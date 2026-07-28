@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: portfolio management
+  datasource:
+    url: jdbc:sqlserver://LAPTOP-HUKRTS1G:1433;databaseName=portfoliomanagement;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: 1
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
