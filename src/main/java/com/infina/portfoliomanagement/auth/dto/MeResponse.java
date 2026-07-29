@@ -3,6 +3,8 @@ package com.infina.portfoliomanagement.auth.dto;
 import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.enums.UserStatus;
 
+import java.util.Set;
+
 public record MeResponse(
         Long id,
         String username,
@@ -13,6 +15,9 @@ public record MeResponse(
         UserStatus status,
         boolean passwordChangeRequired,
         Long companyId,
-        String companyName
+        String companyName,
+        boolean canCreateUser,
+        boolean canDeleteUser,
+        Set<Role> assignableRoles
 ) {
 }

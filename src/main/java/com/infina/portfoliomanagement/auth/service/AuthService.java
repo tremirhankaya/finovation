@@ -10,6 +10,8 @@ import com.infina.portfoliomanagement.company.entity.Company;
 import com.infina.portfoliomanagement.security.jwt.JwtService;
 import com.infina.portfoliomanagement.security.userdetails.CustomUserDetailsService;
 import com.infina.portfoliomanagement.user.entity.User;
+import com.infina.portfoliomanagement.user.enums.Role;
+import com.infina.portfoliomanagement.user.policy.RolePolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -31,6 +33,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
     private final UserRepository userRepository;
+    private final RolePolicy rolePolicy;
 
     public LoginResponse login(LoginRequest request) {
 
@@ -82,6 +85,7 @@ public class AuthService {
                 );
 
         Company company = user.getCompany();
+        Role role = user.getRole();
 
         return new MeResponse(
                 user.getId(),
@@ -89,11 +93,14 @@ public class AuthService {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getEmail(),
-                user.getRole(),
+                role,
                 user.getStatus(),
                 user.isPasswordChangeRequired(),
                 company != null ? company.getId() : null,
-                company != null ? company.getName() : null
+                company != null ? company.getName() : null,
+                rolePolicy.canCreateUser(role),
+                rolePolicy.canDeleteUser(role),
+                rolePolicy.assignableRoles(role)
         );
     }
 
