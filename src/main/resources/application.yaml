@@ -1,12 +1,15 @@
 spring:
   application:
-    name: portfolio management
+    name: finovation
   datasource:
-    url: jdbc:sqlserver://LAPTOP-HUKRTS1G:1433;databaseName=portfoliomanagement;encrypt=true;trustServerCertificate=true
-    username: sa
-    password: 1
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
   jpa:
     hibernate:
       ddl-auto: validate
