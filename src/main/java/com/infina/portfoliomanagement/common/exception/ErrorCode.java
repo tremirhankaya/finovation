@@ -36,6 +36,11 @@ public enum ErrorCode {
             "You do not have permission to perform this operation."
     ),
 
+    AUTHENTICATION_REQUIRED(
+            "AUTH_005",
+            HttpStatus.UNAUTHORIZED,
+            "Authentication is required to access this resource."
+    ),
 
     USER_NOT_FOUND(
             "USER_001",
