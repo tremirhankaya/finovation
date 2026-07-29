@@ -29,4 +29,4 @@ springdoc:
 jwt:
   secret: kYZi3HU4tOW41hd0TWmRTUhcTVvD6NHVitmNXIxuUeg=
   access-token-expiration: 15m
-  refresh-token-expiration: 10s
+  refresh-token-expiration: 15h
