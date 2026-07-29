@@ -15,10 +15,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements AuthControllerDocs {
 
     private final AuthService authService;
 
+    @Override
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request
@@ -26,6 +27,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @Override
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refreshToken(
             @Valid @RequestBody RefreshTokenRequest request
@@ -33,6 +35,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.refreshToken(request));
     }
 
+    @Override
     @GetMapping("/me")
     public ResponseEntity<MeResponse> getCurrentUser(
             @AuthenticationPrincipal UserDetails userDetails

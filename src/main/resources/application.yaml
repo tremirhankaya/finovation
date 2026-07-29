@@ -18,6 +18,14 @@ spring:
       hibernate:
         format_sql: true
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
 jwt:
   secret: kYZi3HU4tOW41hd0TWmRTUhcTVvD6NHVitmNXIxuUeg=
   access-token-expiration: 15m
