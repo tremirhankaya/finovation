@@ -1,6 +1,7 @@
 spring:
   application:
-    name: portfolio management
+    name: portfolio-management
+
   datasource:
     url: jdbc:sqlserver://LAPTOP-HUKRTS1G:1433;databaseName=portfoliomanagement;encrypt=true;trustServerCertificate=true
     username: sa
@@ -14,3 +15,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+jwt:
+  secret: kYZi3HU4tOW41hd0TWmRTUhcTVvD6NHVitmNXIxuUeg=
+  access-token-expiration: 15m
+  refresh-token-expiration: 10s
