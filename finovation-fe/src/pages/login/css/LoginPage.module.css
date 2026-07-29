@@ -1,0 +1,62 @@
+.page {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background: #f8fafc;
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  margin: 0 0 0.5rem;
+  color: var(--color-navy-950);
+  font-size: 1.625rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.header p {
+  margin: 0;
+  color: var(--color-slate-500);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.forgotPassword {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+}
+
+.mobileLogo {
+  display: none;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1023px) {
+  .mobileLogo {
+    display: block;
+  }
+}

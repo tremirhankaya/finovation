@@ -1,0 +1,48 @@
+.logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mark {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-teal-600), var(--color-teal-400));
+}
+
+.mark svg {
+  width: 20px;
+  height: 20px;
+}
+
+.text {
+  color: #fff;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dark .text {
+  color: var(--color-navy-950);
+}
+
+.small .mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.small .mark svg {
+  width: 16px;
+  height: 16px;
+}
+
+.small .text {
+  font-size: 1.125rem;
+}
