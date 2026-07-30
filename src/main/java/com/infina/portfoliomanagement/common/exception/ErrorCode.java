@@ -52,10 +52,30 @@ public enum ErrorCode {
             "USER_002",
             HttpStatus.CONFLICT,
             "Email already exists."
-    ),VALIDATION_ERROR(
+    ),
+
+    USERNAME_ALREADY_EXISTS(
+            "USER_003",
+            HttpStatus.CONFLICT,
+            "Username already exists."
+    ),
+
+    VALIDATION_ERROR(
             "GEN_400",
             HttpStatus.BAD_REQUEST,
             "Validation failed."
+    ),
+
+    COMPANY_NOT_FOUND(
+            "COMPANY_001",
+            HttpStatus.NOT_FOUND,
+            "Company not found."
+    ),
+
+    COMPANY_ASSIGNMENT_INVALID(
+            "COMPANY_002",
+            HttpStatus.BAD_REQUEST,
+            "Company assignment is invalid for the given role."
     ),
     ;
 
