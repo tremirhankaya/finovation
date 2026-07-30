@@ -214,12 +214,6 @@ public class UserService {
 
         assertCanUpdateRoles(actor, target, request.role());
 
-        userCompanyPolicy.assertCanAssignCompany(
-                actor.getRole(),
-                actor.getCompany() != null ? actor.getCompany().getId() : null,
-                request.companyId()
-        );
-
         if (userRepository.existsByEmailAndIdNot(request.email(), target.getId())) {
             throw new BaseException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -236,6 +230,13 @@ public class UserService {
         if (companyId == null && target.getCompany() != null) {
             companyId = target.getCompany().getId();
         }
+
+        userCompanyPolicy.assertCanAssignCompany(
+                actor.getRole(),
+                actor.getCompany() != null ? actor.getCompany().getId() : null,
+                companyId
+        );
+
         target.setCompany(resolveCompany(actor, request.role(), companyId));
 
         if (passwordChanged) {
