@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.auth.controller;
 
+import com.infina.portfoliomanagement.auth.controller.docs.AuthControllerDocs;
 import com.infina.portfoliomanagement.auth.dto.*;
 import com.infina.portfoliomanagement.auth.service.AuthService;
 import jakarta.validation.Valid;

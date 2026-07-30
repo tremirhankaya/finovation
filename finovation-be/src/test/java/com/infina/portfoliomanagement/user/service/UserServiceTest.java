@@ -5,6 +5,7 @@ import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.company.entity.Company;
 import com.infina.portfoliomanagement.company.repository.CompanyRepository;
 import com.infina.portfoliomanagement.user.dto.CreateUserRequest;
+import com.infina.portfoliomanagement.user.dto.UserPageResponse;
 import com.infina.portfoliomanagement.user.dto.UserResponse;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.enums.Role;
@@ -16,18 +17,24 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -212,5 +219,147 @@ class UserServiceTest {
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    @Test
+    void adminListsOnlyUsersInOwnCompany() {
+        User listedUser = listedUser(11L, "company.user", Role.USER);
+
+        when(userRepository.findByUsername("admin1"))
+                .thenReturn(Optional.of(adminActor));
+        when(userRepository.searchUsers(
+                eq(10L),
+                eq("company"),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of(listedUser)));
+
+        UserPageResponse response =
+                userService.getUsers("admin1", 0, 10, "  company  ");
+
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().getFirst().id()).isEqualTo(11L);
+        assertThat(response.content().getFirst().username()).isEqualTo("company.user");
+        assertThat(response.content().getFirst().fullName()).isEqualTo("Listed User");
+        assertThat(response.content().getFirst().role()).isEqualTo(Role.USER);
+
+        verify(userRepository).searchUsers(
+                eq(10L),
+                eq("company"),
+                any(Pageable.class)
+        );
+    }
+
+    @Test
+    void superAdminListsUsersAcrossAllCompanies() {
+        when(userRepository.findByUsername("superadmin1"))
+                .thenReturn(Optional.of(superAdminActor));
+        when(userRepository.searchUsers(
+                eq(null),
+                eq(""),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of()));
+
+        UserPageResponse response =
+                userService.getUsers("superadmin1", 0, 10, null);
+
+        assertThat(response.content()).isEmpty();
+
+        verify(userRepository).searchUsers(
+                eq(null),
+                eq(""),
+                any(Pageable.class)
+        );
+    }
+
+    @Test
+    void userRoleCannotListUsers() {
+        User userActor = User.builder()
+                .id(3L)
+                .username("user1")
+                .role(Role.USER)
+                .company(company)
+                .build();
+
+        when(userRepository.findByUsername("user1"))
+                .thenReturn(Optional.of(userActor));
+
+        assertThatThrownBy(() ->
+                userService.getUsers("user1", 0, 10, "")
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
+
+        verify(userRepository, never()).searchUsers(
+                any(),
+                anyString(),
+                any(Pageable.class)
+        );
+    }
+
+    @Test
+    void listUsersRejectsPageSizeGreaterThanTen() {
+        assertThatThrownBy(() ->
+                userService.getUsers("admin1", 0, 11, "")
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.VALIDATION_ERROR);
+
+        verify(userRepository, never()).findByUsername(anyString());
+    }
+
+    @Test
+    void listUsersRejectsNegativePage() {
+        assertThatThrownBy(() ->
+                userService.getUsers("admin1", -1, 10, "")
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.VALIDATION_ERROR);
+
+        verify(userRepository, never()).findByUsername(anyString());
+    }
+
+    @Test
+    void adminWithoutCompanyCannotListUsers() {
+        User invalidAdmin = User.builder()
+                .id(4L)
+                .username("invalid.admin")
+                .role(Role.ADMIN)
+                .company(null)
+                .build();
+
+        when(userRepository.findByUsername("invalid.admin"))
+                .thenReturn(Optional.of(invalidAdmin));
+
+        assertThatThrownBy(() ->
+                userService.getUsers("invalid.admin", 0, 10, "")
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.COMPANY_ASSIGNMENT_INVALID);
+
+        verify(userRepository, never()).searchUsers(
+                any(),
+                anyString(),
+                any(Pageable.class)
+        );
+    }
+
+    private User listedUser(Long id, String username, Role role) {
+        return User.builder()
+                .id(id)
+                .username(username)
+                .firstName("Listed")
+                .lastName("User")
+                .email(username + "@example.com")
+                .password("encoded-password")
+                .role(role)
+                .status(UserStatus.ACTIVE)
+                .company(company)
+                .createdAt(LocalDateTime.of(2026, 7, 30, 10, 0))
+                .updatedAt(LocalDateTime.of(2026, 7, 30, 10, 0))
+                .build();
     }
 }

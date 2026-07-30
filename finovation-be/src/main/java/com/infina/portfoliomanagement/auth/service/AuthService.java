@@ -112,6 +112,7 @@ public class AuthService {
                 user.isPasswordChangeRequired(),
                 company != null ? company.getId() : null,
                 company != null ? company.getName() : null,
+                rolePolicy.canAccessPanel(role),
                 rolePolicy.canCreateUser(role),
                 rolePolicy.canDeleteUser(role),
                 rolePolicy.assignableRoles(role)
