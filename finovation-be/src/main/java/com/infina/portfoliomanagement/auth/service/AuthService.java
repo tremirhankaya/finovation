@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.auth.service;
 
 import com.infina.portfoliomanagement.auth.dto.LoginRequest;
 import com.infina.portfoliomanagement.auth.dto.LoginResponse;
+import com.infina.portfoliomanagement.auth.dto.LogoutRequest;
 import com.infina.portfoliomanagement.auth.dto.MeResponse;
 import com.infina.portfoliomanagement.auth.dto.RefreshTokenRequest;
 import com.infina.portfoliomanagement.common.exception.BaseException;
@@ -13,11 +14,10 @@ import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.policy.RolePolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -27,23 +27,29 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private static final String TOKEN_TYPE = "Bearer";
-
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
     private final UserRepository userRepository;
     private final RolePolicy rolePolicy;
+    private final RefreshTokenService refreshTokenService;
 
     public LoginResponse login(LoginRequest request) {
 
         try {
-            UserDetails userDetails = (UserDetails) authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.username(),
-                            request.password()
-                    )
-            ).getPrincipal();
+            Authentication authentication =
+                    authenticationManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    request.username(),
+                                    request.password()
+                            )
+                    );
+
+            Object principal = authentication.getPrincipal();
+
+            if (!(principal instanceof UserDetails userDetails)) {
+                throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
+            }
 
             return createTokenResponse(userDetails);
 
@@ -54,26 +60,34 @@ public class AuthService {
 
     public LoginResponse refreshToken(RefreshTokenRequest request) {
 
-        try {
-            String refreshToken = request.refreshToken();
+        String refreshToken = request.refreshToken();
 
-            String username = jwtService.extractUsername(refreshToken);
+        String username =
+                refreshTokenService.getUsername(refreshToken);
 
-            UserDetails userDetails =
-                    customUserDetailsService.loadUserByUsername(username);
-
-            if (!jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
-                throw new BaseException(ErrorCode.INVALID_TOKEN);
-            }
-
-            return createTokenResponse(userDetails);
-
-        } catch (ExpiredJwtException exception) {
-            throw new BaseException(ErrorCode.TOKEN_EXPIRED);
-
-        } catch (JwtException | IllegalArgumentException exception) {
+        if (username == null) {
             throw new BaseException(ErrorCode.INVALID_TOKEN);
         }
+
+        UserDetails userDetails =
+                customUserDetailsService.loadUserByUsername(username);
+
+        refreshTokenService.revoke(refreshToken);
+
+        String accessToken =
+                jwtService.generateAccessToken(userDetails);
+
+        String newRefreshToken =
+                refreshTokenService.create(userDetails.getUsername());
+
+        return new LoginResponse(
+                accessToken,
+                newRefreshToken
+        );
+    }
+
+    public void logout(LogoutRequest request) {
+        refreshTokenService.revoke(request.refreshToken());
     }
 
     @Transactional(readOnly = true)
@@ -106,13 +120,15 @@ public class AuthService {
 
     private LoginResponse createTokenResponse(UserDetails userDetails) {
 
-        String accessToken = jwtService.generateAccessToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        String accessToken =
+                jwtService.generateAccessToken(userDetails);
+
+        String refreshToken =
+                refreshTokenService.create(userDetails.getUsername());
 
         return new LoginResponse(
                 accessToken,
-                refreshToken,
-                TOKEN_TYPE
+                refreshToken
         );
     }
 }

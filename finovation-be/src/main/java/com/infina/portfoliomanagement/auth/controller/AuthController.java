@@ -1,12 +1,10 @@
 package com.infina.portfoliomanagement.auth.controller;
 
-import com.infina.portfoliomanagement.auth.dto.LoginRequest;
-import com.infina.portfoliomanagement.auth.dto.LoginResponse;
-import com.infina.portfoliomanagement.auth.dto.MeResponse;
-import com.infina.portfoliomanagement.auth.dto.RefreshTokenRequest;
+import com.infina.portfoliomanagement.auth.dto.*;
 import com.infina.portfoliomanagement.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,5 +41,13 @@ public class AuthController implements AuthControllerDocs {
         return ResponseEntity.ok(
                 authService.getCurrentUser(userDetails.getUsername())
         );
+    }
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(
+            @Valid @RequestBody LogoutRequest request) {
+
+        authService.logout(request);
+
     }
 }
