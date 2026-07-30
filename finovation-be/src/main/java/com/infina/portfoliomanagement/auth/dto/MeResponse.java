@@ -16,6 +16,7 @@ public record MeResponse(
         boolean passwordChangeRequired,
         Long companyId,
         String companyName,
+        boolean canAccessPanel,
         boolean canCreateUser,
         boolean canDeleteUser,
         Set<Role> assignableRoles

@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.auth.controller;
 
+import com.infina.portfoliomanagement.auth.controller.docs.AuthControllerDocs;
 import com.infina.portfoliomanagement.auth.dto.LoginRequest;
 import com.infina.portfoliomanagement.auth.dto.LoginResponse;
 import com.infina.portfoliomanagement.auth.dto.MeResponse;
