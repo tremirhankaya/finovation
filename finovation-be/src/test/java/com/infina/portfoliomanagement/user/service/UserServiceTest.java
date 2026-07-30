@@ -11,6 +11,7 @@ import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.enums.UserStatus;
 import com.infina.portfoliomanagement.user.policy.RolePolicy;
+import com.infina.portfoliomanagement.user.policy.UserCompanyPolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,7 @@ class UserServiceTest {
                 userRepository,
                 companyRepository,
                 new RolePolicy(),
+                new UserCompanyPolicy(),
                 passwordEncoder,
                 FIXED_CLOCK
         );
