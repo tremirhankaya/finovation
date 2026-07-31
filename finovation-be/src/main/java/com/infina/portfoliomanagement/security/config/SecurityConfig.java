@@ -48,7 +48,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
-                                "/swagger-ui/**")
+                                "/swagger-ui/**",
+                                "/actuator/health",
+                                "/actuator/prometheus")
                         .permitAll()
                         .anyRequest().authenticated()
                 )
