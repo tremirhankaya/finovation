@@ -5,8 +5,10 @@ import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.company.entity.Company;
 import com.infina.portfoliomanagement.company.repository.CompanyRepository;
 import com.infina.portfoliomanagement.user.dto.CreateUserRequest;
+import com.infina.portfoliomanagement.user.dto.UpdateUserRequest;
 import com.infina.portfoliomanagement.user.dto.UserPageResponse;
 import com.infina.portfoliomanagement.user.dto.UserResponse;
+import com.infina.portfoliomanagement.user.dto.UserSearchCriteria;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.enums.UserStatus;
@@ -20,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Clock;
@@ -33,7 +36,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -98,7 +100,7 @@ class UserServiceTest {
                 "First",
                 "Last",
                 "newuser@example.com",
-                "password123",
+                "Password123!",
                 role,
                 companyId
         );
@@ -115,7 +117,7 @@ class UserServiceTest {
         assertThat(response.companyId()).isEqualTo(10L);
         assertThat(response.role()).isEqualTo(Role.USER);
         assertThat(response.status()).isEqualTo(UserStatus.ACTIVE);
-        verify(passwordEncoder).encode("password123");
+        verify(passwordEncoder).encode("Password123!");
     }
 
     @Test
@@ -229,48 +231,82 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("admin1"))
                 .thenReturn(Optional.of(adminActor));
-        when(userRepository.searchUsers(
-                eq(10L),
-                eq("company"),
-                any(Pageable.class)
-        )).thenReturn(new PageImpl<>(List.of(listedUser)));
+        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(listedUser)));
 
         UserPageResponse response =
-                userService.getUsers("admin1", 0, 10, "  company  ");
+                userService.getUsers("admin1", criteria(0, 10, "  company  ", null, null, null));
 
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().getFirst().id()).isEqualTo(11L);
         assertThat(response.content().getFirst().username()).isEqualTo("company.user");
         assertThat(response.content().getFirst().fullName()).isEqualTo("Listed User");
+        assertThat(response.content().getFirst().firstName()).isEqualTo("Listed");
+        assertThat(response.content().getFirst().lastName()).isEqualTo("User");
+        assertThat(response.content().getFirst().email()).isEqualTo("company.user@example.com");
+        assertThat(response.content().getFirst().companyId()).isEqualTo(10L);
+        assertThat(response.content().getFirst().companyName()).isEqualTo("Acme");
         assertThat(response.content().getFirst().role()).isEqualTo(Role.USER);
+        assertThat(response.content().getFirst().status()).isEqualTo(UserStatus.ACTIVE);
 
-        verify(userRepository).searchUsers(
-                eq(10L),
-                eq("company"),
-                any(Pageable.class)
-        );
+        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     void superAdminListsUsersAcrossAllCompanies() {
         when(userRepository.findByUsername("superadmin1"))
                 .thenReturn(Optional.of(superAdminActor));
-        when(userRepository.searchUsers(
-                eq(null),
-                eq(""),
-                any(Pageable.class)
-        )).thenReturn(new PageImpl<>(List.of()));
+        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
 
         UserPageResponse response =
-                userService.getUsers("superadmin1", 0, 10, null);
+                userService.getUsers("superadmin1", criteria(0, 10, null, null, null, null));
 
         assertThat(response.content()).isEmpty();
 
-        verify(userRepository).searchUsers(
-                eq(null),
-                eq(""),
-                any(Pageable.class)
+        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void superAdminCanFilterByRoleAndCompany() {
+        when(userRepository.findByUsername("superadmin1"))
+                .thenReturn(Optional.of(superAdminActor));
+        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        userService.getUsers("superadmin1", criteria(0, 10, "", Role.ADMIN, null, 10L));
+
+        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void superAdminCanFilterByStatus() {
+        when(userRepository.findByUsername("superadmin1"))
+                .thenReturn(Optional.of(superAdminActor));
+        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        userService.getUsers(
+                "superadmin1",
+                criteria(0, 10, "", null, UserStatus.INACTIVE, null)
         );
+
+        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void adminFilteringOtherCompanyIsDenied() {
+        when(userRepository.findByUsername("admin1"))
+                .thenReturn(Optional.of(adminActor));
+
+        assertThatThrownBy(() ->
+                userService.getUsers("admin1", criteria(0, 10, "", null, null, 99L))
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
+
+        verify(userRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
@@ -286,23 +322,19 @@ class UserServiceTest {
                 .thenReturn(Optional.of(userActor));
 
         assertThatThrownBy(() ->
-                userService.getUsers("user1", 0, 10, "")
+                userService.getUsers("user1", criteria(0, 10, "", null, null, null))
         )
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
 
-        verify(userRepository, never()).searchUsers(
-                any(),
-                anyString(),
-                any(Pageable.class)
-        );
+        verify(userRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     void listUsersRejectsPageSizeGreaterThanTen() {
         assertThatThrownBy(() ->
-                userService.getUsers("admin1", 0, 11, "")
+                userService.getUsers("admin1", criteria(0, 11, "", null, null, null))
         )
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
@@ -314,7 +346,7 @@ class UserServiceTest {
     @Test
     void listUsersRejectsNegativePage() {
         assertThatThrownBy(() ->
-                userService.getUsers("admin1", -1, 10, "")
+                userService.getUsers("admin1", criteria(-1, 10, "", null, null, null))
         )
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
@@ -336,16 +368,207 @@ class UserServiceTest {
                 .thenReturn(Optional.of(invalidAdmin));
 
         assertThatThrownBy(() ->
-                userService.getUsers("invalid.admin", 0, 10, "")
+                userService.getUsers("invalid.admin", criteria(0, 10, "", null, null, null))
         )
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.COMPANY_ASSIGNMENT_INVALID);
 
-        verify(userRepository, never()).searchUsers(
-                any(),
-                anyString(),
-                any(Pageable.class)
+        verify(userRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void adminUpdatesUserInOwnCompany() {
+        User target = listedUser(11L, "company.user", Role.USER);
+
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(11L)).thenReturn(Optional.of(target));
+        when(userRepository.existsByEmailAndIdNot("updated@example.com", 11L)).thenReturn(false);
+
+        UserResponse response = userService.updateUser(
+                "admin1",
+                11L,
+                updateRequest("Updated", "Name", "updated@example.com", null, Role.USER, 10L)
+        );
+
+        assertThat(response.firstName()).isEqualTo("Updated");
+        assertThat(response.lastName()).isEqualTo("Name");
+        assertThat(response.email()).isEqualTo("updated@example.com");
+        assertThat(response.companyId()).isEqualTo(10L);
+        assertThat(target.isPasswordChangeRequired()).isFalse();
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository).save(target);
+    }
+
+    @Test
+    void adminUpdatesUserInOtherCompany_isDenied() {
+        Company otherCompany = Company.builder().id(99L).name("Other").build();
+        User target = listedUser(12L, "other.user", Role.USER);
+        target.setCompany(otherCompany);
+
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(12L)).thenReturn(Optional.of(target));
+
+        assertThatThrownBy(() ->
+                userService.updateUser(
+                        "admin1",
+                        12L,
+                        updateRequest("Updated", "Name", "updated@example.com", null, Role.USER, 99L)
+                )
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void adminCannotChangeOwnRole() {
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminActor));
+
+        assertThatThrownBy(() ->
+                userService.updateUser(
+                        "admin1",
+                        1L,
+                        updateRequest("Admin", "One", "admin1@example.com", null, Role.USER, 10L)
+                )
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void adminCannotDeactivateOwnAccount() {
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminActor));
+
+        assertThatThrownBy(() ->
+                userService.updateUser(
+                        "admin1",
+                        1L,
+                        new UpdateUserRequest(
+                                "Admin",
+                                "One",
+                                "admin1@example.com",
+                                null,
+                                Role.ADMIN,
+                                UserStatus.INACTIVE,
+                                10L
+                        )
+                )
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.VALIDATION_ERROR);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateUser_duplicateEmail_throwsEmailAlreadyExists() {
+        User target = listedUser(11L, "company.user", Role.USER);
+
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(11L)).thenReturn(Optional.of(target));
+        when(userRepository.existsByEmailAndIdNot("taken@example.com", 11L)).thenReturn(true);
+
+        assertThatThrownBy(() ->
+                userService.updateUser(
+                        "admin1",
+                        11L,
+                        updateRequest("Updated", "Name", "taken@example.com", null, Role.USER, 10L)
+                )
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void adminSoftDeletesUserInOwnCompany() {
+        User target = listedUser(11L, "company.user", Role.USER);
+
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(11L)).thenReturn(Optional.of(target));
+
+        userService.deleteUser("admin1", 11L);
+
+        assertThat(target.isDeleted()).isTrue();
+        assertThat(target.getUpdatedAt()).isEqualTo(LocalDateTime.of(2026, 7, 30, 10, 0));
+        verify(userRepository).save(target);
+    }
+
+    @Test
+    void adminCannotDeleteOwnAccount() {
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminActor));
+
+        assertThatThrownBy(() -> userService.deleteUser("admin1", 1L))
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void adminCannotDeleteAdmin() {
+        User targetAdmin = listedUser(13L, "other.admin", Role.ADMIN);
+
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        when(userRepository.findById(13L)).thenReturn(Optional.of(targetAdmin));
+
+        assertThatThrownBy(() -> userService.deleteUser("admin1", 13L))
+                .isInstanceOf(BaseException.class)
+                .extracting(exception -> ((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    private UpdateUserRequest updateRequest(
+            String firstName,
+            String lastName,
+            String email,
+            String password,
+            Role role,
+            Long companyId
+    ) {
+        return new UpdateUserRequest(
+                firstName,
+                lastName,
+                email,
+                password,
+                role,
+                UserStatus.ACTIVE,
+                companyId
+        );
+    }
+
+    private UserSearchCriteria criteria(
+            int page,
+            int size,
+            String query,
+            Role role,
+            UserStatus status,
+            Long companyId
+    ) {
+        return new UserSearchCriteria(
+                page,
+                size,
+                query,
+                role,
+                status,
+                companyId,
+                null,
+                null
         );
     }
 
