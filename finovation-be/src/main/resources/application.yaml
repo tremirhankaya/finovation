@@ -1,15 +1,18 @@
 spring:
   application:
     name: finovation
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6380}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -27,6 +30,6 @@ springdoc:
     tags-sorter: alpha
 
 jwt:
-  secret: kYZi3HU4tOW41hd0TWmRTUhcTVvD6NHVitmNXIxuUeg=
-  access-token-expiration: 15m
-  refresh-token-expiration: 15h
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
+  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:15h}
