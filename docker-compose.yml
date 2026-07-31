@@ -143,7 +143,24 @@ services:
 
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: finovation-prometheus
+
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - finovation_prometheus_data:/prometheus
+
+    ports:
+      - "9090:9090"
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped
+
 
 volumes:
   finovation_mssql_data:
   finovation_redis_data:
+  finovation_prometheus_data:
