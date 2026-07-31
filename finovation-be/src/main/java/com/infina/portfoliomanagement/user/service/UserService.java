@@ -66,6 +66,7 @@ public class UserService {
                 .password(passwordEncoder.encode(request.password()))
                 .role(request.role())
                 .status(UserStatus.ACTIVE)
+                .deleted(false)
                 .passwordChangeRequired(true)
                 .createdAt(now)
                 .updatedAt(now)
@@ -283,16 +284,16 @@ public class UserService {
 
         rolePolicy.assertCanDeleteUser(actor.getRole(), target.getRole());
 
-        Long targetId = target.getId();
-        Role targetRole = target.getRole();
-        userRepository.delete(target);
+        target.setDeleted(true);
+        target.setUpdatedAt(LocalDateTime.now(clock));
+        userRepository.save(target);
 
         log.info(
-                "User deleted: actor={}, actorRole={}, targetId={}, targetRole={}",
+                "User soft-deleted: actor={}, actorRole={}, targetId={}, targetRole={}",
                 actorUsername,
                 actor.getRole(),
-                targetId,
-                targetRole
+                target.getId(),
+                target.getRole()
         );
     }
 

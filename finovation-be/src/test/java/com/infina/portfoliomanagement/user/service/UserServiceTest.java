@@ -359,6 +359,7 @@ class UserServiceTest {
                 .password("encoded-password")
                 .role(role)
                 .status(UserStatus.ACTIVE)
+                .deleted(false)
                 .company(company)
                 .createdAt(LocalDateTime.of(2026, 7, 30, 10, 0))
                 .updatedAt(LocalDateTime.of(2026, 7, 30, 10, 0))

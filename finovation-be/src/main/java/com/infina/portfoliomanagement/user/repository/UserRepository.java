@@ -15,9 +15,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
 
-    Optional<User> findByEmail(String email);
-
     boolean existsByEmail(String email);
+
+    boolean existsByEmailAndIdNot(String email, Long id);
 
     @Query("""
             SELECT user
@@ -35,5 +35,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("query") String query,
             Pageable pageable
     );
-    boolean existsByEmailAndIdNot(String email, Long id);
 }
