@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.user.controller.docs;
 
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import com.infina.portfoliomanagement.user.dto.CreateUserRequest;
+import com.infina.portfoliomanagement.user.dto.UpdateUserRequest;
 import com.infina.portfoliomanagement.user.dto.UserPageResponse;
 import com.infina.portfoliomanagement.user.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,4 +37,22 @@ public interface UserControllerDocs {
             int size,
             String q
     );
+    @Operation(
+            summary = "Update user",
+            description = "Updates user profile fields. Username/id cannot be changed. " +
+                    "Role changes are restricted by RolePolicy. Password is optional.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<UserResponse> updateUser(
+            UserDetails userDetails,
+            Long id,
+            UpdateUserRequest request
+    );
+
+    @Operation(
+            summary = "Delete user",
+            description = "Deletes a user according to RolePolicy. Self-deletion is not allowed.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<Void> deleteUser(UserDetails userDetails, Long id);
 }

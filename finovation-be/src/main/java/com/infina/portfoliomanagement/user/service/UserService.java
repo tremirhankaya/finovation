@@ -4,14 +4,12 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.company.entity.Company;
 import com.infina.portfoliomanagement.company.repository.CompanyRepository;
-import com.infina.portfoliomanagement.user.dto.CreateUserRequest;
-import com.infina.portfoliomanagement.user.dto.UserListItemResponse;
-import com.infina.portfoliomanagement.user.dto.UserPageResponse;
-import com.infina.portfoliomanagement.user.dto.UserResponse;
+import com.infina.portfoliomanagement.user.dto.*;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.enums.UserStatus;
 import com.infina.portfoliomanagement.user.policy.RolePolicy;
+import com.infina.portfoliomanagement.user.policy.UserCompanyPolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +33,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final RolePolicy rolePolicy;
+    private final UserCompanyPolicy userCompanyPolicy;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
 
@@ -67,6 +66,7 @@ public class UserService {
                 .password(passwordEncoder.encode(request.password()))
                 .role(request.role())
                 .status(UserStatus.ACTIVE)
+                .deleted(false)
                 .passwordChangeRequired(true)
                 .createdAt(now)
                 .updatedAt(now)
@@ -195,5 +195,126 @@ public class UserService {
                 user.getRole(),
                 user.getCreatedAt()
         );
+    }
+    @Transactional
+    public UserResponse updateUser(String actorUsername, Long userId, UpdateUserRequest request) {
+
+        User actor = userRepository.findByUsername(actorUsername)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        rolePolicy.assertCanAccessPanel(actor.getRole());
+
+        userCompanyPolicy.assertCanManageTarget(
+                actor.getRole(),
+                actor.getCompany() != null ? actor.getCompany().getId() : null,
+                target.getCompany() != null ? target.getCompany().getId() : null
+        );
+
+        assertCanUpdateRoles(actor, target, request.role());
+
+        if (userRepository.existsByEmailAndIdNot(request.email(), target.getId())) {
+            throw new BaseException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+
+        boolean passwordChanged = request.password() != null && !request.password().isBlank();
+        Role previousRole = target.getRole();
+
+        target.setFirstName(request.firstName());
+        target.setLastName(request.lastName());
+        target.setEmail(request.email());
+        target.setRole(request.role());
+
+        Long companyId = request.companyId();
+        if (companyId == null && target.getCompany() != null) {
+            companyId = target.getCompany().getId();
+        }
+
+        userCompanyPolicy.assertCanAssignCompany(
+                actor.getRole(),
+                actor.getCompany() != null ? actor.getCompany().getId() : null,
+                companyId
+        );
+
+        target.setCompany(resolveCompany(actor, request.role(), companyId));
+
+        if (passwordChanged) {
+            target.setPassword(passwordEncoder.encode(request.password()));
+            target.setPasswordChangeRequired(true);
+        }
+
+        target.setUpdatedAt(LocalDateTime.now(clock));
+        UserResponse response = toResponse(userRepository.save(target));
+
+        log.info(
+                "User updated: actor={}, actorRole={}, targetId={}, roleChanged={}, passwordChanged={}",
+                actorUsername,
+                actor.getRole(),
+                target.getId(),
+                previousRole != request.role(),
+                passwordChanged
+        );
+
+        return response;
+    }
+
+    @Transactional
+    public void deleteUser(String actorUsername, Long userId) {
+
+        User actor = userRepository.findByUsername(actorUsername)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        if (actor.getId().equals(target.getId())) {
+            log.warn("Self delete denied: actorId={}", actor.getId());
+            throw new BaseException(ErrorCode.ACCESS_DENIED, "You cannot delete your own account.");
+        }
+
+        rolePolicy.assertCanAccessPanel(actor.getRole());
+
+        userCompanyPolicy.assertCanManageTarget(
+                actor.getRole(),
+                actor.getCompany() != null ? actor.getCompany().getId() : null,
+                target.getCompany() != null ? target.getCompany().getId() : null
+        );
+
+        rolePolicy.assertCanDeleteUser(actor.getRole(), target.getRole());
+
+        target.setDeleted(true);
+        target.setUpdatedAt(LocalDateTime.now(clock));
+        userRepository.save(target);
+
+        log.info(
+                "User soft-deleted: actor={}, actorRole={}, targetId={}, targetRole={}",
+                actorUsername,
+                actor.getRole(),
+                target.getId(),
+                target.getRole()
+        );
+    }
+
+    private void assertCanUpdateRoles(User actor, User target, Role requestedRole) {
+        if (actor.getId().equals(target.getId())
+                && requestedRole != target.getRole()) {
+            log.warn(
+                    "Self role change denied: actorId={}, currentRole={}, requestedRole={}",
+                    actor.getId(),
+                    target.getRole(),
+                    requestedRole
+            );
+            throw new BaseException(ErrorCode.ACCESS_DENIED);
+        }
+
+        if (!actor.getId().equals(target.getId())) {
+            rolePolicy.assertCanChangeRole(actor.getRole(), target.getRole());
+        }
+
+        if (requestedRole != target.getRole()) {
+            rolePolicy.assertCanChangeRole(actor.getRole(), requestedRole);
+        }
     }
 }

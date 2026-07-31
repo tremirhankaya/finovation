@@ -11,6 +11,7 @@ import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.enums.UserStatus;
 import com.infina.portfoliomanagement.user.policy.RolePolicy;
+import com.infina.portfoliomanagement.user.policy.UserCompanyPolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,7 @@ class UserServiceTest {
                 userRepository,
                 companyRepository,
                 new RolePolicy(),
+                new UserCompanyPolicy(),
                 passwordEncoder,
                 FIXED_CLOCK
         );
@@ -357,6 +359,7 @@ class UserServiceTest {
                 .password("encoded-password")
                 .role(role)
                 .status(UserStatus.ACTIVE)
+                .deleted(false)
                 .company(company)
                 .createdAt(LocalDateTime.of(2026, 7, 30, 10, 0))
                 .updatedAt(LocalDateTime.of(2026, 7, 30, 10, 0))

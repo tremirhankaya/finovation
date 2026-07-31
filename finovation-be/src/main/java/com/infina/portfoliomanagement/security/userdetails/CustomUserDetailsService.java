@@ -33,7 +33,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getUsername(),
                 user.getPassword(),
                 user.getRole(),
-                user.getStatus()== UserStatus.ACTIVE
+                user.getStatus() == UserStatus.ACTIVE
         );
     }
 }

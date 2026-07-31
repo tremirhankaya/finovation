@@ -5,11 +5,13 @@ import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
+@SQLRestriction("is_deleted = 0")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,10 +33,10 @@ public class User {
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Column(nullable = false, unique = true, length = 254)
+    @Column(nullable = false, length = 254)
     private String email;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, length = 100)
     private String username;
 
     @Column(nullable = false, length = 100)
@@ -50,6 +52,9 @@ public class User {
 
     @Column(name = "password_change_required", nullable = false)
     private boolean passwordChangeRequired;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean deleted;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

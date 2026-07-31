@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.user.controller;
 
 import com.infina.portfoliomanagement.user.controller.docs.UserControllerDocs;
 import com.infina.portfoliomanagement.user.dto.CreateUserRequest;
+import com.infina.portfoliomanagement.user.dto.UpdateUserRequest;
 import com.infina.portfoliomanagement.user.dto.UserPageResponse;
 import com.infina.portfoliomanagement.user.dto.UserResponse;
 import com.infina.portfoliomanagement.user.service.UserService;
@@ -11,12 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -51,5 +47,26 @@ public class UserController implements UserControllerDocs {
                         q
                 )
         );
+    }
+    @Override
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request
+    ) {
+        return ResponseEntity.ok(
+                userService.updateUser(userDetails.getUsername(), id, request)
+        );
+    }
+
+    @Override
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id
+    ) {
+        userService.deleteUser(userDetails.getUsername(), id);
+        return ResponseEntity.noContent().build();
     }
 }
