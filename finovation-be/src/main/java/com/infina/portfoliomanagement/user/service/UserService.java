@@ -11,6 +11,7 @@ import com.infina.portfoliomanagement.user.enums.UserStatus;
 import com.infina.portfoliomanagement.user.policy.RolePolicy;
 import com.infina.portfoliomanagement.user.policy.UserCompanyPolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
+import com.infina.portfoliomanagement.user.specification.UserSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -117,25 +118,19 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserPageResponse getUsers(
-            String actorUsername,
-            int page,
-            int size,
-            String query
-    ) {
-        validatePagination(page, size);
+    public UserPageResponse getUsers(String actorUsername, UserSearchCriteria criteria) {
+        validatePagination(criteria.page(), criteria.size());
 
         User actor = userRepository.findByUsername(actorUsername)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         rolePolicy.assertCanAccessPanel(actor.getRole());
 
-        Long companyId = resolveListCompanyId(actor);
-        String normalizedQuery = query == null ? "" : query.trim();
+        Long companyId = resolveEffectiveCompanyId(actor, criteria.companyId());
 
         PageRequest pageRequest = PageRequest.of(
-                page,
-                size,
+                criteria.page(),
+                criteria.size(),
                 Sort.by(
                         Sort.Order.desc("createdAt"),
                         Sort.Order.desc("id")
@@ -143,16 +138,27 @@ public class UserService {
         );
 
         log.debug(
-                "Listing users for actor role {}, companyId {}, page {}, size {}, searchApplied {}",
+                "Listing users for actor role {}, companyId {}, roleFilter {}, page {}, size {}, searchApplied {}",
                 actor.getRole(),
                 companyId,
-                page,
-                size,
-                !normalizedQuery.isBlank()
+                criteria.role(),
+                criteria.page(),
+                criteria.size(),
+                criteria.hasQuery()
         );
 
         Page<UserListItemResponse> users = userRepository
-                .searchUsers(companyId, normalizedQuery, pageRequest)
+                .findAll(
+                        UserSpecifications.from(
+                                companyId,
+                                criteria.role(),
+                                criteria.status(),
+                                criteria.query(),
+                                criteria.createdFrom(),
+                                criteria.createdTo()
+                        ),
+                        pageRequest
+                )
                 .map(this::toListItemResponse);
 
         return new UserPageResponse(
@@ -175,24 +181,36 @@ public class UserService {
         }
     }
 
-    private Long resolveListCompanyId(User actor) {
+    private Long resolveEffectiveCompanyId(User actor, Long requestedCompanyId) {
         if (actor.getRole() != Role.ADMIN) {
-            return null;
+            return requestedCompanyId;
         }
 
         if (actor.getCompany() == null) {
             throw new BaseException(ErrorCode.COMPANY_ASSIGNMENT_INVALID);
         }
 
-        return actor.getCompany().getId();
+        Long scopedCompanyId = actor.getCompany().getId();
+        userCompanyPolicy.assertCanQueryCompany(
+                actor.getRole(),
+                scopedCompanyId,
+                requestedCompanyId
+        );
+        return scopedCompanyId;
     }
 
     private UserListItemResponse toListItemResponse(User user) {
         return new UserListItemResponse(
                 user.getId(),
                 user.getUsername(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getFirstName() + " " + user.getLastName(),
+                user.getEmail(),
+                user.getCompany() != null ? user.getCompany().getId() : null,
+                user.getCompany() != null ? user.getCompany().getName() : null,
                 user.getRole(),
+                user.getStatus(),
                 user.getCreatedAt()
         );
     }
@@ -215,6 +233,13 @@ public class UserService {
 
         assertCanUpdateRoles(actor, target, request.role());
 
+        if (actor.getId().equals(target.getId()) && request.status() == UserStatus.INACTIVE) {
+            throw new BaseException(
+                    ErrorCode.VALIDATION_ERROR,
+                    "You cannot deactivate your own account."
+            );
+        }
+
         if (userRepository.existsByEmailAndIdNot(request.email(), target.getId())) {
             throw new BaseException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -226,6 +251,7 @@ public class UserService {
         target.setLastName(request.lastName());
         target.setEmail(request.email());
         target.setRole(request.role());
+        target.setStatus(request.status());
 
         Long companyId = request.companyId();
         if (companyId == null && target.getCompany() != null) {

@@ -51,4 +51,24 @@ public class UserCompanyPolicy {
             throw new BaseException(ErrorCode.ACCESS_DENIED);
         }
     }
+
+    public void assertCanQueryCompany(
+            Role actorRole,
+            Long actorCompanyId,
+            Long requestedCompanyId
+    ) {
+        if (requestedCompanyId == null) {
+            return;
+        }
+
+        if (actorCompanyId == null || !actorCompanyId.equals(requestedCompanyId)) {
+            log.debug(
+                    "Company query denied for role {}: actorCompanyId={}, requestedCompanyId={}",
+                    actorRole,
+                    actorCompanyId,
+                    requestedCompanyId
+            );
+            throw new BaseException(ErrorCode.ACCESS_DENIED);
+        }
+    }
 }
