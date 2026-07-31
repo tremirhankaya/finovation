@@ -1,4 +1,6 @@
 import { type FormEvent, useState } from "react"
+import { useNavigate } from "react-router-dom"
+
 import Button from "@/component/Button"
 import FormAlert from "@/component/FormAlert"
 import Logo from "@/component/Logo"
@@ -10,13 +12,15 @@ import {
 } from "@/schema/authSchema"
 import { login } from "@/service/authService"
 import { saveAccessToken } from "@/util/authStorage"
+
 import BrandPanel from "./component/BrandPanel"
 import styles from "./css/LoginPage.module.css"
 
 const UNKNOWN_LOGIN_ERROR = "Giriş sırasında beklenmeyen bir hata oluştu."
-const FORGOT_PASSWORD_MESSAGE = "Şifre yenileme servisi henüz yapılandırılmadı."
 
 export default function LoginPage() {
+  const navigate = useNavigate()
+
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({})
@@ -41,14 +45,22 @@ export default function LoginPage() {
     try {
       const result = await login(validation.data)
 
-      if (result.accessToken) {
-        saveAccessToken(result.accessToken)
+      if (!result.accessToken) {
+        setFormError(UNKNOWN_LOGIN_ERROR)
+        return
       }
+
+      saveAccessToken(result.accessToken)
+      navigate("/dashboard", { replace: true })
     } catch (error) {
       setFormError(error instanceof Error ? error.message : UNKNOWN_LOGIN_ERROR)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function handleForgotPassword() {
+    navigate("/forgot-password")
   }
 
   return (
@@ -90,8 +102,9 @@ export default function LoginPage() {
 
             <div className={styles.forgotPassword}>
               <Button
+                type="button"
                 variant="link"
-                onClick={() => setFormError(FORGOT_PASSWORD_MESSAGE)}
+                onClick={handleForgotPassword}
               >
                 Şifremi unuttum
               </Button>
@@ -111,3 +124,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
