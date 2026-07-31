@@ -1,15 +1,31 @@
 const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 
 export const API_BASE_URL =
-    configuredApiUrl?.replace(/\/$/, "") || "/api"
+  configuredApiUrl?.replace(/\/$/, "") || "/api"
 
-export const LOGIN_PATH =
-    import.meta.env.VITE_LOGIN_PATH?.trim() || "/v1/auth/login"
+export const API_PATHS = {
+  login: import.meta.env.VITE_LOGIN_PATH?.trim() || "/v1/auth/login",
+  users: import.meta.env.VITE_USERS_PATH?.trim() || "/v1/users",
+  companies: import.meta.env.VITE_COMPANIES_PATH?.trim() || "/v1/companies",
+} as const
+
+function normalizePath(path: string): string {
+  return path.startsWith("/") ? path : `/${path}`
+}
+
+function buildUrl(path: string): string {
+  return `${API_BASE_URL}${normalizePath(path)}`
+}
 
 export function getLoginUrl(): string {
-  const normalizedLoginPath = LOGIN_PATH.startsWith("/")
-      ? LOGIN_PATH
-      : `/${LOGIN_PATH}`
+  return buildUrl(API_PATHS.login)
+}
 
-  return `${API_BASE_URL}${normalizedLoginPath}`
+export function getUsersUrl(userId?: number): string {
+  const base = buildUrl(API_PATHS.users)
+  return userId == null ? base : `${base}/${userId}`
+}
+
+export function getCompaniesUrl(): string {
+  return buildUrl(API_PATHS.companies)
 }

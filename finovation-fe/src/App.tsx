@@ -8,6 +8,7 @@ import {
 import LoginPage from "@/pages/login/LoginPage"
 import DashboardPage from "@/pages/DashboardPage"
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage"
+import UsersPage from "@/pages/users/UsersPage"
 
 export default function App() {
   return (
@@ -23,6 +24,8 @@ export default function App() {
           />
 
           <Route path="/dashboard" element={<DashboardPage />} />
+
+          <Route path="/users" element={<UsersPage />} />
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
