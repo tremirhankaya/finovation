@@ -25,6 +25,16 @@ export type UpdateUserPayload = {
   companyId?: number | null
 }
 
+export type CreateUserPayload = {
+  username: string
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  role: UserRole
+  companyId?: number | null
+}
+
 export type UserDetail = {
   id: number
   username: string

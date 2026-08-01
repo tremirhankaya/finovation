@@ -1,6 +1,7 @@
 import { getUsersUrl } from "@/config/api"
 import { apiFetch, apiSend } from "@/service/httpClient"
 import type {
+  CreateUserPayload,
   GetUsersParams,
   UpdateUserPayload,
   UserDetail,
@@ -51,6 +52,24 @@ export async function getUsers(
       signal,
     },
   )
+}
+
+export async function createUser(
+  payload: CreateUserPayload,
+): Promise<UserDetail> {
+  return apiFetch<UserDetail>(getUsersUrl(), {
+    method: "POST",
+    body: {
+      username: payload.username,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      password: payload.password,
+      role: payload.role,
+      companyId: payload.companyId ?? null,
+    },
+    errorMessage: "Kullanıcı oluşturulamadı",
+  })
 }
 
 export async function updateUser(
