@@ -5,11 +5,15 @@ import com.infina.portfoliomanagement.user.dto.CreateUserRequest;
 import com.infina.portfoliomanagement.user.dto.UpdateUserRequest;
 import com.infina.portfoliomanagement.user.dto.UserPageResponse;
 import com.infina.portfoliomanagement.user.dto.UserResponse;
+import com.infina.portfoliomanagement.user.enums.Role;
+import com.infina.portfoliomanagement.user.enums.UserStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.LocalDate;
 
 @Tag(
         name = "Users",
@@ -27,15 +31,21 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "List users",
-            description = "Returns users with optional username or full-name search. " +
-                    "Page size is limited to 10. ADMIN users are scoped to their company.",
+            description = "Returns users with optional username/full-name search, role, status, company " +
+                    "and createdAt date-range filters. Page size is limited to 10. ADMIN users are scoped " +
+                    "to their company; SUPER_ADMIN may filter by companyId.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<UserPageResponse> getUsers(
             UserDetails userDetails,
             int page,
             int size,
-            String q
+            String q,
+            Role role,
+            UserStatus status,
+            Long companyId,
+            LocalDate createdFrom,
+            LocalDate createdTo
     );
     @Operation(
             summary = "Update user",

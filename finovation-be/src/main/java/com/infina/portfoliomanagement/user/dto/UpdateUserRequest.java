@@ -1,9 +1,12 @@
 package com.infina.portfoliomanagement.user.dto;
 
 import com.infina.portfoliomanagement.user.enums.Role;
+import com.infina.portfoliomanagement.user.enums.UserStatus;
+import com.infina.portfoliomanagement.user.validation.PasswordPolicy;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UpdateUserRequest(
@@ -21,11 +24,14 @@ public record UpdateUserRequest(
         @Size(max = 254, message = "Email must be at most 254 characters.")
         String email,
 
-        @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters.")
+        @Pattern(regexp = PasswordPolicy.REGEX, message = PasswordPolicy.MESSAGE)
         String password,
 
         @NotNull(message = "Role must not be null.")
         Role role,
+
+        @NotNull(message = "Status must not be null.")
+        UserStatus status,
 
         Long companyId
 ) {

@@ -1,15 +1,12 @@
 package com.infina.portfoliomanagement.user.repository;
 
 import com.infina.portfoliomanagement.user.entity.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     Optional<User> findByUsername(String username);
 
@@ -18,21 +15,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByEmailAndIdNot(String email, Long id);
-
-    @Query("""
-            SELECT user
-            FROM User user
-            WHERE (:companyId IS NULL OR user.company.id = :companyId)
-              AND (
-                    :query = ''
-                    OR LOWER(user.username) LIKE LOWER(CONCAT('%', :query, '%'))
-                    OR LOWER(CONCAT(CONCAT(user.firstName, ' '), user.lastName))
-                       LIKE LOWER(CONCAT('%', :query, '%'))
-                  )
-            """)
-    Page<User> searchUsers(
-            @Param("companyId") Long companyId,
-            @Param("query") String query,
-            Pageable pageable
-    );
 }

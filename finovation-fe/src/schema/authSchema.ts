@@ -12,7 +12,7 @@ type LoginValidationResult = {
   success: true
   data: LoginCredentials
   errors: LoginFieldErrors
-} | { success: false data: null errors: LoginFieldErrors }
+} | { success: false; data: null; errors: LoginFieldErrors }
 
 export function validateLoginCredentials(
   input: unknown,
