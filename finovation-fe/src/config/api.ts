@@ -1,7 +1,6 @@
 const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 
-export const API_BASE_URL =
-  configuredApiUrl?.replace(/\/$/, "") || "/api"
+export const API_BASE_URL = configuredApiUrl?.replace(/\/$/, "") || "/api"
 
 export const API_PATHS = {
   login: import.meta.env.VITE_LOGIN_PATH?.trim() || "/v1/auth/login",
@@ -10,6 +9,15 @@ export const API_PATHS = {
   me: import.meta.env.VITE_ME_PATH?.trim() || "/v1/auth/me",
   users: import.meta.env.VITE_USERS_PATH?.trim() || "/v1/users",
   companies: import.meta.env.VITE_COMPANIES_PATH?.trim() || "/v1/companies",
+  passwordResetRequest:
+    import.meta.env.VITE_PASSWORD_RESET_REQUEST_PATH?.trim() ||
+    "/v1/auth/password-reset/request",
+  passwordResetVerify:
+    import.meta.env.VITE_PASSWORD_RESET_VERIFY_PATH?.trim() ||
+    "/v1/auth/password-reset/verify",
+  passwordReset:
+    import.meta.env.VITE_PASSWORD_RESET_PATH?.trim() ||
+    "/v1/auth/password-reset/reset",
 } as const
 
 function normalizePath(path: string): string {
@@ -43,4 +51,16 @@ export function getUsersUrl(userId?: number): string {
 
 export function getCompaniesUrl(): string {
   return buildUrl(API_PATHS.companies)
+}
+
+export function getPasswordResetRequestUrl(): string {
+  return buildUrl(API_PATHS.passwordResetRequest)
+}
+
+export function getPasswordResetVerifyUrl(): string {
+  return buildUrl(API_PATHS.passwordResetVerify)
+}
+
+export function getPasswordResetUrl(): string {
+  return buildUrl(API_PATHS.passwordReset)
 }

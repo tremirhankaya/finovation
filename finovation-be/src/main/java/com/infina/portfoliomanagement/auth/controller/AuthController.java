@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.auth.controller;
 import com.infina.portfoliomanagement.auth.controller.docs.AuthControllerDocs;
 import com.infina.portfoliomanagement.auth.dto.*;
 import com.infina.portfoliomanagement.auth.service.AuthService;
+import com.infina.portfoliomanagement.auth.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController implements AuthControllerDocs {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @Override
     @PostMapping("/login")
@@ -50,5 +52,31 @@ public class AuthController implements AuthControllerDocs {
 
         authService.logout(request);
 
+    }
+
+    @Override
+    @PostMapping("/password-reset/request")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void requestPasswordReset(
+            @Valid @RequestBody PasswordResetStartRequest request
+    ) {
+        passwordResetService.requestOtp(request);
+    }
+
+    @Override
+    @PostMapping("/password-reset/verify")
+    public ResponseEntity<PasswordResetVerifyResponse> verifyPasswordResetOtp(
+            @Valid @RequestBody PasswordResetVerifyRequest request
+    ) {
+        return ResponseEntity.ok(passwordResetService.verifyOtp(request));
+    }
+
+    @Override
+    @PostMapping("/password-reset/reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(
+            @Valid @RequestBody PasswordResetRequest request
+    ) {
+        passwordResetService.resetPassword(request);
     }
 }
