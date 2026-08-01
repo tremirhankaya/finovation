@@ -13,6 +13,18 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLED:true}
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -33,6 +45,15 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
   refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:15h}
+
+auth:
+  password-reset:
+    secret: ${PASSWORD_RESET_SECRET:${JWT_SECRET}}
+    sender: ${MAIL_FROM:${MAIL_USERNAME:}}
+    otp-expiration: ${PASSWORD_RESET_OTP_EXPIRATION:10m}
+    reset-token-expiration: ${PASSWORD_RESET_TOKEN_EXPIRATION:10m}
+    resend-cooldown: ${PASSWORD_RESET_RESEND_COOLDOWN:1m}
+    max-attempts: ${PASSWORD_RESET_MAX_ATTEMPTS:5}
 
 management:
   server:

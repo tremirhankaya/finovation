@@ -42,6 +42,54 @@ public enum ErrorCode {
             "Authentication is required to access this resource."
     ),
 
+    PASSWORD_RESET_ACCOUNT_NOT_FOUND(
+            "AUTH_006",
+            HttpStatus.NOT_FOUND,
+            "No account was found for this email address."
+    ),
+
+    PASSWORD_RESET_OTP_INVALID(
+            "AUTH_007",
+            HttpStatus.BAD_REQUEST,
+            "The verification code is invalid."
+    ),
+
+    PASSWORD_RESET_OTP_EXPIRED(
+            "AUTH_008",
+            HttpStatus.GONE,
+            "The verification code has expired. Request a new code."
+    ),
+
+    PASSWORD_RESET_REQUEST_TOO_SOON(
+            "AUTH_009",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Please wait before requesting another verification code."
+    ),
+
+    PASSWORD_RESET_ATTEMPTS_EXCEEDED(
+            "AUTH_010",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many incorrect verification attempts. Request a new code."
+    ),
+
+    PASSWORD_RESET_TOKEN_INVALID_OR_EXPIRED(
+            "AUTH_011",
+            HttpStatus.BAD_REQUEST,
+            "The password reset session is invalid or has expired."
+    ),
+
+    PASSWORD_RESET_PASSWORDS_DO_NOT_MATCH(
+            "AUTH_012",
+            HttpStatus.BAD_REQUEST,
+            "The passwords do not match."
+    ),
+
+    PASSWORD_RESET_MAIL_DELIVERY_FAILED(
+            "AUTH_013",
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "The verification email could not be sent. Please try again later."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,

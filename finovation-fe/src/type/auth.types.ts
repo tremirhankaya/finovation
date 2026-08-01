@@ -32,3 +32,7 @@ export type MeResponse = {
   assignableRoles: UserRole[]
   deletableRoles: UserRole[]
 }
+
+export type PasswordResetVerifyResponse = {
+  resetToken: string
+}
