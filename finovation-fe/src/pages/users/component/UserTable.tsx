@@ -1,6 +1,6 @@
 import UserRoleChip from "@/pages/users/component/UserRoleChip"
 import UserStatusChip from "@/pages/users/component/UserStatusChip"
-import type { UserListItem } from "@/type/user.types"
+import type { UserListItem, UserRole } from "@/type/user.types"
 import { formatCreatedAt } from "@/util/userLabels"
 import styles from "@/pages/users/css/UserTable.module.css"
 
@@ -10,6 +10,7 @@ type UserTableProps = {
   users: UserListItem[]
   isLoading: boolean
   hasActiveFilters: boolean
+  deletableRoles: UserRole[]
   onClearFilters: () => void
   onEdit: (userId: number) => void
   onDelete: (userId: number) => void
@@ -94,6 +95,7 @@ export default function UserTable({
   users,
   isLoading,
   hasActiveFilters,
+  deletableRoles,
   onClearFilters,
   onEdit,
   onDelete,
@@ -149,15 +151,17 @@ export default function UserTable({
                     >
                       Düzenle
                     </button>
-                    <button
-                      className={styles.deleteButton}
-                      type="button"
-                      aria-label={`${user.username} sil`}
-                      title="Sil"
-                      onClick={() => onDelete(user.id)}
-                    >
-                      <TrashIcon />
-                    </button>
+                    {deletableRoles.includes(user.role) && (
+                      <button
+                        className={styles.deleteButton}
+                        type="button"
+                        aria-label={`${user.username} sil`}
+                        title="Sil"
+                        onClick={() => onDelete(user.id)}
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

@@ -10,6 +10,7 @@ import {
   type LoginFieldErrors,
   validateLoginCredentials,
 } from "@/schema/authSchema"
+import { useAuth } from "@/context/AuthContext"
 import { login } from "@/service/authService"
 import { saveAccessToken } from "@/util/authStorage"
 
@@ -20,6 +21,7 @@ const UNKNOWN_LOGIN_ERROR = "Giriş sırasında beklenmeyen bir hata oluştu."
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { refreshUser } = useAuth()
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -51,6 +53,7 @@ export default function LoginPage() {
       }
 
       saveAccessToken(result.accessToken)
+      await refreshUser()
       navigate("/dashboard", { replace: true })
     } catch (error) {
       setFormError(error instanceof Error ? error.message : UNKNOWN_LOGIN_ERROR)

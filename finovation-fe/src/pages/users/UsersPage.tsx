@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import FormAlert from "@/component/FormAlert"
+import { useAuth } from "@/context/AuthContext"
 import UserDeleteConfirm from "@/pages/users/component/UserDeleteConfirm"
 import UserEditModal from "@/pages/users/component/UserEditModal"
 import UserErrorDialog from "@/pages/users/component/UserErrorDialog"
@@ -27,6 +28,10 @@ const EMPTY_FILTERS: UserListFilters = {
 }
 
 export default function UsersPage() {
+  const { user } = useAuth()
+  const canCreateUser = user?.canCreateUser ?? false
+  const deletableRoles = user?.deletableRoles ?? []
+
   const [queryInput, setQueryInput] = useState("")
   const [filters, setFilters] = useState<UserListFilters>(EMPTY_FILTERS)
   const [page, setPage] = useState(0)
@@ -162,14 +167,16 @@ export default function UsersPage() {
             <h1 className={styles.title}>Kullanıcılar</h1>
             <p className={styles.desc}>Kullanıcı yönetim paneli.</p>
           </div>
-          <button
-            className={styles.createButton}
-            type="button"
-            disabled
-            title="Yakında eklenecek"
-          >
-            + Yeni kullanıcı
-          </button>
+          {canCreateUser && (
+            <button
+              className={styles.createButton}
+              type="button"
+              disabled
+              title="Yakında eklenecek"
+            >
+              + Yeni kullanıcı
+            </button>
+          )}
         </header>
 
         {error && (
@@ -200,6 +207,7 @@ export default function UsersPage() {
             users={users}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
+            deletableRoles={deletableRoles}
             onClearFilters={() => applyFilters(EMPTY_FILTERS)}
             onEdit={(userId) => {
               setEditError("")

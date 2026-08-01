@@ -31,6 +31,11 @@ public class RolePolicy {
         return ASSIGNABLE_ROLES.getOrDefault(actor, EnumSet.noneOf(Role.class));
     }
 
+    public Set<Role> deletableRoles(Role actor) {
+        Role managed = MANAGED_ROLE.get(actor);
+        return managed == null ? EnumSet.noneOf(Role.class) : EnumSet.of(managed);
+    }
+
     public boolean canAccessPanel(Role actor) {
         return actor == Role.ADMIN || actor == Role.SUPER_ADMIN;
     }

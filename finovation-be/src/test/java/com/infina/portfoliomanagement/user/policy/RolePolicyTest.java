@@ -146,4 +146,21 @@ class RolePolicyTest {
         assertThatCode(() -> rolePolicy.assertCanDeleteUser(Role.ADMIN, Role.USER))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void superAdminCanOnlyDeleteAdmin() {
+        assertThat(rolePolicy.deletableRoles(Role.SUPER_ADMIN))
+                .containsExactly(Role.ADMIN);
+    }
+
+    @Test
+    void adminCanOnlyDeleteUser() {
+        assertThat(rolePolicy.deletableRoles(Role.ADMIN))
+                .containsExactly(Role.USER);
+    }
+
+    @Test
+    void userCannotDeleteAnyRole() {
+        assertThat(rolePolicy.deletableRoles(Role.USER)).isEmpty();
+    }
 }

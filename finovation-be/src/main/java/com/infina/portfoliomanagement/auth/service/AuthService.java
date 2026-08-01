@@ -115,7 +115,8 @@ public class AuthService {
                 rolePolicy.canAccessPanel(role),
                 rolePolicy.canCreateUser(role),
                 rolePolicy.canDeleteUser(role),
-                rolePolicy.assignableRoles(role)
+                rolePolicy.assignableRoles(role),
+                rolePolicy.deletableRoles(role)
         );
     }
 
