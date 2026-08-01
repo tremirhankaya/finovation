@@ -96,6 +96,18 @@ public enum ErrorCode {
             "Too many failed login attempts. Please try again later."
     ),
 
+    PASSWORD_RESET_REQUEST_IP_RATE_LIMITED(
+            "AUTH_015",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many verification code requests from this network. Please try again later."
+    ),
+
+    PASSWORD_RESET_VERIFY_IP_RATE_LIMITED(
+            "AUTH_016",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many verification attempts from this network. Please try again later."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,

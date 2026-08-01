@@ -11,6 +11,9 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
+import com.infina.portfoliomanagement.auth.config.PasswordResetIpRateLimitProperties;
+import com.infina.portfoliomanagement.auth.store.PasswordResetIpRateLimitStore;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
@@ -41,11 +44,19 @@ public class PasswordResetService {
     private final PasswordResetProperties properties;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
+    private final PasswordResetIpRateLimitStore ipRateLimitStore;
+    private final PasswordResetIpRateLimitProperties ipRateLimitProperties;
+    private final HttpServletRequest httpServletRequest;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional(readOnly = true)
     public void requestOtp(PasswordResetStartRequest request) {
+        String clientIp = resolveClientIp();
+        if (ipRateLimitStore.recordRequestAttempt(clientIp) > ipRateLimitProperties.requestMaxAttempts()) {
+            throw new BaseException(ErrorCode.PASSWORD_RESET_REQUEST_IP_RATE_LIMITED);
+        }
+
         String email = normalizeEmail(request.email());
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> {
@@ -75,6 +86,11 @@ public class PasswordResetService {
 
     @Transactional(readOnly = true)
     public PasswordResetVerifyResponse verifyOtp(PasswordResetVerifyRequest request) {
+        String clientIp = resolveClientIp();
+        if (ipRateLimitStore.recordVerifyAttempt(clientIp) > ipRateLimitProperties.verifyMaxAttempts()) {
+            throw new BaseException(ErrorCode.PASSWORD_RESET_VERIFY_IP_RATE_LIMITED);
+        }
+
         String email = normalizeEmail(request.email());
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BaseException(ErrorCode.PASSWORD_RESET_ACCOUNT_NOT_FOUND));
@@ -136,6 +152,10 @@ public class PasswordResetService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String resolveClientIp() {
+        return httpServletRequest.getRemoteAddr();
     }
 
     private String generateOtp() {

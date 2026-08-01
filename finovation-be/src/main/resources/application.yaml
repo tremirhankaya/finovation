@@ -54,6 +54,11 @@ auth:
     reset-token-expiration: ${PASSWORD_RESET_TOKEN_EXPIRATION:10m}
     resend-cooldown: ${PASSWORD_RESET_RESEND_COOLDOWN:1m}
     max-attempts: ${PASSWORD_RESET_MAX_ATTEMPTS:5}
+    ip-rate-limit:
+      request-window: ${PASSWORD_RESET_REQUEST_IP_WINDOW:1m}
+      request-max-attempts: ${PASSWORD_RESET_REQUEST_IP_MAX_ATTEMPTS:5}
+      verify-window: ${PASSWORD_RESET_VERIFY_IP_WINDOW:1m}
+      verify-max-attempts: ${PASSWORD_RESET_VERIFY_IP_MAX_ATTEMPTS:10}
   login-rate-limit:
     window: ${LOGIN_RATE_LIMIT_WINDOW:1m}
     max-attempts: ${LOGIN_RATE_LIMIT_MAX_ATTEMPTS:5}

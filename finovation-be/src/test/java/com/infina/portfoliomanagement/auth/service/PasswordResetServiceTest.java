@@ -18,6 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.MailSendException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.infina.portfoliomanagement.auth.config.PasswordResetIpRateLimitProperties;
+import com.infina.portfoliomanagement.auth.store.PasswordResetIpRateLimitStore;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -35,12 +38,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class PasswordResetServiceTest {
 
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-08-01T10:00:00Z"), ZoneOffset.UTC);
+    private static final String CLIENT_IP = "127.0.0.1";
 
     @Mock
     private UserRepository userRepository;
@@ -52,6 +57,10 @@ class PasswordResetServiceTest {
     private PasswordResetMailService mailService;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private PasswordResetIpRateLimitStore ipRateLimitStore;
+    @Mock
+    private HttpServletRequest httpServletRequest;
 
     private PasswordResetService passwordResetService;
     private User user;
@@ -67,6 +76,13 @@ class PasswordResetServiceTest {
                 5
         );
 
+        PasswordResetIpRateLimitProperties ipRateLimitProperties = new PasswordResetIpRateLimitProperties(
+                Duration.ofMinutes(1),
+                5,
+                Duration.ofMinutes(1),
+                10
+        );
+
         passwordResetService = new PasswordResetService(
                 userRepository,
                 passwordResetStore,
@@ -74,8 +90,15 @@ class PasswordResetServiceTest {
                 mailService,
                 properties,
                 passwordEncoder,
-                FIXED_CLOCK
+                FIXED_CLOCK,
+                ipRateLimitStore,
+                ipRateLimitProperties,
+                httpServletRequest
         );
+
+        lenient().when(httpServletRequest.getRemoteAddr()).thenReturn(CLIENT_IP);
+        lenient().when(ipRateLimitStore.recordRequestAttempt(anyString())).thenReturn(1L);
+        lenient().when(ipRateLimitStore.recordVerifyAttempt(anyString())).thenReturn(1L);
 
         user = User.builder()
                 .id(7L)
@@ -207,6 +230,34 @@ class PasswordResetServiceTest {
         assertThat(response.resetToken()).isNotBlank();
         verify(passwordResetStore).clearOtp("email-identity");
         verify(passwordResetStore).saveResetToken("reset-token-hash", "reset.user");
+    }
+
+    @Test
+    void requestOtp_ipRateLimitExceeded_throwsIpRateLimited() {
+        when(ipRateLimitStore.recordRequestAttempt(CLIENT_IP)).thenReturn(6L);
+
+        assertError(
+                () -> passwordResetService.requestOtp(
+                        new PasswordResetStartRequest("user@example.com")
+                ),
+                ErrorCode.PASSWORD_RESET_REQUEST_IP_RATE_LIMITED
+        );
+
+        verifyNoInteractions(userRepository, mailService);
+    }
+
+    @Test
+    void verifyOtp_ipRateLimitExceeded_throwsIpRateLimited() {
+        when(ipRateLimitStore.recordVerifyAttempt(CLIENT_IP)).thenReturn(11L);
+
+        assertError(
+                () -> passwordResetService.verifyOtp(
+                        new PasswordResetVerifyRequest("user@example.com", "123456")
+                ),
+                ErrorCode.PASSWORD_RESET_VERIFY_IP_RATE_LIMITED
+        );
+
+        verifyNoInteractions(userRepository, passwordResetStore);
     }
 
     @Test
