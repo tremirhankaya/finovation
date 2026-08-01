@@ -22,6 +22,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.infina.portfoliomanagement.auth.config.LoginRateLimitProperties;
+import com.infina.portfoliomanagement.auth.store.LoginAttemptStore;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +36,17 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RolePolicy rolePolicy;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptStore loginAttemptStore;
+    private final LoginRateLimitProperties loginRateLimitProperties;
+    private final HttpServletRequest httpServletRequest;
 
     public LoginResponse login(LoginRequest request) {
+
+        String clientIp = resolveClientIp();
+
+        if (loginAttemptStore.getAttempts(clientIp) >= loginRateLimitProperties.maxAttempts()) {
+            throw new BaseException(ErrorCode.LOGIN_ATTEMPTS_EXCEEDED);
+        }
 
         try {
             Authentication authentication =
@@ -51,11 +63,18 @@ public class AuthService {
                 throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
             }
 
+            loginAttemptStore.clearAttempts(clientIp);
+
             return createTokenResponse(userDetails);
 
         } catch (AuthenticationException exception) {
+            loginAttemptStore.recordFailedAttempt(clientIp);
             throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
+    }
+
+    private String resolveClientIp() {
+        return httpServletRequest.getRemoteAddr();
     }
 
     public LoginResponse refreshToken(RefreshTokenRequest request) {

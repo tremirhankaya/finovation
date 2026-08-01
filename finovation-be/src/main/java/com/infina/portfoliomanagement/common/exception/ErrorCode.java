@@ -90,6 +90,12 @@ public enum ErrorCode {
             "The verification email could not be sent. Please try again later."
     ),
 
+    LOGIN_ATTEMPTS_EXCEEDED(
+            "AUTH_014",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many failed login attempts. Please try again later."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,
