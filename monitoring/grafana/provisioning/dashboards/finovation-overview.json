@@ -1,0 +1,103 @@
+{
+  "title": "Finovation - Backend Overview",
+  "uid": "finovation-overview",
+  "tags": ["finovation"],
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Application Status",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "up{job=\"finovation-backend\"}", "legendFormat": "backend" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "HikariCP Aktif Bağlantılar",
+      "type": "timeseries",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "hikaricp_connections_active{application=\"finovation\"}", "legendFormat": "active" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "JVM Live Threads",
+      "type": "timeseries",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "jvm_threads_live_threads{application=\"finovation\"}", "legendFormat": "threads" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "CPU Kullanımı",
+      "type": "timeseries",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit" } },
+      "targets": [
+        { "expr": "process_cpu_usage{application=\"finovation\"}", "legendFormat": "cpu" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "JVM Heap Kullanımı",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [
+        { "expr": "jvm_memory_used_bytes{application=\"finovation\",area=\"heap\"}", "legendFormat": "{{id}}" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "HTTP İstek Oranı (req/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"finovation\"}[1m]))", "legendFormat": "requests/sec" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "HTTP Error Rate (4xx/5xx)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"finovation\",status=~\"4..\"}[1m]))", "legendFormat": "4xx" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"finovation\",status=~\"5..\"}[1m]))", "legendFormat": "5xx" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "HTTP Ortalama Gecikme",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_sum{application=\"finovation\"}[1m])) / sum(rate(http_server_requests_seconds_count{application=\"finovation\"}[1m]))", "legendFormat": "avg latency" }
+      ]
+    }
+  ]
+}

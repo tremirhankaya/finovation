@@ -33,3 +33,15 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
   refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:15h}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
