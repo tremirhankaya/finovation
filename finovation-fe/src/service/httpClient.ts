@@ -1,5 +1,12 @@
+import { getRefreshUrl } from "@/config/api"
 import { type ApiErrorBody, toApiRequestError } from "@/util/apiError"
-import { getAccessToken } from "@/util/authStorage"
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  saveAccessToken,
+  saveRefreshToken,
+} from "@/util/authStorage"
 
 export const SESSION_MISSING_MESSAGE = "Oturum bulunamadı. Lütfen giriş yapın."
 
@@ -9,6 +16,51 @@ type RequestOptions = {
   body?: unknown
   requiresAuth?: boolean
   signal?: AbortSignal
+}
+
+type RefreshResponseBody = {
+  accessToken?: string
+  refreshToken?: string
+}
+
+let refreshPromise: Promise<boolean> | null = null
+
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken()
+
+  if (!refreshToken) {
+    return false
+  }
+
+  const response = await fetch(getRefreshUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  })
+
+  if (!response.ok) {
+    return false
+  }
+
+  const body = (await response.json().catch(() => ({}))) as RefreshResponseBody
+
+  if (!body.accessToken || !body.refreshToken) {
+    return false
+  }
+
+  saveAccessToken(body.accessToken)
+  saveRefreshToken(body.refreshToken)
+  return true
+}
+
+function refreshAccessTokenOnce(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null
+    })
+  }
+
+  return refreshPromise
 }
 
 function buildHeaders(options: RequestOptions): HeadersInit {
@@ -31,13 +83,27 @@ function buildHeaders(options: RequestOptions): HeadersInit {
   return headers
 }
 
-async function send(url: string, options: RequestOptions): Promise<Response> {
-  const response = await fetch(url, {
+async function rawSend(url: string, options: RequestOptions): Promise<Response> {
+  return fetch(url, {
     method: options.method ?? "GET",
     headers: buildHeaders(options),
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: options.signal,
   })
+}
+
+async function send(url: string, options: RequestOptions): Promise<Response> {
+  let response = await rawSend(url, options)
+
+  if (response.status === 401 && options.requiresAuth !== false) {
+    const refreshed = await refreshAccessTokenOnce()
+
+    if (refreshed) {
+      response = await rawSend(url, options)
+    } else {
+      clearTokens()
+    }
+  }
 
   if (!response.ok) {
     throw toApiRequestError(

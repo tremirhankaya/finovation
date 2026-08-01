@@ -19,6 +19,7 @@ public record MeResponse(
         boolean canAccessPanel,
         boolean canCreateUser,
         boolean canDeleteUser,
-        Set<Role> assignableRoles
+        Set<Role> assignableRoles,
+        Set<Role> deletableRoles
 ) {
 }

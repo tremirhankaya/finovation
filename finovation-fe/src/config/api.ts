@@ -5,6 +5,9 @@ export const API_BASE_URL =
 
 export const API_PATHS = {
   login: import.meta.env.VITE_LOGIN_PATH?.trim() || "/v1/auth/login",
+  refresh: import.meta.env.VITE_REFRESH_PATH?.trim() || "/v1/auth/refresh",
+  logout: import.meta.env.VITE_LOGOUT_PATH?.trim() || "/v1/auth/logout",
+  me: import.meta.env.VITE_ME_PATH?.trim() || "/v1/auth/me",
   users: import.meta.env.VITE_USERS_PATH?.trim() || "/v1/users",
   companies: import.meta.env.VITE_COMPANIES_PATH?.trim() || "/v1/companies",
 } as const
@@ -19,6 +22,18 @@ function buildUrl(path: string): string {
 
 export function getLoginUrl(): string {
   return buildUrl(API_PATHS.login)
+}
+
+export function getMeUrl(): string {
+  return buildUrl(API_PATHS.me)
+}
+
+export function getRefreshUrl(): string {
+  return buildUrl(API_PATHS.refresh)
+}
+
+export function getLogoutUrl(): string {
+  return buildUrl(API_PATHS.logout)
 }
 
 export function getUsersUrl(userId?: number): string {

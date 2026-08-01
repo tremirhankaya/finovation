@@ -1,6 +1,6 @@
 import UserRoleChip from "@/pages/users/component/UserRoleChip"
 import UserStatusChip from "@/pages/users/component/UserStatusChip"
-import type { UserListItem } from "@/type/user.types"
+import type { UserListItem, UserRole } from "@/type/user.types"
 import { formatCreatedAt } from "@/util/userLabels"
 import styles from "@/pages/users/css/UserTable.module.css"
 
@@ -10,6 +10,8 @@ type UserTableProps = {
   users: UserListItem[]
   isLoading: boolean
   hasActiveFilters: boolean
+  assignableRoles: UserRole[]
+  deletableRoles: UserRole[]
   onClearFilters: () => void
   onEdit: (userId: number) => void
   onDelete: (userId: number) => void
@@ -94,6 +96,8 @@ export default function UserTable({
   users,
   isLoading,
   hasActiveFilters,
+  assignableRoles,
+  deletableRoles,
   onClearFilters,
   onEdit,
   onDelete,
@@ -141,23 +145,27 @@ export default function UserTable({
                 <td>{formatCreatedAt(user.createdAt)}</td>
                 <td>
                   <div className={styles.actions}>
-                    <button
-                      className={styles.editButton}
-                      type="button"
-                      aria-label={`${user.username} düzenle`}
-                      onClick={() => onEdit(user.id)}
-                    >
-                      Düzenle
-                    </button>
-                    <button
-                      className={styles.deleteButton}
-                      type="button"
-                      aria-label={`${user.username} sil`}
-                      title="Sil"
-                      onClick={() => onDelete(user.id)}
-                    >
-                      <TrashIcon />
-                    </button>
+                    {assignableRoles.includes(user.role) && (
+                      <button
+                        className={styles.editButton}
+                        type="button"
+                        aria-label={`${user.username} düzenle`}
+                        onClick={() => onEdit(user.id)}
+                      >
+                        Düzenle
+                      </button>
+                    )}
+                    {deletableRoles.includes(user.role) && (
+                      <button
+                        className={styles.deleteButton}
+                        type="button"
+                        aria-label={`${user.username} sil`}
+                        title="Sil"
+                        onClick={() => onDelete(user.id)}
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
