@@ -11,12 +11,15 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
     private static final String REDIS_KEY_PREFIX = "auth:refresh:";
+    private static final String REDIS_USER_KEY_PREFIX = "auth:refresh:user:";
     private static final int TOKEN_BYTE_LENGTH = 32;
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -39,6 +42,9 @@ public class RefreshTokenService {
                         expiration
                 );
 
+        stringRedisTemplate.opsForSet()
+                .add(buildUserSetKey(username), tokenHash);
+
         return rawToken;
     }
 
@@ -56,7 +62,30 @@ public class RefreshTokenService {
         String tokenHash = hash(rawToken);
         String redisKey = buildRedisKey(tokenHash);
 
+        String username = stringRedisTemplate.opsForValue().get(redisKey);
+
         stringRedisTemplate.delete(redisKey);
+
+        if (username != null) {
+            stringRedisTemplate.opsForSet()
+                    .remove(buildUserSetKey(username), tokenHash);
+        }
+    }
+
+    public void revokeAllForUser(String username) {
+
+        String userSetKey = buildUserSetKey(username);
+        Set<String> tokenHashes = stringRedisTemplate.opsForSet().members(userSetKey);
+
+        if (tokenHashes != null && !tokenHashes.isEmpty()) {
+            Set<String> redisKeys = tokenHashes.stream()
+                    .map(this::buildRedisKey)
+                    .collect(Collectors.toSet());
+
+            stringRedisTemplate.delete(redisKeys);
+        }
+
+        stringRedisTemplate.delete(userSetKey);
     }
 
     private String generateSecureToken() {
@@ -93,5 +122,9 @@ public class RefreshTokenService {
 
     private String buildRedisKey(String tokenHash) {
         return REDIS_KEY_PREFIX + tokenHash;
+    }
+
+    private String buildUserSetKey(String username) {
+        return REDIS_USER_KEY_PREFIX + username;
     }
 }

@@ -11,12 +11,15 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+
 @Service
 @RequiredArgsConstructor
 @NullMarked
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -33,7 +36,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getUsername(),
                 user.getPassword(),
                 user.getRole(),
-                user.getStatus() == UserStatus.ACTIVE
+                user.getStatus() == UserStatus.ACTIVE,
+                user.getCredentialsChangedAt().atZone(clock.getZone()).toInstant()
         );
     }
 }

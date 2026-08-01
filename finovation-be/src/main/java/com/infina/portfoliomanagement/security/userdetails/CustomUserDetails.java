@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serial;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final Role role;
     private final boolean enabled;
+    private final Instant credentialsChangedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -43,5 +45,9 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public Instant getCredentialsChangedAt() {
+        return credentialsChangedAt;
     }
 }

@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.security.jwt;
 
+import com.infina.portfoliomanagement.security.userdetails.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
@@ -129,11 +130,24 @@ public class JwtService {
                     && userDetails.isEnabled()
                     && userDetails.isAccountNonLocked()
                     && userDetails.isAccountNonExpired()
-                    && userDetails.isCredentialsNonExpired();
+                    && userDetails.isCredentialsNonExpired()
+                    && isIssuedAfterCredentialsChanged(claims, userDetails);
 
         } catch (JwtException | IllegalArgumentException exception) {
             return false;
         }
+    }
+
+    private boolean isIssuedAfterCredentialsChanged(
+            Claims claims,
+            UserDetails userDetails
+    ) {
+        if (!(userDetails instanceof CustomUserDetails customUserDetails)) {
+            return true;
+        }
+
+        return !claims.getIssuedAt().toInstant()
+                .isBefore(customUserDetails.getCredentialsChangedAt());
     }
 
     private Claims extractAllClaims(String token) {
