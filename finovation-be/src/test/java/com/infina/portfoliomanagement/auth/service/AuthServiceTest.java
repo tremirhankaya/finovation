@@ -10,6 +10,9 @@ import com.infina.portfoliomanagement.security.jwt.JwtService;
 import com.infina.portfoliomanagement.security.userdetails.CustomUserDetailsService;
 import com.infina.portfoliomanagement.user.policy.RolePolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
+import com.infina.portfoliomanagement.auth.config.RefreshRateLimitProperties;
+import com.infina.portfoliomanagement.auth.dto.RefreshTokenRequest;
+import com.infina.portfoliomanagement.auth.store.RefreshRateLimitStore;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +33,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -56,6 +60,8 @@ class AuthServiceTest {
     private Authentication authentication;
     @Mock
     private UserDetails userDetails;
+    @Mock
+    private RefreshRateLimitStore refreshRateLimitStore;
 
     private AuthService authService;
 
@@ -64,6 +70,11 @@ class AuthServiceTest {
         LoginRateLimitProperties properties = new LoginRateLimitProperties(
                 Duration.ofMinutes(1),
                 5
+        );
+
+        RefreshRateLimitProperties refreshProperties = new RefreshRateLimitProperties(
+                Duration.ofMinutes(1),
+                30
         );
 
         authService = new AuthService(
@@ -75,10 +86,13 @@ class AuthServiceTest {
                 refreshTokenService,
                 loginAttemptStore,
                 properties,
-                httpServletRequest
+                httpServletRequest,
+                refreshRateLimitStore,
+                refreshProperties
         );
 
-        when(httpServletRequest.getRemoteAddr()).thenReturn(CLIENT_IP);
+        lenient().when(httpServletRequest.getRemoteAddr()).thenReturn(CLIENT_IP);
+        lenient().when(refreshRateLimitStore.recordAttempt(CLIENT_IP)).thenReturn(1L);
     }
 
     @Test
@@ -130,5 +144,32 @@ class AuthServiceTest {
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(expectedErrorCode);
+    }
+
+    @Test
+    void refreshToken_rateLimitExceeded_throwsRateLimited() {
+        when(refreshRateLimitStore.recordAttempt(CLIENT_IP)).thenReturn(31L);
+
+        assertError(
+                () -> authService.refreshToken(new RefreshTokenRequest("some-refresh-token")),
+                ErrorCode.REFRESH_TOKEN_RATE_LIMITED
+        );
+
+        verifyNoInteractions(refreshTokenService, customUserDetailsService, jwtService);
+    }
+
+    @Test
+    void refreshToken_validToken_returnsNewTokens() {
+        when(refreshTokenService.getUsername("old-refresh-token")).thenReturn("user");
+        when(customUserDetailsService.loadUserByUsername("user")).thenReturn(userDetails);
+        when(userDetails.getUsername()).thenReturn("user");
+        when(jwtService.generateAccessToken(userDetails)).thenReturn("new-access-token");
+        when(refreshTokenService.create("user")).thenReturn("new-refresh-token");
+
+        LoginResponse response = authService.refreshToken(new RefreshTokenRequest("old-refresh-token"));
+
+        assertThat(response.accessToken()).isEqualTo("new-access-token");
+        assertThat(response.refreshToken()).isEqualTo("new-refresh-token");
+        verify(refreshTokenService).revoke("old-refresh-token");
     }
 }

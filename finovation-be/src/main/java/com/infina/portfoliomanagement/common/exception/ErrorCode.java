@@ -108,6 +108,12 @@ public enum ErrorCode {
             "Too many verification attempts from this network. Please try again later."
     ),
 
+    REFRESH_TOKEN_RATE_LIMITED(
+            "AUTH_017",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many token refresh requests from this network. Please try again later."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,

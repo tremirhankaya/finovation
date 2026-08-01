@@ -62,6 +62,9 @@ auth:
   login-rate-limit:
     window: ${LOGIN_RATE_LIMIT_WINDOW:1m}
     max-attempts: ${LOGIN_RATE_LIMIT_MAX_ATTEMPTS:5}
+  refresh-rate-limit:
+    window: ${REFRESH_RATE_LIMIT_WINDOW:1m}
+    max-attempts: ${REFRESH_RATE_LIMIT_MAX_ATTEMPTS:30}
 
 management:
   server:

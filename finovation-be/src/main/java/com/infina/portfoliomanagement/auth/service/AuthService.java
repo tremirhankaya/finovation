@@ -25,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.infina.portfoliomanagement.auth.config.LoginRateLimitProperties;
 import com.infina.portfoliomanagement.auth.store.LoginAttemptStore;
 import jakarta.servlet.http.HttpServletRequest;
+import com.infina.portfoliomanagement.auth.config.RefreshRateLimitProperties;
+import com.infina.portfoliomanagement.auth.store.RefreshRateLimitStore;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,8 @@ public class AuthService {
     private final LoginAttemptStore loginAttemptStore;
     private final LoginRateLimitProperties loginRateLimitProperties;
     private final HttpServletRequest httpServletRequest;
+    private final RefreshRateLimitStore refreshRateLimitStore;
+    private final RefreshRateLimitProperties refreshRateLimitProperties;
 
     public LoginResponse login(LoginRequest request) {
 
@@ -78,6 +82,11 @@ public class AuthService {
     }
 
     public LoginResponse refreshToken(RefreshTokenRequest request) {
+
+        String clientIp = resolveClientIp();
+        if (refreshRateLimitStore.recordAttempt(clientIp) > refreshRateLimitProperties.maxAttempts()) {
+            throw new BaseException(ErrorCode.REFRESH_TOKEN_RATE_LIMITED);
+        }
 
         String refreshToken = request.refreshToken();
 
