@@ -14,6 +14,7 @@ import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
 
@@ -146,8 +147,15 @@ public class JwtService {
             return true;
         }
 
-        return !claims.getIssuedAt().toInstant()
-                .isBefore(customUserDetails.getCredentialsChangedAt());
+        Date issuedAt = claims.getIssuedAt();
+        Instant credentialsChangedAt = customUserDetails.getCredentialsChangedAt();
+
+        if (issuedAt == null || credentialsChangedAt == null) {
+            return false;
+        }
+
+        return !issuedAt.toInstant().truncatedTo(ChronoUnit.SECONDS)
+                .isBefore(credentialsChangedAt.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private Claims extractAllClaims(String token) {

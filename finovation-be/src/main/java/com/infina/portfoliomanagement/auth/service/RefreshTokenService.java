@@ -42,8 +42,10 @@ public class RefreshTokenService {
                         expiration
                 );
 
-        stringRedisTemplate.opsForSet()
-                .add(buildUserSetKey(username), tokenHash);
+        String userSetKey = buildUserSetKey(username);
+
+        stringRedisTemplate.opsForSet().add(userSetKey, tokenHash);
+        stringRedisTemplate.expire(userSetKey, expiration);
 
         return rawToken;
     }
