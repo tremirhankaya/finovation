@@ -2,6 +2,7 @@ import { useState } from "react"
 
 import FormAlert from "@/component/FormAlert"
 import { useAuth } from "@/context/AuthContext"
+import UserCreateModal from "@/pages/users/component/UserCreateModal"
 import UserDeleteConfirm from "@/pages/users/component/UserDeleteConfirm"
 import UserEditModal from "@/pages/users/component/UserEditModal"
 import UserErrorDialog from "@/pages/users/component/UserErrorDialog"
@@ -10,8 +11,12 @@ import UserSearchToolbar from "@/pages/users/component/UserSearchToolbar"
 import UserTable from "@/pages/users/component/UserTable"
 import { useCompanyOptions } from "@/pages/users/hook/useCompanyOptions"
 import { useUsersList } from "@/pages/users/hook/useUsersList"
-import { deleteUser, updateUser } from "@/service/userService"
-import type { UpdateUserPayload, UserListFilters } from "@/type/user.types"
+import { createUser, deleteUser, updateUser } from "@/service/userService"
+import type {
+  CreateUserPayload,
+  UpdateUserPayload,
+  UserListFilters,
+} from "@/type/user.types"
 import { isPermissionError } from "@/util/apiError"
 import styles from "@/pages/users/css/UsersPage.module.css"
 
@@ -42,6 +47,9 @@ export default function UsersPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [permissionError, setPermissionError] = useState("")
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [createError, setCreateError] = useState("")
 
   const { companies, error: companiesError } = useCompanyOptions()
   const {
@@ -95,13 +103,19 @@ export default function UsersPage() {
     setDeletingUserId(null)
   }
 
+  const closeCreateModal = () => {
+    setIsCreateOpen(false)
+    setCreateError("")
+  }
+
   const handleMutationError = (
     mutationError: unknown,
     fallback: string,
-    options?: { forEdit?: boolean },
+    options?: { forEdit?: boolean; forCreate?: boolean },
   ) => {
     if (isPermissionError(mutationError)) {
       closeEditor()
+      closeCreateModal()
       closeDeleteConfirm()
       setPermissionError(PERMISSION_ERROR_MESSAGE)
       return
@@ -109,6 +123,10 @@ export default function UsersPage() {
 
     if (options?.forEdit) {
       setEditError(
+        mutationError instanceof Error ? mutationError.message : fallback,
+      )
+    } else if (options?.forCreate) {
+      setCreateError(
         mutationError instanceof Error ? mutationError.message : fallback,
       )
     } else {
@@ -138,6 +156,24 @@ export default function UsersPage() {
       })
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleCreateUser = async (payload: CreateUserPayload) => {
+    setIsCreating(true)
+    setCreateError("")
+    setPermissionError("")
+
+    try {
+      await createUser(payload)
+      closeCreateModal()
+      reload()
+    } catch (createErr) {
+      handleMutationError(createErr, "Kullanıcı oluşturulamadı.", {
+        forCreate: true,
+      })
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -172,8 +208,7 @@ export default function UsersPage() {
             <button
               className={styles.createButton}
               type="button"
-              disabled
-              title="Yakında eklenecek"
+              onClick={() => setIsCreateOpen(true)}
             >
               + Yeni kullanıcı
             </button>
@@ -246,6 +281,22 @@ export default function UsersPage() {
           closeEditor()
         }}
         onSave={handleSave}
+      />
+
+      <UserCreateModal
+        open={isCreateOpen}
+        isSaving={isCreating}
+        error={createError}
+        assignableRoles={assignableRoles}
+        companies={companies}
+        actorRole={user?.role ?? "USER"}
+        onClose={() => {
+          if (isCreating) {
+            return
+          }
+          closeCreateModal()
+        }}
+        onCreate={handleCreateUser}
       />
 
       <UserDeleteConfirm
