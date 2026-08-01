@@ -35,6 +35,8 @@ jwt:
   refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:15h}
 
 management:
+  server:
+    port: 8081
   endpoints:
     web:
       exposure:
