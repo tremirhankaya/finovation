@@ -12,7 +12,7 @@ import {
 } from "@/schema/authSchema"
 import { useAuth } from "@/context/AuthContext"
 import { login } from "@/service/authService"
-import { saveAccessToken } from "@/util/authStorage"
+import { saveAccessToken, saveRefreshToken } from "@/util/authStorage"
 
 import BrandPanel from "./component/BrandPanel"
 import styles from "./css/LoginPage.module.css"
@@ -47,12 +47,13 @@ export default function LoginPage() {
     try {
       const result = await login(validation.data)
 
-      if (!result.accessToken) {
+      if (!result.accessToken || !result.refreshToken) {
         setFormError(UNKNOWN_LOGIN_ERROR)
         return
       }
 
       saveAccessToken(result.accessToken)
+      saveRefreshToken(result.refreshToken)
       await refreshUser()
       navigate("/dashboard", { replace: true })
     } catch (error) {

@@ -6,8 +6,8 @@ export default function DashboardPage() {
     const navigate = useNavigate()
     const { user, signOut } = useAuth()
 
-    function handleReturnToLogin() {
-        signOut()
+    async function handleReturnToLogin() {
+        await signOut()
         navigate("/login")
     }
 

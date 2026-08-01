@@ -10,6 +10,7 @@ type UserTableProps = {
   users: UserListItem[]
   isLoading: boolean
   hasActiveFilters: boolean
+  assignableRoles: UserRole[]
   deletableRoles: UserRole[]
   onClearFilters: () => void
   onEdit: (userId: number) => void
@@ -95,6 +96,7 @@ export default function UserTable({
   users,
   isLoading,
   hasActiveFilters,
+  assignableRoles,
   deletableRoles,
   onClearFilters,
   onEdit,
@@ -143,14 +145,16 @@ export default function UserTable({
                 <td>{formatCreatedAt(user.createdAt)}</td>
                 <td>
                   <div className={styles.actions}>
-                    <button
-                      className={styles.editButton}
-                      type="button"
-                      aria-label={`${user.username} düzenle`}
-                      onClick={() => onEdit(user.id)}
-                    >
-                      Düzenle
-                    </button>
+                    {assignableRoles.includes(user.role) && (
+                      <button
+                        className={styles.editButton}
+                        type="button"
+                        aria-label={`${user.username} düzenle`}
+                        onClick={() => onEdit(user.id)}
+                      >
+                        Düzenle
+                      </button>
+                    )}
                     {deletableRoles.includes(user.role) && (
                       <button
                         className={styles.deleteButton}

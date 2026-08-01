@@ -7,15 +7,16 @@ import {
   useState,
 } from "react"
 
-import { getCurrentUser } from "@/service/authService"
+import { getCurrentUser, logout } from "@/service/authService"
 import type { MeResponse } from "@/type/auth.types"
-import { clearAccessToken, getAccessToken } from "@/util/authStorage"
+import { ApiRequestError } from "@/util/apiError"
+import { clearTokens, getAccessToken, getRefreshToken } from "@/util/authStorage"
 
 type AuthContextValue = {
   user: MeResponse | null
   isLoading: boolean
   refreshUser: () => Promise<void>
-  signOut: () => void
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -35,15 +36,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       setUser(await getCurrentUser())
-    } catch {
-      setUser(null)
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) {
+        clearTokens()
+        setUser(null)
+      }
     } finally {
       setIsLoading(false)
     }
   }, [])
 
-  const signOut = useCallback(() => {
-    clearAccessToken()
+  const signOut = useCallback(async () => {
+    const refreshToken = getRefreshToken()
+
+    if (refreshToken) {
+      await logout(refreshToken).catch(() => undefined)
+    }
+
+    clearTokens()
     setUser(null)
   }, [])
 

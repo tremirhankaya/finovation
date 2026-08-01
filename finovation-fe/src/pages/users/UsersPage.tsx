@@ -30,6 +30,7 @@ const EMPTY_FILTERS: UserListFilters = {
 export default function UsersPage() {
   const { user } = useAuth()
   const canCreateUser = user?.canCreateUser ?? false
+  const assignableRoles = user?.assignableRoles ?? []
   const deletableRoles = user?.deletableRoles ?? []
 
   const [queryInput, setQueryInput] = useState("")
@@ -207,6 +208,7 @@ export default function UsersPage() {
             users={users}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
+            assignableRoles={assignableRoles}
             deletableRoles={deletableRoles}
             onClearFilters={() => applyFilters(EMPTY_FILTERS)}
             onEdit={(userId) => {
