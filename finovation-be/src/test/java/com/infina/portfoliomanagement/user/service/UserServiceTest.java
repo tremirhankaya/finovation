@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.user.service;
 
+import com.infina.portfoliomanagement.auth.service.RefreshTokenService;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.company.entity.Company;
@@ -56,6 +57,9 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     private UserService userService;
 
     private Company company;
@@ -70,6 +74,7 @@ class UserServiceTest {
                 new RolePolicy(),
                 new UserCompanyPolicy(),
                 passwordEncoder,
+                refreshTokenService,
                 FIXED_CLOCK
         );
 

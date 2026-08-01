@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.user.service;
 
+import com.infina.portfoliomanagement.auth.service.RefreshTokenService;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.company.entity.Company;
@@ -36,6 +37,7 @@ public class UserService {
     private final RolePolicy rolePolicy;
     private final UserCompanyPolicy userCompanyPolicy;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
     private final Clock clock;
 
     @Transactional
@@ -71,6 +73,7 @@ public class UserService {
                 .passwordChangeRequired(true)
                 .createdAt(now)
                 .updatedAt(now)
+                .credentialsChangedAt(now)
                 .build();
 
         User saved = userRepository.save(newUser);
@@ -269,10 +272,15 @@ public class UserService {
         if (passwordChanged) {
             target.setPassword(passwordEncoder.encode(request.password()));
             target.setPasswordChangeRequired(true);
+            target.setCredentialsChangedAt(LocalDateTime.now(clock));
         }
 
         target.setUpdatedAt(LocalDateTime.now(clock));
         UserResponse response = toResponse(userRepository.save(target));
+
+        if (passwordChanged) {
+            refreshTokenService.revokeAllForUser(target.getUsername());
+        }
 
         log.info(
                 "User updated: actor={}, actorRole={}, targetId={}, roleChanged={}, passwordChanged={}",

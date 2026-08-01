@@ -7,6 +7,7 @@ import {
   saveAccessToken,
   saveRefreshToken,
 } from "@/util/authStorage"
+import { emitSessionExpired } from "@/util/sessionEvents"
 
 export const SESSION_MISSING_MESSAGE = "Oturum bulunamadı. Lütfen giriş yapın."
 
@@ -102,6 +103,7 @@ async function send(url: string, options: RequestOptions): Promise<Response> {
       response = await rawSend(url, options)
     } else {
       clearTokens()
+      emitSessionExpired()
     }
   }
 

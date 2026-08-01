@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react"
-import { useNavigate } from "react-router"
+import { useLocation, useNavigate } from "react-router"
 
 import Button from "@/component/Button"
 import FormAlert from "@/component/FormAlert"
@@ -18,15 +18,25 @@ import BrandPanel from "./component/BrandPanel"
 import styles from "./css/LoginPage.module.css"
 
 const UNKNOWN_LOGIN_ERROR = "Giriş sırasında beklenmeyen bir hata oluştu."
+const SESSION_EXPIRED_MESSAGE = "Oturumunuz sona erdi. Lütfen tekrar giriş yapın."
+
+type LoginLocationState = {
+  sessionExpired?: boolean
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { refreshUser } = useAuth()
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({})
-  const [formError, setFormError] = useState("")
+  const [formError, setFormError] = useState(() =>
+    (location.state as LoginLocationState | null)?.sessionExpired
+      ? SESSION_EXPIRED_MESSAGE
+      : "",
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

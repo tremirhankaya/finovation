@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.security.jwt;
 
+import com.infina.portfoliomanagement.security.userdetails.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
@@ -13,6 +14,7 @@ import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
 
@@ -129,11 +131,31 @@ public class JwtService {
                     && userDetails.isEnabled()
                     && userDetails.isAccountNonLocked()
                     && userDetails.isAccountNonExpired()
-                    && userDetails.isCredentialsNonExpired();
+                    && userDetails.isCredentialsNonExpired()
+                    && isIssuedAfterCredentialsChanged(claims, userDetails);
 
         } catch (JwtException | IllegalArgumentException exception) {
             return false;
         }
+    }
+
+    private boolean isIssuedAfterCredentialsChanged(
+            Claims claims,
+            UserDetails userDetails
+    ) {
+        if (!(userDetails instanceof CustomUserDetails customUserDetails)) {
+            return true;
+        }
+
+        Date issuedAt = claims.getIssuedAt();
+        Instant credentialsChangedAt = customUserDetails.getCredentialsChangedAt();
+
+        if (issuedAt == null || credentialsChangedAt == null) {
+            return false;
+        }
+
+        return !issuedAt.toInstant().truncatedTo(ChronoUnit.SECONDS)
+                .isBefore(credentialsChangedAt.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private Claims extractAllClaims(String token) {

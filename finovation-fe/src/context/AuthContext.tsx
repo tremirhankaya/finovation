@@ -11,10 +11,12 @@ import { getCurrentUser, logout } from "@/service/authService"
 import type { MeResponse } from "@/type/auth.types"
 import { ApiRequestError } from "@/util/apiError"
 import { clearTokens, getAccessToken, getRefreshToken } from "@/util/authStorage"
+import { onSessionExpired } from "@/util/sessionEvents"
 
 type AuthContextValue = {
   user: MeResponse | null
   isLoading: boolean
+  sessionExpired: boolean
   refreshUser: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -24,6 +26,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MeResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [sessionExpired, setSessionExpired] = useState(false)
 
   const refreshUser = useCallback(async () => {
     if (!getAccessToken()) {
@@ -36,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       setUser(await getCurrentUser())
+      setSessionExpired(false)
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) {
         clearTokens()
@@ -55,14 +59,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     clearTokens()
     setUser(null)
+    setSessionExpired(false)
   }, [])
 
   useEffect(() => {
     void refreshUser()
   }, [refreshUser])
 
+  useEffect(() => {
+    return onSessionExpired(() => {
+      setSessionExpired(true)
+      setUser(null)
+    })
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, refreshUser, signOut }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, sessionExpired, refreshUser, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   )

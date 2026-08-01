@@ -12,14 +12,20 @@ export default function ProtectedRoute({
   children,
   requirePanelAccess = false,
 }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, sessionExpired } = useAuth()
 
   if (isLoading) {
     return null
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={sessionExpired ? { sessionExpired: true } : undefined}
+      />
+    )
   }
 
   if (requirePanelAccess && !user.canAccessPanel) {
