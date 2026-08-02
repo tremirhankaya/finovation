@@ -17,7 +17,14 @@ import java.util.function.Function;
 @Component
 public class CsvFileWriter {
 
+    private static final Path ALLOWED_ROOT = Path.of("data-export").toAbsolutePath().normalize();
+
     public <T> void write(Path outputFile, List<String> header, List<T> records, Function<T, List<String>> rowMapper) {
+        Path resolved = outputFile.toAbsolutePath().normalize();
+        if (!resolved.startsWith(ALLOWED_ROOT)) {
+            throw new IllegalArgumentException("Output file escapes the data-export directory: " + outputFile);
+        }
+
         try (Writer writer = Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8);
              CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT.builder()
                      .setHeader(header.toArray(new String[0]))

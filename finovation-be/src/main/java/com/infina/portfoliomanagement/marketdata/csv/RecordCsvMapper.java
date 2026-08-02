@@ -31,9 +31,20 @@ public final class RecordCsvMapper<T extends Record> {
         List<String> row = new ArrayList<>();
         for (RecordComponent component : components) {
             Object value = read(component, record);
-            row.add(value == null ? "" : value.toString());
+            row.add(value == null ? "" : escapeFormula(value.toString()));
         }
         return row;
+    }
+
+    private String escapeFormula(String cell) {
+        if (cell.isEmpty()) {
+            return cell;
+        }
+        char first = cell.charAt(0);
+        if (first == '=' || first == '+' || first == '@') {
+            return "'" + cell;
+        }
+        return cell;
     }
 
     private Object read(RecordComponent component, T record) {
