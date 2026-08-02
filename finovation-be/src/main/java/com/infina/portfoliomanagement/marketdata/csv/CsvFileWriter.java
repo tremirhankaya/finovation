@@ -2,6 +2,8 @@ package com.infina.portfoliomanagement.marketdata.csv;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -10,6 +12,8 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.function.Function;
 
@@ -17,6 +21,7 @@ import java.util.function.Function;
 @Component
 public class CsvFileWriter {
 
+    private static final Logger log = LoggerFactory.getLogger(CsvFileWriter.class);
     private static final Path ALLOWED_ROOT = Path.of("data-export").toAbsolutePath().normalize();
 
     public <T> void write(Path outputFile, List<String> header, List<T> records, Function<T, List<String>> rowMapper) {
@@ -36,6 +41,18 @@ public class CsvFileWriter {
 
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to write CSV file: " + outputFile, e);
+        }
+
+        restrictPermissions(outputFile);
+    }
+
+    private void restrictPermissions(Path outputFile) {
+        try {
+            if (Files.getFileStore(outputFile).supportsFileAttributeView(PosixFileAttributeView.class)) {
+                Files.setPosixFilePermissions(outputFile, PosixFilePermissions.fromString("rw-r-----"));
+            }
+        } catch (IOException e) {
+            log.warn("Could not restrict permissions on {}", outputFile, e);
         }
     }
 }
