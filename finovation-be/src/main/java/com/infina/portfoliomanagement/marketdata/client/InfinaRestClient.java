@@ -6,6 +6,7 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
@@ -13,6 +14,7 @@ import org.springframework.web.client.RestClient;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 public class InfinaRestClient implements InfinaClient {
 
@@ -29,6 +31,9 @@ public class InfinaRestClient implements InfinaClient {
     @Retry(name = "infina")
     public <T> List<T> get(String endpoint, MultiValueMap<String, String> params, Class<T> itemType) {
         String path = endpoint.startsWith("/") ? endpoint : "/" + endpoint;
+        if (!InfinaEndpoints.ALLOWED.contains(path)) {
+            throw new IllegalArgumentException("Unknown Infina endpoint: " + path);
+        }
         String serviceName = path.substring(1);
 
         JsonNode root = infinaHttpClient.get()
@@ -41,9 +46,9 @@ public class InfinaRestClient implements InfinaClient {
         int resultCode = summary.path("resultCode").asInt(-1);
 
         if (resultCode != 200) {
-            throw new BaseException(ErrorCode.EXTERNAL_SERVICE_ERROR,
-                    "Infina/%s -> resultCode=%d, message=%s".formatted(
-                            serviceName, resultCode, summary.path("resultMessage").asString("Unknown error")));
+            log.error("Infina/{} -> resultCode={}, message={}",
+                    serviceName, resultCode, summary.path("resultMessage").asString("Unknown error"));
+            throw new BaseException(ErrorCode.EXTERNAL_SERVICE_ERROR);
         }
 
         JsonNode dataArray = result.path("data").path(serviceName);
