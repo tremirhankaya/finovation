@@ -245,6 +245,7 @@ export default function UsersPage() {
             hasActiveFilters={hasActiveFilters}
             assignableRoles={assignableRoles}
             deletableRoles={deletableRoles}
+            currentUserId={user?.id ?? null}
             onClearFilters={() => applyFilters(EMPTY_FILTERS)}
             onEdit={(userId) => {
               setEditError("")

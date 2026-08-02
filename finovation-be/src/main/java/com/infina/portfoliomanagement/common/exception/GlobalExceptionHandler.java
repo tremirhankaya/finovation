@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
             BaseException ex,
             HttpServletRequest request
     ) {
-        return createErrorResponse(ex.getErrorCode(), request, List.of());
+        return createErrorResponse(ex.getErrorCode(), ex.getMessage(), request, List.of());
     }
 
     @ExceptionHandler(Exception.class)
@@ -35,7 +35,12 @@ public class GlobalExceptionHandler {
 
         log.error("Unexpected exception occurred while processing request: {}", request.getRequestURI(), ex);
 
-        return createErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, request,List.of());
+        return createErrorResponse(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
+                request,
+                List.of()
+        );
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -55,6 +60,7 @@ public class GlobalExceptionHandler {
 
         return createErrorResponse(
                 ErrorCode.VALIDATION_ERROR,
+                ErrorCode.VALIDATION_ERROR.getMessage(),
                 request,
                 errors
         );
@@ -62,6 +68,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> createErrorResponse(
             ErrorCode errorCode,
+            String message,
             HttpServletRequest request,
             List<ValidationFieldError> errors
     ){
@@ -69,7 +76,7 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(clock),
                 errorCode.getHttpStatus().value(),
                 errorCode.getCode(),
-                errorCode.getMessage(),
+                message,
                 request.getRequestURI(),
                 errors
         );
