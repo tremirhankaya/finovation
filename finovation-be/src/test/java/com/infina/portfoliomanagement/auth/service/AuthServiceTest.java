@@ -96,8 +96,21 @@ class AuthServiceTest {
     }
 
     @Test
-    void login_attemptsExceeded_throwsRateLimitError() {
-        when(loginAttemptStore.getAttempts(CLIENT_IP)).thenReturn(5L);
+    void login_ipAttemptsExceeded_throwsRateLimitError() {
+        when(loginAttemptStore.getIpAttempts(CLIENT_IP)).thenReturn(5L);
+
+        assertError(
+                () -> authService.login(new LoginRequest("user", "password")),
+                ErrorCode.LOGIN_ATTEMPTS_EXCEEDED
+        );
+
+        verifyNoInteractions(authenticationManager);
+    }
+
+    @Test
+    void login_usernameAttemptsExceeded_throwsRateLimitError() {
+        when(loginAttemptStore.getIpAttempts(CLIENT_IP)).thenReturn(0L);
+        when(loginAttemptStore.getUsernameAttempts("user")).thenReturn(5L);
 
         assertError(
                 () -> authService.login(new LoginRequest("user", "password")),
@@ -109,7 +122,8 @@ class AuthServiceTest {
 
     @Test
     void login_successfulCredentials_clearsAttemptsAndReturnsTokens() {
-        when(loginAttemptStore.getAttempts(CLIENT_IP)).thenReturn(0L);
+        when(loginAttemptStore.getIpAttempts(CLIENT_IP)).thenReturn(0L);
+        when(loginAttemptStore.getUsernameAttempts("user")).thenReturn(0L);
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
         when(userDetails.getUsername()).thenReturn("user");
@@ -120,13 +134,16 @@ class AuthServiceTest {
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
-        verify(loginAttemptStore).clearAttempts(CLIENT_IP);
-        verify(loginAttemptStore, never()).recordFailedAttempt(CLIENT_IP);
+        verify(loginAttemptStore).clearIpAttempts(CLIENT_IP);
+        verify(loginAttemptStore).clearUsernameAttempts("user");
+        verify(loginAttemptStore, never()).recordIpFailedAttempt(CLIENT_IP);
+        verify(loginAttemptStore, never()).recordUsernameFailedAttempt("user");
     }
 
     @Test
     void login_invalidCredentials_recordsFailedAttempt() {
-        when(loginAttemptStore.getAttempts(CLIENT_IP)).thenReturn(0L);
+        when(loginAttemptStore.getIpAttempts(CLIENT_IP)).thenReturn(0L);
+        when(loginAttemptStore.getUsernameAttempts("user")).thenReturn(0L);
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("bad credentials"));
 
@@ -135,8 +152,10 @@ class AuthServiceTest {
                 ErrorCode.INVALID_CREDENTIALS
         );
 
-        verify(loginAttemptStore).recordFailedAttempt(CLIENT_IP);
-        verify(loginAttemptStore, never()).clearAttempts(CLIENT_IP);
+        verify(loginAttemptStore).recordIpFailedAttempt(CLIENT_IP);
+        verify(loginAttemptStore).recordUsernameFailedAttempt("user");
+        verify(loginAttemptStore, never()).clearIpAttempts(CLIENT_IP);
+        verify(loginAttemptStore, never()).clearUsernameAttempts("user");
     }
 
     private void assertError(Runnable action, ErrorCode expectedErrorCode) {

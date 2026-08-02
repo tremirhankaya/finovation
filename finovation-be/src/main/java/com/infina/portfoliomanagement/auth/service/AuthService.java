@@ -22,6 +22,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Locale;
 import com.infina.portfoliomanagement.auth.config.LoginRateLimitProperties;
 import com.infina.portfoliomanagement.auth.store.LoginAttemptStore;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,8 +48,10 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
 
         String clientIp = resolveClientIp();
+        String normalizedUsername = normalizeUsername(request.username());
 
-        if (loginAttemptStore.getAttempts(clientIp) >= loginRateLimitProperties.maxAttempts()) {
+        if (loginAttemptStore.getIpAttempts(clientIp) >= loginRateLimitProperties.maxAttempts()
+                || loginAttemptStore.getUsernameAttempts(normalizedUsername) >= loginRateLimitProperties.maxAttempts()) {
             throw new BaseException(ErrorCode.LOGIN_ATTEMPTS_EXCEEDED);
         }
 
@@ -67,18 +70,24 @@ public class AuthService {
                 throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
             }
 
-            loginAttemptStore.clearAttempts(clientIp);
+            loginAttemptStore.clearIpAttempts(clientIp);
+            loginAttemptStore.clearUsernameAttempts(normalizedUsername);
 
             return createTokenResponse(userDetails);
 
         } catch (AuthenticationException exception) {
-            loginAttemptStore.recordFailedAttempt(clientIp);
+            loginAttemptStore.recordIpFailedAttempt(clientIp);
+            loginAttemptStore.recordUsernameFailedAttempt(normalizedUsername);
             throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
     }
 
     private String resolveClientIp() {
         return httpServletRequest.getRemoteAddr();
+    }
+
+    private String normalizeUsername(String username) {
+        return username.trim().toLowerCase(Locale.ROOT);
     }
 
     public LoginResponse refreshToken(RefreshTokenRequest request) {

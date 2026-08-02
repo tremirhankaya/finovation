@@ -9,24 +9,41 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LoginAttemptStore {
 
-    private static final String ATTEMPTS_PREFIX = "auth:login:attempts:";
+    private static final String IP_PREFIX = "auth:login:attempts:ip:";
+    private static final String USERNAME_PREFIX = "auth:login:attempts:username:";
 
     private final RateLimiter rateLimiter;
     private final LoginRateLimitProperties properties;
 
-    public long getAttempts(String ip) {
-        return rateLimiter.getAttempts(attemptsKey(ip));
+    public long getIpAttempts(String ip) {
+        return rateLimiter.getAttempts(ipKey(ip));
     }
 
-    public long recordFailedAttempt(String ip) {
-        return rateLimiter.increment(attemptsKey(ip), properties.window());
+    public long recordIpFailedAttempt(String ip) {
+        return rateLimiter.increment(ipKey(ip), properties.window());
     }
 
-    public void clearAttempts(String ip) {
-        rateLimiter.clear(attemptsKey(ip));
+    public void clearIpAttempts(String ip) {
+        rateLimiter.clear(ipKey(ip));
     }
 
-    private String attemptsKey(String ip) {
-        return ATTEMPTS_PREFIX + ip;
+    public long getUsernameAttempts(String username) {
+        return rateLimiter.getAttempts(usernameKey(username));
+    }
+
+    public long recordUsernameFailedAttempt(String username) {
+        return rateLimiter.increment(usernameKey(username), properties.window());
+    }
+
+    public void clearUsernameAttempts(String username) {
+        rateLimiter.clear(usernameKey(username));
+    }
+
+    private String ipKey(String ip) {
+        return IP_PREFIX + ip;
+    }
+
+    private String usernameKey(String username) {
+        return USERNAME_PREFIX + username;
     }
 }
