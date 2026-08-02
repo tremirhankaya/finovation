@@ -47,6 +47,7 @@ public class PasswordResetService {
     private final PasswordResetIpRateLimitStore ipRateLimitStore;
     private final PasswordResetIpRateLimitProperties ipRateLimitProperties;
     private final HttpServletRequest httpServletRequest;
+    private final RefreshTokenService refreshTokenService;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -145,7 +146,10 @@ public class PasswordResetService {
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         user.setPasswordChangeRequired(false);
         user.setUpdatedAt(LocalDateTime.now(clock));
+        user.setCredentialsChangedAt(LocalDateTime.now(clock));
         userRepository.save(user);
+
+        refreshTokenService.revokeAllForUser(user.getUsername());
 
         log.info("Password reset completed: userId={}", user.getId());
     }

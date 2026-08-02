@@ -61,6 +61,8 @@ class PasswordResetServiceTest {
     private PasswordResetIpRateLimitStore ipRateLimitStore;
     @Mock
     private HttpServletRequest httpServletRequest;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     private PasswordResetService passwordResetService;
     private User user;
@@ -93,7 +95,8 @@ class PasswordResetServiceTest {
                 FIXED_CLOCK,
                 ipRateLimitStore,
                 ipRateLimitProperties,
-                httpServletRequest
+                httpServletRequest,
+                refreshTokenService
         );
 
         lenient().when(httpServletRequest.getRemoteAddr()).thenReturn(CLIENT_IP);
@@ -269,7 +272,7 @@ class PasswordResetServiceTest {
                 ErrorCode.PASSWORD_RESET_PASSWORDS_DO_NOT_MATCH
         );
 
-        verifyNoInteractions(passwordResetStore, passwordEncoder);
+        verifyNoInteractions(passwordResetStore, passwordEncoder, refreshTokenService);
     }
 
     @Test
@@ -284,7 +287,7 @@ class PasswordResetServiceTest {
                 ErrorCode.PASSWORD_RESET_TOKEN_INVALID_OR_EXPIRED
         );
 
-        verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(passwordEncoder, refreshTokenService);
     }
 
     @Test
@@ -298,13 +301,17 @@ class PasswordResetServiceTest {
                 new PasswordResetRequest("reset-token", "Password1!", "Password1!")
         );
 
-        assertThat(user.getPassword()).isEqualTo("encoded-password");
-        assertThat(user.isPasswordChangeRequired()).isFalse();
-        assertThat(user.getUpdatedAt()).isEqualTo(LocalDateTime.ofInstant(
+        LocalDateTime expectedTimestamp = LocalDateTime.ofInstant(
                 FIXED_CLOCK.instant(),
                 ZoneOffset.UTC
-        ));
+        );
+
+        assertThat(user.getPassword()).isEqualTo("encoded-password");
+        assertThat(user.isPasswordChangeRequired()).isFalse();
+        assertThat(user.getUpdatedAt()).isEqualTo(expectedTimestamp);
+        assertThat(user.getCredentialsChangedAt()).isEqualTo(expectedTimestamp);
         verify(userRepository).save(user);
+        verify(refreshTokenService).revokeAllForUser("reset.user");
     }
 
     private void stubUserAndIdentity() {
