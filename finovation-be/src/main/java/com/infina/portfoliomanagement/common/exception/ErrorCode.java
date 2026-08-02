@@ -90,6 +90,30 @@ public enum ErrorCode {
             "The verification email could not be sent. Please try again later."
     ),
 
+    LOGIN_ATTEMPTS_EXCEEDED(
+            "AUTH_014",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many failed login attempts. Please try again later."
+    ),
+
+    PASSWORD_RESET_REQUEST_IP_RATE_LIMITED(
+            "AUTH_015",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many verification code requests from this network. Please try again later."
+    ),
+
+    PASSWORD_RESET_VERIFY_IP_RATE_LIMITED(
+            "AUTH_016",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many verification attempts from this network. Please try again later."
+    ),
+
+    REFRESH_TOKEN_RATE_LIMITED(
+            "AUTH_017",
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many token refresh requests from this network. Please try again later."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,

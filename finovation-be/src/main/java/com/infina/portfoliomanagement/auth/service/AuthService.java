@@ -22,6 +22,12 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Locale;
+import com.infina.portfoliomanagement.auth.config.LoginRateLimitProperties;
+import com.infina.portfoliomanagement.auth.store.LoginAttemptStore;
+import jakarta.servlet.http.HttpServletRequest;
+import com.infina.portfoliomanagement.auth.config.RefreshRateLimitProperties;
+import com.infina.portfoliomanagement.auth.store.RefreshRateLimitStore;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +39,24 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RolePolicy rolePolicy;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptStore loginAttemptStore;
+    private final LoginRateLimitProperties loginRateLimitProperties;
+    private final HttpServletRequest httpServletRequest;
+    private final RefreshRateLimitStore refreshRateLimitStore;
+    private final RefreshRateLimitProperties refreshRateLimitProperties;
 
     public LoginResponse login(LoginRequest request) {
+
+        String clientIp = resolveClientIp();
+        String normalizedUsername = normalizeUsername(request.username());
+
+        long ipAttempts = loginAttemptStore.recordIpAttempt(clientIp);
+        long usernameAttempts = loginAttemptStore.recordUsernameAttempt(normalizedUsername);
+
+        if (ipAttempts > loginRateLimitProperties.maxAttempts()
+                || usernameAttempts > loginRateLimitProperties.maxAttempts()) {
+            throw new BaseException(ErrorCode.LOGIN_ATTEMPTS_EXCEEDED);
+        }
 
         try {
             Authentication authentication =
@@ -51,6 +73,9 @@ public class AuthService {
                 throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
             }
 
+            loginAttemptStore.clearIpAttempts(clientIp);
+            loginAttemptStore.clearUsernameAttempts(normalizedUsername);
+
             return createTokenResponse(userDetails);
 
         } catch (AuthenticationException exception) {
@@ -58,7 +83,20 @@ public class AuthService {
         }
     }
 
+    private String resolveClientIp() {
+        return httpServletRequest.getRemoteAddr();
+    }
+
+    private String normalizeUsername(String username) {
+        return username.trim().toLowerCase(Locale.ROOT);
+    }
+
     public LoginResponse refreshToken(RefreshTokenRequest request) {
+
+        String clientIp = resolveClientIp();
+        if (refreshRateLimitStore.recordAttempt(clientIp) > refreshRateLimitProperties.maxAttempts()) {
+            throw new BaseException(ErrorCode.REFRESH_TOKEN_RATE_LIMITED);
+        }
 
         String refreshToken = request.refreshToken();
 
