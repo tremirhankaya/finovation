@@ -170,12 +170,6 @@ class RecordCsvMapperTest {
                 "2026-01-02", "BRNT.L", "", "BRNT.L", "USD", "", "", "", "30.88", "");
     }
 
-    /**
-     * Every DTO used by an ingest job today carries {@code @JsonProperty} on every
-     * field, so the camelCase-to-snake_case fallback in {@link RecordCsvMapper} never
-     * actually runs through those tests. This pins that fallback down on its own using
-     * a plain record with no annotations at all.
-     */
     private record NoAnnotations(String assetCode, Integer retryCount) {
     }
 

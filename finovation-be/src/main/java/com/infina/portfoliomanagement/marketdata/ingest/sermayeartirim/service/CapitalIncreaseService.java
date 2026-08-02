@@ -19,8 +19,6 @@ public class CapitalIncreaseService {
     }
 
     public List<CapitalIncreaseRecord> fetchAll(String assetCode) {
-        // /SermayeArtirim uses a different code shape than every other endpoint
-        // (e.g. "AKBNK.E.BIST" instead of "AKBNK.E") — confirmed live against preprod.
         String code = assetCode + ".BIST";
 
         MultiValueMap<String, String> extraParams = new LinkedMultiValueMap<>();

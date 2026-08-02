@@ -19,10 +19,6 @@ public record TppOranRecord(
         @JsonProperty("high_rate") BigDecimal highRate
 ) {
 
-    /**
-     * A synthetic row for a non-trading day (weekend/holiday): only the date and the
-     * carried-forward rate are known, every other field is intentionally absent.
-     */
     public static TppOranRecord filledRate(LocalDate date, BigDecimal weightedAverage) {
         return new TppOranRecord(date, null, null, null, null, weightedAverage, null, null, null, null, null);
     }

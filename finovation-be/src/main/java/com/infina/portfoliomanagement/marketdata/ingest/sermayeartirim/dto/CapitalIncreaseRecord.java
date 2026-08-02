@@ -5,12 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/**
- * A single corporate action event (bonus share issue, cash dividend, or rights issue)
- * for a ticker. {@code bonus}, {@code dividend} and {@code right} are percentages —
- * exactly one is normally non-zero per event, identifying which kind of action it was.
- * {@code ratio} is the resulting price-adjustment multiplier.
- */
 public record CapitalIncreaseRecord(
         @JsonProperty("data_date") LocalDate dataDate,
         @JsonProperty("code") String code,
