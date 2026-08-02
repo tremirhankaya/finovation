@@ -5,8 +5,7 @@ import com.infina.portfoliomanagement.marketdata.csv.RecordCsvMapper;
 import com.infina.portfoliomanagement.marketdata.ingest.dovizfiyat.dto.ForexRateRecord;
 import com.infina.portfoliomanagement.marketdata.ingest.dovizfiyat.service.ForexRateService;
 import com.infina.portfoliomanagement.marketdata.runner.MarketDataIngestJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,10 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+@Slf4j
 @Component
 public class ForexRateIngestJob implements MarketDataIngestJob {
-
-    private static final Logger log = LoggerFactory.getLogger(ForexRateIngestJob.class);
 
     private static final List<String> CURRENCY_PAIRS = List.of("USD/TRY", "EUR/TRY", "GBP/TRY");
     private static final Path OUTPUT_DIR = Path.of("data-export", "doviz-fiyat");

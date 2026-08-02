@@ -1,7 +1,6 @@
 package com.infina.portfoliomanagement.marketdata.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -11,10 +10,10 @@ import java.util.List;
 import java.util.function.Function;
 
 
+@Slf4j
 @Component
 public class HistoricalDataFetcher {
 
-    private static final Logger log = LoggerFactory.getLogger(HistoricalDataFetcher.class);
     private static final LocalDate EARLIEST_DATE = LocalDate.of(1990, 1, 1);
 
     private final InfinaClient infinaClient;

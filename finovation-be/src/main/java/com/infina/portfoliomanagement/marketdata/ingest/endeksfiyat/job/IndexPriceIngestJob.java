@@ -5,8 +5,7 @@ import com.infina.portfoliomanagement.marketdata.csv.RecordCsvMapper;
 import com.infina.portfoliomanagement.marketdata.ingest.endeksfiyat.dto.IndexPriceRecord;
 import com.infina.portfoliomanagement.marketdata.ingest.endeksfiyat.service.IndexPriceService;
 import com.infina.portfoliomanagement.marketdata.runner.MarketDataIngestJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,10 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+@Slf4j
 @Component
 public class IndexPriceIngestJob implements MarketDataIngestJob {
 
-    private static final Logger log = LoggerFactory.getLogger(IndexPriceIngestJob.class);
     private static final List<String> INDEX_CODES = List.of("XU100", "XU030");
     private static final Path OUTPUT_DIR = Path.of("data-export", "endeks-fiyat");
     private static final RecordCsvMapper<IndexPriceRecord> CSV_MAPPER = RecordCsvMapper.of(IndexPriceRecord.class);

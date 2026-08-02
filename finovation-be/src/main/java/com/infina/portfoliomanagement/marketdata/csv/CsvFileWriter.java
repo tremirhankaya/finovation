@@ -1,9 +1,8 @@
 package com.infina.portfoliomanagement.marketdata.csv;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -18,10 +17,10 @@ import java.util.List;
 import java.util.function.Function;
 
 
+@Slf4j
 @Component
 public class CsvFileWriter {
 
-    private static final Logger log = LoggerFactory.getLogger(CsvFileWriter.class);
     private static final Path ALLOWED_ROOT = Path.of("data-export").toAbsolutePath().normalize();
 
     public <T> void write(Path outputFile, List<String> header, List<T> records, Function<T, List<String>> rowMapper) {

@@ -1,8 +1,7 @@
 package com.infina.portfoliomanagement.marketdata.ingest.hissereferans.job;
 
 import com.infina.portfoliomanagement.marketdata.runner.MarketDataIngestJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -11,10 +10,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Slf4j
 @Component
 public class TickerReferenceExportJob implements MarketDataIngestJob {
 
-    private static final Logger log = LoggerFactory.getLogger(TickerReferenceExportJob.class);
     private static final String RESOURCE_PATH = "data/bist-tickers.csv";
     private static final Path OUTPUT_DIR = Path.of("data-export", "hisse-referans");
     private static final Path OUTPUT_FILE = OUTPUT_DIR.resolve("hisse-referans.csv");

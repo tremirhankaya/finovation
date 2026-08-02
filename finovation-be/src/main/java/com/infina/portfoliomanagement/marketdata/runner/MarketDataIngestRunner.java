@@ -1,7 +1,6 @@
 package com.infina.portfoliomanagement.marketdata.runner;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -15,11 +14,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @Profile("data-ingest")
 public class MarketDataIngestRunner implements CommandLineRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(MarketDataIngestRunner.class);
     private static final String ALL_JOBS_ARG = "all";
 
     private final Map<String, MarketDataIngestJob> jobsByKey;

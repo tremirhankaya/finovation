@@ -5,8 +5,7 @@ import com.infina.portfoliomanagement.marketdata.csv.RecordCsvMapper;
 import com.infina.portfoliomanagement.marketdata.ingest.tpporan.dto.TppOranRecord;
 import com.infina.portfoliomanagement.marketdata.ingest.tpporan.service.TppOranService;
 import com.infina.portfoliomanagement.marketdata.runner.MarketDataIngestJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,10 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+@Slf4j
 @Component
 public class TppOranMaturityIngestJob implements MarketDataIngestJob {
 
-    private static final Logger log = LoggerFactory.getLogger(TppOranMaturityIngestJob.class);
     private static final Path OUTPUT_DIR = Path.of("data-export", "tpp-oran-vadeler");
     private static final Path OUTPUT_FILE = OUTPUT_DIR.resolve("tpp-oran-vadeler.csv");
     private static final RecordCsvMapper<TppOranRecord> CSV_MAPPER = RecordCsvMapper.of(TppOranRecord.class);

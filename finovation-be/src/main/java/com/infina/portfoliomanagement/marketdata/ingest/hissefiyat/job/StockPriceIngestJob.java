@@ -8,8 +8,7 @@ import com.infina.portfoliomanagement.marketdata.ingest.hissefiyat.service.Stock
 import com.infina.portfoliomanagement.marketdata.ingest.hissetanim.dto.StockDefinitionRecord;
 import com.infina.portfoliomanagement.marketdata.ingest.hissetanim.service.TickerValidationService;
 import com.infina.portfoliomanagement.marketdata.runner.MarketDataIngestJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -18,10 +17,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public class StockPriceIngestJob implements MarketDataIngestJob {
 
-    private static final Logger log = LoggerFactory.getLogger(StockPriceIngestJob.class);
     private static final Path OUTPUT_DIR = Path.of("data-export", "hisse-fiyat");
     private static final RecordCsvMapper<StockPriceRecord> CSV_MAPPER = RecordCsvMapper.of(StockPriceRecord.class);
 

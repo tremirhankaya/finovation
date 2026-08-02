@@ -6,8 +6,7 @@ import com.infina.portfoliomanagement.marketdata.csv.TickerCsvReader;
 import com.infina.portfoliomanagement.marketdata.ingest.sermayeartirim.dto.CapitalIncreaseRecord;
 import com.infina.portfoliomanagement.marketdata.ingest.sermayeartirim.service.CapitalIncreaseService;
 import com.infina.portfoliomanagement.marketdata.runner.MarketDataIngestJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -15,10 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+@Slf4j
 @Component
 public class CapitalIncreaseIngestJob implements MarketDataIngestJob {
 
-    private static final Logger log = LoggerFactory.getLogger(CapitalIncreaseIngestJob.class);
     private static final Path OUTPUT_DIR = Path.of("data-export", "sermaye-artirim");
     private static final RecordCsvMapper<CapitalIncreaseRecord> CSV_MAPPER = RecordCsvMapper.of(CapitalIncreaseRecord.class);
 

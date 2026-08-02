@@ -6,8 +6,7 @@ import com.infina.portfoliomanagement.marketdata.csv.TickerCsvReader;
 import com.infina.portfoliomanagement.marketdata.ingest.hissetanim.dto.StockDefinitionRecord;
 import com.infina.portfoliomanagement.marketdata.ingest.hissetanim.service.TickerValidationService;
 import com.infina.portfoliomanagement.marketdata.runner.MarketDataIngestJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -17,10 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public class TickerDefinitionIngestJob implements MarketDataIngestJob {
 
-    private static final Logger log = LoggerFactory.getLogger(TickerDefinitionIngestJob.class);
     private static final Path OUTPUT_DIR = Path.of("data-export", "hisse-tanim");
     private static final Path OUTPUT_FILE = OUTPUT_DIR.resolve("hisse-tanim.csv");
     private static final RecordCsvMapper<StockDefinitionRecord> CSV_MAPPER = RecordCsvMapper.of(StockDefinitionRecord.class);
