@@ -25,18 +25,6 @@ public class RateLimiter {
 
     private final StringRedisTemplate redisTemplate;
 
-    public long getAttempts(String key) {
-        String value = redisTemplate.opsForValue().get(key);
-        if (value == null) {
-            return 0;
-        }
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException exception) {
-            return 0;
-        }
-    }
-
     public long increment(String key, Duration window) {
         Long attempts = redisTemplate.execute(
                 INCREMENT_AND_EXPIRE_SCRIPT,

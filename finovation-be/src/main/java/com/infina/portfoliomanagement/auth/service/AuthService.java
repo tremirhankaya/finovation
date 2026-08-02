@@ -50,8 +50,11 @@ public class AuthService {
         String clientIp = resolveClientIp();
         String normalizedUsername = normalizeUsername(request.username());
 
-        if (loginAttemptStore.getIpAttempts(clientIp) >= loginRateLimitProperties.maxAttempts()
-                || loginAttemptStore.getUsernameAttempts(normalizedUsername) >= loginRateLimitProperties.maxAttempts()) {
+        long ipAttempts = loginAttemptStore.recordIpAttempt(clientIp);
+        long usernameAttempts = loginAttemptStore.recordUsernameAttempt(normalizedUsername);
+
+        if (ipAttempts > loginRateLimitProperties.maxAttempts()
+                || usernameAttempts > loginRateLimitProperties.maxAttempts()) {
             throw new BaseException(ErrorCode.LOGIN_ATTEMPTS_EXCEEDED);
         }
 
@@ -76,8 +79,6 @@ public class AuthService {
             return createTokenResponse(userDetails);
 
         } catch (AuthenticationException exception) {
-            loginAttemptStore.recordIpFailedAttempt(clientIp);
-            loginAttemptStore.recordUsernameFailedAttempt(normalizedUsername);
             throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
     }

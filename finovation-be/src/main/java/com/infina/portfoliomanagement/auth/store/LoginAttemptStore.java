@@ -15,11 +15,7 @@ public class LoginAttemptStore {
     private final RateLimiter rateLimiter;
     private final LoginRateLimitProperties properties;
 
-    public long getIpAttempts(String ip) {
-        return rateLimiter.getAttempts(ipKey(ip));
-    }
-
-    public long recordIpFailedAttempt(String ip) {
+    public long recordIpAttempt(String ip) {
         return rateLimiter.increment(ipKey(ip), properties.window());
     }
 
@@ -27,11 +23,7 @@ public class LoginAttemptStore {
         rateLimiter.clear(ipKey(ip));
     }
 
-    public long getUsernameAttempts(String username) {
-        return rateLimiter.getAttempts(usernameKey(username));
-    }
-
-    public long recordUsernameFailedAttempt(String username) {
+    public long recordUsernameAttempt(String username) {
         return rateLimiter.increment(usernameKey(username), properties.window());
     }
 
