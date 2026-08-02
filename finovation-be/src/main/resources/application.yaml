@@ -46,6 +46,30 @@ jwt:
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
   refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:15h}
 
+infina:
+  base-url: ${INFINA_BASE_URL}
+  api-key: ${INFINA_API_KEY}
+  connect-timeout: 5s
+  read-timeout: 15s
+
+resilience4j:
+  ratelimiter:
+    instances:
+      infina:
+        limit-for-period: 30
+        limit-refresh-period: 1s
+        timeout-duration: 5s
+  retry:
+    instances:
+      infina:
+        max-attempts: 4
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.client.HttpClientErrorException$TooManyRequests
+
 auth:
   password-reset:
     secret: ${PASSWORD_RESET_SECRET:${JWT_SECRET}}
