@@ -507,7 +507,8 @@ class UserServiceTest {
 
         assertThat(target.isDeleted()).isTrue();
         assertThat(target.getUpdatedAt()).isEqualTo(LocalDateTime.of(2026, 7, 30, 10, 0));
-        verify(userRepository).save(target);
+        verify(userRepository).saveAndFlush(target);
+        verify(refreshTokenService).revokeAllForUser(target.getUsername());
     }
 
     @Test

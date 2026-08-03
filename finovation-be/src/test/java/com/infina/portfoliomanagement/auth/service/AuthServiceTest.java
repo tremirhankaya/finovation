@@ -23,6 +23,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.Duration;
 
@@ -174,17 +175,84 @@ class AuthServiceTest {
     }
 
     @Test
-    void refreshToken_validToken_returnsNewTokens() {
-        when(refreshTokenService.getUsername("old-refresh-token")).thenReturn("user");
-        when(customUserDetailsService.loadUserByUsername("user")).thenReturn(userDetails);
+    void refreshToken_validToken_returnsNewTokenPair() {
+        when(refreshTokenService.consume("old-refresh-token"))
+                .thenReturn("user");
+        when(customUserDetailsService.loadUserByUsername("user"))
+                .thenReturn(userDetails);
+        when(userDetails.isEnabled()).thenReturn(true);
         when(userDetails.getUsername()).thenReturn("user");
-        when(jwtService.generateAccessToken(userDetails)).thenReturn("new-access-token");
-        when(refreshTokenService.create("user")).thenReturn("new-refresh-token");
+        when(jwtService.generateAccessToken(userDetails))
+                .thenReturn("new-access-token");
+        when(refreshTokenService.create("user"))
+                .thenReturn("new-refresh-token");
 
-        LoginResponse response = authService.refreshToken(new RefreshTokenRequest("old-refresh-token"));
+        LoginResponse response = authService.refreshToken(
+                new RefreshTokenRequest("old-refresh-token")
+        );
 
         assertThat(response.accessToken()).isEqualTo("new-access-token");
         assertThat(response.refreshToken()).isEqualTo("new-refresh-token");
-        verify(refreshTokenService).revoke("old-refresh-token");
+
+        verify(refreshTokenService).consume("old-refresh-token");
+        verify(jwtService).generateAccessToken(userDetails);
+        verify(refreshTokenService).create("user");
+        verify(refreshTokenService, never()).revoke(any());
+    }
+
+    @Test
+    void refreshToken_unknownOrConsumedToken_throwsInvalidToken() {
+        when(refreshTokenService.consume("invalid-refresh-token"))
+                .thenReturn(null);
+
+        assertError(
+                () -> authService.refreshToken(
+                        new RefreshTokenRequest("invalid-refresh-token")
+                ),
+                ErrorCode.INVALID_TOKEN
+        );
+
+        verify(refreshTokenService).consume("invalid-refresh-token");
+        verifyNoInteractions(customUserDetailsService, jwtService);
+        verify(refreshTokenService, never()).create(any());
+    }
+
+    @Test
+    void refreshToken_disabledUser_throwsInvalidToken() {
+        when(refreshTokenService.consume("refresh-token"))
+                .thenReturn("user");
+        when(customUserDetailsService.loadUserByUsername("user"))
+                .thenReturn(userDetails);
+        when(userDetails.isEnabled()).thenReturn(false);
+
+        assertError(
+                () -> authService.refreshToken(
+                        new RefreshTokenRequest("refresh-token")
+                ),
+                ErrorCode.INVALID_TOKEN
+        );
+
+        verify(refreshTokenService).consume("refresh-token");
+        verifyNoInteractions(jwtService);
+        verify(refreshTokenService, never()).create(any());
+    }
+
+    @Test
+    void refreshToken_userNoLongerExists_throwsInvalidToken() {
+        when(refreshTokenService.consume("refresh-token"))
+                .thenReturn("deleted-user");
+        when(customUserDetailsService.loadUserByUsername("deleted-user"))
+                .thenThrow(new UsernameNotFoundException("User not found"));
+
+        assertError(
+                () -> authService.refreshToken(
+                        new RefreshTokenRequest("refresh-token")
+                ),
+                ErrorCode.INVALID_TOKEN
+        );
+
+        verify(refreshTokenService).consume("refresh-token");
+        verifyNoInteractions(jwtService);
+        verify(refreshTokenService, never()).create(any());
     }
 }

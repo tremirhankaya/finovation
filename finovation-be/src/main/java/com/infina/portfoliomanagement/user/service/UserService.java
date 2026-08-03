@@ -320,10 +320,12 @@ public class UserService {
 
         target.setDeleted(true);
         target.setUpdatedAt(LocalDateTime.now(clock));
-        userRepository.save(target);
+
+        userRepository.saveAndFlush(target);
+        refreshTokenService.revokeAllForUser(target.getUsername());
 
         log.info(
-                "User soft-deleted: actor={}, actorRole={}, targetId={}, targetRole={}",
+                "User soft-deleted and sessions revoked: actor={}, actorRole={}, targetId={}, targetRole={}",
                 actorUsername,
                 actor.getRole(),
                 target.getId(),
