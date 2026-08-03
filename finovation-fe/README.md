@@ -1,71 +1,92 @@
-# Finovation Login
+# Finovation Frontend
 
-React, TypeScript, Vite ve merkezi CSS yapısıyla hazırlanmış giriş ekranı.
+React, TypeScript ve Vite tabanlı Finovation web uygulaması.
 
-## IntelliJ IDEA ile çalıştırma
+## Gereksinimler
 
-1. IntelliJ IDEA'da **File > Open** menüsünden bu klasörü açın.
-2. IntelliJ terminalini açın.
-3. Bağımlılıkları kurun:
+- Node.js 22.22 veya üzeri
+- npm
+- Yerelde çalıştırılacaksa `http://localhost:8080` adresinde çalışan backend
 
-   ```bash
-   npm install
-   ```
+## Yerel geliştirme
 
-4. Geliştirme sunucusunu başlatın:
+Frontend klasöründe aşağıdaki komutları çalıştırın:
 
-   ```bash
-   npm run dev
-   ```
-
-5. Terminalde gösterilen `http://localhost:5173` adresini tarayıcıda açın.
-
-## Komutlar
-
-- `npm run dev`: Geliştirme sunucusunu başlatır.
-- `npm run build`: Üretim derlemesi oluşturur.
-- `npm run preview`: Üretim derlemesini yerel olarak gösterir.
-
-## Java backend bağlantısı
-
-Backend bilgileri belli olduğunda `.env.example` dosyasını `.env` adıyla kopyalayın:
-
-```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_LOGIN_PATH=/api/auth/login
+```bash
+npm ci
+npm run dev
 ```
 
-Giriş formu aşağıdaki isteği gönderir:
+Uygulama varsayılan olarak `http://localhost:5173` adresinde açılır. `/api`
+istekleri Vite proxy üzerinden `http://localhost:8080` adresine gönderilir.
 
-```http
-POST /api/auth/login
-Content-Type: application/json
+Farklı bir backend adresi gerekiyorsa `.env.example` dosyasını `.env` adıyla
+kopyalayıp `VITE_DEV_PROXY_TARGET` değerini değiştirin. `.env` dosyaları Git'e
+gönderilmez.
 
-{
-  "username": "kullanici",
-  "password": "sifre"
-}
+## Docker ile geliştirme
+
+Repository kökünde:
+
+```bash
+docker compose up --build frontend backend
 ```
 
-- Backend adresi ve endpoint: `src/config/api.ts`
-- HTTP isteği ve hata yönetimi: `src/features/auth/api/authService.ts`
-- İstek/cevap tipleri: `src/features/auth/model/auth.types.ts`
-- Giriş ekranı ve form davranışı: `src/pages/login/LoginPage.tsx`
+Compose ortamında frontend proxy hedefi servis adı üzerinden
+`http://backend:8080` olarak ayarlanır. Bu değer yerel terminal ayarından
+bilinçli olarak farklıdır; container içindeki `localhost` frontend
+container'ının kendisini ifade eder.
 
-Backend farklı alan isimleri veya farklı bir cevap döndürürse yalnızca
-`features/auth` altındaki servis ve tip eşlemelerinin güncellenmesi yeterlidir.
+## Kalite komutları
+
+```bash
+npm run format
+npm run lint
+npm run typecheck
+npm run test
+npm run test:coverage
+npm run build
+npm run check
+```
+
+`npm run check`; format, lint, TypeScript, test ve üretim build kontrollerini
+tek akışta çalıştırır.
 
 ## Kaynak kod organizasyonu
 
-- `src/app`: Uygulamanın kök component'i ve ileride eklenecek router/provider yapıları.
-- `src/pages`: URL veya ekran seviyesindeki component'ler ve yalnızca o sayfaya ait CSS Modules.
-- `src/features`: Login gibi iş özelliklerinin API, model ve ilerideki özel component/hook kodları.
-- `src/shared/ui`: Birden fazla sayfada kullanılabilecek ortak UI component'leri.
-- `src/shared/layout`: Ortak sayfa yerleşimi parçaları.
-- `src/shared/icons`: Tekrar kullanılabilir SVG icon component'leri.
-- `src/config`: Uygulama genelindeki çalışma zamanı ayarları.
-- `src/index.css`: Yalnızca global tema değişkenleri, reset ve temel element kuralları.
+```text
+src/
+├── app/                 # Uygulama kökü ve route korumaları
+├── features/
+│   ├── auth/            # Kimlik doğrulama ve şifre yenileme özelliği
+│   ├── dashboard/       # Dashboard ekranı
+│   └── users/           # Kullanıcı ve şirket yönetimi özelliği
+├── shared/
+│   ├── api/             # Ortak HTTP istemcisi ve API hata sözleşmesi
+│   ├── auth/            # Token saklama ve oturum olayları
+│   ├── lib/             # Özellikten bağımsız yardımcı kurallar
+│   ├── model/           # Feature'lar arasında ortak domain tipleri
+│   ├── styles/          # Global tema ve reset
+│   └── ui/              # Tekrar kullanılabilir arayüz bileşenleri
+└── test/                # Ortak test kurulumu
+```
 
-Component stilleri aynı klasördeki `*.module.css` dosyalarında tutulur. CSS Modules
-sınıf isimlerini build sırasında izole ettiği için yeni sayfaların stilleri mevcut
-sayfalarla çakışmaz.
+Bir özelliğe ait API, model, component, hook ve stiller aynı feature altında
+tutulur. Uygulama genelinde tekrar kullanılan kodlar `shared` altında yer alır.
+Yeni kod eklerken feature sınırlarını aşan doğrudan bağımlılıklar yerine bu
+ayrım korunmalıdır.
+
+## API çalışma modeli
+
+- Tarayıcı istekleri `/api` taban yolunu kullanır.
+- Access token korumalı isteklere `Bearer` başlığıyla eklenir.
+- 401 yanıtında tek bir refresh isteği çalıştırılır ve başarılıysa ilk istek
+  bir kez tekrarlanır.
+- Backend yanıtları kritik endpointlerde Zod şemalarıyla çalışma zamanında
+  doğrulanır.
+- Backend hata kodları ortak API hata katmanında kullanıcıya uygun Türkçe
+  mesajlara çevrilir. Backend'in ham teknik ve alan doğrulama mesajları
+  kullanıcıya doğrudan gösterilmez.
+
+Refactor ayrıntıları ve bilinen geliştirme alanları
+`finovation-docs/FRONTEND_REFACTOR_RAPORU.md` dosyasında tutulur.

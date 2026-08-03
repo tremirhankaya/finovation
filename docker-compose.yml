@@ -157,6 +157,7 @@ services:
     environment:
       VITE_API_BASE_URL: /api
       VITE_LOGIN_PATH: /v1/auth/login
+      VITE_DEV_PROXY_TARGET: http://backend:8080
       CHOKIDAR_USEPOLLING: "true"
 
     ports:
