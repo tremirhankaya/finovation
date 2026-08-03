@@ -1,16 +1,21 @@
 package com.infina.portfoliomanagement.auth.service;
 
+import com.infina.portfoliomanagement.auth.config.PasswordResetIpRateLimitProperties;
 import com.infina.portfoliomanagement.auth.config.PasswordResetProperties;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetStartRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetVerifyRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetVerifyResponse;
 import com.infina.portfoliomanagement.auth.security.PasswordResetTokenCodec;
+import com.infina.portfoliomanagement.auth.store.PasswordResetIpRateLimitStore;
 import com.infina.portfoliomanagement.auth.store.PasswordResetStore;
+import com.infina.portfoliomanagement.auth.store.model.OtpVerificationResult;
+import com.infina.portfoliomanagement.auth.store.model.OtpVerificationStatus;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,9 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.MailSendException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.infina.portfoliomanagement.auth.config.PasswordResetIpRateLimitProperties;
-import com.infina.portfoliomanagement.auth.store.PasswordResetIpRateLimitStore;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -34,11 +36,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class PasswordResetServiceTest {
@@ -180,7 +181,8 @@ class PasswordResetServiceTest {
     @Test
     void verifyOtp_missingOtp_throwsExpired() {
         stubUserAndIdentity();
-        when(passwordResetStore.getOtpHash("email-identity")).thenReturn(null);
+        when(tokenCodec.encode("otp:email-identity:123456")).thenReturn("submitted-hash");
+        stubOtpVerification(OtpVerificationStatus.EXPIRED, 0);
 
         assertError(
                 () -> passwordResetService.verifyOtp(
@@ -192,8 +194,9 @@ class PasswordResetServiceTest {
 
     @Test
     void verifyOtp_invalidOtp_recordsFailedAttempt() {
-        stubVerification("stored-hash", "submitted-hash");
-        when(passwordResetStore.recordFailedAttempt("email-identity")).thenReturn(1L);
+        stubUserAndIdentity();
+        when(tokenCodec.encode("otp:email-identity:123456")).thenReturn("submitted-hash");
+        stubOtpVerification(OtpVerificationStatus.INVALID, 1);
 
         assertError(
                 () -> passwordResetService.verifyOtp(
@@ -202,13 +205,14 @@ class PasswordResetServiceTest {
                 ErrorCode.PASSWORD_RESET_OTP_INVALID
         );
 
-        verify(passwordResetStore, never()).clearOtp("email-identity");
+        verify(passwordResetStore).verifyAndConsumeOtp("email-identity", "submitted-hash");
     }
 
     @Test
     void verifyOtp_atAttemptLimit_invalidatesOtp() {
-        stubVerification("stored-hash", "submitted-hash");
-        when(passwordResetStore.recordFailedAttempt("email-identity")).thenReturn(5L);
+        stubUserAndIdentity();
+        when(tokenCodec.encode("otp:email-identity:123456")).thenReturn("submitted-hash");
+        stubOtpVerification(OtpVerificationStatus.ATTEMPTS_EXCEEDED, 5);
 
         assertError(
                 () -> passwordResetService.verifyOtp(
@@ -217,12 +221,14 @@ class PasswordResetServiceTest {
                 ErrorCode.PASSWORD_RESET_ATTEMPTS_EXCEEDED
         );
 
-        verify(passwordResetStore).clearOtp("email-identity");
+        verify(passwordResetStore).verifyAndConsumeOtp("email-identity", "submitted-hash");
     }
 
     @Test
     void verifyOtp_validOtp_returnsAndStoresSingleUseResetToken() {
-        stubVerification("same-hash", "same-hash");
+        stubUserAndIdentity();
+        when(tokenCodec.encode("otp:email-identity:123456")).thenReturn("submitted-hash");
+        stubOtpVerification(OtpVerificationStatus.VERIFIED, 0);
         when(tokenCodec.encode(argThat(value -> value.startsWith("reset:"))))
                 .thenReturn("reset-token-hash");
 
@@ -231,7 +237,7 @@ class PasswordResetServiceTest {
         );
 
         assertThat(response.resetToken()).isNotBlank();
-        verify(passwordResetStore).clearOtp("email-identity");
+        verify(passwordResetStore).verifyAndConsumeOtp("email-identity", "submitted-hash");
         verify(passwordResetStore).saveResetToken("reset-token-hash", "reset.user");
     }
 
@@ -310,8 +316,9 @@ class PasswordResetServiceTest {
         assertThat(user.isPasswordChangeRequired()).isFalse();
         assertThat(user.getUpdatedAt()).isEqualTo(expectedTimestamp);
         assertThat(user.getCredentialsChangedAt()).isEqualTo(expectedTimestamp);
-        verify(userRepository).save(user);
+        verify(userRepository).saveAndFlush(user);
         verify(refreshTokenService).revokeAllForUser("reset.user");
+        verify(passwordResetStore).revokeResetTokensForUser("reset.user");
     }
 
     private void stubUserAndIdentity() {
@@ -320,10 +327,12 @@ class PasswordResetServiceTest {
         when(tokenCodec.encode("email:user@example.com")).thenReturn("email-identity");
     }
 
-    private void stubVerification(String storedHash, String submittedHash) {
-        stubUserAndIdentity();
-        when(passwordResetStore.getOtpHash("email-identity")).thenReturn(storedHash);
-        when(tokenCodec.encode("otp:email-identity:123456")).thenReturn(submittedHash);
+    private void stubOtpVerification(
+            OtpVerificationStatus status,
+            long attempts
+    ) {
+        when(passwordResetStore.verifyAndConsumeOtp("email-identity", "submitted-hash"))
+                .thenReturn(new OtpVerificationResult(status, attempts));
     }
 
     private void assertError(Runnable action, ErrorCode expectedErrorCode) {
