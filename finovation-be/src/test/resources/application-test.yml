@@ -1,0 +1,19 @@
+jwt:
+  secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+  access-token-expiration: 15m
+  refresh-token-expiration: 15h
+
+auth:
+  password-reset:
+    secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+    sender: test@finovation.local
+
+spring:
+  mail:
+    host: localhost
+    port: 2525
+    username: test
+    password: test
+
+  jpa:
+    show-sql: false
