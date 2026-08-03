@@ -1,0 +1,9 @@
+.env
+.DS_Store
+.git
+.idea
+coverage
+dist
+finovation-docs
+node_modules
+*.log
