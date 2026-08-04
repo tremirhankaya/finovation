@@ -41,7 +41,7 @@ public class EquityPriceSyncService {
                                   Clock clock,
                                   @Value("${marketdata.sync.price-lookback-days:30}") int lookbackDays,
                                   @Value("${marketdata.sync.price-deep-lookback-days:365}") int deepLookbackDays,
-                                  @Value("${marketdata.sync.price-history-start:1990-01-01}") String historyStart) {
+                                  @Value("${marketdata.sync.history-start:1990-01-01}") String historyStart) {
         this.equityPriceApi = equityPriceApi;
         this.assetRepository = assetRepository;
         this.equityPriceRepository = equityPriceRepository;
