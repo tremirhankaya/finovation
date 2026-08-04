@@ -1,0 +1,105 @@
+groups:
+  - name: finovation-application
+    rules:
+      - alert: BackendDown
+        expr: up{job="finovation-backend"} == 0 or absent(up{job="finovation-backend"})
+        for: 2m
+        keep_firing_for: 5m
+        labels:
+          severity: critical
+          service: finovation-backend
+          component: api
+          team: finovation
+        annotations:
+          summary: Finovation backend erişilemiyor
+          description: Prometheus en az 2 dakikadır backend metrik endpoint'ine erişemiyor.
+
+      - alert: HighHttp5xxRatio
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{job="finovation-backend",status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_server_requests_seconds_count{job="finovation-backend"}[5m])), 0.001)
+          ) > 0.05
+          and
+          sum(increase(http_server_requests_seconds_count{job="finovation-backend"}[5m])) >= 20
+        for: 5m
+        keep_firing_for: 5m
+        labels:
+          severity: warning
+          service: finovation-backend
+          component: api
+          team: finovation
+        annotations:
+          summary: Backend 5xx oranı yükseldi
+          description: Son 5 dakikada yeterli trafik altında 5xx oranı %5 eşiğini aştı.
+
+      - alert: HighHttp5xxRatio
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{job="finovation-backend",status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_server_requests_seconds_count{job="finovation-backend"}[5m])), 0.001)
+          ) > 0.20
+          and
+          sum(increase(http_server_requests_seconds_count{job="finovation-backend"}[5m])) >= 20
+        for: 5m
+        keep_firing_for: 5m
+        labels:
+          severity: critical
+          service: finovation-backend
+          component: api
+          team: finovation
+        annotations:
+          summary: Backend 5xx oranı kritik seviyede
+          description: Son 5 dakikada yeterli trafik altında 5xx oranı %20 eşiğini aştı.
+
+      - alert: HikariPoolSaturation
+        expr: |
+          (
+            sum(hikaricp_connections_active{job="finovation-backend"})
+            /
+            clamp_min(sum(hikaricp_connections_max{job="finovation-backend"}), 1)
+          ) > 0.90
+          or
+          sum(hikaricp_connections_pending{job="finovation-backend"}) > 0
+        for: 5m
+        keep_firing_for: 5m
+        labels:
+          severity: warning
+          service: finovation-backend
+          component: sqlserver
+          team: finovation
+        annotations:
+          summary: Veritabanı bağlantı havuzu doygun
+          description: HikariCP kullanım oranı %90 üzerinde veya bağlantı bekleyen istek bulunuyor.
+
+      - alert: HighJvmHeapUsage
+        expr: |
+          sum(jvm_memory_used_bytes{job="finovation-backend",area="heap"})
+          /
+          clamp_min(sum(jvm_memory_max_bytes{job="finovation-backend",area="heap"} > 0), 1)
+          > 0.85
+        for: 15m
+        keep_firing_for: 5m
+        labels:
+          severity: warning
+          service: finovation-backend
+          component: jvm
+          team: finovation
+        annotations:
+          summary: JVM heap kullanımı yüksek
+          description: Backend JVM heap kullanımı 15 dakikadır %85 eşiğinin üzerinde.
+
+      - alert: HighProcessCpu
+        expr: process_cpu_usage{job="finovation-backend"} > 0.85
+        for: 15m
+        keep_firing_for: 5m
+        labels:
+          severity: warning
+          service: finovation-backend
+          component: jvm
+          team: finovation
+        annotations:
+          summary: Backend CPU kullanımı yüksek
+          description: Backend process CPU kullanımı 15 dakikadır %85 eşiğinin üzerinde.
