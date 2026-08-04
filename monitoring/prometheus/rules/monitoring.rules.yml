@@ -1,0 +1,78 @@
+groups:
+  - name: finovation-monitoring
+    rules:
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0 or absent(up{job="alertmanager"})
+        for: 2m
+        keep_firing_for: 5m
+        labels:
+          severity: critical
+          service: finovation-monitoring
+          component: alertmanager
+          team: finovation
+        annotations:
+          summary: Alertmanager erişilemiyor
+          description: Prometheus en az 2 dakikadır Alertmanager metrik endpoint'ine erişemiyor.
+
+      - alert: AlertmanagerNotificationFailures
+        expr: increase(alertmanager_notifications_failed_total[5m]) > 0
+        for: 2m
+        keep_firing_for: 5m
+        labels:
+          severity: critical
+          service: finovation-monitoring
+          component: alertmanager
+          team: finovation
+        annotations:
+          summary: Alertmanager bildirim gönderemiyor
+          description: Alertmanager son 5 dakika içinde en az bir bildirim gönderim hatası kaydetti.
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[5m]) > 0
+        for: 2m
+        keep_firing_for: 5m
+        labels:
+          severity: warning
+          service: finovation-monitoring
+          component: prometheus
+          team: finovation
+        annotations:
+          summary: Prometheus kural değerlendirme hatası
+          description: Prometheus son 5 dakika içinde bir veya daha fazla alarm kuralını değerlendiremedi.
+
+      - alert: PrometheusAlertDeliveryFailures
+        expr: increase(prometheus_notifications_errors_total[5m]) > 0
+        for: 2m
+        keep_firing_for: 5m
+        labels:
+          severity: critical
+          service: finovation-monitoring
+          component: prometheus
+          team: finovation
+        annotations:
+          summary: Prometheus alarmları Alertmanager'a iletemiyor
+          description: Prometheus son 5 dakika içinde Alertmanager'a alarm gönderirken hata aldı.
+
+      - alert: PrometheusConfigReloadFailed
+        expr: prometheus_config_last_reload_successful == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: finovation-monitoring
+          component: prometheus
+          team: finovation
+        annotations:
+          summary: Prometheus konfigürasyonu yüklenemedi
+          description: Prometheus son konfigürasyon yenilemesini başarıyla tamamlayamadı.
+
+      - alert: AlertmanagerConfigReloadFailed
+        expr: alertmanager_config_last_reload_successful == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: finovation-monitoring
+          component: alertmanager
+          team: finovation
+        annotations:
+          summary: Alertmanager konfigürasyonu yüklenemedi
+          description: Alertmanager son konfigürasyon yenilemesini başarıyla tamamlayamadı.

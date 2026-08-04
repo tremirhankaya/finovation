@@ -178,10 +178,36 @@ services:
 
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - ./monitoring/prometheus/tests:/etc/prometheus/tests:ro
       - finovation_prometheus_data:/prometheus
 
     depends_on:
       - backend
+      - alertmanager
+
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.32.1
+    container_name: finovation-alertmanager
+
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.external-url=http://localhost:9093
+      - --enable-feature=utf8-strict-mode
+
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./monitoring/alertmanager/templates:/etc/alertmanager/templates:ro
+      - finovation_alertmanager_data:/alertmanager
+
+    secrets:
+      - alertmanager_slack_webhook_url
+
+    ports:
+      - "127.0.0.1:9093:9093"
 
     restart: unless-stopped
 
@@ -210,4 +236,9 @@ volumes:
   finovation_mssql_data:
   finovation_redis_data:
   finovation_prometheus_data:
+  finovation_alertmanager_data:
   finovation_grafana_data:
+
+secrets:
+  alertmanager_slack_webhook_url:
+    file: ./monitoring/alertmanager/secrets/slack_webhook_url

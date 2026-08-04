@@ -1,3 +1,8 @@
 .DS_Store
 .env
 .idea/
+
+# Alertmanager receiver secrets. Keep the example file versioned.
+monitoring/alertmanager/secrets/*
+!monitoring/alertmanager/secrets/.gitkeep
+!monitoring/alertmanager/secrets/slack_webhook_url.example
