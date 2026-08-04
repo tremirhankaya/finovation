@@ -50,13 +50,19 @@ public class RefreshTokenService {
         return rawToken;
     }
 
-    public String getUsername(String rawToken) {
-
+    public String consume(String rawToken) {
         String tokenHash = hash(rawToken);
         String redisKey = buildRedisKey(tokenHash);
 
-        return stringRedisTemplate.opsForValue()
-                .get(redisKey);
+        String username = stringRedisTemplate.opsForValue()
+                .getAndDelete(redisKey);
+
+        if (username != null) {
+            stringRedisTemplate.opsForSet()
+                    .remove(buildUserSetKey(username), tokenHash);
+        }
+
+        return username;
     }
 
     public void revoke(String rawToken) {

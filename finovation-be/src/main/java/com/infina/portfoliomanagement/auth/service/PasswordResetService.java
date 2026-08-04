@@ -1,18 +1,20 @@
 package com.infina.portfoliomanagement.auth.service;
 
+import com.infina.portfoliomanagement.auth.config.PasswordResetIpRateLimitProperties;
 import com.infina.portfoliomanagement.auth.config.PasswordResetProperties;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetStartRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetVerifyRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetVerifyResponse;
 import com.infina.portfoliomanagement.auth.security.PasswordResetTokenCodec;
+import com.infina.portfoliomanagement.auth.store.PasswordResetIpRateLimitStore;
 import com.infina.portfoliomanagement.auth.store.PasswordResetStore;
+import com.infina.portfoliomanagement.auth.store.model.OtpVerificationResult;
+import com.infina.portfoliomanagement.auth.store.model.OtpVerificationStatus;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
-import com.infina.portfoliomanagement.auth.config.PasswordResetIpRateLimitProperties;
-import com.infina.portfoliomanagement.auth.store.PasswordResetIpRateLimitStore;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +23,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -97,28 +97,32 @@ public class PasswordResetService {
                 .orElseThrow(() -> new BaseException(ErrorCode.PASSWORD_RESET_ACCOUNT_NOT_FOUND));
 
         String identity = tokenCodec.encode("email:" + email);
-        String storedOtpHash = passwordResetStore.getOtpHash(identity);
-        if (storedOtpHash == null) {
-            throw new BaseException(ErrorCode.PASSWORD_RESET_OTP_EXPIRED);
-        }
-
         String submittedOtpHash = tokenCodec.encode(
                 "otp:" + identity + ":" + request.code()
         );
 
-        if (!constantTimeEquals(storedOtpHash, submittedOtpHash)) {
-            long attempts = passwordResetStore.recordFailedAttempt(identity);
-            log.warn("Invalid password reset OTP: userId={}, attempt={}", user.getId(), attempts);
+        OtpVerificationResult verification =
+                passwordResetStore.verifyAndConsumeOtp(identity, submittedOtpHash);
 
-            if (attempts >= properties.maxAttempts()) {
-                passwordResetStore.clearOtp(identity);
-                throw new BaseException(ErrorCode.PASSWORD_RESET_ATTEMPTS_EXCEEDED);
-            }
-
+        if (verification.status() == OtpVerificationStatus.EXPIRED) {
+            throw new BaseException(ErrorCode.PASSWORD_RESET_OTP_EXPIRED);
+        }
+        if (verification.status() == OtpVerificationStatus.INVALID) {
+            log.warn(
+                    "Invalid password reset OTP: userId={}, attempt={}",
+                    user.getId(),
+                    verification.attempts()
+            );
             throw new BaseException(ErrorCode.PASSWORD_RESET_OTP_INVALID);
         }
-
-        passwordResetStore.clearOtp(identity);
+        if (verification.status() == OtpVerificationStatus.ATTEMPTS_EXCEEDED) {
+            log.warn(
+                    "Password reset OTP attempts exceeded: userId={}, attempt={}",
+                    user.getId(),
+                    verification.attempts()
+            );
+            throw new BaseException(ErrorCode.PASSWORD_RESET_ATTEMPTS_EXCEEDED);
+        }
 
         String resetToken = generateResetToken();
         String resetTokenHash = tokenCodec.encode("reset:" + resetToken);
@@ -143,13 +147,15 @@ public class PasswordResetService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
+        LocalDateTime now = LocalDateTime.now(clock);
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         user.setPasswordChangeRequired(false);
-        user.setUpdatedAt(LocalDateTime.now(clock));
-        user.setCredentialsChangedAt(LocalDateTime.now(clock));
-        userRepository.save(user);
+        user.setUpdatedAt(now);
+        user.setCredentialsChangedAt(now);
+        userRepository.saveAndFlush(user);
 
         refreshTokenService.revokeAllForUser(user.getUsername());
+        passwordResetStore.revokeResetTokensForUser(user.getUsername());
 
         log.info("Password reset completed: userId={}", user.getId());
     }
@@ -172,10 +178,4 @@ public class PasswordResetService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private boolean constantTimeEquals(String expected, String actual) {
-        return MessageDigest.isEqual(
-                expected.getBytes(StandardCharsets.UTF_8),
-                actual.getBytes(StandardCharsets.UTF_8)
-        );
-    }
 }

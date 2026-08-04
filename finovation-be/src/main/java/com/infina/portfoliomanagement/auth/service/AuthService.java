@@ -28,6 +28,7 @@ import com.infina.portfoliomanagement.auth.store.LoginAttemptStore;
 import jakarta.servlet.http.HttpServletRequest;
 import com.infina.portfoliomanagement.auth.config.RefreshRateLimitProperties;
 import com.infina.portfoliomanagement.auth.store.RefreshRateLimitStore;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -94,23 +95,31 @@ public class AuthService {
     public LoginResponse refreshToken(RefreshTokenRequest request) {
 
         String clientIp = resolveClientIp();
-        if (refreshRateLimitStore.recordAttempt(clientIp) > refreshRateLimitProperties.maxAttempts()) {
+
+        if (refreshRateLimitStore.recordAttempt(clientIp)
+                > refreshRateLimitProperties.maxAttempts()) {
             throw new BaseException(ErrorCode.REFRESH_TOKEN_RATE_LIMITED);
         }
 
-        String refreshToken = request.refreshToken();
-
         String username =
-                refreshTokenService.getUsername(refreshToken);
+                refreshTokenService.consume(request.refreshToken());
 
         if (username == null) {
             throw new BaseException(ErrorCode.INVALID_TOKEN);
         }
 
-        UserDetails userDetails =
-                customUserDetailsService.loadUserByUsername(username);
+        UserDetails userDetails;
 
-        refreshTokenService.revoke(refreshToken);
+        try {
+            userDetails =
+                    customUserDetailsService.loadUserByUsername(username);
+        } catch (UsernameNotFoundException exception) {
+            throw new BaseException(ErrorCode.INVALID_TOKEN);
+        }
+
+        if (!userDetails.isEnabled()) {
+            throw new BaseException(ErrorCode.INVALID_TOKEN);
+        }
 
         String accessToken =
                 jwtService.generateAccessToken(userDetails);
