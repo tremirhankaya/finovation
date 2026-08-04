@@ -27,10 +27,10 @@ public class EquityPriceRevision {
     @Column(name = "data_date", nullable = false)
     private LocalDate dataDate;
 
-    @Column(name = "old_close_price", nullable = false, precision = 19, scale = 6)
+    @Column(name = "old_close_price", nullable = false, precision = 19, scale = 8)
     private BigDecimal oldClosePrice;
 
-    @Column(name = "new_close_price", nullable = false, precision = 19, scale = 6)
+    @Column(name = "new_close_price", nullable = false, precision = 19, scale = 8)
     private BigDecimal newClosePrice;
 
     @Column(name = "old_source_record_date")

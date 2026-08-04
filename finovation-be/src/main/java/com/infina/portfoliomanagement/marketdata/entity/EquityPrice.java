@@ -27,16 +27,16 @@ public class EquityPrice {
     @Column(name = "data_date", nullable = false)
     private LocalDate dataDate;
 
-    @Column(name = "open_price", precision = 19, scale = 6)
+    @Column(name = "open_price", precision = 19, scale = 8)
     private BigDecimal openPrice;
 
-    @Column(name = "high_price", precision = 19, scale = 6)
+    @Column(name = "high_price", precision = 19, scale = 8)
     private BigDecimal highPrice;
 
-    @Column(name = "low_price", precision = 19, scale = 6)
+    @Column(name = "low_price", precision = 19, scale = 8)
     private BigDecimal lowPrice;
 
-    @Column(name = "close_price", nullable = false, precision = 19, scale = 6)
+    @Column(name = "close_price", nullable = false, precision = 19, scale = 8)
     private BigDecimal closePrice;
 
     @Column(name = "source_record_date")
