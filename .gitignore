@@ -5,3 +5,8 @@ data-export/
 data-export 2/
 data-export.zip
 docs/
+
+# Alertmanager receiver secrets. Keep the example file versioned.
+monitoring/alertmanager/secrets/*
+!monitoring/alertmanager/secrets/.gitkeep
+!monitoring/alertmanager/secrets/slack_webhook_url.example

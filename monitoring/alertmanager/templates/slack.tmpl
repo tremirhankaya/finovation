@@ -1,0 +1,15 @@
+{{ define "slack.finovation.title" -}}
+[{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}] {{ .CommonLabels.alertname }}
+{{- end }}
+
+{{ define "slack.finovation.text" -}}
+*Environment:* `{{ .CommonLabels.environment }}`  *Service:* `{{ .CommonLabels.service }}`  *Component:* `{{ .CommonLabels.component }}`
+{{ range .Alerts -}}
+{{ if .Annotations.summary }}
+*{{ .Annotations.summary }}*
+{{- end }}
+{{ if .Annotations.description }}
+{{ .Annotations.description }}
+{{- end }}
+{{ end -}}
+{{- end }}
