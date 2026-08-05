@@ -20,6 +20,8 @@ export default function DashboardPage() {
         </p>
       )}
 
+      <button onClick={() => navigate("/fund-design")}>Fon Tasarımı</button>
+
       {user?.canAccessPanel && (
         <button onClick={() => navigate("/users")}>Kullanıcılar</button>
       )}

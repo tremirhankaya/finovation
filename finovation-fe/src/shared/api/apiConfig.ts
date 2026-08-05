@@ -18,6 +18,8 @@ export const API_PATHS = {
   passwordReset:
     import.meta.env.VITE_PASSWORD_RESET_PATH?.trim() ||
     "/v1/auth/password-reset/reset",
+  fundDrafts:
+    import.meta.env.VITE_FUND_DRAFTS_PATH?.trim() || "/v1/fund-drafts",
 } as const
 
 function normalizePath(path: string): string {
@@ -63,4 +65,12 @@ export function getPasswordResetVerifyUrl(): string {
 
 export function getPasswordResetUrl(): string {
   return buildUrl(API_PATHS.passwordReset)
+}
+
+export function getFundDraftsUrl(): string {
+  return buildUrl(API_PATHS.fundDrafts)
+}
+
+export function getFundDraftLimitsUrl(): string {
+  return `${getFundDraftsUrl()}/limits`
 }
