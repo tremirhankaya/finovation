@@ -52,6 +52,10 @@ infina:
   connect-timeout: 5s
   read-timeout: 15s
 
+fund:
+  min-initial-portfolio-size: ${FUND_MIN_INITIAL_PORTFOLIO_SIZE:1000000}
+  max-initial-portfolio-size: ${FUND_MAX_INITIAL_PORTFOLIO_SIZE:100000000000}
+
 marketdata:
   sync:
     reference-cron: ${MARKETDATA_REFERENCE_SYNC_CRON:0 0 7 * * *}
@@ -60,7 +64,7 @@ marketdata:
     price-lookback-days: ${MARKETDATA_PRICE_LOOKBACK_DAYS:30}
     price-deep-lookback-days: ${MARKETDATA_PRICE_DEEP_LOOKBACK_DAYS:365}
     history-start: ${MARKETDATA_HISTORY_START:1990-01-01}
-    bootstrap-on-startup: ${MARKETDATA_BOOTSTRAP_ON_STARTUP:false}
+    bootstrap-on-startup: ${MARKETDATA_BOOTSTRAP_ON_STARTUP:true}
 
 resilience4j:
   ratelimiter:

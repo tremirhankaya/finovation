@@ -197,6 +197,12 @@ public enum ErrorCode {
             HttpStatus.CONFLICT,
             "This request was modified by another request. Please reload and try again."
     ),
+
+    FUND_INITIAL_SIZE_OUT_OF_RANGE(
+            "FUND_001",
+            HttpStatus.BAD_REQUEST,
+            "The initial portfolio size is outside the allowed range."
+    ),
     ;
 
     private final String code;
