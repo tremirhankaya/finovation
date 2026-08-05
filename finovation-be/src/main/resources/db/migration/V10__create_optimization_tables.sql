@@ -96,15 +96,16 @@ CREATE TABLE dbo.optimization_asset_preferences
         FOREIGN KEY (request_id)
             REFERENCES dbo.optimization_requests (id),
 
-    CONSTRAINT uk_optimization_asset_preferences_request_asset
-        UNIQUE (request_id, asset_code),
-
     CONSTRAINT ck_optimization_asset_preferences_type
         CHECK (preference_type IN ('KEEP', 'EXCLUDE', 'CANDIDATE_ADD', 'FORCE_ADD'))
 );
 
 CREATE INDEX ix_optimization_asset_preferences_request_id
     ON dbo.optimization_asset_preferences (request_id);
+
+CREATE UNIQUE INDEX uk_optimization_asset_preferences_request_asset
+    ON dbo.optimization_asset_preferences (request_id, asset_code)
+    WHERE active = 1;
 
 CREATE TABLE dbo.optimization_asset_limit_overrides
 (

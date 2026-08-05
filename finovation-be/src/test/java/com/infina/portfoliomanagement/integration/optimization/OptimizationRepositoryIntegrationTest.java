@@ -158,6 +158,37 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void assetPreference_inactiveDuplicateAssetInSameRequest_isAllowed() {
+        OptimizationRequest request = newRequest();
+        LocalDateTime now = LocalDateTime.now();
+
+        AssetPreference deactivated = AssetPreference.builder()
+                .request(request)
+                .assetCode("AKBNK")
+                .preferenceType(AssetPreferenceType.KEEP)
+                .active(false)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        assetPreferenceRepository.saveAndFlush(deactivated);
+
+        AssetPreference replacement = AssetPreference.builder()
+                .request(request)
+                .assetCode("AKBNK")
+                .preferenceType(AssetPreferenceType.EXCLUDE)
+                .active(true)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        AssetPreference saved = assetPreferenceRepository.saveAndFlush(replacement);
+
+        assertThat(saved.getId()).isNotNull();
+        assertThat(assetPreferenceRepository.findAllByRequestId(request.getId())).hasSize(2);
+    }
+
+    @Test
     void requestConstraintTarget_minGreaterThanMax_violatesCheckConstraint() {
         OptimizationRequest request = newRequest();
         LocalDateTime now = LocalDateTime.now();
