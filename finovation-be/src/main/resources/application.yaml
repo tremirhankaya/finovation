@@ -60,7 +60,7 @@ marketdata:
     price-lookback-days: ${MARKETDATA_PRICE_LOOKBACK_DAYS:30}
     price-deep-lookback-days: ${MARKETDATA_PRICE_DEEP_LOOKBACK_DAYS:365}
     history-start: ${MARKETDATA_HISTORY_START:1990-01-01}
-    bootstrap-on-startup: ${MARKETDATA_BOOTSTRAP_ON_STARTUP:true}
+    bootstrap-on-startup: ${MARKETDATA_BOOTSTRAP_ON_STARTUP:false}
 
 resilience4j:
   ratelimiter:

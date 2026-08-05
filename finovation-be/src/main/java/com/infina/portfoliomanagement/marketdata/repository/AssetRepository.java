@@ -1,7 +1,7 @@
 package com.infina.portfoliomanagement.marketdata.repository;
 
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
-import com.infina.portfoliomanagement.marketdata.enums.AssetType;
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

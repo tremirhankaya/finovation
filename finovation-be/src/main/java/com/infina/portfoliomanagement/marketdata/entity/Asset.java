@@ -1,6 +1,6 @@
 package com.infina.portfoliomanagement.marketdata.entity;
 
-import com.infina.portfoliomanagement.marketdata.enums.AssetType;
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;

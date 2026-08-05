@@ -1,6 +1,6 @@
 package com.infina.portfoliomanagement.optimization.entity;
 
-import com.infina.portfoliomanagement.optimization.enums.AssetType;
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.optimization.enums.ResultActionType;
 import jakarta.persistence.*;
 import lombok.*;

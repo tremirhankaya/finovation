@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.integration.optimization;
 
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.integration.AbstractIntegrationTest;
 import com.infina.portfoliomanagement.optimization.entity.AssetLimitOverride;
 import com.infina.portfoliomanagement.optimization.entity.AssetPreference;
@@ -8,7 +9,6 @@ import com.infina.portfoliomanagement.optimization.entity.OptimizationResult;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationResultAsset;
 import com.infina.portfoliomanagement.optimization.entity.RequestConstraintTarget;
 import com.infina.portfoliomanagement.optimization.enums.AssetPreferenceType;
-import com.infina.portfoliomanagement.optimization.enums.AssetType;
 import com.infina.portfoliomanagement.optimization.enums.LiquidityPreference;
 import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
 import com.infina.portfoliomanagement.optimization.enums.ResultActionType;
@@ -240,7 +240,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
         OptimizationResultAsset akbnk = OptimizationResultAsset.builder()
                 .result(result)
                 .assetCode("AKBNK")
-                .assetType(AssetType.STOCK)
+                .assetType(AssetType.EQUITY)
                 .currentWeight(new BigDecimal("0.08"))
                 .proposedWeight(new BigDecimal("0.06"))
                 .changeAmount(new BigDecimal("-0.02"))
