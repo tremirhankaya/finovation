@@ -214,7 +214,7 @@ CREATE TABLE dbo.optimization_result_assets
         UNIQUE (result_id, asset_code),
 
     CONSTRAINT ck_optimization_result_assets_asset_type
-        CHECK (asset_type IN ('STOCK', 'TPP')),
+        CHECK (asset_type IN ('EQUITY', 'TPP')),
 
     CONSTRAINT ck_optimization_result_assets_action_type
         CHECK (action_type IN ('INCREASE', 'DECREASE', 'KEEP'))
