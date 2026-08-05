@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.fund.controller;
 
 import com.infina.portfoliomanagement.fund.controller.docs.FundDraftControllerDocs;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
+import com.infina.portfoliomanagement.fund.dto.FundDraftLimitsResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
 import com.infina.portfoliomanagement.fund.service.FundDraftService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,5 +34,11 @@ public class FundDraftController implements FundDraftControllerDocs {
                 fundDraftService.createDraft(userDetails.getUsername(), request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Override
+    @GetMapping("/limits")
+    public FundDraftLimitsResponse getLimits() {
+        return fundDraftService.getLimits();
     }
 }

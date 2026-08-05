@@ -4,6 +4,7 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
+import com.infina.portfoliomanagement.fund.dto.FundDraftLimitsResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
@@ -27,6 +28,13 @@ public class FundDraftService {
     private final UserRepository userRepository;
     private final FundProperties fundProperties;
     private final Clock clock;
+
+    public FundDraftLimitsResponse getLimits() {
+        return new FundDraftLimitsResponse(
+                fundProperties.minInitialPortfolioSize(),
+                fundProperties.maxInitialPortfolioSize()
+        );
+    }
 
     @Transactional
     public FundDraftResponse createDraft(String actorUsername, CreateFundDraftRequest request) {

@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.fund.controller.docs;
 
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
+import com.infina.portfoliomanagement.fund.dto.FundDraftLimitsResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,4 +27,12 @@ public interface FundDraftControllerDocs {
             UserDetails userDetails,
             CreateFundDraftRequest request
     );
+
+    @Operation(
+            summary = "Get fund draft size limits",
+            description = "Returns the configured minimum and maximum initial portfolio size. "
+                    + "The frontend uses this for button state; create still enforces the same bounds.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    FundDraftLimitsResponse getLimits();
 }
