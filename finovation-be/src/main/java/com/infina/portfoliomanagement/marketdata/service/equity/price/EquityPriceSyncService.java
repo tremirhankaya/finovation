@@ -2,7 +2,7 @@ package com.infina.portfoliomanagement.marketdata.service.equity.price;
 
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.entity.EquityPrice;
-import com.infina.portfoliomanagement.marketdata.enums.AssetType;
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.marketdata.infina.api.EquityPriceApi;
 import com.infina.portfoliomanagement.marketdata.infina.dto.EquityPriceRecord;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;

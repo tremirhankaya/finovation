@@ -3,7 +3,7 @@ package com.infina.portfoliomanagement.marketdata.service.equity.definition;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.entity.EquityDetail;
 import com.infina.portfoliomanagement.marketdata.entity.Sector;
-import com.infina.portfoliomanagement.marketdata.enums.AssetType;
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.marketdata.infina.api.CodeDefinitionApi;
 import com.infina.portfoliomanagement.marketdata.infina.dto.CodeDefinitionRecord;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;

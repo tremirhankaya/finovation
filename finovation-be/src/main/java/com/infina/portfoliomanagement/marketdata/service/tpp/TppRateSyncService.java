@@ -2,7 +2,7 @@ package com.infina.portfoliomanagement.marketdata.service.tpp;
 
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.entity.TppRate;
-import com.infina.portfoliomanagement.marketdata.enums.AssetType;
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.marketdata.infina.api.TppRateApi;
 import com.infina.portfoliomanagement.marketdata.infina.dto.TppRateRecord;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
