@@ -66,7 +66,10 @@ CREATE TABLE dbo.optimization_request_constraint_targets
             'EQUITY_WEIGHT_MIN', 'EQUITY_WEIGHT_MAX', 'TPP_MIN', 'TPP_MAX',
             'SINGLE_STOCK_MIN', 'SINGLE_STOCK_MAX', 'STOCK_COUNT_MIN', 'STOCK_COUNT_MAX',
             'SECTOR_MAX', 'CORRELATION_GROUP_MAX'
-        ))
+        )),
+
+    CONSTRAINT ck_optimization_request_constraint_targets_min_max
+        CHECK (min_value IS NULL OR max_value IS NULL OR min_value <= max_value)
 );
 
 CREATE INDEX ix_optimization_request_constraint_targets_request_id

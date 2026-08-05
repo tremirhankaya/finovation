@@ -6,17 +6,20 @@ import com.infina.portfoliomanagement.optimization.entity.AssetPreference;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationRequest;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationResult;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationResultAsset;
+import com.infina.portfoliomanagement.optimization.entity.RequestConstraintTarget;
 import com.infina.portfoliomanagement.optimization.enums.AssetPreferenceType;
 import com.infina.portfoliomanagement.optimization.enums.AssetType;
 import com.infina.portfoliomanagement.optimization.enums.LiquidityPreference;
 import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
 import com.infina.portfoliomanagement.optimization.enums.ResultActionType;
 import com.infina.portfoliomanagement.optimization.enums.RiskLevel;
+import com.infina.portfoliomanagement.optimization.enums.OptimizationConstraintCode;
 import com.infina.portfoliomanagement.optimization.repository.AssetLimitOverrideRepository;
 import com.infina.portfoliomanagement.optimization.repository.AssetPreferenceRepository;
 import com.infina.portfoliomanagement.optimization.repository.OptimizationRequestRepository;
 import com.infina.portfoliomanagement.optimization.repository.OptimizationResultAssetRepository;
 import com.infina.portfoliomanagement.optimization.repository.OptimizationResultRepository;
+import com.infina.portfoliomanagement.optimization.repository.RequestConstraintTargetRepository;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.enums.Role;
 import com.infina.portfoliomanagement.user.enums.UserStatus;
@@ -54,6 +57,9 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private OptimizationResultAssetRepository optimizationResultAssetRepository;
 
+    @Autowired
+    private RequestConstraintTargetRepository requestConstraintTargetRepository;
+
     private User fundManager;
 
     @BeforeEach
@@ -62,6 +68,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
         optimizationResultRepository.deleteAll();
         assetLimitOverrideRepository.deleteAll();
         assetPreferenceRepository.deleteAll();
+        requestConstraintTargetRepository.deleteAll();
         optimizationRequestRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -147,6 +154,24 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
                 .build();
 
         assertThatThrownBy(() -> assetPreferenceRepository.saveAndFlush(duplicate))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void requestConstraintTarget_minGreaterThanMax_violatesCheckConstraint() {
+        OptimizationRequest request = newRequest();
+        LocalDateTime now = LocalDateTime.now();
+
+        RequestConstraintTarget invalid = RequestConstraintTarget.builder()
+                .request(request)
+                .constraintCode(OptimizationConstraintCode.STOCK_COUNT_MIN)
+                .minValue(new BigDecimal("30"))
+                .maxValue(new BigDecimal("10"))
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        assertThatThrownBy(() -> requestConstraintTargetRepository.saveAndFlush(invalid))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
