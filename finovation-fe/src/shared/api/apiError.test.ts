@@ -89,6 +89,22 @@ describe("toApiRequestError", () => {
     expect(error.message).not.toContain("You cannot delete")
   })
 
+  it("FUND_001 kodunu kullanıcı dostu mesaja çevirir", () => {
+    const error = toApiRequestError(
+      {
+        code: "FUND_001",
+        message: "The initial portfolio size is outside the allowed range.",
+      },
+      400,
+      "Fon taslağı oluşturulamadı",
+    )
+
+    expect(error.message).toBe(
+      "Başlangıç portföy büyüklüğü izin verilen aralığın dışında.",
+    )
+    expect(error.message).not.toContain("outside the allowed range")
+  })
+
   it("403 yanıtını yetki hatası olarak işaretler", () => {
     const error = toApiRequestError({}, 403, "İşlem başarısız")
 

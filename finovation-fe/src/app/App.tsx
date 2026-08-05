@@ -6,6 +6,8 @@ import AuthProvider from "@/features/auth/context/AuthProvider"
 import LoginPage from "@/features/auth/pages/LoginPage"
 import DashboardPage from "@/features/dashboard/pages/DashboardPage"
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage"
+import StartFundDraftPage from "@/features/fund-design/pages/StartFundDraftPage"
+import FundDesignStrategyPage from "@/features/fund-design/pages/FundDesignStrategyPage"
 import UsersPage from "@/features/users/pages/UsersPage"
 
 export default function App() {
@@ -54,6 +56,24 @@ export default function App() {
             element={
               <ProtectedRoute requirePanelAccess>
                 <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/fund-design"
+            element={
+              <ProtectedRoute>
+                <StartFundDraftPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/fund-design/:draftId/strategy"
+            element={
+              <ProtectedRoute>
+                <FundDesignStrategyPage />
               </ProtectedRoute>
             }
           />

@@ -37,6 +37,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   USER_003: "Bu kullanıcı adı daha önce alınmış.",
   COMPANY_001: "Şirket bulunamadı.",
   COMPANY_002: "Rol ve şirket seçimi birbiriyle uyumlu değil.",
+  FUND_001: "Başlangıç portföy büyüklüğü izin verilen aralığın dışında.",
 }
 
 function fallbackMessage(fallback: string): string {
