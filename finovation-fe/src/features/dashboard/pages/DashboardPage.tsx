@@ -26,6 +26,10 @@ export default function DashboardPage() {
         <button onClick={() => navigate("/users")}>Kullanıcılar</button>
       )}
 
+      <button onClick={() => navigate("/fund-monitoring")}>
+        Fon İzleme ve Performans
+      </button>
+
       <button onClick={handleReturnToLogin}>Giriş ekranına dön</button>
     </div>
   )
