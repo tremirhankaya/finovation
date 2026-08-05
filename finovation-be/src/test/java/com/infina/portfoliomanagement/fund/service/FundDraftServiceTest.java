@@ -149,6 +149,14 @@ class FundDraftServiceTest {
     }
 
     @Test
+    void getLimits_returnsConfiguredBounds() {
+        var limits = fundDraftService.getLimits();
+
+        assertThat(limits.minInitialPortfolioSize()).isEqualByComparingTo(MIN_SIZE);
+        assertThat(limits.maxInitialPortfolioSize()).isEqualByComparingTo(MAX_SIZE);
+    }
+
+    @Test
     void unknownActor_throwsUserNotFoundAndDoesNotSave() {
         when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
 
