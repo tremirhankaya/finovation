@@ -155,6 +155,48 @@ public enum ErrorCode {
             HttpStatus.BAD_GATEWAY,
             "External service returned an error."
     ),
+
+    OPT_REQUEST_NOT_FOUND(
+            "OPT_001",
+            HttpStatus.NOT_FOUND,
+            "Optimization request not found."
+    ),
+
+    OPT_ASSET_NOT_IN_UNIVERSE(
+            "OPT_002",
+            HttpStatus.BAD_REQUEST,
+            "The asset is not part of the defined investment universe."
+    ),
+
+    OPT_INVALID_CONSTRAINT_VALUE(
+            "OPT_003",
+            HttpStatus.BAD_REQUEST,
+            "The constraint value is outside the allowed range."
+    ),
+
+    OPT_CONSTRAINT_SET_INFEASIBLE(
+            "OPT_004",
+            HttpStatus.BAD_REQUEST,
+            "The combined constraints cannot be satisfied together."
+    ),
+
+    OPT_ASSET_PREFERENCE_CONFLICT(
+            "OPT_005",
+            HttpStatus.BAD_REQUEST,
+            "An asset cannot have more than one active preference in the same request."
+    ),
+
+    OPT_ASSET_LIMIT_INVALID(
+            "OPT_006",
+            HttpStatus.BAD_REQUEST,
+            "The asset limit override's minimum weight must not exceed its maximum weight."
+    ),
+
+    OPT_VERSION_CONFLICT(
+            "OPT_007",
+            HttpStatus.CONFLICT,
+            "This request was modified by another request. Please reload and try again."
+    ),
     ;
 
     private final String code;
