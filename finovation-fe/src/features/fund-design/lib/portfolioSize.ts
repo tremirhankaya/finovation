@@ -1,4 +1,7 @@
-import type { FundDraftLimits } from "@/features/fund-design/model/fundDraftSchemas"
+type PortfolioSizeLimits = {
+  minInitialPortfolioSize: number
+  maxInitialPortfolioSize: number
+}
 
 const amountFormatter = new Intl.NumberFormat("tr-TR")
 
@@ -23,7 +26,7 @@ export function formatPortfolioSize(value: number | string): string {
 
 export function limitBarPosition(
   raw: string,
-  limits: FundDraftLimits,
+  limits: PortfolioSizeLimits,
 ): number | null {
   const value = parsePortfolioSize(raw)
   if (value == null) return null
@@ -40,7 +43,7 @@ export function limitBarPosition(
 
 export function isPortfolioSizeReady(
   raw: string,
-  limits: FundDraftLimits | null,
+  limits: PortfolioSizeLimits | null,
 ): boolean {
   if (!limits) return false
 
