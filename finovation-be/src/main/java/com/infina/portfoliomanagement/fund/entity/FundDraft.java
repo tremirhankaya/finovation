@@ -19,6 +19,8 @@ import java.util.UUID;
 @Builder
 public class FundDraft {
 
+    public static final String DEFAULT_CURRENCY_CODE = "TRY";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -62,4 +64,21 @@ public class FundDraft {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public static FundDraft newDraft(
+            BigDecimal initialPortfolioSize,
+            Long createdByUserId,
+            LocalDateTime now
+    ) {
+        return FundDraft.builder()
+                .publicId(UUID.randomUUID())
+                .fundType(FundType.EQUITY_INTENSIVE)
+                .currencyCode(DEFAULT_CURRENCY_CODE)
+                .initialPortfolioSize(initialPortfolioSize)
+                .status(FundDraftStatus.IN_PROGRESS)
+                .createdByUserId(createdByUserId)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
 }
