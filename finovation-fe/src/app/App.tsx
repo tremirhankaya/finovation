@@ -8,6 +8,7 @@ import DashboardPage from "@/features/dashboard/pages/DashboardPage"
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage"
 import StartFundDraftPage from "@/features/fund-design/pages/StartFundDraftPage"
 import FundDesignStrategyPage from "@/features/fund-design/pages/FundDesignStrategyPage"
+import FundMonitoringPage from "@/features/fund-monitoring/pages/FundMonitoringPage"
 import UsersPage from "@/features/users/pages/UsersPage"
 
 export default function App() {
@@ -74,6 +75,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <FundDesignStrategyPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/fund-monitoring"
+            element={
+              <ProtectedRoute>
+                <FundMonitoringPage />
               </ProtectedRoute>
             }
           />

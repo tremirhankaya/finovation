@@ -6,6 +6,13 @@
 /data-export.zip
 /docs/
 
+# Local Codex project context and working instructions.
+AGENTS.md
+finovation-be/AGENTS.md
+finovation-fe/AGENTS.md
+docs/PROJECT_CONTEXT.md
+
+
 # Alertmanager receiver secrets. Keep the example file versioned.
 monitoring/alertmanager/secrets/*
 !monitoring/alertmanager/secrets/.gitkeep
