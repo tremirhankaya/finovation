@@ -1,6 +1,10 @@
 .DS_Store
 .env
 .idea/
+data-export/
+data-export 2/
+data-export.zip
+docs/
 
 # Alertmanager receiver secrets. Keep the example file versioned.
 monitoring/alertmanager/secrets/*

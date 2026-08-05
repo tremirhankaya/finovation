@@ -46,6 +46,51 @@ jwt:
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
   refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:15h}
 
+infina:
+  base-url: ${INFINA_BASE_URL}
+  api-key: ${INFINA_API_KEY}
+  connect-timeout: 5s
+  read-timeout: 15s
+
+marketdata:
+  sync:
+    reference-cron: ${MARKETDATA_REFERENCE_SYNC_CRON:0 0 7 * * *}
+    price-cron: ${MARKETDATA_PRICE_SYNC_CRON:0 30 9,19 * * *}
+    price-deep-refresh-cron: ${MARKETDATA_PRICE_DEEP_REFRESH_CRON:0 0 4 * * SUN}
+    price-lookback-days: ${MARKETDATA_PRICE_LOOKBACK_DAYS:30}
+    price-deep-lookback-days: ${MARKETDATA_PRICE_DEEP_LOOKBACK_DAYS:365}
+    history-start: ${MARKETDATA_HISTORY_START:1990-01-01}
+    bootstrap-on-startup: ${MARKETDATA_BOOTSTRAP_ON_STARTUP:true}
+
+resilience4j:
+  ratelimiter:
+    instances:
+      infina:
+        limit-for-period: 30
+        limit-refresh-period: 1s
+        timeout-duration: 5s
+  retry:
+    instances:
+      infina:
+        max-attempts: 4
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.client.HttpClientErrorException$TooManyRequests
+  circuitbreaker:
+    instances:
+      infina:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        ignore-exceptions:
+          - com.infina.portfoliomanagement.common.exception.BaseException
+
 auth:
   password-reset:
     secret: ${PASSWORD_RESET_SECRET:${JWT_SECRET}}

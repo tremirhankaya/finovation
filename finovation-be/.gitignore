@@ -35,3 +35,6 @@ build/
 ### Local secrets / OS ###
 .env
 .DS_Store
+
+### Data ingest output ###
+data-export/

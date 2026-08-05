@@ -1,0 +1,59 @@
+no,asset_code,company,sector_group,current_index,theme
+1,AKBNK.E,Akbank T.A.Ş.,BIST Banka,BIST 100 (XU100),Bankacılık
+2,ALBRK.E,Albaraka Türk Katılım Bankası A.Ş.,BIST Banka,BIST Tüm-100 (XTUMY); BIST Banka,Katılım bankacılığı
+3,GARAN.E,Türkiye Garanti Bankası A.Ş.,BIST Banka,BIST 100 (XU100),Bankacılık
+4,HALKB.E,Türkiye Halk Bankası A.Ş.,BIST Banka,BIST 100 (XU100),Bankacılık
+5,ISCTR.E,Türkiye İş Bankası A.Ş. C Grubu,BIST Banka,BIST 100 (XU100),Bankacılık
+6,TSKB.E,Türkiye Sınai Kalkınma Bankası A.Ş.,BIST Banka,BIST 100 (XU100),Kalkınma ve yatırım bankacılığı
+7,VAKBN.E,Türkiye Vakıflar Bankası T.A.O.,BIST Banka,BIST 100 (XU100),Bankacılık
+8,YKBNK.E,Yapı ve Kredi Bankası A.Ş.,BIST Banka,BIST 100 (XU100),Bankacılık
+9,ALARK.E,Alarko Holding A.Ş.,BIST Holding ve Yatırım,BIST 100 (XU100),Holding
+10,DOHOL.E,Doğan Şirketler Grubu Holding A.Ş.,BIST Holding ve Yatırım,BIST 100 (XU100),Holding
+11,ECILC.E,EİS Eczacıbaşı İlaç Sınai ve Finansal Yatırımlar Sanayi ve Ticaret A.Ş.,BIST Holding ve Yatırım,BIST 100 (XU100),Sağlık yatırımları / holding
+12,KCHOL.E,Koç Holding A.Ş.,BIST Holding ve Yatırım,BIST 100 (XU100),Holding
+13,SAHOL.E,Hacı Ömer Sabancı Holding A.Ş.,BIST Holding ve Yatırım,BIST 100 (XU100),Holding
+14,TKFEN.E,Tekfen Holding A.Ş.,BIST Holding ve Yatırım,BIST 100 (XU100),Taahhüt / holding
+15,EKGYO.E,Emlak Konut Gayrimenkul Yatırım Ortaklığı A.Ş.,BIST Gayrimenkul Yatırım Ortaklıkları,BIST 100 (XU100),Gayrimenkul
+16,ISGYO.E,İş Gayrimenkul Yatırım Ortaklığı A.Ş.,BIST Gayrimenkul Yatırım Ortaklıkları,BIST Tüm-100 (XTUMY); BIST Gayrimenkul Yatırım Ortaklıkları,Gayrimenkul
+17,AKSEN.E,Aksa Enerji Üretim A.Ş.,BIST Elektrik,BIST 100 (XU100),Elektrik üretimi
+18,ODAS.E,Odaş Elektrik Üretim Sanayi Ticaret A.Ş.,BIST Elektrik,BIST 100 (XU100),Enerji / madencilik
+19,ZOREN.E,Zorlu Enerji Elektrik Üretim A.Ş.,BIST Elektrik,BIST 100 (XU100),Enerji
+20,AKSA.E,Aksa Akrilik Kimya Sanayii A.Ş.,"BIST Kimya, Petrol, Plastik",BIST 100 (XU100),Kimya / tekstil girdisi
+21,AYGAZ.E,Aygaz A.Ş.,"BIST Kimya, Petrol, Plastik","BIST Tüm-100 (XTUMY); BIST Kimya, Petrol, Plastik",Enerji dağıtımı / LPG
+22,BRISA.E,Brisa Bridgestone Sabancı Lastik Sanayi ve Ticaret A.Ş.,"BIST Kimya, Petrol, Plastik","BIST Tüm-100 (XTUMY); BIST Kimya, Petrol, Plastik",Otomotiv yan sanayi
+23,DEVA.E,Deva Holding A.Ş.,"BIST Kimya, Petrol, Plastik","BIST Tüm-100 (XTUMY); BIST Kimya, Petrol, Plastik",Sağlık / ilaç
+24,GUBRF.E,Gübre Fabrikaları T.A.Ş.,"BIST Kimya, Petrol, Plastik",BIST 100 (XU100),Gübre / madencilik
+25,PETKM.E,Petkim Petrokimya Holding A.Ş.,"BIST Kimya, Petrol, Plastik",BIST 100 (XU100),Petrokimya
+26,SASA.E,Sasa Polyester Sanayi A.Ş.,"BIST Kimya, Petrol, Plastik",BIST 100 (XU100),Polyester / kimya
+27,TUPRS.E,Türkiye Petrol Rafinerileri A.Ş.,"BIST Kimya, Petrol, Plastik",BIST 100 (XU100),Rafineri
+28,EREGL.E,Ereğli Demir ve Çelik Fabrikaları T.A.Ş.,BIST Ana Metal,BIST 100 (XU100),Demir-çelik
+29,KRDMD.E,Kardemir Karabük Demir Çelik Sanayi ve Ticaret A.Ş. D Grubu,BIST Ana Metal,BIST 100 (XU100),Demir-çelik
+30,BRSAN.E,Borusan Birleşik Boru Fabrikaları Sanayi ve Ticaret A.Ş.,"BIST Metal Eşya, Makina",BIST 100 (XU100),Çelik boru / sanayi
+31,EGEEN.E,Ege Endüstri ve Ticaret A.Ş.,"BIST Metal Eşya, Makina","BIST Tüm-100 (XTUMY); BIST Metal Eşya, Makina",Otomotiv yan sanayi / ihracat
+32,FROTO.E,Ford Otomotiv Sanayi A.Ş.,"BIST Metal Eşya, Makina",BIST 100 (XU100),Otomotiv
+33,KARSN.E,Karsan Otomotiv Sanayii ve Ticaret A.Ş.,"BIST Metal Eşya, Makina","BIST Tüm-100 (XTUMY); BIST Metal Eşya, Makina",Elektrikli ticari araç
+34,OTKAR.E,Otokar Otomotiv ve Savunma Sanayi A.Ş.,"BIST Metal Eşya, Makina",BIST 100 (XU100),Otomotiv / savunma
+35,TOASO.E,Tofaş Türk Otomobil Fabrikası A.Ş.,"BIST Metal Eşya, Makina",BIST 100 (XU100),Otomotiv
+36,TTRAK.E,Türk Traktör ve Ziraat Makineleri A.Ş.,"BIST Metal Eşya, Makina","BIST Tüm-100 (XTUMY); BIST Metal Eşya, Makina",Tarım makineleri
+37,VESTL.E,Vestel Elektronik Sanayi ve Ticaret A.Ş.,"BIST Metal Eşya, Makina",BIST 100 (XU100),Elektronik / dayanıklı tüketim
+38,CIMSA.E,Çimsa Çimento Sanayi ve Ticaret A.Ş.,"BIST Taş, Toprak",BIST 100 (XU100),Çimento
+39,SISE.E,Türkiye Şişe ve Cam Fabrikaları A.Ş.,"BIST Taş, Toprak",BIST 100 (XU100),Cam / kimya
+40,AEFES.E,Anadolu Efes Biracılık ve Malt Sanayii A.Ş.,"BIST Gıda, İçecek",BIST 100 (XU100),Tüketim / içecek
+41,CCOLA.E,Coca-Cola İçecek A.Ş.,"BIST Gıda, İçecek",BIST 100 (XU100),İçecek
+42,TATGD.E,Tat Gıda Sanayi A.Ş.,"BIST Gıda, İçecek","BIST Tüm-100 (XTUMY); BIST Gıda, İçecek",Gıda
+43,ULKER.E,Ülker Bisküvi Sanayi A.Ş.,"BIST Gıda, İçecek",BIST 100 (XU100),Paketli gıda
+44,BIMAS.E,BİM Birleşik Mağazalar A.Ş.,BIST Ticaret,BIST 100 (XU100),Gıda perakendesi
+45,DOAS.E,Doğuş Otomotiv Servis ve Ticaret A.Ş.,BIST Ticaret,BIST 100 (XU100),Otomotiv dağıtımı
+46,MGROS.E,Migros Ticaret A.Ş.,BIST Ticaret,BIST 100 (XU100),Gıda perakendesi
+47,CLEBI.E,Çelebi Hava Servisi A.Ş.,BIST Ulaştırma,BIST Tüm-100 (XTUMY); BIST Ulaştırma,Havacılık hizmetleri
+48,PGSUS.E,Pegasus Hava Taşımacılığı A.Ş.,BIST Ulaştırma,BIST 100 (XU100),Havacılık
+49,TAVHL.E,TAV Havalimanları Holding A.Ş.,BIST Ulaştırma,BIST 100 (XU100),Havalimanı işletmeciliği
+50,THYAO.E,Türk Hava Yolları A.O.,BIST Ulaştırma,BIST 100 (XU100),Havacılık
+51,TCELL.E,Turkcell İletişim Hizmetleri A.Ş.,BIST İletişim,BIST 100 (XU100),Telekomünikasyon
+52,TTKOM.E,Türk Telekomünikasyon A.Ş.,BIST İletişim,BIST 100 (XU100),Telekomünikasyon
+53,ASELS.E,Aselsan Elektronik Sanayi ve Ticaret A.Ş.,BIST Teknoloji,BIST 100 (XU100),Savunma / teknoloji
+54,NETAS.E,Netaş Telekomünikasyon A.Ş.,BIST Bilişim / BIST Teknoloji,BIST Tüm-100 (XTUMY); BIST Bilişim / BIST Teknoloji,Bilişim / telekom altyapısı
+55,ENKAI.E,Enka İnşaat ve Sanayi A.Ş.,BIST İnşaat,BIST 100 (XU100),İnşaat / enerji
+56,KORDS.E,Kordsa Teknik Tekstil A.Ş.,"BIST Tekstil, Deri","BIST Tüm-100 (XTUMY); BIST Tekstil, Deri",Kompozit / teknik tekstil
+57,FENER.E,Fenerbahçe Futbol A.Ş.,BIST Spor,BIST 100 (XU100),Spor
+58,GSRAY.E,Galatasaray Sportif Sınai ve Ticari Yatırımlar A.Ş.,BIST Spor,BIST 100 (XU100),Spor

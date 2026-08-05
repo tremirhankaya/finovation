@@ -149,6 +149,12 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "Company assignment is invalid for the given role."
     ),
+
+    EXTERNAL_SERVICE_ERROR(
+            "EXT_001",
+            HttpStatus.BAD_GATEWAY,
+            "External service returned an error."
+    ),
     ;
 
     private final String code;
