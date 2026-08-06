@@ -9,6 +9,5 @@ public enum OptimizationConstraintCode {
     SINGLE_STOCK_MAX,
     STOCK_COUNT_MIN,
     STOCK_COUNT_MAX,
-    SECTOR_MAX,
-    CORRELATION_GROUP_MAX
+    SECTOR_MAX
 }
