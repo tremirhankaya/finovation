@@ -1,6 +1,7 @@
 package com.infina.portfoliomanagement.fund.repository;
 
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
+import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -12,4 +13,14 @@ public interface FundDraftRepository extends JpaRepository<FundDraft, Long> {
     Optional<FundDraft> findByPublicId(UUID publicId);
 
     List<FundDraft> findAllByCreatedByUserIdOrderByCreatedAtDesc(Long createdByUserId);
+
+    List<FundDraft> findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+            FundDraftStatus status,
+            Long createdByUserId
+    );
+
+    Optional<FundDraft> findByPublicIdAndStatus(
+            UUID publicId,
+            FundDraftStatus status
+    );
 }

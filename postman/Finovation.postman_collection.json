@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Finovation API",
-    "description": "Auth & Kullanıcı Yönetimi endpoint'leri. Login çalıştığında accessToken/refreshToken otomatik olarak collection değişkenlerine yazılır, sonraki istekler bunu kullanır.",
+    "description": "Finovation API endpoint'leri. Login çalıştığında accessToken/refreshToken otomatik olarak collection değişkenlerine yazılır, sonraki istekler bunu kullanır.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -14,7 +14,8 @@
     { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
     { "key": "accessToken", "value": "", "type": "string" },
     { "key": "refreshToken", "value": "", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" }
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "fundId", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -183,6 +184,47 @@
               "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fund Monitoring",
+      "item": [
+        {
+          "name": "List Active Funds",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/funds",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "funds"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const funds = pm.response.json();",
+                  "    if (funds.length > 0) pm.collectionVariables.set('fundId', funds[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Fund Monitoring Snapshot",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/funds/{{fundId}}/monitoring",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "funds", "{{fundId}}", "monitoring"]
             }
           }
         }

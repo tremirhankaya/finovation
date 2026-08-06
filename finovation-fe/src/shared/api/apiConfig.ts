@@ -20,6 +20,7 @@ export const API_PATHS = {
     "/v1/auth/password-reset/reset",
   fundDrafts:
     import.meta.env.VITE_FUND_DRAFTS_PATH?.trim() || "/v1/fund-drafts",
+  funds: import.meta.env.VITE_FUNDS_PATH?.trim() || "/v1/funds",
 } as const
 
 function normalizePath(path: string): string {
@@ -73,4 +74,12 @@ export function getFundDraftsUrl(): string {
 
 export function getFundDraftLimitsUrl(): string {
   return `${getFundDraftsUrl()}/limits`
+}
+
+export function getFundsUrl(): string {
+  return buildUrl(API_PATHS.funds)
+}
+
+export function getFundMonitoringUrl(fundId: string): string {
+  return `${getFundsUrl()}/${encodeURIComponent(fundId)}/monitoring`
 }

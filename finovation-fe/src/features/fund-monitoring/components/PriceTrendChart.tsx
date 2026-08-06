@@ -35,8 +35,9 @@ export default function PriceTrendChart({
   points,
   fundName,
 }: PriceTrendChartProps) {
-  const hasData = points.length > 1
-  const linePath = hasData ? createPath(points) : ""
+  const hasData = points.length > 0
+  const hasLine = points.length > 1
+  const linePath = hasLine ? createPath(points) : ""
   const areaPath = linePath
     ? `${linePath} L${WIDTH - PADDING_X} ${HEIGHT - PADDING_Y} L${PADDING_X} ${HEIGHT - PADDING_Y} Z`
     : ""
@@ -71,7 +72,7 @@ export default function PriceTrendChart({
           />
         ))}
 
-        {hasData ? (
+        {hasLine ? (
           <>
             <path d={areaPath} fill="url(#fund-price-area)" />
             <path
@@ -83,6 +84,8 @@ export default function PriceTrendChart({
               strokeLinejoin="round"
             />
           </>
+        ) : hasData ? (
+          <circle cx={PADDING_X} cy={HEIGHT / 2} r="5" fill="#0d9488" />
         ) : (
           <line
             x1={PADDING_X}
@@ -96,6 +99,9 @@ export default function PriceTrendChart({
         )}
       </svg>
       {!hasData && <p>Grafik verisi fon seçildikten sonra gösterilecek.</p>}
+      {hasData && !hasLine && (
+        <p>Fon yeni oluşturulduğu için henüz tek fiyat verisi bulunuyor.</p>
+      )}
     </div>
   )
 }
