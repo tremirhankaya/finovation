@@ -1,8 +1,7 @@
 package com.infina.portfoliomanagement.optimization.entity;
 
-import com.infina.portfoliomanagement.optimization.enums.LiquidityPreference;
 import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
-import com.infina.portfoliomanagement.optimization.enums.RiskLevel;
+import com.infina.portfoliomanagement.optimization.enums.RiskProfile;
 import com.infina.portfoliomanagement.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,12 +35,8 @@ public class OptimizationRequest {
     private User requestedBy;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "risk_level", nullable = false, length = 10)
-    private RiskLevel riskLevel;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "liquidity_preference", nullable = false, length = 10)
-    private LiquidityPreference liquidityPreference;
+    @Column(name = "risk_profile", nullable = false, length = 15)
+    private RiskProfile riskProfile;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
