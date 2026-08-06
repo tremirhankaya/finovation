@@ -16,7 +16,8 @@ public record FundMonitoringResponse(
         List<TechnicalIndicatorResponse> technicalIndicators,
         List<PeriodReturnResponse> periodReturns,
         List<FundPositionResponse> positions,
-        List<SectorAllocationResponse> sectorAllocations
+        List<SectorAllocationResponse> sectorAllocations,
+        List<FundComparisonAssetResponse> comparisonAssets
 ) {
     public record PricePointResponse(LocalDate date, BigDecimal value) {
     }
@@ -50,6 +51,16 @@ public record FundMonitoringResponse(
             String sectorId,
             String sectorName,
             BigDecimal weightPercentage
+    ) {
+    }
+
+    public record FundComparisonAssetResponse(
+            String id,
+            String code,
+            String name,
+            String color,
+            boolean isFund,
+            Map<String, BigDecimal> returns
     ) {
     }
 }

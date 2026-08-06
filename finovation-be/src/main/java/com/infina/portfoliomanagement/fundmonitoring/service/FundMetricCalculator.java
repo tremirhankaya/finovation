@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.fundmonitoring.service;
 
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.PeriodReturnResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.TechnicalIndicatorResponse;
+import com.infina.portfoliomanagement.fundmonitoring.model.ComparisonPeriod;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import org.springframework.stereotype.Component;
 
@@ -9,13 +10,20 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 @Component
 public class FundMetricCalculator {
 
     private static final double TRADING_DAYS_PER_YEAR = 252.0;
     private static final int METRIC_SCALE = 4;
+    private static final String UNIT_PERCENT = "PERCENT";
+    private static final String TONE_NEUTRAL = "neutral";
 
     public BigDecimal dailyChange(List<FundValuationPoint> points) {
         if (points.size() < 2) {
@@ -49,16 +57,45 @@ public class FundMetricCalculator {
 
         return List.of(
                 indicator("VOLATILITY", "Volatilite (Yıllık)", volatility,
-                        "PERCENT", "neutral"),
+                        UNIT_PERCENT, TONE_NEUTRAL),
                 indicator("MAX_DRAWDOWN", "Maksimum Düşüş", maximumDrawdown,
-                        "PERCENT", maximumDrawdown == null ? "neutral" : "negative"),
-                indicator("BETA", "Beta", null, "RATIO", "neutral"),
-                indicator("SHARPE", "Sharpe Oranı", null, "RATIO", "neutral"),
+                        UNIT_PERCENT, maximumDrawdown == null ? TONE_NEUTRAL : "negative"),
+                indicator("BETA", "Beta", null, "RATIO", TONE_NEUTRAL),
+                indicator("SHARPE", "Sharpe Oranı", null, "RATIO", TONE_NEUTRAL),
                 indicator("SECTOR_CONCENTRATION", "Sektörel Yoğunluk", sectorConcentration,
-                        "PERCENT", "neutral"),
+                        UNIT_PERCENT, TONE_NEUTRAL),
                 indicator("LIQUIDITY_RATIO", "Likidite Oranı", liquidityRatio,
-                        "PERCENT", liquidityRatio.signum() > 0 ? "positive" : "neutral")
+                        UNIT_PERCENT, liquidityRatio.signum() > 0 ? "positive" : TONE_NEUTRAL)
         );
+    }
+
+    public Map<String, BigDecimal> comparisonReturns(
+            List<FundValuationPoint> points,
+            LocalDate asOfDate
+    ) {
+        NavigableMap<LocalDate, BigDecimal> values = new TreeMap<>();
+        points.forEach(point -> values.put(point.date(), point.sharePrice()));
+        return comparisonReturns(values, asOfDate);
+    }
+
+    public Map<String, BigDecimal> comparisonReturns(
+            NavigableMap<LocalDate, BigDecimal> values,
+            LocalDate asOfDate
+    ) {
+        Map<String, BigDecimal> returns = new LinkedHashMap<>();
+        Map.Entry<LocalDate, BigDecimal> end = values.floorEntry(asOfDate);
+
+        for (ComparisonPeriod period : ComparisonPeriod.values()) {
+            Map.Entry<LocalDate, BigDecimal> start = values.floorEntry(
+                    period.startDate(asOfDate)
+            );
+            BigDecimal value = start == null || end == null
+                    ? null
+                    : percentageChange(start.getValue(), end.getValue());
+            returns.put(period.code(), value);
+        }
+
+        return Collections.unmodifiableMap(returns);
     }
 
     public BigDecimal annualizedVolatility(List<FundValuationPoint> points) {
