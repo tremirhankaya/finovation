@@ -41,6 +41,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   FUND_002: "Fon bulunamadı veya bu fonu görüntüleme yetkiniz yok.",
   FUND_003:
     "Fonun izleme verileri henüz hesaplanamıyor. Lütfen daha sonra tekrar deneyin.",
+  FUND_004: "Fon taslağı bulunamadı.",
+  FUND_005: "Fon tasarım profili yapılandırması bulunamadı.",
+  FUND_006: "Fon pay fiyatı izin verilen aralığın dışında.",
+  FUND_007: "Fon adı geçersiz. En az 5 harf olmalı ve sayı içermemelidir.",
 }
 
 function fallbackMessage(fallback: string): string {

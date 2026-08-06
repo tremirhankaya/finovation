@@ -1,117 +1,122 @@
 .page {
-  min-height: 100vh;
-  padding: 1.75rem 1.25rem 2.5rem;
-  background: #f4f7f8;
-}
-
-.page > * {
   width: 100%;
-  max-width: 1080px;
-  margin-right: auto;
-  margin-left: auto;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2rem;
 }
 
 .header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
+  margin-bottom: 1.15rem;
 }
 
 .title {
   margin: 0;
-  color: var(--color-navy-950);
+  color: #0f1f3c;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 
 .subtitle {
-  margin: 0;
-  color: var(--color-slate-500);
+  margin: 0.35rem 0 0;
+  color: #8090a0;
   font-size: 0.875rem;
 }
 
 .steps {
   display: flex;
-  justify-content: center;
+  align-items: center;
   width: 100%;
-  max-width: 760px;
-  margin: 0 auto 1.5rem;
+  margin: 0 0 1.5rem;
   padding: 0;
   list-style: none;
 }
 
 .step {
-  position: relative;
   display: flex;
   flex: 1 1 0;
-  flex-direction: column;
   align-items: center;
   gap: 0.45rem;
   min-width: 0;
-  color: var(--color-slate-500);
+  color: #8090a0;
   font-size: 0.75rem;
   font-weight: 500;
-  text-align: center;
 }
 
 .step:not(:last-child)::after {
   content: "";
-  position: absolute;
-  top: 0.75rem;
-  left: calc(50% + 0.95rem);
-  right: calc(-50% + 0.95rem);
+  flex: 1 1 auto;
   height: 1px;
+  min-width: 0.75rem;
+  margin: 0 0.4rem 0 0.15rem;
   background: #dbe4ea;
 }
 
 .stepCurrent {
-  color: var(--color-teal-600);
+  color: #0f1f3c;
   font-weight: 700;
+}
+
+.stepDone {
+  color: #3d5163;
 }
 
 .stepIndex {
   display: inline-flex;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.4rem;
+  height: 1.4rem;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border: 1px solid #dbe4ea;
+  border: 1.5px solid #d5e0e6;
   border-radius: 999px;
   background: #fff;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
 .stepCurrent .stepIndex {
-  border-color: var(--color-teal-400);
+  border-color: #2ec4a7;
+  color: #2ec4a7;
+  background: #fff;
+}
+
+.stepDone .stepIndex {
+  border-color: #2ec4a7;
   color: #fff;
-  background: var(--color-teal-400);
+  background: #2ec4a7;
 }
 
 .stepLabel {
   overflow: hidden;
-  max-width: 100%;
+  flex: 0 1 auto;
+  max-width: 7.5rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 @media (max-width: 800px) {
   .steps {
-    flex-wrap: wrap;
-    row-gap: 1rem;
-    max-width: 420px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem 0.5rem;
   }
 
   .step {
-    flex: 0 0 33.33%;
+    flex: none;
   }
 
   .step::after {
     display: none;
+  }
+
+  .stepLabel {
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

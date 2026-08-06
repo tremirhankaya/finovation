@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState } from "react"
 
-import { getFundDraftLimits } from "@/features/fund-design/api/fundDraftApi"
-import type { FundDraftLimits } from "@/features/fund-design/model/fundDraftSchemas"
+import { getFundDraftInit } from "@/features/fund-design/api/fundDraftApi"
+import type { FundDraftInit } from "@/features/fund-design/model/fundDraftSchemas"
 
-type UseFundDraftLimitsResult = {
-  limits: FundDraftLimits | null
+type UseFundDraftInitResult = {
+  init: FundDraftInit | null
   error: string
   isLoading: boolean
   reload: () => void
 }
 
-export function useFundDraftLimits(): UseFundDraftLimitsResult {
-  const [limits, setLimits] = useState<FundDraftLimits | null>(null)
+export function useFundDraftInit(): UseFundDraftInitResult {
+  const [init, setInit] = useState<FundDraftInit | null>(null)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
@@ -26,19 +26,19 @@ export function useFundDraftLimits(): UseFundDraftLimitsResult {
 
     void (async () => {
       try {
-        const nextLimits = await getFundDraftLimits(controller.signal)
+        const nextInit = await getFundDraftInit(controller.signal)
         if (controller.signal.aborted) return
 
-        setLimits(nextLimits)
+        setInit(nextInit)
         setError("")
       } catch (loadError) {
         if (controller.signal.aborted) return
 
-        setLimits(null)
+        setInit(null)
         setError(
           loadError instanceof Error
             ? loadError.message
-            : "Portföy limiti alınamadı.",
+            : "Fon taslağı başlangıç verisi alınamadı.",
         )
       } finally {
         if (!controller.signal.aborted) {
@@ -52,5 +52,5 @@ export function useFundDraftLimits(): UseFundDraftLimitsResult {
     }
   }, [reloadKey])
 
-  return { limits, error, isLoading, reload }
+  return { init, error, isLoading, reload }
 }

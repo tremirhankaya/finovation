@@ -1,33 +1,39 @@
-import { getFundDraftLimitsUrl, getFundDraftsUrl } from "@/shared/api/apiConfig"
+import { getFundDraftInitUrl, getFundDraftsUrl } from "@/shared/api/apiConfig"
 import { apiFetch } from "@/shared/api/httpClient"
 import {
   type CreatedFundDraft,
-  type FundDraftLimits,
+  type FundDraftInit,
   createdFundDraftSchema,
-  fundDraftLimitsSchema,
+  fundDraftInitSchema,
 } from "@/features/fund-design/model/fundDraftSchemas"
 
-export async function getFundDraftLimits(
+export type CreateFundDraftInput = {
+  name: string
+  initialPortfolioSize: number
+  unitPrice: number
+}
+
+export async function getFundDraftInit(
   signal?: AbortSignal,
-): Promise<FundDraftLimits> {
+): Promise<FundDraftInit> {
   return apiFetch(
-    getFundDraftLimitsUrl(),
+    getFundDraftInitUrl(),
     {
-      errorMessage: "Portföy limiti alınamadı",
+      errorMessage: "Fon taslağı başlangıç verisi alınamadı",
       signal,
     },
-    fundDraftLimitsSchema.parse,
+    fundDraftInitSchema.parse,
   )
 }
 
 export async function createFundDraft(
-  initialPortfolioSize: number,
+  input: CreateFundDraftInput,
 ): Promise<CreatedFundDraft> {
   return apiFetch(
     getFundDraftsUrl(),
     {
       method: "POST",
-      body: { initialPortfolioSize },
+      body: input,
       errorMessage: "Fon taslağı oluşturulamadı",
     },
     createdFundDraftSchema.parse,

@@ -20,12 +20,14 @@ export default function FundDesignLayout({
   step,
   children,
 }: FundDesignLayoutProps) {
+  const currentLabel = STEPS[step - 1] ?? STEPS[0]
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>AI Destekli Fon Tasarımı</h1>
         <p className={styles.subtitle}>
-          Adım {step} / {STEPS.length} - {STEPS[step - 1]}
+          Adım {step} / {STEPS.length} - {currentLabel}
         </p>
       </header>
 
@@ -33,11 +35,16 @@ export default function FundDesignLayout({
         {STEPS.map((label, index) => {
           const stepNumber = index + 1
           const isCurrent = stepNumber === step
+          const isDone = stepNumber < step
 
           return (
             <li
               key={label}
-              className={[styles.step, isCurrent && styles.stepCurrent]
+              className={[
+                styles.step,
+                isCurrent && styles.stepCurrent,
+                isDone && styles.stepDone,
+              ]
                 .filter(Boolean)
                 .join(" ")}
               aria-current={isCurrent ? "step" : undefined}

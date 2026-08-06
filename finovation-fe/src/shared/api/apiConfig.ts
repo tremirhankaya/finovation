@@ -72,8 +72,8 @@ export function getFundDraftsUrl(): string {
   return buildUrl(API_PATHS.fundDrafts)
 }
 
-export function getFundDraftLimitsUrl(): string {
-  return `${getFundDraftsUrl()}/limits`
+export function getFundDraftInitUrl(): string {
+  return `${getFundDraftsUrl()}/init`
 }
 
 export function getFundsUrl(): string {

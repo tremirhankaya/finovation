@@ -3,7 +3,7 @@ import styles from "@/shared/ui/TextField.module.css"
 
 export type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> & {
   id: string
-  label: string
+  label: ReactNode
   value: string
   onChange: (value: string) => void
   error?: string
