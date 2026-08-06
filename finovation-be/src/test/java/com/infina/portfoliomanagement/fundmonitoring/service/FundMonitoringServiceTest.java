@@ -12,6 +12,7 @@ import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProper
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
+import com.infina.portfoliomanagement.fundmonitoring.service.FundBenchmarkService.BenchmarkSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.policy.FundMonitoringAccessPolicy;
 import com.infina.portfoliomanagement.fundmonitoring.valuation.AssetValuationProviderRegistry;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
@@ -33,6 +34,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +74,8 @@ class FundMonitoringServiceTest {
     private FundValuationCalculator valuationCalculator;
     @Mock
     private FundBenchmarkService benchmarkService;
+    @Mock
+    private RiskFreeRateProvider riskFreeRateProvider;
 
     private FundMonitoringService service;
 
@@ -89,6 +93,7 @@ class FundMonitoringServiceTest {
                 valuationCalculator,
                 new FundMetricCalculator(),
                 benchmarkService,
+                riskFreeRateProvider,
                 new FundMonitoringProperties(new BigDecimal("1000000")),
                 CLOCK
         );
@@ -138,7 +143,9 @@ class FundMonitoringServiceTest {
                 List.of(),
                 Map.of()
         )).thenReturn(valuation("100", "120"));
-        when(benchmarkService.comparisonAssets(AS_OF_DATE)).thenReturn(List.of());
+        when(benchmarkService.load(AS_OF_DATE)).thenReturn(
+                new BenchmarkSnapshot(List.of(), new TreeMap<>())
+        );
 
         var response = service.getMonitoringSnapshot(
                 "manager",

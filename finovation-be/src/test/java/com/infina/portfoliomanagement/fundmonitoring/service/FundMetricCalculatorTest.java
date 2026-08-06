@@ -8,6 +8,8 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -95,6 +97,39 @@ class FundMetricCalculatorTest {
                 .containsEntry("1M", null)
                 .containsEntry("3M", null)
                 .containsEntry("5Y", null);
+    }
+
+    @Test
+    void beta_usesReturnsAlignedWithBist100Dates() {
+        LocalDate firstDate = LocalDate.of(2026, Month.AUGUST, 1);
+        List<FundValuationPoint> fundPoints = List.of(
+                point(firstDate, "100"),
+                point(firstDate.plusDays(1), "120"),
+                point(firstDate.plusDays(2), "96"),
+                point(firstDate.plusDays(3), "115.2")
+        );
+        NavigableMap<LocalDate, BigDecimal> benchmarkValues = new TreeMap<>();
+        benchmarkValues.put(firstDate, new BigDecimal("100"));
+        benchmarkValues.put(firstDate.plusDays(1), new BigDecimal("110"));
+        benchmarkValues.put(firstDate.plusDays(2), new BigDecimal("99"));
+        benchmarkValues.put(firstDate.plusDays(3), new BigDecimal("108.9"));
+
+        assertThat(calculator.beta(fundPoints, benchmarkValues))
+                .isEqualByComparingTo("2.0000");
+    }
+
+    @Test
+    void sharpeRatio_annualizesDailyExcessReturn() {
+        LocalDate firstDate = LocalDate.of(2026, Month.AUGUST, 1);
+        List<FundValuationPoint> points = List.of(
+                point(firstDate, "100"),
+                point(firstDate.plusDays(1), "101"),
+                point(firstDate.plusDays(2), "103.02"),
+                point(firstDate.plusDays(3), "103.02")
+        );
+
+        assertThat(calculator.sharpeRatio(points, BigDecimal.ZERO))
+                .isEqualByComparingTo("15.8745");
     }
 
     private FundValuationPoint point(LocalDate date, String sharePrice) {

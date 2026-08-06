@@ -21,6 +21,7 @@ import java.util.TreeMap;
 public class FundMetricCalculator {
 
     private static final double TRADING_DAYS_PER_YEAR = 252.0;
+    private static final double ZERO_TOLERANCE = 1.0e-12;
     private static final int METRIC_SCALE = 4;
     private static final String UNIT_PERCENT = "PERCENT";
     private static final String TONE_NEUTRAL = "neutral";
@@ -49,19 +50,24 @@ public class FundMetricCalculator {
 
     public List<TechnicalIndicatorResponse> technicalIndicators(
             List<FundValuationPoint> points,
+            NavigableMap<LocalDate, BigDecimal> benchmarkValues,
+            BigDecimal annualRiskFreeRate,
             BigDecimal sectorConcentration,
             BigDecimal liquidityRatio
     ) {
         BigDecimal volatility = annualizedVolatility(points);
         BigDecimal maximumDrawdown = maximumDrawdown(points);
+        BigDecimal beta = beta(points, benchmarkValues);
+        BigDecimal sharpeRatio = sharpeRatio(points, annualRiskFreeRate);
 
         return List.of(
                 indicator("VOLATILITY", "Volatilite (Yıllık)", volatility,
                         UNIT_PERCENT, TONE_NEUTRAL),
                 indicator("MAX_DRAWDOWN", "Maksimum Düşüş", maximumDrawdown,
                         UNIT_PERCENT, maximumDrawdown == null ? TONE_NEUTRAL : "negative"),
-                indicator("BETA", "Beta", null, "RATIO", TONE_NEUTRAL),
-                indicator("SHARPE", "Sharpe Oranı", null, "RATIO", TONE_NEUTRAL),
+                indicator("BETA", "Beta", beta, "RATIO", TONE_NEUTRAL),
+                indicator("SHARPE", "Sharpe Oranı", sharpeRatio, "RATIO",
+                        metricTone(sharpeRatio)),
                 indicator("SECTOR_CONCENTRATION", "Sektörel Yoğunluk", sectorConcentration,
                         UNIT_PERCENT, TONE_NEUTRAL),
                 indicator("LIQUIDITY_RATIO", "Likidite Oranı", liquidityRatio,
@@ -104,13 +110,77 @@ public class FundMetricCalculator {
             return null;
         }
 
-        double mean = returns.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-        double variance = returns.stream()
-                .mapToDouble(value -> Math.pow(value - mean, 2))
-                .sum() / (returns.size() - 1);
-        double annualizedPercentage = Math.sqrt(variance) * Math.sqrt(TRADING_DAYS_PER_YEAR) * 100;
+        double annualizedPercentage = sampleStandardDeviation(returns)
+                * Math.sqrt(TRADING_DAYS_PER_YEAR) * 100;
 
         return metric(annualizedPercentage);
+    }
+
+    public BigDecimal beta(
+            List<FundValuationPoint> points,
+            NavigableMap<LocalDate, BigDecimal> benchmarkValues
+    ) {
+        Map<LocalDate, Double> fundReturns = datedDailyReturns(points);
+        Map<LocalDate, Double> benchmarkReturns = datedDailyReturns(benchmarkValues);
+        List<Double> alignedFundReturns = new ArrayList<>();
+        List<Double> alignedBenchmarkReturns = new ArrayList<>();
+
+        for (Map.Entry<LocalDate, Double> fundReturn : fundReturns.entrySet()) {
+            Double benchmarkReturn = benchmarkReturns.get(fundReturn.getKey());
+            if (benchmarkReturn != null) {
+                alignedFundReturns.add(fundReturn.getValue());
+                alignedBenchmarkReturns.add(benchmarkReturn);
+            }
+        }
+
+        if (alignedFundReturns.size() < 2) {
+            return null;
+        }
+
+        double fundMean = mean(alignedFundReturns);
+        double benchmarkMean = mean(alignedBenchmarkReturns);
+        double covariance = 0;
+        double benchmarkVariance = 0;
+
+        for (int index = 0; index < alignedFundReturns.size(); index++) {
+            double fundDeviation = alignedFundReturns.get(index) - fundMean;
+            double benchmarkDeviation = alignedBenchmarkReturns.get(index)
+                    - benchmarkMean;
+            covariance += fundDeviation * benchmarkDeviation;
+            benchmarkVariance += benchmarkDeviation * benchmarkDeviation;
+        }
+
+        if (benchmarkVariance <= 0.0) {
+            return null;
+        }
+        if (benchmarkVariance < ZERO_TOLERANCE) {
+            return null;
+        }
+        return metric(covariance / benchmarkVariance);
+    }
+
+    public BigDecimal sharpeRatio(
+            List<FundValuationPoint> points,
+            BigDecimal annualRiskFreeRate
+    ) {
+        List<Double> returns = dailyReturns(points);
+        if (returns.size() < 2 || annualRiskFreeRate == null) {
+            return null;
+        }
+
+        double dailyStandardDeviation = sampleStandardDeviation(returns);
+        if (dailyStandardDeviation <= 0.0) {
+            return null;
+        }
+        if (dailyStandardDeviation < ZERO_TOLERANCE) {
+            return null;
+        }
+
+        double annualizedExcessReturn = mean(returns) * TRADING_DAYS_PER_YEAR
+                - annualRiskFreeRate.doubleValue() / 100;
+        double annualizedStandardDeviation = dailyStandardDeviation
+                * Math.sqrt(TRADING_DAYS_PER_YEAR);
+        return metric(annualizedExcessReturn / annualizedStandardDeviation);
     }
 
     public BigDecimal maximumDrawdown(List<FundValuationPoint> points) {
@@ -152,15 +222,54 @@ public class FundMetricCalculator {
     }
 
     private List<Double> dailyReturns(List<FundValuationPoint> points) {
-        List<Double> returns = new ArrayList<>();
+        return new ArrayList<>(datedDailyReturns(points).values());
+    }
 
-        for (int index = 1; index < points.size(); index++) {
-            double previous = points.get(index - 1).sharePrice().doubleValue();
-            double current = points.get(index).sharePrice().doubleValue();
-            returns.add(current / previous - 1);
+    private NavigableMap<LocalDate, Double> datedDailyReturns(
+            List<FundValuationPoint> points
+    ) {
+        NavigableMap<LocalDate, BigDecimal> values = new TreeMap<>();
+        points.forEach(point -> values.put(point.date(), point.sharePrice()));
+        return datedDailyReturns(values);
+    }
+
+    private NavigableMap<LocalDate, Double> datedDailyReturns(
+            NavigableMap<LocalDate, BigDecimal> values
+    ) {
+        NavigableMap<LocalDate, Double> returns = new TreeMap<>();
+        Map.Entry<LocalDate, BigDecimal> previous = null;
+
+        for (Map.Entry<LocalDate, BigDecimal> current : values.entrySet()) {
+            if (previous != null && previous.getValue().signum() != 0) {
+                returns.put(
+                        current.getKey(),
+                        current.getValue().doubleValue()
+                                / previous.getValue().doubleValue() - 1
+                );
+            }
+            previous = current;
         }
 
         return returns;
+    }
+
+    private double mean(List<Double> values) {
+        return values.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+    }
+
+    private double sampleStandardDeviation(List<Double> values) {
+        double average = mean(values);
+        double variance = values.stream()
+                .mapToDouble(value -> Math.pow(value - average, 2))
+                .sum() / (values.size() - 1);
+        return Math.sqrt(variance);
+    }
+
+    private String metricTone(BigDecimal value) {
+        if (value == null || value.signum() == 0) {
+            return TONE_NEUTRAL;
+        }
+        return value.signum() > 0 ? "positive" : "negative";
     }
 
     private BigDecimal percentageChange(BigDecimal start, BigDecimal end) {

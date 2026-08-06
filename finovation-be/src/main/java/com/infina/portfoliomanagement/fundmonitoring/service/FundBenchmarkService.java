@@ -15,6 +15,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -34,71 +35,49 @@ public class FundBenchmarkService {
     private final BenchmarkPriceApi benchmarkPriceApi;
     private final FundMetricCalculator metricCalculator;
 
-    public List<FundComparisonAssetResponse> comparisonAssets(LocalDate asOfDate) {
+    public BenchmarkSnapshot load(LocalDate asOfDate) {
         LocalDate from = ComparisonPeriod.FIVE_YEARS.startDate(asOfDate)
                 .minusDays(HISTORY_LOOKBACK_BUFFER_DAYS);
+        NavigableMap<LocalDate, BigDecimal> bist30Values = safelyLoad(
+                BIST_30_SOURCE_CODE,
+                () -> indexValues(BIST_30_SOURCE_CODE, from, asOfDate)
+        );
+        NavigableMap<LocalDate, BigDecimal> bist100Values = safelyLoad(
+                BIST_100_SOURCE_CODE,
+                () -> indexValues(BIST_100_SOURCE_CODE, from, asOfDate)
+        );
+        NavigableMap<LocalDate, BigDecimal> inflationValues = safelyLoad(
+                INFLATION_SOURCE_CODE,
+                () -> economicValues(INFLATION_SOURCE_CODE, from, asOfDate)
+        );
 
-        return List.of(
-                indexAsset(
+        List<FundComparisonAssetResponse> assets = List.of(
+                comparisonAsset(
                         "bist-30",
                         "BIST30",
                         "BIST 30",
                         "#2563eb",
-                        BIST_30_SOURCE_CODE,
-                        from,
+                        bist30Values,
                         asOfDate
                 ),
-                indexAsset(
+                comparisonAsset(
                         "bist-100",
                         "BIST100",
                         "BIST 100",
                         "#7c3aed",
-                        BIST_100_SOURCE_CODE,
-                        from,
+                        bist100Values,
                         asOfDate
                 ),
-                economicAsset(
+                comparisonAsset(
                         "inflation",
                         "TUFE",
                         "TÜFE",
                         "#ea580c",
-                        INFLATION_SOURCE_CODE,
-                        from,
+                        inflationValues,
                         asOfDate
                 )
         );
-    }
-
-    private FundComparisonAssetResponse indexAsset(
-            String id,
-            String code,
-            String name,
-            String color,
-            String sourceCode,
-            LocalDate from,
-            LocalDate to
-    ) {
-        NavigableMap<LocalDate, BigDecimal> values = safelyLoad(
-                sourceCode,
-                () -> indexValues(sourceCode, from, to)
-        );
-        return comparisonAsset(id, code, name, color, values, to);
-    }
-
-    private FundComparisonAssetResponse economicAsset(
-            String id,
-            String code,
-            String name,
-            String color,
-            String sourceCode,
-            LocalDate from,
-            LocalDate to
-    ) {
-        NavigableMap<LocalDate, BigDecimal> values = safelyLoad(
-                sourceCode,
-                () -> economicValues(sourceCode, from, to)
-        );
-        return comparisonAsset(id, code, name, color, values, to);
+        return new BenchmarkSnapshot(assets, bist100Values);
     }
 
     private NavigableMap<LocalDate, BigDecimal> indexValues(
@@ -174,5 +153,17 @@ public class FundBenchmarkService {
                 false,
                 returns
         );
+    }
+
+    public record BenchmarkSnapshot(
+            List<FundComparisonAssetResponse> comparisonAssets,
+            NavigableMap<LocalDate, BigDecimal> bist100Values
+    ) {
+        public BenchmarkSnapshot {
+            comparisonAssets = List.copyOf(comparisonAssets);
+            bist100Values = Collections.unmodifiableNavigableMap(
+                    new TreeMap<>(bist100Values)
+            );
+        }
     }
 }

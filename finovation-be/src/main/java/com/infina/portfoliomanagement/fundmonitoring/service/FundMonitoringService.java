@@ -17,6 +17,7 @@ import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.PricePointResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.SectorAllocationResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundSummaryResponse;
+import com.infina.portfoliomanagement.fundmonitoring.service.FundBenchmarkService.BenchmarkSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.model.AssetMonitoringProfile;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
@@ -64,6 +65,7 @@ public class FundMonitoringService {
     private final FundValuationCalculator valuationCalculator;
     private final FundMetricCalculator metricCalculator;
     private final FundBenchmarkService benchmarkService;
+    private final RiskFreeRateProvider riskFreeRateProvider;
     private final FundMonitoringProperties properties;
     private final Clock clock;
 
@@ -116,6 +118,10 @@ public class FundMonitoringService {
                 .setScale(4, RoundingMode.HALF_UP);
         List<FundValuationPoint> points = valuation.points();
         FundValuationPoint latest = valuation.latestPoint();
+        BenchmarkSnapshot benchmarks = benchmarkService.load(latest.date());
+        BigDecimal annualRiskFreeRate = riskFreeRateProvider.annualRate(
+                latest.date()
+        );
 
         log.info(
                 "Fund monitoring snapshot calculated for fund {} at {} with {} valuation point(s)",
@@ -134,6 +140,8 @@ public class FundMonitoringService {
                 priceHistory(points, latest.date()),
                 metricCalculator.technicalIndicators(
                         points,
+                        benchmarks.bist100Values(),
+                        annualRiskFreeRate,
                         sectorConcentration,
                         liquidityRatio
                 ),
@@ -144,7 +152,8 @@ public class FundMonitoringService {
                         fund,
                         valuation,
                         actor.getId(),
-                        today
+                        today,
+                        benchmarks.comparisonAssets()
                 )
         );
     }
@@ -185,7 +194,8 @@ public class FundMonitoringService {
             FundDraft selectedFund,
             FundValuationResult selectedValuation,
             Long actorUserId,
-            LocalDate today
+            LocalDate today,
+            List<FundComparisonAssetResponse> benchmarkAssets
     ) {
         List<FundDraft> visibleFunds = fundDraftRepository
                 .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
@@ -216,9 +226,7 @@ public class FundMonitoringService {
             assets.add(comparisonAsset(fund, valuation, assets.size()));
         }
 
-        assets.addAll(benchmarkService.comparisonAssets(
-                selectedValuation.latestPoint().date()
-        ));
+        assets.addAll(benchmarkAssets);
 
         return List.copyOf(assets);
     }

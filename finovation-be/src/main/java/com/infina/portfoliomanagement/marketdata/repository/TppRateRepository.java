@@ -15,6 +15,11 @@ public interface TppRateRepository extends JpaRepository<TppRate, Long> {
 
     Optional<TppRate> findTopByAssetIdOrderByDataDateDesc(Long assetId);
 
+    Optional<TppRate> findTopByAssetIdAndDataDateLessThanEqualOrderByDataDateDesc(
+            Long assetId,
+            LocalDate dataDate
+    );
+
     @EntityGraph(attributePaths = "asset")
     List<TppRate> findAllByAssetIdInAndDataDateBetweenOrderByDataDateAsc(
             List<Long> assetIds,

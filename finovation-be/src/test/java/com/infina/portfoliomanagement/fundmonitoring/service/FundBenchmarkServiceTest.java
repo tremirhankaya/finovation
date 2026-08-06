@@ -1,6 +1,7 @@
 package com.infina.portfoliomanagement.fundmonitoring.service;
 
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
+import com.infina.portfoliomanagement.fundmonitoring.service.FundBenchmarkService.BenchmarkSnapshot;
 import com.infina.portfoliomanagement.marketdata.infina.api.BenchmarkPriceApi;
 import com.infina.portfoliomanagement.marketdata.infina.dto.EconomicPriceRecord;
 import com.infina.portfoliomanagement.marketdata.infina.dto.IndexPriceRecord;
@@ -70,9 +71,8 @@ class FundBenchmarkServiceTest {
                 economicPrice(AS_OF_DATE, "420")
         ));
 
-        List<FundComparisonAssetResponse> assets = service.comparisonAssets(
-                AS_OF_DATE
-        );
+        BenchmarkSnapshot snapshot = service.load(AS_OF_DATE);
+        List<FundComparisonAssetResponse> assets = snapshot.comparisonAssets();
 
         assertThat(assets)
                 .extracting(
@@ -86,6 +86,8 @@ class FundBenchmarkServiceTest {
                         tuple("BIST100", "BIST 100", false, new BigDecimal("20.0000")),
                         tuple("TUFE", "TÜFE", false, new BigDecimal("5.0000"))
                 );
+        assertThat(snapshot.bist100Values())
+                .containsEntry(AS_OF_DATE, new BigDecimal("240"));
     }
 
     private IndexPriceRecord indexPrice(
