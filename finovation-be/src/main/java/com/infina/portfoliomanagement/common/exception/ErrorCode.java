@@ -198,6 +198,12 @@ public enum ErrorCode {
             "This request was modified by another request. Please reload and try again."
     ),
 
+    OPT_INVALID_STATUS_TRANSITION(
+            "OPT_008",
+            HttpStatus.CONFLICT,
+            "This optimization request cannot change to the requested status from its current status."
+    ),
+
     FUND_INITIAL_SIZE_OUT_OF_RANGE(
             "FUND_001",
             HttpStatus.BAD_REQUEST,

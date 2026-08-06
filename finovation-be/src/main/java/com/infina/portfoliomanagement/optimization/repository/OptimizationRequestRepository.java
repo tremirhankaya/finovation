@@ -8,4 +8,6 @@ import java.util.List;
 public interface OptimizationRequestRepository extends JpaRepository<OptimizationRequest, Long> {
 
     List<OptimizationRequest> findAllByFundId(Long fundId);
+
+    List<OptimizationRequest> findAllByFundIdAndRequestedById(Long fundId, Long requestedById);
 }
