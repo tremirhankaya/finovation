@@ -1,24 +1,43 @@
 package com.infina.portfoliomanagement.fund.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import com.infina.portfoliomanagement.fund.entity.FundDesignProfile;
 
 import java.math.BigDecimal;
 
-@ConfigurationProperties(prefix = "fund")
 public record FundProperties(
         BigDecimal minInitialPortfolioSize,
-        BigDecimal maxInitialPortfolioSize
+        BigDecimal maxInitialPortfolioSize,
+        BigDecimal minUnitPrice,
+        BigDecimal maxUnitPrice,
+        int minLiquidityTargetPct,
+        int maxLiquidityTargetPct,
+        int minStockCount,
+        int maxStockCount,
+        int minSingleStockMaxPct,
+        int maxSingleStockMaxPct,
+        int minEquityWeightPct,
+        int maxEquityWeightPct,
+        BigDecimal sectorMaxPct,
+        int minTppRangePct,
+        int minStockCountRange
 ) {
-    public FundProperties {
-        if (minInitialPortfolioSize == null || minInitialPortfolioSize.signum() <= 0) {
-            throw new IllegalArgumentException("Minimum initial portfolio size must be positive.");
-        }
-        if (maxInitialPortfolioSize == null || maxInitialPortfolioSize.signum() <= 0) {
-            throw new IllegalArgumentException("Maximum initial portfolio size must be positive.");
-        }
-        if (minInitialPortfolioSize.compareTo(maxInitialPortfolioSize) > 0) {
-            throw new IllegalArgumentException(
-                    "Minimum initial portfolio size must not exceed the maximum.");
-        }
+    public static FundProperties from(FundDesignProfile profile) {
+        return new FundProperties(
+                profile.getMinInitialPortfolioSize(),
+                profile.getMaxInitialPortfolioSize(),
+                profile.getMinUnitPrice(),
+                profile.getMaxUnitPrice(),
+                profile.getMinLiquidityTargetPct(),
+                profile.getMaxLiquidityTargetPct(),
+                profile.getMinStockCount(),
+                profile.getMaxStockCount(),
+                profile.getMinSingleStockMaxPct(),
+                profile.getMaxSingleStockMaxPct(),
+                profile.getMinEquityWeightPct(),
+                profile.getMaxEquityWeightPct(),
+                profile.getSectorMaxPct(),
+                profile.getMinTppRangePct(),
+                profile.getMinStockCountRange()
+        );
     }
 }

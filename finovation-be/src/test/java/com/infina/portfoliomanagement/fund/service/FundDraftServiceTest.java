@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,6 +38,9 @@ class FundDraftServiceTest {
 
     private static final BigDecimal MIN_SIZE = new BigDecimal("1000000");
     private static final BigDecimal MAX_SIZE = new BigDecimal("100000000000");
+    private static final BigDecimal MIN_UNIT_PRICE = new BigDecimal("1");
+    private static final BigDecimal MAX_UNIT_PRICE = new BigDecimal("1000");
+    private static final BigDecimal SECTOR_MAX_PCT = new BigDecimal("30");
     private static final Instant FIXED_INSTANT = Instant.parse("2026-08-05T07:30:00Z");
 
     @Mock
@@ -45,16 +49,38 @@ class FundDraftServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private FundDesignProfileService fundDesignProfileService;
+
     private FundDraftService fundDraftService;
 
     private User actor;
+    private FundProperties limits;
 
     @BeforeEach
     void setUp() {
+        limits = new FundProperties(
+                MIN_SIZE,
+                MAX_SIZE,
+                MIN_UNIT_PRICE,
+                MAX_UNIT_PRICE,
+                5,
+                15,
+                10,
+                30,
+                3,
+                10,
+                85,
+                95,
+                SECTOR_MAX_PCT,
+                3,
+                5
+        );
+
         fundDraftService = new FundDraftService(
                 fundDraftRepository,
                 userRepository,
-                new FundProperties(MIN_SIZE, MAX_SIZE),
+                fundDesignProfileService,
                 Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC)
         );
 
@@ -66,41 +92,45 @@ class FundDraftServiceTest {
 
     @Test
     void validRequest_createsDraftWithSystemAssignedDefaults() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         FundDraftResponse response =
-                fundDraftService.createDraft("user1", request("100000000"));
+                fundDraftService.createDraft("user1", request("100000000", "17"));
 
         assertThat(response.draftId()).isNotNull();
         assertThat(response.fundType()).isEqualTo(FundType.EQUITY_INTENSIVE);
         assertThat(response.currency()).isEqualTo("TRY");
         assertThat(response.status()).isEqualTo(FundDraftStatus.IN_PROGRESS);
         assertThat(response.initialPortfolioSize()).isEqualByComparingTo("100000000");
+        assertThat(response.unitPrice()).isEqualByComparingTo("17");
+        assertThat(response.name()).isEqualTo("Finovation Hisse Senedi Fonu");
     }
 
     @Test
     void validRequest_leavesStrategyFieldsUnsetForTheNextStep() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         FundDraftResponse response =
-                fundDraftService.createDraft("user1", request("100000000"));
+                fundDraftService.createDraft("user1", request("100000000", "17"));
 
-        assertThat(response.name()).isNull();
         assertThat(response.managementApproach()).isNull();
         assertThat(response.liquidityTargetPct()).isNull();
     }
 
     @Test
     void validRequest_linksDraftToActorAndStampsFixedTime() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        fundDraftService.createDraft("user1", request("100000000"));
+        fundDraftService.createDraft("user1", request("100000000", "17"));
 
         ArgumentCaptor<FundDraft> captor = ArgumentCaptor.forClass(FundDraft.class);
         verify(fundDraftRepository).save(captor.capture());
@@ -110,15 +140,17 @@ class FundDraftServiceTest {
 
         assertThat(saved.getCreatedByUserId()).isEqualTo(7L);
         assertThat(saved.getPublicId()).isNotNull();
+        assertThat(saved.getUnitPrice()).isEqualByComparingTo("17");
         assertThat(saved.getCreatedAt()).isEqualTo(expectedTime);
         assertThat(saved.getUpdatedAt()).isEqualTo(expectedTime);
     }
 
     @Test
     void sizeBelowMinimum_throwsOutOfRangeAndDoesNotSave() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
 
-        assertThatThrownBy(() -> fundDraftService.createDraft("user1", request("999999")))
+        assertThatThrownBy(() -> fundDraftService.createDraft("user1", request("999999", "17")))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.FUND_INITIAL_SIZE_OUT_OF_RANGE);
@@ -128,9 +160,10 @@ class FundDraftServiceTest {
 
     @Test
     void sizeAboveMaximum_throwsOutOfRangeAndDoesNotSave() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
 
-        assertThatThrownBy(() -> fundDraftService.createDraft("user1", request("100000000001")))
+        assertThatThrownBy(() -> fundDraftService.createDraft("user1", request("100000000001", "17")))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.FUND_INITIAL_SIZE_OUT_OF_RANGE);
@@ -139,28 +172,129 @@ class FundDraftServiceTest {
     }
 
     @Test
+    void unitPriceBelowMinimum_throwsOutOfRangeAndDoesNotSave() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+
+        assertThatThrownBy(() -> fundDraftService.createDraft("user1", request("100000000", "0.5")))
+                .isInstanceOf(BaseException.class)
+                .extracting(ex -> ((BaseException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_UNIT_PRICE_OUT_OF_RANGE);
+
+        verifyNoInteractions(fundDraftRepository);
+    }
+
+    @Test
+    void unitPriceAboveMaximum_throwsOutOfRangeAndDoesNotSave() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+
+        assertThatThrownBy(() -> fundDraftService.createDraft("user1", request("100000000", "1000.01")))
+                .isInstanceOf(BaseException.class)
+                .extracting(ex -> ((BaseException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_UNIT_PRICE_OUT_OF_RANGE);
+
+        verifyNoInteractions(fundDraftRepository);
+    }
+
+    @Test
     void sizeExactlyAtBounds_isAccepted() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThat(fundDraftService.createDraft("user1", request("1000000"))).isNotNull();
-        assertThat(fundDraftService.createDraft("user1", request("100000000000"))).isNotNull();
+        assertThat(fundDraftService.createDraft("user1", request("1000000", "1"))).isNotNull();
+        assertThat(fundDraftService.createDraft("user1", request("100000000000", "1000"))).isNotNull();
     }
 
     @Test
-    void getLimits_returnsConfiguredBounds() {
-        var limits = fundDraftService.getLimits();
+    void invalidFundName_throwsAndDoesNotSave() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
 
-        assertThat(limits.minInitialPortfolioSize()).isEqualByComparingTo(MIN_SIZE);
-        assertThat(limits.maxInitialPortfolioSize()).isEqualByComparingTo(MAX_SIZE);
+        assertThatThrownBy(() -> fundDraftService.createDraft(
+                "user1",
+                new CreateFundDraftRequest("Fon 2", MIN_SIZE, MIN_UNIT_PRICE)
+        ))
+                .isInstanceOf(BaseException.class)
+                .extracting(ex -> ((BaseException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_NAME_INVALID);
+
+        verifyNoInteractions(fundDraftRepository);
+    }
+
+    @Test
+    void getInit_returnsCurrenciesBoundsAndPortfolioRuleFrames() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+
+        var response = fundDraftService.getInit();
+
+        assertThat(response.currencies()).hasSize(1);
+        assertThat(response.currencies().getFirst().code()).isEqualTo("TRY");
+        assertThat(response.currencies().getFirst().label()).isEqualTo("TRY - Türk Lirası");
+        assertThat(response.defaultCurrency()).isEqualTo("TRY");
+        assertThat(response.minInitialPortfolioSize()).isEqualByComparingTo(MIN_SIZE);
+        assertThat(response.maxInitialPortfolioSize()).isEqualByComparingTo(MAX_SIZE);
+        assertThat(response.minUnitPrice()).isEqualByComparingTo(MIN_UNIT_PRICE);
+        assertThat(response.maxUnitPrice()).isEqualByComparingTo(MAX_UNIT_PRICE);
+        assertThat(response.minLiquidityTargetPct()).isEqualTo(5);
+        assertThat(response.maxLiquidityTargetPct()).isEqualTo(15);
+        assertThat(response.minTppRangePct()).isEqualTo(3);
+        assertThat(response.minStockCount()).isEqualTo(10);
+        assertThat(response.maxStockCount()).isEqualTo(30);
+        assertThat(response.minStockCountRange()).isEqualTo(5);
+        assertThat(response.minSingleStockMaxPct()).isEqualTo(3);
+        assertThat(response.maxSingleStockMaxPct()).isEqualTo(10);
+        assertThat(response.minEquityWeightPct()).isEqualTo(85);
+        assertThat(response.maxEquityWeightPct()).isEqualTo(95);
+        assertThat(response.sectorMaxPct()).isEqualByComparingTo(SECTOR_MAX_PCT);
+    }
+
+    @Test
+    void getDraft_returnsOwnedDraft() {
+        FundDraft draft = existingDraft(7L);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicId(draft.getPublicId())).thenReturn(Optional.of(draft));
+
+        FundDraftResponse response = fundDraftService.getDraft("user1", draft.getPublicId());
+
+        assertThat(response.draftId()).isEqualTo(draft.getPublicId());
+        assertThat(response.initialPortfolioSize()).isEqualByComparingTo("100000000");
+        assertThat(response.unitPrice()).isEqualByComparingTo("17");
+        assertThat(response.status()).isEqualTo(FundDraftStatus.IN_PROGRESS);
+        assertThat(response.managementApproach()).isNull();
+    }
+
+    @Test
+    void getDraft_missingDraft_throwsNotFound() {
+        UUID draftId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicId(draftId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> fundDraftService.getDraft("user1", draftId))
+                .isInstanceOf(BaseException.class)
+                .extracting(ex -> ((BaseException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_DRAFT_NOT_FOUND);
+    }
+
+    @Test
+    void getDraft_otherUsersDraft_throwsAccessDenied() {
+        FundDraft draft = existingDraft(99L);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicId(draft.getPublicId())).thenReturn(Optional.of(draft));
+
+        assertThatThrownBy(() -> fundDraftService.getDraft("user1", draft.getPublicId()))
+                .isInstanceOf(BaseException.class)
+                .extracting(ex -> ((BaseException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
     }
 
     @Test
     void unknownActor_throwsUserNotFoundAndDoesNotSave() {
         when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> fundDraftService.createDraft("missing", request("100000000")))
+        assertThatThrownBy(() -> fundDraftService.createDraft("missing", request("100000000", "17")))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -168,7 +302,28 @@ class FundDraftServiceTest {
         verifyNoInteractions(fundDraftRepository);
     }
 
-    private CreateFundDraftRequest request(String initialPortfolioSize) {
-        return new CreateFundDraftRequest(new BigDecimal(initialPortfolioSize));
+    private CreateFundDraftRequest request(String initialPortfolioSize, String unitPrice) {
+        return new CreateFundDraftRequest(
+                "Finovation Hisse Senedi Fonu",
+                new BigDecimal(initialPortfolioSize),
+                new BigDecimal(unitPrice)
+        );
+    }
+
+    private FundDraft existingDraft(Long ownerId) {
+        LocalDateTime now = LocalDateTime.ofInstant(FIXED_INSTANT, ZoneOffset.UTC);
+        return FundDraft.builder()
+                .id(1L)
+                .publicId(UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+                .version(0)
+                .fundType(FundType.EQUITY_INTENSIVE)
+                .currencyCode(FundDraft.DEFAULT_CURRENCY_CODE)
+                .initialPortfolioSize(new BigDecimal("100000000"))
+                .unitPrice(new BigDecimal("17"))
+                .status(FundDraftStatus.IN_PROGRESS)
+                .createdByUserId(ownerId)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 }

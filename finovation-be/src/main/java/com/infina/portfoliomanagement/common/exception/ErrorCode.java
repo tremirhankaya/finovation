@@ -221,6 +221,30 @@ public enum ErrorCode {
             HttpStatus.UNPROCESSABLE_ENTITY,
             "Fund monitoring data is not available."
     ),
+
+    FUND_DRAFT_NOT_FOUND(
+            "FUND_004",
+            HttpStatus.NOT_FOUND,
+            "Fund draft not found."
+    ),
+
+    FUND_DESIGN_PROFILE_NOT_FOUND(
+            "FUND_005",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Fund design profile configuration is missing."
+    ),
+
+    FUND_UNIT_PRICE_OUT_OF_RANGE(
+            "FUND_006",
+            HttpStatus.BAD_REQUEST,
+            "The fund unit price is outside the allowed range."
+    ),
+
+    FUND_NAME_INVALID(
+            "FUND_007",
+            HttpStatus.BAD_REQUEST,
+            "The fund name is invalid."
+    ),
     ;
 
     private final String code;

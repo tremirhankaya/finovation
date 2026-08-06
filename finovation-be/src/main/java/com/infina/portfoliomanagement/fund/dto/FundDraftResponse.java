@@ -17,6 +17,7 @@ public record FundDraftResponse(
         FundType fundType,
         String currency,
         BigDecimal initialPortfolioSize,
+        BigDecimal unitPrice,
         ManagementApproach managementApproach,
         Short liquidityTargetPct,
         FundDraftStatus status
@@ -29,6 +30,7 @@ public record FundDraftResponse(
                 .fundType(draft.getFundType())
                 .currency(draft.getCurrencyCode())
                 .initialPortfolioSize(draft.getInitialPortfolioSize())
+                .unitPrice(draft.getUnitPrice())
                 .managementApproach(draft.getManagementApproach())
                 .liquidityTargetPct(draft.getLiquidityTargetPct())
                 .status(draft.getStatus())
