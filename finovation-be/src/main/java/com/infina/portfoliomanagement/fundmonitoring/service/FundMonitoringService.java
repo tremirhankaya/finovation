@@ -63,6 +63,7 @@ public class FundMonitoringService {
     private final AssetClassificationProviderRegistry classificationProviderRegistry;
     private final FundValuationCalculator valuationCalculator;
     private final FundMetricCalculator metricCalculator;
+    private final FundBenchmarkService benchmarkService;
     private final FundMonitoringProperties properties;
     private final Clock clock;
 
@@ -214,6 +215,10 @@ public class FundMonitoringService {
             }
             assets.add(comparisonAsset(fund, valuation, assets.size()));
         }
+
+        assets.addAll(benchmarkService.comparisonAssets(
+                selectedValuation.latestPoint().date()
+        ));
 
         return List.copyOf(assets);
     }

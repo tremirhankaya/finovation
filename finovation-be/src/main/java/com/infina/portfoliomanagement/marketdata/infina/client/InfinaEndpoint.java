@@ -7,6 +7,7 @@ public enum InfinaEndpoint {
     CODE_DEFINITION("/KodTanim"),
     SECTOR_DEFINITION("/SektorTanim"),
     INDEX_PRICE("/EndeksFiyat"),
+    ECONOMIC_PRICE("/EkonomikFiyat"),
     CAPITAL_INCREASE("/SermayeArtirim"),
     TPP_RATE("/TppOran"),
     HOLIDAYS("/TatilGunleri");

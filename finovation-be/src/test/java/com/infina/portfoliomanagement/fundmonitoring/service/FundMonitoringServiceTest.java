@@ -70,6 +70,8 @@ class FundMonitoringServiceTest {
     private AssetClassificationProviderRegistry classificationProviderRegistry;
     @Mock
     private FundValuationCalculator valuationCalculator;
+    @Mock
+    private FundBenchmarkService benchmarkService;
 
     private FundMonitoringService service;
 
@@ -86,6 +88,7 @@ class FundMonitoringServiceTest {
                 classificationProviderRegistry,
                 valuationCalculator,
                 new FundMetricCalculator(),
+                benchmarkService,
                 new FundMonitoringProperties(new BigDecimal("1000000")),
                 CLOCK
         );
@@ -135,6 +138,7 @@ class FundMonitoringServiceTest {
                 List.of(),
                 Map.of()
         )).thenReturn(valuation("100", "120"));
+        when(benchmarkService.comparisonAssets(AS_OF_DATE)).thenReturn(List.of());
 
         var response = service.getMonitoringSnapshot(
                 "manager",
