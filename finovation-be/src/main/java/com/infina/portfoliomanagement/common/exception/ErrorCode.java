@@ -203,6 +203,18 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "The initial portfolio size is outside the allowed range."
     ),
+
+    FUND_NOT_FOUND(
+            "FUND_002",
+            HttpStatus.NOT_FOUND,
+            "Fund not found."
+    ),
+
+    FUND_MONITORING_DATA_UNAVAILABLE(
+            "FUND_003",
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "Fund monitoring data is not available."
+    ),
     ;
 
     private final String code;

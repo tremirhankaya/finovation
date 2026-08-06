@@ -24,6 +24,7 @@ export default function FundPriceCard({
 }: FundPriceCardProps) {
   const dailyChange = snapshot?.dailyChangePercentage ?? 0
   const isNegative = dailyChange < 0
+  const isPositive = dailyChange > 0
   const points = snapshot?.priceHistory[period] ?? []
 
   return (
@@ -48,7 +49,8 @@ export default function FundPriceCard({
               isNegative ? styles.negativeChange : ""
             }`}
           >
-            {isNegative ? "▼" : "▲"} {formatPercentage(dailyChange)} bugün
+            {isNegative ? "▼" : isPositive ? "▲" : "•"}{" "}
+            {formatPercentage(dailyChange)} bugün
           </div>
           <div className={styles.dataDate}>
             {formatDataDate(snapshot?.asOfDate)}

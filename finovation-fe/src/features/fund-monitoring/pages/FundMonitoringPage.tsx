@@ -6,6 +6,7 @@ import FundHoldingsCard from "@/features/fund-monitoring/components/FundHoldings
 import FundMetricsCard from "@/features/fund-monitoring/components/FundMetricsCard"
 import FundPriceCard from "@/features/fund-monitoring/components/FundPriceCard"
 import SectorAllocationCard from "@/features/fund-monitoring/components/SectorAllocationCard"
+import { useFundMonitoring } from "@/features/fund-monitoring/hooks/useFundMonitoring"
 import type {
   FundMonitoringSnapshot,
   FundOption,
@@ -160,14 +161,25 @@ export function FundMonitoringView({
 
 export default function FundMonitoringPage() {
   const navigate = useNavigate()
+  const {
+    funds,
+    selectedFundId,
+    snapshot,
+    isLoading,
+    errorMessage,
+    selectFund,
+    reload,
+  } = useFundMonitoring()
 
-  // Backend fon izleme endpointi ve DTO'su kesinleştiğinde feature API adapterı
-  // bu görünüm modelini besleyecek. Üretim ekranında mock finansal veri tutulmaz.
   return (
     <FundMonitoringView
-      funds={[]}
-      selectedFundId=""
-      snapshot={null}
+      funds={funds}
+      selectedFundId={selectedFundId}
+      snapshot={snapshot}
+      isLoading={isLoading}
+      errorMessage={errorMessage}
+      onFundChange={selectFund}
+      onRetry={reload}
       onBack={() => navigate("/dashboard")}
     />
   )

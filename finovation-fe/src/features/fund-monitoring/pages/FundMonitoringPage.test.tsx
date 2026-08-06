@@ -170,6 +170,29 @@ describe("FundMonitoringView", () => {
     expect(onFundChange).toHaveBeenCalledWith("fund-2")
   })
 
+  it("yeni fonun tek fiyat noktasını boş grafik gibi göstermez", () => {
+    const props = {
+      ...READY_PROPS,
+      snapshot: {
+        ...READY_PROPS.snapshot!,
+        priceHistory: {
+          "1M": [{ date: "2026-08-04", value: 50 }],
+        },
+      },
+    }
+
+    render(<FundMonitoringView {...props} />)
+
+    expect(
+      screen.getByText(
+        "Fon yeni oluşturulduğu için henüz tek fiyat verisi bulunuyor.",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText("Grafik verisi fon seçildikten sonra gösterilecek."),
+    ).not.toBeInTheDocument()
+  })
+
   it("getiri karşılaştırmasını dönem ve görünüm seçimleriyle günceller", async () => {
     const user = userEvent.setup()
     render(<FundMonitoringView {...READY_PROPS} />)

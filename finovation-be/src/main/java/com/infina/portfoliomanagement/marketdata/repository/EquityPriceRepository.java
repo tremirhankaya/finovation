@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.marketdata.repository;
 
 import com.infina.portfoliomanagement.marketdata.entity.EquityPrice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,4 +16,11 @@ public interface EquityPriceRepository extends JpaRepository<EquityPrice, Long> 
     Optional<EquityPrice> findTopByAssetIdOrderByDataDateDesc(Long assetId);
 
     boolean existsByAssetIdAndDataDate(Long assetId, LocalDate dataDate);
+
+    @EntityGraph(attributePaths = "asset")
+    List<EquityPrice> findAllByAssetIdInAndDataDateBetweenOrderByDataDateAsc(
+            List<Long> assetIds,
+            LocalDate from,
+            LocalDate to
+    );
 }
