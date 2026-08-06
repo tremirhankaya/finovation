@@ -65,6 +65,7 @@ public class FundMonitoringService {
     private final FundValuationCalculator valuationCalculator;
     private final FundMetricCalculator metricCalculator;
     private final FundBenchmarkService benchmarkService;
+    private final SimilarFundService similarFundService;
     private final RiskFreeRateProvider riskFreeRateProvider;
     private final FundMonitoringProperties properties;
     private final Clock clock;
@@ -153,6 +154,10 @@ public class FundMonitoringService {
                         valuation,
                         actor.getId(),
                         today,
+                        similarFundService.comparisonAssets(
+                                fund.getFundType(),
+                                latest.date()
+                        ),
                         benchmarks.comparisonAssets()
                 )
         );
@@ -195,6 +200,7 @@ public class FundMonitoringService {
             FundValuationResult selectedValuation,
             Long actorUserId,
             LocalDate today,
+            List<FundComparisonAssetResponse> similarFundAssets,
             List<FundComparisonAssetResponse> benchmarkAssets
     ) {
         List<FundDraft> visibleFunds = fundDraftRepository
@@ -226,6 +232,7 @@ public class FundMonitoringService {
             assets.add(comparisonAsset(fund, valuation, assets.size()));
         }
 
+        assets.addAll(similarFundAssets);
         assets.addAll(benchmarkAssets);
 
         return List.copyOf(assets);

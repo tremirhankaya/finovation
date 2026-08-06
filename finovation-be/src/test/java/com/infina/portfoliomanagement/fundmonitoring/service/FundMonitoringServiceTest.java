@@ -75,6 +75,8 @@ class FundMonitoringServiceTest {
     @Mock
     private FundBenchmarkService benchmarkService;
     @Mock
+    private SimilarFundService similarFundService;
+    @Mock
     private RiskFreeRateProvider riskFreeRateProvider;
 
     private FundMonitoringService service;
@@ -93,6 +95,7 @@ class FundMonitoringServiceTest {
                 valuationCalculator,
                 new FundMetricCalculator(),
                 benchmarkService,
+                similarFundService,
                 riskFreeRateProvider,
                 new FundMonitoringProperties(new BigDecimal("1000000")),
                 CLOCK
@@ -146,6 +149,10 @@ class FundMonitoringServiceTest {
         when(benchmarkService.load(AS_OF_DATE)).thenReturn(
                 new BenchmarkSnapshot(List.of(), new TreeMap<>())
         );
+        when(similarFundService.comparisonAssets(
+                FundType.EQUITY_INTENSIVE,
+                AS_OF_DATE
+        )).thenReturn(List.of());
 
         var response = service.getMonitoringSnapshot(
                 "manager",
