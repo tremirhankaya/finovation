@@ -1,0 +1,387 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.header {
+  margin-bottom: 0.15rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #0f1f3c;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.introLead {
+  margin: 0.55rem 0 0;
+  color: #0f1f3c;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.intro {
+  margin: 0.25rem 0 0;
+  max-width: 44rem;
+  color: #6b7c8c;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.retry {
+  margin-left: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.retry:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card {
+  padding: 1.25rem 1.35rem 1.35rem;
+  border: 1px solid #e5edf1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 32, 64, 0.04);
+}
+
+.analysisGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 1.5rem 2rem;
+}
+
+.stagesColumn .columnTitle {
+  margin-bottom: 1rem;
+}
+
+.columnTitle {
+  margin: 0;
+  color: #0f1f3c;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.detailsHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+}
+
+.fundMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  color: #8a97a6;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.fundName {
+  color: #3d5163;
+  font-weight: 600;
+}
+
+.metaDot {
+  color: #c2ccd4;
+}
+
+.stageList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stageItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #8a97a6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.25s ease;
+}
+
+.stageIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 1.5px dashed #c9d4dc;
+  border-radius: 999px;
+  color: transparent;
+  background: #fff;
+  flex: 0 0 auto;
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.stageDone {
+  color: #0f1f3c;
+}
+
+.stageDone .stageIcon {
+  border-style: solid;
+  border-color: #2ec4a7;
+  color: #fff;
+  background: #2ec4a7;
+}
+
+.stageActive {
+  color: #0f1f3c;
+  font-weight: 600;
+}
+
+.stageActive .stageIcon {
+  border-style: solid;
+  border-color: #2ec4a7;
+  color: #1a9e86;
+  background: rgba(46, 196, 167, 0.12);
+  animation: pulseActive 1.2s ease-in-out infinite;
+}
+
+.stagePending .stageIcon {
+  border-style: dashed;
+  border-color: #c9d4dc;
+}
+
+.stageLabel {
+  line-height: 1.35;
+}
+
+.prefGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.prefTile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 100%;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid #e5edf1;
+  border-radius: 12px;
+  background: #fbfcfd;
+}
+
+.prefTileLocked {
+  border-color: #e8ecf0;
+  background: #f3f5f7;
+}
+
+.prefLabel {
+  margin: 0;
+  color: #6b7c8c;
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.prefTileLocked .prefLabel {
+  color: #9aa6b2;
+}
+
+.prefValue {
+  margin: 0;
+  color: #0f1f3c;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.prefTileLocked .prefValue {
+  color: #7a8794;
+  font-weight: 600;
+}
+
+.prefHint {
+  margin: 0.1rem 0 0;
+  color: #1a9e86;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.prefTileLocked .prefHint {
+  color: #9aa6b2;
+}
+
+.lockedHeading {
+  margin: 0.85rem 0 0.5rem;
+  color: #9aa6b2;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.progressBlock {
+  margin-top: 1.35rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid #eef3f6;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.progressLabel {
+  color: #0f1f3c;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.progressValue {
+  color: #0f1f3c;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.progressTrack {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eef2;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2ec4a7 0%, #3dd4b0 100%);
+  transition: width 0.55s ease;
+}
+
+.progressNote {
+  margin: 0.65rem 0 0;
+  color: #6b7c8c;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.5rem;
+  height: 44px;
+  padding: 0 1.25rem;
+  border: 1.5px solid #d5e0e6;
+  border-radius: 12px;
+  color: #3d5163;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back:hover {
+  border-color: #b8c6cf;
+  background: #f8fbfb;
+}
+
+.back:focus-visible {
+  outline: 3px solid #2ec4a7;
+  outline-offset: 2px;
+}
+
+.continue {
+  min-width: 7.5rem;
+  height: 44px;
+  border-radius: 12px;
+  background: #2ec4a7;
+  box-shadow: none;
+}
+
+.continue:disabled {
+  background: #c5d4d1;
+  opacity: 1;
+}
+
+.continue:not(:disabled):hover {
+  filter: brightness(1.04);
+}
+
+@keyframes pulseActive {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 196, 167, 0.35);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 6px rgba(46, 196, 167, 0);
+  }
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .analysisGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .prefGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .back,
+  .continue {
+    width: 100%;
+  }
+}
