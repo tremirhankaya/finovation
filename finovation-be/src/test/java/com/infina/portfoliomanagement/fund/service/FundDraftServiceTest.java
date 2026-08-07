@@ -5,10 +5,18 @@ import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
+import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPortfolioRulesRequest;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
+import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
+import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
+import com.infina.portfoliomanagement.fund.repository.FundAssetPreferenceRepository;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
+import com.infina.portfoliomanagement.fund.service.analysis.FundModelClient;
+import com.infina.portfoliomanagement.fund.validation.FundDraftValidator;
+import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
+import com.infina.portfoliomanagement.marketdata.repository.EquityDetailRepository;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +31,14 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -51,6 +61,24 @@ class FundDraftServiceTest {
 
     @Mock
     private FundDesignProfileService fundDesignProfileService;
+
+    @Mock
+    private FundModelClient fundModelClient;
+
+    @Mock
+    private FundConstraintService fundConstraintService;
+
+    @Mock
+    private FundAnalysisPersistenceService fundAnalysisPersistenceService;
+
+    @Mock
+    private FundAssetPreferenceRepository fundAssetPreferenceRepository;
+
+    @Mock
+    private AssetRepository assetRepository;
+
+    @Mock
+    private EquityDetailRepository equityDetailRepository;
 
     private FundDraftService fundDraftService;
 
@@ -81,6 +109,13 @@ class FundDraftServiceTest {
                 fundDraftRepository,
                 userRepository,
                 fundDesignProfileService,
+                fundModelClient,
+                fundConstraintService,
+                fundAnalysisPersistenceService,
+                new FundDraftValidator(),
+                fundAssetPreferenceRepository,
+                assetRepository,
+                equityDetailRepository,
                 Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC)
         );
 
@@ -88,6 +123,9 @@ class FundDraftServiceTest {
                 .id(7L)
                 .username("user1")
                 .build();
+
+        lenient().when(fundAssetPreferenceRepository.findAllByFundDraftIdAndPreferenceType(any(), any()))
+                .thenReturn(List.of());
     }
 
     @Test
@@ -95,7 +133,13 @@ class FundDraftServiceTest {
         when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation -> {
+                    FundDraft draft = invocation.getArgument(0);
+                    if (draft.getId() == null) {
+                        draft.setId(42L);
+                    }
+                    return draft;
+                });
 
         FundDraftResponse response =
                 fundDraftService.createDraft("user1", request("100000000", "17"));
@@ -107,6 +151,8 @@ class FundDraftServiceTest {
         assertThat(response.initialPortfolioSize()).isEqualByComparingTo("100000000");
         assertThat(response.unitPrice()).isEqualByComparingTo("17");
         assertThat(response.name()).isEqualTo("Finovation Hisse Senedi Fonu");
+        assertThat(response.excludedAssetCodes()).isEmpty();
+        assertThat(response.forcedAssetCodes()).isEmpty();
     }
 
     @Test
@@ -114,13 +160,18 @@ class FundDraftServiceTest {
         when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation -> {
+                    FundDraft draft = invocation.getArgument(0);
+                    draft.setId(42L);
+                    return draft;
+                });
 
         FundDraftResponse response =
                 fundDraftService.createDraft("user1", request("100000000", "17"));
 
         assertThat(response.managementApproach()).isNull();
         assertThat(response.liquidityTargetPct()).isNull();
+        assertThat(response.currentStep()).isEqualTo(2);
     }
 
     @Test
@@ -128,7 +179,11 @@ class FundDraftServiceTest {
         when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation -> {
+                    FundDraft draft = invocation.getArgument(0);
+                    draft.setId(42L);
+                    return draft;
+                });
 
         fundDraftService.createDraft("user1", request("100000000", "17"));
 
@@ -202,7 +257,11 @@ class FundDraftServiceTest {
         when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.save(any(FundDraft.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation -> {
+                    FundDraft draft = invocation.getArgument(0);
+                    draft.setId(42L);
+                    return draft;
+                });
 
         assertThat(fundDraftService.createDraft("user1", request("1000000", "1"))).isNotNull();
         assertThat(fundDraftService.createDraft("user1", request("100000000000", "1000"))).isNotNull();
@@ -225,11 +284,12 @@ class FundDraftServiceTest {
     }
 
     @Test
-    void getInit_returnsCurrenciesBoundsAndPortfolioRuleFrames() {
+    void getInit_start_returnsCurrenciesBoundsAndPortfolioRuleFrames() {
         when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
 
-        var response = fundDraftService.getInit();
+        var response = fundDraftService.getInit("user1", FundDesignInitPage.START, null);
 
+        assertThat(response.page()).isEqualTo(FundDesignInitPage.START);
         assertThat(response.currencies()).hasSize(1);
         assertThat(response.currencies().getFirst().code()).isEqualTo("TRY");
         assertThat(response.currencies().getFirst().label()).isEqualTo("TRY - Türk Lirası");
@@ -249,6 +309,18 @@ class FundDraftServiceTest {
         assertThat(response.minEquityWeightPct()).isEqualTo(85);
         assertThat(response.maxEquityWeightPct()).isEqualTo(95);
         assertThat(response.sectorMaxPct()).isEqualByComparingTo(SECTOR_MAX_PCT);
+        assertThat(response.draft()).isNull();
+        assertThat(response.modelUniverse()).isNull();
+    }
+
+    @Test
+    void getInit_strategy_withoutDraftId_rejects() {
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+
+        assertThatThrownBy(() -> fundDraftService.getInit("user1", FundDesignInitPage.STRATEGY, null))
+                .isInstanceOf(BaseException.class)
+                .extracting(ex -> ((BaseException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_INIT_PAGE_INVALID);
     }
 
     @Test
@@ -256,6 +328,8 @@ class FundDraftServiceTest {
         FundDraft draft = existingDraft(7L);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
         when(fundDraftRepository.findByPublicId(draft.getPublicId())).thenReturn(Optional.of(draft));
+        when(fundAssetPreferenceRepository.findAllByFundDraftIdAndPreferenceType(any(), any()))
+                .thenReturn(List.of());
 
         FundDraftResponse response = fundDraftService.getDraft("user1", draft.getPublicId());
 
@@ -264,6 +338,8 @@ class FundDraftServiceTest {
         assertThat(response.unitPrice()).isEqualByComparingTo("17");
         assertThat(response.status()).isEqualTo(FundDraftStatus.IN_PROGRESS);
         assertThat(response.managementApproach()).isNull();
+        assertThat(response.excludedAssetCodes()).isEmpty();
+        assertThat(response.forcedAssetCodes()).isEmpty();
     }
 
     @Test
@@ -288,6 +364,75 @@ class FundDraftServiceTest {
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
+    }
+
+    @Test
+    void updatePortfolioRules_persistsUserChoicesAndProfileCaps() {
+        FundDraft draft = existingDraft(7L);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicId(draft.getPublicId())).thenReturn(Optional.of(draft));
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+        when(fundDraftRepository.save(any(FundDraft.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        UpdateFundDraftPortfolioRulesRequest request = new UpdateFundDraftPortfolioRulesRequest(
+                ManagementApproach.PROTECTIVE,
+                5,
+                10,
+                8,
+                25,
+                30,
+                List.of(),
+                List.of()
+        );
+
+        FundDraftResponse response =
+                fundDraftService.updatePortfolioRules("user1", draft.getPublicId(), request);
+
+        assertThat(response.managementApproach()).isEqualTo(ManagementApproach.PROTECTIVE);
+        assertThat(response.tppMinPct()).isEqualTo((short) 5);
+        assertThat(response.tppMaxPct()).isEqualTo((short) 10);
+        assertThat(response.preferredTppPct()).isEqualTo((short) 8);
+        assertThat(response.liquidityTargetPct()).isEqualTo((short) 8);
+        assertThat(response.minStockCount()).isEqualTo((short) 25);
+        assertThat(response.maxStockCount()).isEqualTo((short) 30);
+        assertThat(response.equityMinPct()).isEqualTo((short) 85);
+        assertThat(response.equityMaxPct()).isEqualTo((short) 95);
+        assertThat(response.singleStockMaxPct()).isEqualTo((short) 10);
+        assertThat(response.currentStep()).isEqualTo(3);
+
+        ArgumentCaptor<FundDraft> captor = ArgumentCaptor.forClass(FundDraft.class);
+        verify(fundDraftRepository).save(captor.capture());
+        assertThat(captor.getValue().getPreferredTppPct()).isEqualTo((short) 8);
+    }
+
+    @Test
+    void updatePortfolioRules_outOfBounds_throwsAndDoesNotSave() {
+        FundDraft draft = existingDraft(7L);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicId(draft.getPublicId())).thenReturn(Optional.of(draft));
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+
+        UpdateFundDraftPortfolioRulesRequest request = new UpdateFundDraftPortfolioRulesRequest(
+                ManagementApproach.ATTACK,
+                5,
+                6,
+                5,
+                16,
+                21,
+                null,
+                null
+        );
+
+        assertThatThrownBy(
+                () -> fundDraftService.updatePortfolioRules("user1", draft.getPublicId(), request)
+        )
+                .isInstanceOf(BaseException.class)
+                .extracting(ex -> ((BaseException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_PORTFOLIO_RULES_INVALID);
+
+        verify(fundDraftRepository).findByPublicId(draft.getPublicId());
+        verify(fundDraftRepository, org.mockito.Mockito.never()).save(any());
     }
 
     @Test
@@ -321,6 +466,7 @@ class FundDraftServiceTest {
                 .initialPortfolioSize(new BigDecimal("100000000"))
                 .unitPrice(new BigDecimal("17"))
                 .status(FundDraftStatus.IN_PROGRESS)
+                .currentStep((short) 2)
                 .createdByUserId(ownerId)
                 .createdAt(now)
                 .updatedAt(now)

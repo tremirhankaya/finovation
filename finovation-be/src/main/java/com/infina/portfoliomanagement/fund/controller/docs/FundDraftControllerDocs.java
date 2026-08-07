@@ -4,12 +4,22 @@ import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundDraftInitResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
+import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
+import com.infina.portfoliomanagement.fund.dto.ModelUniverseAssetResponse;
+import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPortfolioRulesRequest;
+import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
+import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
+import com.infina.portfoliomanagement.fund.dto.analysis.SelectFundProposalRequest;
+import com.infina.portfoliomanagement.fund.dto.analysis.UpdateWorkingPortfolioRequest;
+import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
+import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.List;
 import java.util.UUID;
 
 @Tag(
@@ -22,7 +32,10 @@ public interface FundDraftControllerDocs {
             summary = "Start a fund draft",
             description = "Creates a fund draft from the fund name, initial portfolio size and unit price. "
                     + "Fund type, currency and investment universe are assigned by the system. "
-                    + "Strategy preferences and portfolio limits are defined in the next step.",
+                    + "currentStep is set to 2 (Strategy). "
+                    + "Profile constraints (equity/single-stock/sector caps) are written to "
+                    + "fund_constraints. Strategy preferences and portfolio limits are defined "
+                    + "in the next step.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<FundDraftResponse> createDraft(
@@ -31,20 +44,100 @@ public interface FundDraftControllerDocs {
     );
 
     @Operation(
-            summary = "Get fund draft init data",
-            description = "Returns supported currencies plus configured bounds for screen 1 "
-                    + "(portfolio size, unit price) and screen 2 portfolio rules "
-                    + "(liquidity/TPP, stock count, equity weight, single-stock max, sector cap). "
+            summary = "Get page-scoped fund draft init data",
+            description = "Returns bootstrap data for one wizard page. "
+                    + "page=START: currencies + create bounds + prospectus frames. "
+                    + "page=STRATEGY&draftId=: portfolio-rule bounds + owned draft + model universe "
+                    + "(single response for screen 2). "
+                    + "page=ANALYSIS|ALTERNATIVES|EDIT: prospectus / rule frames only. "
                     + "Save endpoints still enforce the same bounds.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
-    FundDraftInitResponse getInit();
+    FundDraftInitResponse getInit(UserDetails userDetails, FundDesignInitPage page, UUID draftId);
+
+    @Operation(
+            summary = "List in-progress fund drafts",
+            description = "Returns the authenticated user's IN_PROGRESS drafts for resume/continue flows. "
+                    + "currentStep is the next wizard screen to open.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    List<FundDraftSummaryResponse> listInProgressDrafts(UserDetails userDetails);
+
+    @Operation(
+            summary = "List model universe equities",
+            description = "Standalone universe list. Prefer page=STRATEGY init for screen 2 bootstrap.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    List<ModelUniverseAssetResponse> listModelUniverse();
 
     @Operation(
             summary = "Get a fund draft",
             description = "Returns the draft owned by the authenticated user. "
-                    + "Strategy fields may still be empty until that step is saved.",
+                    + "Strategy fields may still be empty until that step is saved. "
+                    + "Includes excluded and forced asset codes when preferences exist.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     FundDraftResponse getDraft(UserDetails userDetails, UUID draftId);
+
+    @Operation(
+            summary = "Save portfolio rules (screen 2)",
+            description = "Persists management approach, TPP range/preferred value, stock-count "
+                    + "range, and optional excluded/forced equities. Equity and single-stock caps "
+                    + "are stamped from the design profile into fund_drafts and fund_constraints. "
+                    + "Advances currentStep to 3 (AI Analizi) when appropriate.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    FundDraftResponse updatePortfolioRules(
+            UserDetails userDetails,
+            UUID draftId,
+            UpdateFundDraftPortfolioRulesRequest request
+    );
+
+    @Operation(
+            summary = "Get persisted analysis state",
+            description = "Returns proposals for the current rules fingerprint from SQL "
+                    + "(model_runs / fund_portfolios). Empty proposals means analysis was not run "
+                    + "yet or rules changed.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    FundDraftAnalysisStateResponse getAnalysisState(UserDetails userDetails, UUID draftId);
+
+    @Operation(
+            summary = "Run AI analysis (screen 3)",
+            description = "If a COMPLETED model_run already matches the current rules fingerprint, "
+                    + "returns those proposals without re-running. Otherwise creates a model_run, "
+                    + "persists PROPOSAL portfolios/positions, and advances currentStep to 4.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    FundModelAnalysisResponse runAnalysis(UserDetails userDetails, UUID draftId);
+
+    @Operation(
+            summary = "Select a proposal (screen 4)",
+            description = "Marks the proposal as selected and copies positions into the WORKING "
+                    + "portfolio. Advances currentStep to 5 (Edit).",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    FundDraftAnalysisStateResponse selectProposal(
+            UserDetails userDetails,
+            UUID draftId,
+            SelectFundProposalRequest request
+    );
+
+    @Operation(
+            summary = "Get working portfolio (screen 5)",
+            description = "Returns the WORKING portfolio positions for the draft.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    WorkingPortfolioResponse getWorkingPortfolio(UserDetails userDetails, UUID draftId);
+
+    @Operation(
+            summary = "Update working portfolio (screen 5)",
+            description = "Replaces WORKING portfolio positions (autosave / continue).",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    WorkingPortfolioResponse updateWorkingPortfolio(
+            UserDetails userDetails,
+            UUID draftId,
+            UpdateWorkingPortfolioRequest request
+    );
 }
