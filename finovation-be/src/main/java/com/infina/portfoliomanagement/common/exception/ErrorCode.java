@@ -203,7 +203,24 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "The initial portfolio size is outside the allowed range."
     ),
-    ;
+    STRESS_PORTFOLIO_NOT_AVAILABLE(
+            "STRESS_001",
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "A selected portfolio is not available for stress testing."
+    ),
+
+    STRESS_SCENARIO_NOT_FOUND(
+            "STRESS_002",
+            HttpStatus.NOT_FOUND,
+            "Stress scenario not found."
+    ),
+
+    STRESS_TEST_NOT_FOUND(
+            "STRESS_003",
+            HttpStatus.NOT_FOUND,
+            "Stress test not found."
+    );
+
 
     private final String code;
     private final HttpStatus httpStatus;
