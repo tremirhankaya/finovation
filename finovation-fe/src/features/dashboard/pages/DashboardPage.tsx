@@ -30,6 +30,10 @@ export default function DashboardPage() {
         Fon İzleme ve Performans
       </button>
 
+      <button onClick={() => navigate("/optimization-requests/new")}>
+        Fon Optimizasyonu
+      </button>
+
       <button onClick={handleReturnToLogin}>Giriş ekranına dön</button>
     </div>
   )
