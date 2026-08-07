@@ -52,6 +52,9 @@ public record FundModelAnalysisRequest(
 
         @NotNull
         @JsonProperty("excluded_assets")
-        List<String> excludedAssets
+        List<String> excludedAssets,
+
+        @JsonProperty("forced_assets")
+        List<String> forcedAssets
 ) {
 }
