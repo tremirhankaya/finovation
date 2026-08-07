@@ -7,6 +7,7 @@ export type ConstraintRangeInputsProps = {
   max: number
   floor: number
   ceiling: number
+  minWidth: number
   onMinChange: (value: number) => void
   onMaxChange: (value: number) => void
   hint: string
@@ -18,6 +19,7 @@ export default function ConstraintRangeInputs({
   max,
   floor,
   ceiling,
+  minWidth,
   onMinChange,
   onMaxChange,
   hint,
@@ -45,6 +47,7 @@ export default function ConstraintRangeInputs({
           max={max}
           floor={floor}
           ceiling={ceiling}
+          minWidth={minWidth}
           onMinChange={onMinChange}
           onMaxChange={onMaxChange}
         />

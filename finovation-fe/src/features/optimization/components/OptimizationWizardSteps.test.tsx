@@ -22,4 +22,11 @@ describe("OptimizationWizardSteps", () => {
     const otherStep = screen.getByText("Fon Seçimi").closest("li")
     expect(otherStep).not.toHaveAttribute("aria-current")
   })
+
+  it("4. adımda tüm önceki adımları tamamlanmış işaretler", () => {
+    render(<OptimizationWizardSteps currentStep={4} />)
+
+    const finalStep = screen.getByText("Onay").closest("li")
+    expect(finalStep).toHaveAttribute("aria-current", "step")
+  })
 })

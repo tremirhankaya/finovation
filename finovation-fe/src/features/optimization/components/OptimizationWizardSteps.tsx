@@ -1,9 +1,9 @@
 import styles from "@/features/optimization/styles/OptimizationFormPage.module.css"
 
-export type WizardStep = 1 | 2
+export type WizardStep = 1 | 2 | 3 | 4
 
 type StepEntry = {
-  step: WizardStep | 3 | 4
+  step: WizardStep
   label: string
 }
 
@@ -26,14 +26,13 @@ export default function OptimizationWizardSteps({
       {STEPS.map(({ step, label }) => {
         const isActive = step === currentStep
         const isDone = step < currentStep
-        const isAvailable = step === 1 || step === 2
 
         return (
           <li
             key={step}
             className={`${styles.wizardStep} ${
               isActive ? styles.wizardStepActive : ""
-            } ${!isAvailable ? styles.wizardStepDisabled : ""}`}
+            }`}
             aria-current={isActive ? "step" : undefined}
           >
             <span

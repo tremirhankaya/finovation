@@ -10,7 +10,7 @@ const VALID_INPUT: ComplianceInput = {
   tppMinWeight: 5,
   tppMaxWeight: 15,
   stockCountMin: 16,
-  stockCountMax: 35,
+  stockCountMax: 30,
   keptAssetCount: 2,
   keptWeightSum: 16,
   forceAddedAssetCount: 1,
@@ -37,11 +37,22 @@ describe("buildComplianceRows", () => {
     expect(isComplianceReady(rows)).toBe(false)
   })
 
-  it("hisse sayısı sistem sınırının (16-35) dışındaysa UYUMSUZ verir", () => {
+  it("hisse sayısı sistem sınırının (16-30) dışındaysa UYUMSUZ verir", () => {
     const rows = buildComplianceRows({
       ...VALID_INPUT,
       stockCountMin: 10,
-      stockCountMax: 30,
+      stockCountMax: 25,
+    })
+
+    const stockCountRow = rows.find((row) => row.key === "stock-count")
+    expect(stockCountRow?.status).toBe("UYUMSUZ")
+  })
+
+  it("hisse sayısı üst sınırı (30) aşarsa UYUMSUZ verir", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      stockCountMin: 16,
+      stockCountMax: 31,
     })
 
     const stockCountRow = rows.find((row) => row.key === "stock-count")

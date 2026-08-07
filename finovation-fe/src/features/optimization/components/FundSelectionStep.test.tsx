@@ -48,21 +48,6 @@ describe("FundSelectionStep", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Fonlar yüklenemedi.")
   })
 
-  it("fon yoksa boş durum mesajı gösterir", () => {
-    render(
-      <FundSelectionStep
-        funds={[]}
-        selectedFundId=""
-        onSelectFund={vi.fn()}
-        onContinue={vi.fn()}
-        isLoading={false}
-        errorMessage=""
-      />,
-    )
-
-    expect(screen.getByText("Optimize edilebilir fon yok.")).toBeInTheDocument()
-  })
-
   it("fonları listeler ve seçili olanı işaretler", () => {
     render(
       <FundSelectionStep

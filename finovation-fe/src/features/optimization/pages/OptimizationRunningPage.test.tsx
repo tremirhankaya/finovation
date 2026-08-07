@@ -27,6 +27,18 @@ describe("OptimizationRunningView", () => {
     expect(screen.getByRole("main")).toHaveAttribute("aria-busy", "true")
   })
 
+  it("fundName verildiğinde ham fon ID'si yerine gerçek fon adını gösterir", () => {
+    render(
+      <OptimizationRunningView
+        {...RUNNING_PROPS}
+        fundName="Deneme Hisse Fonu"
+      />,
+    )
+
+    expect(screen.getByText(/Deneme Hisse Fonu/)).toBeInTheDocument()
+    expect(screen.queryByText(/Fon #42/)).not.toBeInTheDocument()
+  })
+
   it("optimizasyon adımlarını listeler", () => {
     render(<OptimizationRunningView {...RUNNING_PROPS} />)
 
@@ -75,19 +87,38 @@ describe("OptimizationRunningView", () => {
     expect(screen.getByRole("button", { name: "Tekrar Dene" })).toBeDisabled()
   })
 
-  it("tamamlandığında yer tutucu başarı durumunu gösterir", () => {
+  it("tamamlandığında başarı durumunu ve sonuç butonunu gösterir", () => {
     render(
       <OptimizationRunningView
         {...RUNNING_PROPS}
         isRunning={false}
         isCompleted={true}
+        onViewResult={vi.fn()}
       />,
     )
 
     expect(screen.getByText("Optimizasyon tamamlandı")).toBeInTheDocument()
     expect(
-      screen.getByText("Sonuç ekranı yakında eklenecek."),
+      screen.getByRole("button", { name: "Sonucu Görüntüle →" }),
     ).toBeInTheDocument()
+  })
+
+  it("sonucu görüntüle butonuna basınca callback'i tetikler", async () => {
+    const user = userEvent.setup()
+    const onViewResult = vi.fn()
+
+    render(
+      <OptimizationRunningView
+        {...RUNNING_PROPS}
+        isRunning={false}
+        isCompleted={true}
+        onViewResult={onViewResult}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "Sonucu Görüntüle →" }))
+
+    expect(onViewResult).toHaveBeenCalledTimes(1)
   })
 
   it("geri dön butonuna basınca callback'i tetikler", async () => {

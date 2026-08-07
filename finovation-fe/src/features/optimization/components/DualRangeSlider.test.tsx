@@ -84,4 +84,33 @@ describe("DualRangeSlider", () => {
 
     expect(onMaxChange).toHaveBeenCalledWith(31)
   })
+
+  it("tutamaçlar yakınlaştığında az önce basılan tutamacı öne getirir", () => {
+    render(
+      <DualRangeSlider
+        label="TPP Ağırlık Aralığı (%)"
+        min={6}
+        max={9}
+        floor={5}
+        ceiling={15}
+        onMinChange={vi.fn()}
+        onMaxChange={vi.fn()}
+      />,
+    )
+
+    const minSlider = screen.getByRole("slider", {
+      name: "TPP Ağırlık Aralığı (%) minimum kaydırıcı",
+    })
+    const maxSlider = screen.getByRole("slider", {
+      name: "TPP Ağırlık Aralığı (%) maksimum kaydırıcı",
+    })
+
+    fireEvent.pointerDown(minSlider)
+    expect(minSlider).toHaveStyle({ zIndex: "3" })
+    expect(maxSlider).toHaveStyle({ zIndex: "1" })
+
+    fireEvent.pointerDown(maxSlider)
+    expect(maxSlider).toHaveStyle({ zIndex: "3" })
+    expect(minSlider).toHaveStyle({ zIndex: "2" })
+  })
 })
