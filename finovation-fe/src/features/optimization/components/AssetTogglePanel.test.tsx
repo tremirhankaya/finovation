@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 import AssetTogglePanel from "@/features/optimization/components/AssetTogglePanel"
+import styles from "@/features/optimization/styles/OptimizationFormPage.module.css"
 
 const ASSETS = [
   {
@@ -122,5 +123,42 @@ describe("AssetTogglePanel", () => {
     )
 
     expect(onToggle).toHaveBeenCalledWith("MGROS")
+  })
+
+  it("exclude variant'ında checkbox'a hariç tutma vurgu sınıfını ekler", () => {
+    render(
+      <AssetTogglePanel
+        title="C · Dahil Edilmeyecek Hisseler"
+        description="açıklama"
+        assets={ASSETS}
+        selectedAssetCodes={new Set()}
+        disabledAssetCodes={new Set()}
+        toggleLabel="Hariç Tut"
+        variant="exclude"
+        onToggle={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Hariç Tut" }),
+    ).toHaveClass(styles.assetCheckboxExclude)
+  })
+
+  it("forceAdd variant'ında (varsayılan) hariç tutma vurgu sınıfını eklemez", () => {
+    render(
+      <AssetTogglePanel
+        title="D · Zorunlu Eklenecek Hisseler"
+        description="açıklama"
+        assets={ASSETS}
+        selectedAssetCodes={new Set()}
+        disabledAssetCodes={new Set()}
+        toggleLabel="Ekle"
+        onToggle={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Ekle" }),
+    ).not.toHaveClass(styles.assetCheckboxExclude)
   })
 })
