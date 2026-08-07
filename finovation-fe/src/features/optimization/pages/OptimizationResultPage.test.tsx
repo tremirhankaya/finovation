@@ -54,6 +54,22 @@ vi.mock(
   () => metricsPlaceholderMocks,
 )
 
+const pdfExportMocks = vi.hoisted(() => ({
+  downloadOptimizationResultPdf: vi.fn(),
+}))
+
+vi.mock("@/features/optimization/lib/optimizationPdfExport", () => ({
+  ...pdfExportMocks,
+}))
+
+const excelExportMocks = vi.hoisted(() => ({
+  downloadOptimizationResultExcel: vi.fn(),
+}))
+
+vi.mock("@/features/optimization/lib/optimizationExcelExport", () => ({
+  ...excelExportMocks,
+}))
+
 import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
 
 const COMPLETED_REQUEST = {
@@ -107,6 +123,8 @@ describe("OptimizationResultPage", () => {
       .mockResolvedValue(COMPLETED_REQUEST)
     optimizationApiMocks.approveOptimizationRequest.mockReset()
     optimizationApiMocks.rejectOptimizationRequest.mockReset()
+    pdfExportMocks.downloadOptimizationResultPdf.mockReset()
+    excelExportMocks.downloadOptimizationResultExcel.mockReset()
   })
 
   it("yüklenirken durum bandını gösterir", () => {
@@ -198,7 +216,69 @@ describe("OptimizationResultPage", () => {
     ).toHaveBeenCalledWith(1)
   })
 
-  it("reddedince başarı ekranını farklı metinle gösterir", async () => {
+  it("onaylayınca PDF İndir butonunu gösterir ve tıklanınca export'u tetikler", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({})
+    renderPage("Finovation Atlas Fonu")
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Onaya İlerle →" }),
+      ).toBeInTheDocument(),
+    )
+    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
+    await user.click(screen.getByRole("button", { name: "Onayla" }))
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "PDF İndir" }),
+      ).toBeInTheDocument(),
+    )
+    await user.click(screen.getByRole("button", { name: "PDF İndir" }))
+
+    await waitFor(() =>
+      expect(pdfExportMocks.downloadOptimizationResultPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fundName: "Finovation Atlas Fonu",
+          request: expect.objectContaining({ id: 1 }),
+        }),
+      ),
+    )
+  })
+
+  it("onaylayınca Excel İndir butonunu gösterir ve tıklanınca export'u tetikler", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({})
+    renderPage("Finovation Atlas Fonu")
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Onaya İlerle →" }),
+      ).toBeInTheDocument(),
+    )
+    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
+    await user.click(screen.getByRole("button", { name: "Onayla" }))
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Excel İndir" }),
+      ).toBeInTheDocument(),
+    )
+    await user.click(screen.getByRole("button", { name: "Excel İndir" }))
+
+    await waitFor(() =>
+      expect(
+        excelExportMocks.downloadOptimizationResultExcel,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fundName: "Finovation Atlas Fonu",
+          request: expect.objectContaining({ id: 1 }),
+        }),
+      ),
+    )
+  })
+
+  it("reddedince başarı ekranını farklı metinle gösterir ve PDF/Excel İndir butonlarını göstermez", async () => {
     const user = userEvent.setup()
     optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
     renderPage()
@@ -214,6 +294,12 @@ describe("OptimizationResultPage", () => {
     await waitFor(() =>
       expect(screen.getByText("Optimizasyon Reddedildi")).toBeInTheDocument(),
     )
+    expect(
+      screen.queryByRole("button", { name: "PDF İndir" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Excel İndir" }),
+    ).not.toBeInTheDocument()
   })
 
   it("onay hata verdiğinde hata bandını gösterir", async () => {
