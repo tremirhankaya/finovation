@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router"
 
+import AppShell from "@/app/layout/AppShell"
 import ProtectedRoute from "@/app/router/ProtectedRoute"
 import GuestRoute from "@/app/router/GuestRoute"
 import AuthProvider from "@/features/auth/context/AuthProvider"
@@ -44,46 +45,26 @@ export default function App() {
           />
 
           <Route
-            path="/dashboard"
             element={
               <ProtectedRoute requireProductAccess>
-                <DashboardPage />
+                <AppShell />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/fund-design" element={<StartFundDraftPage />} />
+            <Route
+              path="/fund-design/:draftId/strategy"
+              element={<FundDesignStrategyPage />}
+            />
+            <Route path="/fund-monitoring" element={<FundMonitoringPage />} />
+          </Route>
 
           <Route
             path="/users"
             element={
               <ProtectedRoute requirePanelAccess>
                 <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/fund-design"
-            element={
-              <ProtectedRoute requireProductAccess>
-                <StartFundDraftPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/fund-design/:draftId/strategy"
-            element={
-              <ProtectedRoute requireProductAccess>
-                <FundDesignStrategyPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/fund-monitoring"
-            element={
-              <ProtectedRoute requireProductAccess>
-                <FundMonitoringPage />
               </ProtectedRoute>
             }
           />
