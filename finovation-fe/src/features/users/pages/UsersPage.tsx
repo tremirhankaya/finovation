@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router"
 
 import FormAlert from "@/shared/ui/FormAlert"
 import { useAuth } from "@/features/auth/context/AuthContext"
+import CompanyManagementCard from "@/features/users/components/CompanyManagementCard"
 import UserCreateModal from "@/features/users/components/UserCreateModal"
 import UserDeleteConfirm from "@/features/users/components/UserDeleteConfirm"
 import UserEditModal from "@/features/users/components/UserEditModal"
@@ -16,6 +18,10 @@ import {
   deleteUser,
   updateUser,
 } from "@/features/users/api/userService"
+import {
+  createCompany as createCompanyRequest,
+  deleteCompany as deleteCompanyRequest,
+} from "@/features/users/api/companyService"
 import type {
   CreateUserPayload,
   UpdateUserPayload,
@@ -37,8 +43,10 @@ const EMPTY_FILTERS: UserListFilters = {
 }
 
 export default function UsersPage() {
-  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { user, signOut } = useAuth()
   const canCreateUser = user?.canCreateUser ?? false
+  const isSuperAdmin = user?.role === "SUPER_ADMIN"
   const assignableRoles = user?.assignableRoles ?? []
   const deletableRoles = user?.deletableRoles ?? []
 
@@ -54,6 +62,11 @@ export default function UsersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<Error | null>(null)
+  const [isCreatingCompany, setIsCreatingCompany] = useState(false)
+  const [deletingCompanyId, setDeletingCompanyId] = useState<number | null>(
+    null,
+  )
+  const [companyMutationError, setCompanyMutationError] = useState("")
 
   const {
     companies,
@@ -225,23 +238,91 @@ export default function UsersPage() {
     }
   }
 
+  const handleCreateCompany = async (name: string): Promise<boolean> => {
+    setIsCreatingCompany(true)
+    setCompanyMutationError("")
+
+    try {
+      await createCompanyRequest({ name })
+      reloadCompanies()
+      return true
+    } catch (companyError) {
+      setCompanyMutationError(
+        companyError instanceof Error
+          ? companyError.message
+          : "Şirket oluşturulamadı.",
+      )
+      return false
+    } finally {
+      setIsCreatingCompany(false)
+    }
+  }
+
+  const handleDeleteCompany = async (companyId: number): Promise<boolean> => {
+    setDeletingCompanyId(companyId)
+    setCompanyMutationError("")
+
+    try {
+      await deleteCompanyRequest(companyId)
+      closeEditor()
+      reloadCompanies()
+
+      if (filters.companyId === companyId) {
+        applyFilters({ ...filters, companyId: null })
+      } else {
+        reload()
+      }
+      return true
+    } catch (companyError) {
+      setCompanyMutationError(
+        companyError instanceof Error
+          ? companyError.message
+          : "Şirket silinemedi.",
+      )
+      return false
+    } finally {
+      setDeletingCompanyId(null)
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.content}>
         <header className={styles.pageHead}>
           <div>
-            <h1 className={styles.title}>Kullanıcılar</h1>
-            <p className={styles.desc}>Kullanıcı yönetim paneli.</p>
+            <h1 className={styles.title}>
+              {isSuperAdmin ? "Sistem Yönetimi" : "Kullanıcılar"}
+            </h1>
+            <p className={styles.desc}>
+              {isSuperAdmin
+                ? "Şirketleri ve yönetici hesaplarını tek ekrandan yönetin."
+                : "Şirketinizdeki kullanıcıları yönetin."}
+            </p>
           </div>
-          {canCreateUser && (
+          <div className={styles.headerActions}>
+            {canCreateUser && (
+              <button
+                className={styles.createButton}
+                type="button"
+                onClick={() => setIsCreateOpen(true)}
+              >
+                + Yeni kullanıcı
+              </button>
+            )}
             <button
-              className={styles.createButton}
+              className={styles.signOutButton}
               type="button"
-              onClick={() => setIsCreateOpen(true)}
+              onClick={() => {
+                if (isSuperAdmin) {
+                  void signOut()
+                  return
+                }
+                navigate("/dashboard")
+              }}
             >
-              + Yeni kullanıcı
+              {isSuperAdmin ? "Çıkış yap" : "Ana sayfaya dön"}
             </button>
-          )}
+          </div>
         </header>
 
         {error && (
@@ -259,7 +340,7 @@ export default function UsersPage() {
           </div>
         )}
 
-        {!error && companiesError && (
+        {!isSuperAdmin && companiesError && (
           <div className={styles.pageAlert}>
             <FormAlert>
               Şirket filtresi kullanılamıyor: {companiesError}
@@ -319,6 +400,21 @@ export default function UsersPage() {
             </>
           )}
         </section>
+
+        {isSuperAdmin && (
+          <CompanyManagementCard
+            companies={companies}
+            isLoading={companiesLoading}
+            loadError={companiesError}
+            mutationError={companyMutationError}
+            isCreating={isCreatingCompany}
+            deletingCompanyId={deletingCompanyId}
+            onRetry={reloadCompanies}
+            onCreate={handleCreateCompany}
+            onDelete={handleDeleteCompany}
+            onDismissMutationError={() => setCompanyMutationError("")}
+          />
+        )}
       </div>
 
       <UserEditModal

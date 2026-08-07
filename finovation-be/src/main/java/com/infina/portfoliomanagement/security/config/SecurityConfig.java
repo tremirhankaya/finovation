@@ -6,6 +6,7 @@ import com.infina.portfoliomanagement.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -53,6 +54,16 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/prometheus")
                         .permitAll()
+                        .requestMatchers("/api/v1/auth/me")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/companies")
+                        .hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers("/api/v1/companies", "/api/v1/companies/**")
+                        .hasRole("SUPER_ADMIN")
+                        .requestMatchers("/api/v1/users/**")
+                        .hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers("/api/v1/**")
+                        .hasAnyRole("ADMIN", "USER")
                         .anyRequest().authenticated()
                 )
 

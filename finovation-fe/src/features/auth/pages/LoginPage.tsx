@@ -11,6 +11,7 @@ import {
   validateLoginCredentials,
 } from "@/features/auth/model/loginSchema"
 import { useAuth } from "@/features/auth/context/AuthContext"
+import { getAuthenticatedHomePath } from "@/app/router/routeAccess"
 
 import BrandPanel from "@/features/auth/components/BrandPanel"
 import styles from "@/features/auth/styles/LoginPage.module.css"
@@ -54,8 +55,10 @@ export default function LoginPage() {
     setIsSubmitting(true)
 
     try {
-      await signIn(validation.data)
-      navigate("/dashboard", { replace: true })
+      const currentUser = await signIn(validation.data)
+      if (currentUser) {
+        navigate(getAuthenticatedHomePath(currentUser), { replace: true })
+      }
     } catch (error) {
       setFormError(error instanceof Error ? error.message : UNKNOWN_LOGIN_ERROR)
     } finally {

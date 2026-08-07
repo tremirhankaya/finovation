@@ -46,7 +46,7 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireProductAccess>
                 <DashboardPage />
               </ProtectedRoute>
             }
@@ -64,7 +64,7 @@ export default function App() {
           <Route
             path="/fund-design"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireProductAccess>
                 <StartFundDraftPage />
               </ProtectedRoute>
             }
@@ -73,7 +73,7 @@ export default function App() {
           <Route
             path="/fund-design/:draftId/strategy"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireProductAccess>
                 <FundDesignStrategyPage />
               </ProtectedRoute>
             }
@@ -82,7 +82,7 @@ export default function App() {
           <Route
             path="/fund-monitoring"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireProductAccess>
                 <FundMonitoringPage />
               </ProtectedRoute>
             }

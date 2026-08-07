@@ -12,7 +12,7 @@ import GuestRoute from "@/app/router/GuestRoute"
 import ProtectedRoute from "@/app/router/ProtectedRoute"
 import type { AuthContextValue } from "@/features/auth/context/AuthContext"
 
-const USER = {
+const ADMIN = {
   id: 1,
   username: "batuhan",
   firstName: "Batuhan",
@@ -28,6 +28,30 @@ const USER = {
   canDeleteUser: true,
   assignableRoles: ["USER" as const],
   deletableRoles: ["USER" as const],
+}
+
+const SUPER_ADMIN = {
+  ...ADMIN,
+  id: 2,
+  role: "SUPER_ADMIN" as const,
+  companyId: null,
+  companyName: null,
+  canAccessPanel: true,
+  canCreateUser: true,
+  canDeleteUser: true,
+  assignableRoles: ["ADMIN" as const, "SUPER_ADMIN" as const],
+  deletableRoles: ["ADMIN" as const],
+}
+
+const USER = {
+  ...ADMIN,
+  id: 3,
+  role: "USER" as const,
+  canAccessPanel: false,
+  canCreateUser: false,
+  canDeleteUser: false,
+  assignableRoles: [],
+  deletableRoles: [],
 }
 
 function authValue(
@@ -70,7 +94,7 @@ describe("route guards", () => {
   })
 
   it("giriş yapmış kullanıcıyı guest route'tan dashboard'a gönderir", async () => {
-    useAuthMock.mockReturnValue(authValue({ user: USER }))
+    useAuthMock.mockReturnValue(authValue({ user: ADMIN }))
 
     render(
       <MemoryRouter initialEntries={["/login"]}>
@@ -89,6 +113,28 @@ describe("route guards", () => {
     )
 
     expect(await screen.findByText("/dashboard")).toBeInTheDocument()
+  })
+
+  it("giriş yapmış super admini guest route'tan kullanıcı yönetimine gönderir", async () => {
+    useAuthMock.mockReturnValue(authValue({ user: SUPER_ADMIN }))
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <div>Login</div>
+              </GuestRoute>
+            }
+          />
+          <Route path="/users" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText("/users")).toBeInTheDocument()
   })
 
   it("oturumsuz kullanıcıyı korumalı route'tan login'e gönderir", async () => {
@@ -114,9 +160,7 @@ describe("route guards", () => {
   })
 
   it("panel yetkisi olmayan kullanıcıyı dashboard'a gönderir", async () => {
-    useAuthMock.mockReturnValue(
-      authValue({ user: { ...USER, canAccessPanel: false } }),
-    )
+    useAuthMock.mockReturnValue(authValue({ user: USER }))
 
     render(
       <MemoryRouter initialEntries={["/users"]}>
@@ -135,5 +179,41 @@ describe("route guards", () => {
     )
 
     expect(await screen.findByText("/dashboard")).toBeInTheDocument()
+  })
+
+  it("adminin kullanıcı yönetimi route'una erişmesine izin verir", async () => {
+    useAuthMock.mockReturnValue(authValue({ user: ADMIN }))
+
+    render(
+      <MemoryRouter initialEntries={["/users"]}>
+        <ProtectedRoute requirePanelAccess>
+          <div>Kullanıcı Yönetimi</div>
+        </ProtectedRoute>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText("Kullanıcı Yönetimi")).toBeInTheDocument()
+  })
+
+  it("super adminin ürün route'larına erişimini kullanıcı yönetimine yönlendirir", async () => {
+    useAuthMock.mockReturnValue(authValue({ user: SUPER_ADMIN }))
+
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <Routes>
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requireProductAccess>
+                <div>Dashboard</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/users" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText("/users")).toBeInTheDocument()
   })
 })
