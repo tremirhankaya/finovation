@@ -11,6 +11,7 @@ import StartFundDraftPage from "@/features/fund-design/pages/StartFundDraftPage"
 import FundDesignStrategyPage from "@/features/fund-design/pages/FundDesignStrategyPage"
 import FundMonitoringPage from "@/features/fund-monitoring/pages/FundMonitoringPage"
 import OptimizationFormPage from "@/features/optimization/pages/OptimizationFormPage"
+import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
 import OptimizationRunningPage from "@/features/optimization/pages/OptimizationRunningPage"
 import UsersPage from "@/features/users/pages/UsersPage"
 
@@ -67,6 +68,10 @@ export default function App() {
             <Route
               path="/optimization-requests/:requestId/running"
               element={<OptimizationRunningPage />}
+            />
+            <Route
+              path="/optimization-requests/:requestId/result"
+              element={<OptimizationResultPage />}
             />
           </Route>
 

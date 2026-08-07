@@ -5,6 +5,7 @@ import ComplianceSummaryPanel from "@/features/optimization/components/Complianc
 import ConstraintRangeInputs from "@/features/optimization/components/ConstraintRangeInputs"
 import FundSelectionStep from "@/features/optimization/components/FundSelectionStep"
 import KeptAssetsPanel from "@/features/optimization/components/KeptAssetsPanel"
+import NoFundsAvailableStep from "@/features/optimization/components/NoFundsAvailableStep"
 import OptimizationWizardSteps from "@/features/optimization/components/OptimizationWizardSteps"
 import RiskProfilePanel from "@/features/optimization/components/RiskProfilePanel"
 import { useOptimizationForm } from "@/features/optimization/hooks/useOptimizationForm"
@@ -34,6 +35,9 @@ export default function OptimizationFormPage() {
     .filter((position) => keptAssetCodes.has(position.assetId))
     .reduce((sum, position) => sum + position.weightPercentage, 0)
 
+  const hasNoFunds =
+    !form.isLoadingFunds && !form.loadErrorMessage && form.funds.length === 0
+
   return (
     <main className={styles.page}>
       <div className={styles.wizardShell}>
@@ -50,14 +54,18 @@ export default function OptimizationFormPage() {
         <OptimizationWizardSteps currentStep={form.step} />
 
         {form.step === 1 ? (
-          <FundSelectionStep
-            funds={form.funds}
-            selectedFundId={form.selectedFundId}
-            onSelectFund={form.selectFund}
-            onContinue={form.goToPreferences}
-            isLoading={form.isLoadingFunds}
-            errorMessage={form.loadErrorMessage}
-          />
+          hasNoFunds ? (
+            <NoFundsAvailableStep />
+          ) : (
+            <FundSelectionStep
+              funds={form.funds}
+              selectedFundId={form.selectedFundId}
+              onSelectFund={form.selectFund}
+              onContinue={form.goToPreferences}
+              isLoading={form.isLoadingFunds}
+              errorMessage={form.loadErrorMessage}
+            />
+          )
         ) : (
           <div className={styles.layout}>
             <div className={styles.main}>
@@ -137,6 +145,7 @@ export default function OptimizationFormPage() {
                   max={form.tppMaxWeight}
                   floor={5}
                   ceiling={15}
+                  minWidth={3}
                   onMinChange={form.setTppMinWeight}
                   onMaxChange={form.setTppMaxWeight}
                   hint="İzahname: TPP ağırlığı %5 ile %15 arasında · aralık genişliği en az 3 puan"
@@ -146,10 +155,11 @@ export default function OptimizationFormPage() {
                   min={form.stockCountMin}
                   max={form.stockCountMax}
                   floor={16}
-                  ceiling={35}
+                  ceiling={30}
+                  minWidth={5}
                   onMinChange={form.setStockCountMin}
                   onMaxChange={form.setStockCountMax}
-                  hint="Sistem sınırı: 16 ≤ hisse sayısı ≤ 35 · aralık genişliği en az 5 hisse"
+                  hint="Sistem sınırı: 16 ≤ hisse sayısı ≤ 30 · aralık genişliği en az 5 hisse"
                 />
               </section>
             </div>
@@ -162,6 +172,9 @@ export default function OptimizationFormPage() {
                 void form.submit((createdRequestId) =>
                   navigate(
                     `/optimization-requests/${createdRequestId}/running`,
+                    {
+                      state: { fundName: form.snapshot?.fund.name },
+                    },
                   ),
                 )
               }

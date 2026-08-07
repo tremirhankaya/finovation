@@ -99,6 +99,20 @@ describe("OptimizationFormPage", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Fonlar yükleniyor…")
   })
 
+  it("optimize edilebilir fon yoksa ayrı boş durum ekranını gösterir", async () => {
+    fundMonitoringMocks.fetchFunds.mockResolvedValue([])
+    renderPage()
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Optimize edilebilecek bir fon bulunamadı."),
+      ).toBeInTheDocument(),
+    )
+    expect(
+      screen.getByRole("button", { name: "Fon Oluşturma Ekranına Git" }),
+    ).toBeInTheDocument()
+  })
+
   it("1. adımda fonu listeler, devam edince 2. adıma geçip pozisyonları gösterir", async () => {
     const user = userEvent.setup()
     renderPage()

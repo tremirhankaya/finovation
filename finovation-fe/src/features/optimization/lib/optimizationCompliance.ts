@@ -7,7 +7,7 @@ const TPP_FLOOR = 5
 const TPP_CEILING = 15
 const TPP_MIN_RANGE_WIDTH = 3
 const STOCK_COUNT_FLOOR = 16
-const STOCK_COUNT_CEILING = 35
+const STOCK_COUNT_CEILING = 30
 const STOCK_COUNT_MIN_RANGE_WIDTH = 5
 const USABLE_EQUITY_WEIGHT_CEILING = 95
 const FORCE_ADD_MINIMUM_WEIGHT = 1
@@ -86,7 +86,7 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
       detail:
         stockCountStatus === "UYUMLU"
           ? `${input.stockCountMin}–${input.stockCountMax} arasında`
-          : "Sistem sınırı 16–35 arasında, aralık genişliği en az 5 hisse olmalı",
+          : "Sistem sınırı 16–30 arasında, aralık genişliği en az 5 hisse olmalı",
     },
     {
       key: "kept-assets",

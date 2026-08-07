@@ -157,7 +157,7 @@ describe("useOptimizationForm", () => {
         tppMinWeight: 5,
         tppMaxWeight: 15,
         stockCountMin: 16,
-        stockCountMax: 35,
+        stockCountMax: 30,
         assetPreferences: [
           {
             assetCode: "AKBNK",

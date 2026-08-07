@@ -37,10 +37,6 @@ export default function FundSelectionStep({
         </div>
       )}
 
-      {!isLoading && !errorMessage && funds.length === 0 && (
-        <p className={styles.emptyState}>Optimize edilebilir fon yok.</p>
-      )}
-
       {!isLoading && !errorMessage && funds.length > 0 && (
         <table className={styles.assetTable}>
           <thead>

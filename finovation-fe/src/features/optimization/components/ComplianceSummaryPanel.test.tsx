@@ -16,7 +16,7 @@ const ROWS: ComplianceRow[] = [
     key: "stock-count",
     label: "Hisse sayısı",
     status: "UYUMSUZ",
-    detail: "Sistem sınırı 16–35 arasında",
+    detail: "Sistem sınırı 16–30 arasında",
   },
 ]
 
@@ -34,7 +34,7 @@ describe("ComplianceSummaryPanel", () => {
     expect(screen.getByText("TPP aralığı")).toBeInTheDocument()
     expect(screen.getByText("%5–%15 aralığında")).toBeInTheDocument()
     expect(screen.getByText("Hisse sayısı")).toBeInTheDocument()
-    expect(screen.getByText("Sistem sınırı 16–35 arasında")).toBeInTheDocument()
+    expect(screen.getByText("Sistem sınırı 16–30 arasında")).toBeInTheDocument()
   })
 
   it("canSubmit false iken gönder butonunu devre dışı bırakır", () => {

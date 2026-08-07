@@ -67,6 +67,24 @@
   font-size: 0.8rem;
 }
 
+.successBanner button {
+  margin-top: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  color: #fff;
+  background: #0d9488;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.successBanner button:hover {
+  background: #0f766e;
+}
+
 .errorBanner button,
 .backButton {
   min-height: 42px;

@@ -1,3 +1,5 @@
+import { useState } from "react"
+
 import styles from "@/features/optimization/styles/OptimizationFormPage.module.css"
 
 export type DualRangeSliderProps = {
@@ -7,6 +9,7 @@ export type DualRangeSliderProps = {
   floor: number
   ceiling: number
   step?: number
+  minWidth?: number
   onMinChange: (value: number) => void
   onMaxChange: (value: number) => void
 }
@@ -24,9 +27,12 @@ export default function DualRangeSlider({
   floor,
   ceiling,
   step = 1,
+  minWidth = step,
   onMinChange,
   onMaxChange,
 }: DualRangeSliderProps) {
+  const [activeThumb, setActiveThumb] = useState<"min" | "max" | null>(null)
+
   const minPercentage = toPercentage(min, floor, ceiling)
   const maxPercentage = toPercentage(max, floor, ceiling)
   const ticks = [
@@ -64,26 +70,32 @@ export default function DualRangeSlider({
         <input
           type="range"
           className={styles.sliderInput}
+          style={{ zIndex: activeThumb === "min" ? 3 : 2 }}
           min={floor}
           max={ceiling}
           step={step}
           value={min}
           aria-label={`${label} minimum kaydırıcı`}
+          onPointerDown={() => setActiveThumb("min")}
+          onFocus={() => setActiveThumb("min")}
           onChange={(event) => {
-            const next = Math.min(Number(event.target.value), max - step)
+            const next = Math.min(Number(event.target.value), max - minWidth)
             onMinChange(next)
           }}
         />
         <input
           type="range"
           className={styles.sliderInput}
+          style={{ zIndex: activeThumb === "max" ? 3 : 1 }}
           min={floor}
           max={ceiling}
           step={step}
           value={max}
           aria-label={`${label} maksimum kaydırıcı`}
+          onPointerDown={() => setActiveThumb("max")}
+          onFocus={() => setActiveThumb("max")}
           onChange={(event) => {
-            const next = Math.max(Number(event.target.value), min + step)
+            const next = Math.max(Number(event.target.value), min + minWidth)
             onMaxChange(next)
           }}
         />
