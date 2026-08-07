@@ -55,8 +55,8 @@ VALUES ('EQUITY_INTENSIVE',
         15,
         3,
         16,
-        36,
-        10,
+        30,
+        5,
         3,
         10,
         85,
@@ -64,4 +64,30 @@ VALUES ('EQUITY_INTENSIVE',
         30.0000);
 
 ALTER TABLE dbo.fund_drafts
-    ADD unit_price DECIMAL(18, 4) NULL;
+    ADD unit_price DECIMAL(18, 4) NULL,
+        horizon VARCHAR(5) NULL,
+        tpp_min_pct SMALLINT NULL,
+        tpp_max_pct SMALLINT NULL,
+        preferred_tpp_pct SMALLINT NULL,
+        min_stock_count SMALLINT NULL,
+        max_stock_count SMALLINT NULL,
+        equity_min_pct SMALLINT NULL,
+        equity_max_pct SMALLINT NULL,
+        single_stock_max_pct SMALLINT NULL,
+        current_step SMALLINT NOT NULL
+            CONSTRAINT df_fund_drafts_current_step DEFAULT 2
+            CONSTRAINT ck_fund_drafts_current_step CHECK (current_step BETWEEN 1 AND 6);
+
+ALTER TABLE dbo.fund_constraints
+    DROP CONSTRAINT ck_fund_constraints_code;
+
+ALTER TABLE dbo.fund_constraints
+    ADD CONSTRAINT ck_fund_constraints_code
+        CHECK (constraint_code IN (
+            'EQUITY_MIN',
+            'EQUITY_MAX',
+            'SINGLE_STOCK_MAX',
+            'SECTOR_MAX',
+            'MIN_STOCK_COUNT',
+            'MAX_STOCK_COUNT'
+        ));
