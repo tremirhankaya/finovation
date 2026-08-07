@@ -227,6 +227,24 @@ public enum ErrorCode {
             HttpStatus.UNPROCESSABLE_ENTITY,
             "Fund monitoring data is not available."
     ),
+
+    STRESS_PORTFOLIO_NOT_AVAILABLE(
+            "STRESS_001",
+            HttpStatus.UNPROCESSABLE_CONTENT,
+            "A selected portfolio is not available for stress testing."
+    ),
+
+    STRESS_SCENARIO_NOT_FOUND(
+            "STRESS_002",
+            HttpStatus.NOT_FOUND,
+            "Stress scenario not found."
+    ),
+
+    STRESS_TEST_NOT_FOUND(
+            "STRESS_003",
+            HttpStatus.NOT_FOUND,
+            "Stress test not found."
+    ),
     ;
 
     private final String code;

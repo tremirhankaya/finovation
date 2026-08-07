@@ -15,19 +15,20 @@ import java.util.List;
         name = "Companies",
         description = "Company lookup operations for panel filters and assignment UIs."
 )
+@SuppressWarnings("unused") // Endpoints are invoked by Spring through their controller implementations.
 public interface CompanyControllerDocs {
 
     @Operation(
             summary = "List companies",
             description = "Returns companies visible to the authenticated actor. " +
-                    "SUPER_ADMIN receives all active companies. ADMIN receives only its own company.",
+                    "ADMIN receives all active companies. COMPANY_MANAGER receives only its own company.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<List<CompanyResponse>> getCompanies(UserDetails userDetails);
 
     @Operation(
             summary = "Create company",
-            description = "Creates an active company. Available only to SUPER_ADMIN.",
+            description = "Creates an active company. Available only to ADMIN.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<CompanyResponse> createCompany(
@@ -38,7 +39,7 @@ public interface CompanyControllerDocs {
     @Operation(
             summary = "Delete company",
             description = "Soft-deletes the company and all of its active users. " +
-                    "Available only to SUPER_ADMIN.",
+                    "Available only to ADMIN.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<Void> deleteCompany(UserDetails userDetails, Long id);

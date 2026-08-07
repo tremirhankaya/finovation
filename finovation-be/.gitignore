@@ -38,3 +38,6 @@ build/
 
 ### Data ingest output ###
 data-export/
+
+node_modules/
+target/

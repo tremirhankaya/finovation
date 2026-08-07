@@ -124,7 +124,7 @@ public class CompanyService {
     }
 
     private List<Company> resolveVisibleCompanies(User actor) {
-        if (actor.getRole() == Role.SUPER_ADMIN) {
+        if (actor.getRole() == Role.ADMIN) {
             return companyRepository.findAllByStatusOrderByNameAsc(CompanyStatus.ACTIVE);
         }
 

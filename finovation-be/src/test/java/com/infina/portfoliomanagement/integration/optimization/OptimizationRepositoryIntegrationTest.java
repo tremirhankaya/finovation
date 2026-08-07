@@ -80,7 +80,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
                 .email("fon-yoneticisi@finovation.test")
                 .username("fon-yoneticisi")
                 .password("irrelevant-for-this-test")
-                .role(Role.SUPER_ADMIN)
+                .role(Role.ADMIN)
                 .status(UserStatus.ACTIVE)
                 .passwordChangeRequired(false)
                 .deleted(false)
@@ -122,7 +122,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
         assertThat(found.get().getRiskProfile()).isEqualTo(RiskProfile.BALANCED);
         assertThat(found.get().getStatus()).isEqualTo(RequestStatus.PREPARING);
         assertThat(found.get().getRequestedBy().getId()).isEqualTo(fundManager.getId());
-        assertThat(found.get().getVersion()).isEqualTo(0L);
+        assertThat(found.get().getVersion()).isZero();
     }
 
     @Test

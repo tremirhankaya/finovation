@@ -19,12 +19,12 @@ public class RolePolicy {
     private static final Map<Role, Role> MANAGED_ROLE = new EnumMap<>(Role.class);
 
     static {
-        ASSIGNABLE_ROLES.put(Role.SUPER_ADMIN, EnumSet.of(Role.ADMIN, Role.SUPER_ADMIN));
-        ASSIGNABLE_ROLES.put(Role.ADMIN, EnumSet.of(Role.USER));
+        ASSIGNABLE_ROLES.put(Role.ADMIN, EnumSet.of(Role.COMPANY_MANAGER, Role.ADMIN));
+        ASSIGNABLE_ROLES.put(Role.COMPANY_MANAGER, EnumSet.of(Role.USER));
         ASSIGNABLE_ROLES.put(Role.USER, EnumSet.noneOf(Role.class));
 
-        MANAGED_ROLE.put(Role.SUPER_ADMIN, Role.ADMIN);
-        MANAGED_ROLE.put(Role.ADMIN, Role.USER);
+        MANAGED_ROLE.put(Role.ADMIN, Role.COMPANY_MANAGER);
+        MANAGED_ROLE.put(Role.COMPANY_MANAGER, Role.USER);
     }
 
     public Set<Role> assignableRoles(Role actor) {
@@ -37,7 +37,7 @@ public class RolePolicy {
     }
 
     public boolean canAccessPanel(Role actor) {
-        return actor == Role.ADMIN || actor == Role.SUPER_ADMIN;
+        return actor == Role.COMPANY_MANAGER || actor == Role.ADMIN;
     }
 
     public boolean canCreateUser(Role actor, Role targetRole) {

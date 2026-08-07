@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class OptimizationRequestPolicy {
 
     public void assertCanAccess(User actor, OptimizationRequest request) {
-        if (actor.getRole() == Role.SUPER_ADMIN) {
+        if (actor.getRole() == Role.ADMIN) {
             return;
         }
 

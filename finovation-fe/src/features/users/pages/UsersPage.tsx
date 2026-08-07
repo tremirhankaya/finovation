@@ -46,7 +46,7 @@ export default function UsersPage() {
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const canCreateUser = user?.canCreateUser ?? false
-  const isSuperAdmin = user?.role === "SUPER_ADMIN"
+  const isAdmin = user?.role === "ADMIN"
   const assignableRoles = user?.assignableRoles ?? []
   const deletableRoles = user?.deletableRoles ?? []
 
@@ -291,10 +291,10 @@ export default function UsersPage() {
         <header className={styles.pageHead}>
           <div>
             <h1 className={styles.title}>
-              {isSuperAdmin ? "Sistem Yönetimi" : "Kullanıcılar"}
+              {isAdmin ? "Sistem Yönetimi" : "Kullanıcılar"}
             </h1>
             <p className={styles.desc}>
-              {isSuperAdmin
+              {isAdmin
                 ? "Şirketleri ve yönetici hesaplarını tek ekrandan yönetin."
                 : "Şirketinizdeki kullanıcıları yönetin."}
             </p>
@@ -313,14 +313,14 @@ export default function UsersPage() {
               className={styles.signOutButton}
               type="button"
               onClick={() => {
-                if (isSuperAdmin) {
+                if (isAdmin) {
                   void signOut()
                   return
                 }
                 navigate("/dashboard")
               }}
             >
-              {isSuperAdmin ? "Çıkış yap" : "Ana sayfaya dön"}
+              {isAdmin ? "Çıkış yap" : "Ana sayfaya dön"}
             </button>
           </div>
         </header>
@@ -340,7 +340,7 @@ export default function UsersPage() {
           </div>
         )}
 
-        {!isSuperAdmin && companiesError && (
+        {!isAdmin && companiesError && (
           <div className={styles.pageAlert}>
             <FormAlert>
               Şirket filtresi kullanılamıyor: {companiesError}
@@ -401,7 +401,7 @@ export default function UsersPage() {
           )}
         </section>
 
-        {isSuperAdmin && (
+        {isAdmin && (
           <CompanyManagementCard
             companies={companies}
             isLoading={companiesLoading}

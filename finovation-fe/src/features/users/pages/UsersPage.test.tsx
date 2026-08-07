@@ -45,7 +45,7 @@ const TARGET_USER = {
   email: "admin@example.com",
   companyId: 7,
   companyName: "Infina",
-  role: "ADMIN" as const,
+  role: "COMPANY_MANAGER" as const,
   status: "ACTIVE" as const,
   createdAt: "2026-08-03T00:00:00",
 }
@@ -75,10 +75,10 @@ describe("UsersPage", () => {
     mocks.useAuth.mockReturnValue({
       user: {
         id: 1,
-        role: "SUPER_ADMIN",
+        role: "ADMIN",
         canCreateUser: true,
-        assignableRoles: ["ADMIN", "SUPER_ADMIN"],
-        deletableRoles: ["ADMIN"],
+        assignableRoles: ["COMPANY_MANAGER", "ADMIN"],
+        deletableRoles: ["COMPANY_MANAGER"],
       },
       signOut: mocks.signOut,
     })
@@ -196,7 +196,7 @@ describe("UsersPage", () => {
     mocks.useAuth.mockReturnValue({
       user: {
         id: 3,
-        role: "ADMIN",
+        role: "COMPANY_MANAGER",
         canCreateUser: true,
         assignableRoles: ["USER"],
         deletableRoles: ["USER"],

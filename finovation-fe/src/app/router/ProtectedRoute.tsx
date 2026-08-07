@@ -52,7 +52,7 @@ export default function ProtectedRoute({
     return <Navigate to={getAuthenticatedHomePath(user)} replace />
   }
 
-  if (requireProductAccess && user.role === "SUPER_ADMIN") {
+  if (requireProductAccess && user.role === "ADMIN") {
     return <Navigate to={getAuthenticatedHomePath(user)} replace />
   }
 
