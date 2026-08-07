@@ -29,6 +29,9 @@ public class FundPosition {
     @Column(name = "weight", nullable = false, precision = 9, scale = 6)
     private BigDecimal weight;
 
+    @Column(name = "ai_note", length = 200)
+    private String aiNote;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

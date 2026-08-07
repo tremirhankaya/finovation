@@ -228,6 +228,78 @@ public enum ErrorCode {
             "Fund monitoring data is not available."
     ),
 
+    FUND_DRAFT_NOT_FOUND(
+            "FUND_004",
+            HttpStatus.NOT_FOUND,
+            "Fund draft not found."
+    ),
+
+    FUND_DESIGN_PROFILE_NOT_FOUND(
+            "FUND_005",
+            HttpStatus.NOT_FOUND,
+            "Fund design profile not found."
+    ),
+
+    FUND_UNIT_PRICE_OUT_OF_RANGE(
+            "FUND_006",
+            HttpStatus.BAD_REQUEST,
+            "The unit price is outside the allowed range."
+    ),
+
+    FUND_NAME_INVALID(
+            "FUND_007",
+            HttpStatus.BAD_REQUEST,
+            "The fund name is invalid."
+    ),
+
+    FUND_PORTFOLIO_RULES_INVALID(
+            "FUND_008",
+            HttpStatus.BAD_REQUEST,
+            "The portfolio rules are outside the allowed bounds."
+    ),
+
+    FUND_STRATEGY_INCOMPLETE(
+            "FUND_009",
+            HttpStatus.BAD_REQUEST,
+            "Portfolio rules must be saved before running AI analysis."
+    ),
+
+    FUND_MODEL_UNIVERSE_EMPTY(
+            "FUND_010",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "No equity assets are available in the model universe."
+    ),
+
+    FUND_ASSET_PREFERENCE_INVALID(
+            "FUND_011",
+            HttpStatus.BAD_REQUEST,
+            "Excluded or forced assets are invalid for this fund draft."
+    ),
+
+    FUND_INIT_PAGE_INVALID(
+            "FUND_012",
+            HttpStatus.BAD_REQUEST,
+            "Fund draft init page is invalid or missing required parameters."
+    ),
+
+    FUND_ANALYSIS_NOT_FOUND(
+            "FUND_013",
+            HttpStatus.NOT_FOUND,
+            "No matching analysis result was found for this fund draft."
+    ),
+
+    FUND_PROPOSAL_NOT_FOUND(
+            "FUND_014",
+            HttpStatus.NOT_FOUND,
+            "The selected proposal was not found for this analysis."
+    ),
+
+    FUND_WORKING_PORTFOLIO_INVALID(
+            "FUND_015",
+            HttpStatus.BAD_REQUEST,
+            "The working portfolio payload is invalid."
+    ),
+
     STRESS_PORTFOLIO_NOT_AVAILABLE(
             "STRESS_001",
             HttpStatus.UNPROCESSABLE_CONTENT,

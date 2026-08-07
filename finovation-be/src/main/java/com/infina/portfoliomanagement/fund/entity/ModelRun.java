@@ -34,6 +34,9 @@ public class ModelRun {
     @Column(name = "model_version", length = 30)
     private String modelVersion;
 
+    @Column(name = "rules_fingerprint", length = 200)
+    private String rulesFingerprint;
+
     @Column(name = "error_code", length = 50)
     private String errorCode;
 

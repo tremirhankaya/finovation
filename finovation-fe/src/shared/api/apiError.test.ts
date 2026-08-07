@@ -105,6 +105,52 @@ describe("toApiRequestError", () => {
     expect(error.message).not.toContain("outside the allowed range")
   })
 
+  it("FUND_002 kodunu kullanıcı dostu mesaja çevirir", () => {
+    const error = toApiRequestError(
+      {
+        code: "FUND_002",
+        message: "Fund not found.",
+      },
+      404,
+      "Fon alınamadı",
+    )
+
+    expect(error.message).toBe(
+      "Fon bulunamadı veya bu fonu görüntüleme yetkiniz yok.",
+    )
+    expect(error.message).not.toContain("Fund not found")
+  })
+
+  it("FUND_004 kodunu kullanıcı dostu mesaja çevirir", () => {
+    const error = toApiRequestError(
+      {
+        code: "FUND_004",
+        message: "Fund draft not found.",
+      },
+      404,
+      "Fon taslağı alınamadı",
+    )
+
+    expect(error.message).toBe("Fon taslağı bulunamadı.")
+    expect(error.message).not.toContain("Fund draft not found")
+  })
+
+  it("FUND_006 kodunu kullanıcı dostu mesaja çevirir", () => {
+    const error = toApiRequestError(
+      {
+        code: "FUND_006",
+        message: "The fund unit price is outside the allowed range.",
+      },
+      400,
+      "Fon taslağı oluşturulamadı",
+    )
+
+    expect(error.message).toBe(
+      "Fon pay fiyatı izin verilen aralığın dışında.",
+    )
+    expect(error.message).not.toContain("outside the allowed range")
+  })
+
   it("403 yanıtını yetki hatası olarak işaretler", () => {
     const error = toApiRequestError({}, 403, "İşlem başarısız")
 
