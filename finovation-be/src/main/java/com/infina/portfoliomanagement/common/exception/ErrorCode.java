@@ -150,6 +150,12 @@ public enum ErrorCode {
             "Company assignment is invalid for the given role."
     ),
 
+    COMPANY_NAME_ALREADY_EXISTS(
+            "COMPANY_003",
+            HttpStatus.CONFLICT,
+            "Company name already exists."
+    ),
+
     EXTERNAL_SERVICE_ERROR(
             "EXT_001",
             HttpStatus.BAD_GATEWAY,

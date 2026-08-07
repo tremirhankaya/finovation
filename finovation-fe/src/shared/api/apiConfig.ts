@@ -55,8 +55,9 @@ export function getUsersUrl(userId?: number): string {
   return userId == null ? base : `${base}/${userId}`
 }
 
-export function getCompaniesUrl(): string {
-  return buildUrl(API_PATHS.companies)
+export function getCompaniesUrl(companyId?: number): string {
+  const base = buildUrl(API_PATHS.companies)
+  return companyId == null ? base : `${base}/${companyId}`
 }
 
 export function getPasswordResetRequestUrl(): string {

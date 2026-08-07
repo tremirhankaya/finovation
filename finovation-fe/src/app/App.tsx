@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router"
 
+import AppShell from "@/app/layout/AppShell"
 import ProtectedRoute from "@/app/router/ProtectedRoute"
 import GuestRoute from "@/app/router/GuestRoute"
 import AuthProvider from "@/features/auth/context/AuthProvider"
@@ -46,64 +47,34 @@ export default function App() {
           />
 
           <Route
-            path="/dashboard"
             element={
-              <ProtectedRoute>
-                <DashboardPage />
+              <ProtectedRoute requireProductAccess>
+                <AppShell />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/fund-design" element={<StartFundDraftPage />} />
+            <Route
+              path="/fund-design/:draftId/strategy"
+              element={<FundDesignStrategyPage />}
+            />
+            <Route path="/fund-monitoring" element={<FundMonitoringPage />} />
+            <Route
+              path="/optimization-requests/new"
+              element={<OptimizationFormPage />}
+            />
+            <Route
+              path="/optimization-requests/:requestId/running"
+              element={<OptimizationRunningPage />}
+            />
+          </Route>
 
           <Route
             path="/users"
             element={
               <ProtectedRoute requirePanelAccess>
                 <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/fund-design"
-            element={
-              <ProtectedRoute>
-                <StartFundDraftPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/fund-design/:draftId/strategy"
-            element={
-              <ProtectedRoute>
-                <FundDesignStrategyPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/fund-monitoring"
-            element={
-              <ProtectedRoute>
-                <FundMonitoringPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/optimization-requests/new"
-            element={
-              <ProtectedRoute>
-                <OptimizationFormPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/optimization-requests/:requestId/running"
-            element={
-              <ProtectedRoute>
-                <OptimizationRunningPage />
               </ProtectedRoute>
             }
           />

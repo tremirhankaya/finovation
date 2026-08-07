@@ -28,8 +28,26 @@
   letter-spacing: -0.02em;
 }
 
+.wordmark {
+  display: grid;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.subtitle {
+  color: #cbd5e1;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .dark .text {
   color: var(--color-navy-950);
+}
+
+.dark .subtitle {
+  color: #94a3b8;
 }
 
 .small .mark {

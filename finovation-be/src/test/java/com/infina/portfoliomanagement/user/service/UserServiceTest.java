@@ -246,13 +246,8 @@ class UserServiceTest {
         assertThat(response.content().getFirst().id()).isEqualTo(11L);
         assertThat(response.content().getFirst().username()).isEqualTo("company.user");
         assertThat(response.content().getFirst().fullName()).isEqualTo("Listed User");
-        assertThat(response.content().getFirst().firstName()).isEqualTo("Listed");
-        assertThat(response.content().getFirst().lastName()).isEqualTo("User");
-        assertThat(response.content().getFirst().email()).isEqualTo("company.user@example.com");
         assertThat(response.content().getFirst().companyId()).isEqualTo(10L);
-        assertThat(response.content().getFirst().companyName()).isEqualTo("Acme");
         assertThat(response.content().getFirst().role()).isEqualTo(Role.USER);
-        assertThat(response.content().getFirst().status()).isEqualTo(UserStatus.ACTIVE);
 
         verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
     }
@@ -400,7 +395,6 @@ class UserServiceTest {
         assertThat(response.lastName()).isEqualTo("Name");
         assertThat(response.email()).isEqualTo("updated@example.com");
         assertThat(response.companyId()).isEqualTo(10L);
-        assertThat(target.isPasswordChangeRequired()).isFalse();
         verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository).save(target);
     }

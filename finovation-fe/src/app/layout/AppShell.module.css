@@ -1,0 +1,267 @@
+.appShell {
+  display: flex;
+  min-width: 0;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  width: 248px;
+  height: 100vh;
+  flex: 0 0 248px;
+  flex-direction: column;
+  padding: 22px 14px 18px;
+  overflow: hidden;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+  transition:
+    width 220ms ease,
+    flex-basis 220ms ease,
+    padding 220ms ease,
+    border-color 220ms ease,
+    transform 220ms ease;
+}
+
+.appShellCollapsed .sidebar {
+  width: 0;
+  flex-basis: 0;
+  padding-right: 0;
+  padding-left: 0;
+  border-color: transparent;
+  transform: translateX(-100%);
+  visibility: hidden;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  padding: 0 10px 22px;
+  white-space: nowrap;
+}
+
+.navigation {
+  display: grid;
+  gap: 4px;
+}
+
+.navigationLink {
+  position: relative;
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  color: #64748b;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.navigationLink:hover {
+  color: var(--color-teal-700);
+  background: #f1f5f9;
+}
+
+.navigationLinkActive {
+  color: var(--color-teal-700);
+  background: #e7f8f5;
+}
+
+.navigationLinkActive::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: -14px;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-teal-600);
+}
+
+.navigationLink:focus-visible,
+.signOutButton:focus-visible,
+.sidebarToggle:focus-visible {
+  outline: 3px solid rgb(13 148 136 / 25%);
+  outline-offset: 2px;
+}
+
+.navigationIcon {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  place-items: center;
+}
+
+.navigationIcon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.sidebarFooter {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.userSummary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 10px;
+  white-space: nowrap;
+}
+
+.avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-navy-900), var(--color-teal-600));
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.userDetails {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.userDetails strong {
+  overflow: hidden;
+  color: var(--color-navy-950);
+  font-size: 0.81rem;
+  text-overflow: ellipsis;
+}
+
+.userDetails > span {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.signOutButton {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  color: #64748b;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.signOutButton:hover {
+  color: var(--color-red-800);
+  background: #fff1f2;
+}
+
+.signOutButton svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.sidebarToggle {
+  position: fixed;
+  top: 24px;
+  left: 230px;
+  z-index: 30;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  color: var(--color-navy-900);
+  background: #fff;
+  border: 1px solid #dbe4ea;
+  border-radius: 50%;
+  box-shadow: 0 5px 16px rgb(15 32 64 / 12%);
+  cursor: pointer;
+  transition:
+    left 220ms ease,
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.sidebarToggle:hover {
+  color: var(--color-teal-700);
+  border-color: var(--color-teal-400);
+}
+
+.sidebarToggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.appShellCollapsed .sidebarToggle {
+  left: 14px;
+}
+
+.content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    width: min(280px, calc(100vw - 48px));
+    flex-basis: auto;
+    box-shadow: 12px 0 32px rgb(15 32 64 / 12%);
+  }
+
+  .sidebarToggle {
+    left: min(calc(100vw - 66px), 262px);
+  }
+
+  .appShellCollapsed .sidebarToggle {
+    left: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebarToggle {
+    transition: none;
+  }
+}

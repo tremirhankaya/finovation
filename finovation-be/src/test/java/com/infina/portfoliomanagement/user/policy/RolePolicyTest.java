@@ -34,6 +34,10 @@ class RolePolicyTest {
     void adminAndSuperAdminCanAccessPanel() {
         assertThat(rolePolicy.canAccessPanel(Role.ADMIN)).isTrue();
         assertThat(rolePolicy.canAccessPanel(Role.SUPER_ADMIN)).isTrue();
+        assertThat(rolePolicy.canCreateUser(Role.ADMIN)).isTrue();
+        assertThat(rolePolicy.canDeleteUser(Role.ADMIN)).isTrue();
+        assertThat(rolePolicy.canCreateUser(Role.SUPER_ADMIN)).isTrue();
+        assertThat(rolePolicy.canDeleteUser(Role.SUPER_ADMIN)).isTrue();
     }
 
     @Test
@@ -104,8 +108,8 @@ class RolePolicyTest {
     }
 
     @Test
-    void assertCanAccessPanelPassesForAdmin() {
-        assertThatCode(() -> rolePolicy.assertCanAccessPanel(Role.ADMIN))
+    void assertCanAccessPanelPassesForSuperAdmin() {
+        assertThatCode(() -> rolePolicy.assertCanAccessPanel(Role.SUPER_ADMIN))
                 .doesNotThrowAnyException();
     }
 

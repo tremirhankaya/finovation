@@ -46,6 +46,7 @@ public class UserService {
         User actor = userRepository.findByUsername(actorUsername)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
+        rolePolicy.assertCanAccessPanel(actor.getRole());
         rolePolicy.assertCanCreateUser(actor.getRole(), request.role());
 
         if (userRepository.existsByUsername(request.username())) {
