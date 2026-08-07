@@ -14,6 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -34,6 +35,39 @@ public class InfinaRestClient implements InfinaClient {
     @Retry(name = RESILIENCE_INSTANCE)
     @CircuitBreaker(name = RESILIENCE_INSTANCE)
     public <T> List<T> get(InfinaEndpoint endpoint, MultiValueMap<String, String> params, Class<T> itemType) {
+        JsonNode data = fetchData(endpoint, params);
+        JsonNode dataArray = data.path(endpoint.dataKey());
+        if (!dataArray.isArray()) {
+            return List.of();
+        }
+
+        List<T> items = new ArrayList<>();
+        for (JsonNode item : dataArray) {
+            items.add(objectMapper.convertValue(item, itemType));
+        }
+        return items;
+    }
+
+    @Override
+    @RateLimiter(name = RESILIENCE_INSTANCE)
+    @Retry(name = RESILIENCE_INSTANCE)
+    @CircuitBreaker(name = RESILIENCE_INSTANCE)
+    public <T> Optional<T> getObject(
+            InfinaEndpoint endpoint,
+            MultiValueMap<String, String> params,
+            Class<T> responseType
+    ) {
+        JsonNode data = fetchData(endpoint, params);
+        if (!data.isObject()) {
+            return Optional.empty();
+        }
+        return Optional.of(objectMapper.convertValue(data, responseType));
+    }
+
+    private JsonNode fetchData(
+            InfinaEndpoint endpoint,
+            MultiValueMap<String, String> params
+    ) {
         JsonNode root = infinaHttpClient.get()
                 .uri(uriBuilder -> uriBuilder.path(endpoint.path()).queryParams(params).build())
                 .retrieve()
@@ -54,15 +88,6 @@ public class InfinaRestClient implements InfinaClient {
             throw new BaseException(ErrorCode.EXTERNAL_SERVICE_ERROR);
         }
 
-        JsonNode dataArray = result.path("data").path(endpoint.dataKey());
-        if (!dataArray.isArray()) {
-            return List.of();
-        }
-
-        List<T> items = new ArrayList<>();
-        for (JsonNode item : dataArray) {
-            items.add(objectMapper.convertValue(item, itemType));
-        }
-        return items;
+        return result.path("data");
     }
 }

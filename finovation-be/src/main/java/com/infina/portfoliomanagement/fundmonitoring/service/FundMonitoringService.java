@@ -13,9 +13,11 @@ import com.infina.portfoliomanagement.fundmonitoring.classification.AssetClassif
 import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundPositionResponse;
+import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.PricePointResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.SectorAllocationResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundSummaryResponse;
+import com.infina.portfoliomanagement.fundmonitoring.service.FundBenchmarkService.BenchmarkSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.model.AssetMonitoringProfile;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
@@ -43,6 +45,14 @@ import java.util.*;
 public class FundMonitoringService {
 
     private static final BigDecimal ZERO_PERCENT = BigDecimal.ZERO.setScale(4);
+    private static final List<String> COMPARISON_COLORS = List.of(
+            "#0d9488",
+            "#2563eb",
+            "#7c3aed",
+            "#ea580c",
+            "#0891b2",
+            "#be123c"
+    );
 
     private final FundDraftRepository fundDraftRepository;
     private final FundPortfolioRepository fundPortfolioRepository;
@@ -54,6 +64,9 @@ public class FundMonitoringService {
     private final AssetClassificationProviderRegistry classificationProviderRegistry;
     private final FundValuationCalculator valuationCalculator;
     private final FundMetricCalculator metricCalculator;
+    private final FundBenchmarkService benchmarkService;
+    private final SimilarFundService similarFundService;
+    private final RiskFreeRateProvider riskFreeRateProvider;
     private final FundMonitoringProperties properties;
     private final Clock clock;
 
@@ -81,34 +94,10 @@ public class FundMonitoringService {
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
         accessPolicy.assertCanView(fund, actor.getId());
 
-        FundPortfolio selectedPortfolio = fundPortfolioRepository
-                .findByFundDraftIdAndSelectedTrue(fund.getId())
-                .orElseThrow(() -> new BaseException(
-                        ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE
-                ));
-        List<FundPosition> portfolioPositions = fundPositionRepository
-                .findAllByFundPortfolioIdOrderByWeightDesc(selectedPortfolio.getId());
-        List<Long> assetIds = portfolioPositions.stream()
-                .map(FundPosition::getAssetId)
-                .toList();
-        List<Asset> assets = assetRepository.findAllById(assetIds);
-        assertAllAssetsFound(assets, new HashSet<>(assetIds).size());
-        LocalDate inceptionDate = fund.getCreatedAt().toLocalDate();
         LocalDate today = LocalDate.now(clock);
-
-        Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
-                valuationProviderRegistry.loadUnitValues(
-                        assets,
-                        inceptionDate,
-                        today
-                );
-        FundValuationResult valuation =
-                valuationCalculator.calculate(
-                        fund,
-                        portfolioPositions,
-                        assets,
-                        unitValuesByAsset
-                );
+        FundMonitoringCalculation calculation = calculateFund(fund, today);
+        List<Asset> assets = calculation.assets();
+        FundValuationResult valuation = calculation.valuation();
 
         Map<Long, AssetMonitoringProfile> profilesByAssetId =
                 classificationProviderRegistry.loadProfiles(assets);
@@ -130,6 +119,10 @@ public class FundMonitoringService {
                 .setScale(4, RoundingMode.HALF_UP);
         List<FundValuationPoint> points = valuation.points();
         FundValuationPoint latest = valuation.latestPoint();
+        BenchmarkSnapshot benchmarks = benchmarkService.load(latest.date());
+        BigDecimal annualRiskFreeRate = riskFreeRateProvider.annualRate(
+                latest.date()
+        );
 
         log.info(
                 "Fund monitoring snapshot calculated for fund {} at {} with {} valuation point(s)",
@@ -148,13 +141,133 @@ public class FundMonitoringService {
                 priceHistory(points, latest.date()),
                 metricCalculator.technicalIndicators(
                         points,
+                        benchmarks.bist100Values(),
+                        annualRiskFreeRate,
                         sectorConcentration,
                         liquidityRatio
                 ),
                 metricCalculator.periodReturns(points, latest.date()),
                 positions,
-                sectors
+                sectors,
+                comparisonAssets(
+                        fund,
+                        valuation,
+                        actor.getId(),
+                        today,
+                        similarFundService.comparisonAssets(
+                                fund.getFundType(),
+                                latest.date()
+                        ),
+                        benchmarks.comparisonAssets()
+                )
         );
+    }
+
+    private FundMonitoringCalculation calculateFund(
+            FundDraft fund,
+            LocalDate today
+    ) {
+        FundPortfolio selectedPortfolio = fundPortfolioRepository
+                .findByFundDraftIdAndSelectedTrue(fund.getId())
+                .orElseThrow(() -> new BaseException(
+                        ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE
+                ));
+        List<FundPosition> portfolioPositions = fundPositionRepository
+                .findAllByFundPortfolioIdOrderByWeightDesc(selectedPortfolio.getId());
+        List<Long> assetIds = portfolioPositions.stream()
+                .map(FundPosition::getAssetId)
+                .toList();
+        List<Asset> assets = assetRepository.findAllById(assetIds);
+        assertAllAssetsFound(assets, new HashSet<>(assetIds).size());
+
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
+                valuationProviderRegistry.loadUnitValues(
+                        assets,
+                        fund.getCreatedAt().toLocalDate(),
+                        today
+                );
+        FundValuationResult valuation = valuationCalculator.calculate(
+                fund,
+                portfolioPositions,
+                assets,
+                unitValuesByAsset
+        );
+        return new FundMonitoringCalculation(valuation, assets);
+    }
+
+    private List<FundComparisonAssetResponse> comparisonAssets(
+            FundDraft selectedFund,
+            FundValuationResult selectedValuation,
+            Long actorUserId,
+            LocalDate today,
+            List<FundComparisonAssetResponse> similarFundAssets,
+            List<FundComparisonAssetResponse> benchmarkAssets
+    ) {
+        List<FundDraft> visibleFunds = fundDraftRepository
+                .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+                        FundDraftStatus.COMPLETED,
+                        actorUserId
+                );
+        List<FundComparisonAssetResponse> assets = new ArrayList<>();
+        assets.add(comparisonAsset(selectedFund, selectedValuation, 0));
+
+        for (FundDraft fund : visibleFunds) {
+            if (fund.getPublicId().equals(selectedFund.getPublicId())) {
+                continue;
+            }
+
+            FundValuationResult valuation = null;
+            try {
+                valuation = calculateFund(fund, today).valuation();
+            } catch (BaseException exception) {
+                if (exception.getErrorCode()
+                        != ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE) {
+                    throw exception;
+                }
+                log.warn(
+                        "Comparison returns are unavailable for fund {}",
+                        fund.getPublicId()
+                );
+            }
+            assets.add(comparisonAsset(fund, valuation, assets.size()));
+        }
+
+        assets.addAll(similarFundAssets);
+        assets.addAll(benchmarkAssets);
+
+        return List.copyOf(assets);
+    }
+
+    private FundComparisonAssetResponse comparisonAsset(
+            FundDraft fund,
+            FundValuationResult valuation,
+            int colorIndex
+    ) {
+        LocalDate asOfDate = valuation == null
+                ? LocalDate.now(clock)
+                : valuation.latestPoint().date();
+        Map<String, BigDecimal> returns = metricCalculator.comparisonReturns(
+                valuation == null ? List.of() : valuation.points(),
+                asOfDate
+        );
+
+        return new FundComparisonAssetResponse(
+                fund.getPublicId().toString(),
+                comparisonCode(fund.getName()),
+                fund.getName(),
+                COMPARISON_COLORS.get(colorIndex % COMPARISON_COLORS.size()),
+                true,
+                returns
+        );
+    }
+
+    private String comparisonCode(String fundName) {
+        String normalized = fundName == null ? "FON" : fundName.trim();
+        if (normalized.isEmpty()) {
+            return "FON";
+        }
+        return normalized.substring(0, Math.min(5, normalized.length()))
+                .toUpperCase(Locale.forLanguageTag("tr-TR"));
     }
 
     private List<FundPositionResponse> positions(
@@ -260,5 +373,11 @@ public class FundMonitoringService {
     }
 
     private record SectorKey(String id, String name) {
+    }
+
+    private record FundMonitoringCalculation(
+            FundValuationResult valuation,
+            List<Asset> assets
+    ) {
     }
 }

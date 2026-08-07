@@ -43,6 +43,28 @@ const sectorAllocationSchema = z.object({
   weightPercentage: z.number().min(0).max(100),
 })
 
+const comparisonReturnsSchema = z
+  .object({
+    "1W": z.number().nullable(),
+    "1M": z.number().nullable(),
+    "3M": z.number().nullable(),
+    "6M": z.number().nullable(),
+    YTD: z.number().nullable(),
+    "1Y": z.number().nullable(),
+    "3Y": z.number().nullable(),
+    "5Y": z.number().nullable(),
+  })
+  .partial()
+
+const fundComparisonAssetSchema = z.object({
+  id: z.string().min(1),
+  code: z.string().min(1),
+  name: z.string().min(1),
+  color: z.string().min(1),
+  isFund: z.boolean(),
+  returns: comparisonReturnsSchema,
+})
+
 export const fundMonitoringResponseSchema = z.object({
   fund: fundSummaryResponseSchema,
   asOfDate: z.iso.date(),
@@ -61,6 +83,7 @@ export const fundMonitoringResponseSchema = z.object({
   periodReturns: z.array(periodReturnSchema),
   positions: z.array(fundPositionSchema),
   sectorAllocations: z.array(sectorAllocationSchema),
+  comparisonAssets: z.array(fundComparisonAssetSchema).optional(),
 })
 
 export const fundSummaryListResponseSchema = z.array(fundSummaryResponseSchema)
