@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -14,6 +14,7 @@ import StartFundDraftPage from "@/features/fund-design/pages/StartFundDraftPage"
 import { toApiRequestError } from "@/shared/api/apiError"
 
 const INIT = {
+  page: "START" as const,
   currencies: [{ code: "TRY", label: "TRY - Türk Lirası" }],
   defaultCurrency: "TRY",
   minInitialPortfolioSize: 1_000_000,
@@ -34,7 +35,7 @@ const INIT = {
 }
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await screen.findByLabelText("Para Birimi *")
+  await screen.findByText("TRY")
   await user.type(
     screen.getByLabelText("Fon Adı *"),
     "Finovation Hisse Senedi Fonu",
@@ -69,6 +70,42 @@ describe("StartFundDraftPage", () => {
     expect(mocks.createFundDraft).not.toHaveBeenCalled()
   })
 
+  it("sağ panelde portföy büyüklüğü ve pay fiyatı aralıklarını gösterir", async () => {
+    renderPage()
+
+    expect(await screen.findByText("Portföy Büyüklüğü")).toBeInTheDocument()
+    expect(screen.getByText("1.000.000 – 100.000.000.000 TL")).toBeInTheDocument()
+    expect(screen.getByText("Fon Pay Fiyatı")).toBeInTheDocument()
+    expect(screen.getByText("1 – 1000 TL")).toBeInTheDocument()
+  })
+
+  it("geçersiz portföy büyüklüğünde hata ve aralık metni gösterir", async () => {
+    renderPage()
+
+    const portfolioInput = await screen.findByLabelText("Portföy Büyüklüğü *")
+    fireEvent.change(portfolioInput, { target: { value: "100" } })
+    fireEvent.blur(portfolioInput)
+
+    expect(portfolioInput).toHaveValue("100")
+    expect(
+      await screen.findByText(/İzin verilen aralık: 1\.000\.000/),
+    ).toBeInTheDocument()
+  })
+
+  it("geçersiz pay fiyatında sağ panel noktasını kırmızıya çeker", async () => {
+    renderPage()
+
+    const panel = await screen.findByLabelText("İzahname ve kural kontrolü")
+    const unitInput = await screen.findByLabelText("Fon Pay Fiyatı *")
+    fireEvent.change(unitInput, { target: { value: "99999" } })
+
+    const unitRule = within(panel)
+      .getByText("Fon Pay Fiyatı")
+      .closest("li")
+    expect(unitRule).not.toBeNull()
+    expect(unitRule!.querySelector("[class*='dotBad']")).not.toBeNull()
+  })
+
   it("geçerli formda taslak oluşturup strateji adımına geçer", async () => {
     mocks.createFundDraft.mockResolvedValue({
       draftId: "11111111-1111-1111-1111-111111111111",
@@ -77,7 +114,10 @@ describe("StartFundDraftPage", () => {
     renderPage()
 
     await fillValidForm(user)
-    expect(screen.getByLabelText("Para Birimi *")).toHaveValue("TRY")
+    expect(screen.getByText("TRY")).toBeInTheDocument()
+    expect(
+      screen.getByLabelText(/Portföy Büyüklüğü/),
+    ).toHaveValue("1.000.000")
     await user.click(screen.getByRole("button", { name: "İleri →" }))
 
     await waitFor(() => {
@@ -94,7 +134,7 @@ describe("StartFundDraftPage", () => {
     const user = userEvent.setup()
     renderPage()
 
-    await screen.findByLabelText("Para Birimi *")
+    await screen.findByText("TRY")
     await user.type(screen.getByLabelText("Fon Adı *"), "Fon 2")
 
     expect(screen.getByRole("button", { name: "İleri →" })).toBeDisabled()

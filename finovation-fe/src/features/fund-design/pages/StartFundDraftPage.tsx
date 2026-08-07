@@ -3,14 +3,19 @@ import { useNavigate } from "react-router"
 
 import { createFundDraft } from "@/features/fund-design/api/fundDraftApi"
 import FundDesignLayout from "@/features/fund-design/components/FundDesignLayout"
+import ProspectusRulesPanel from "@/features/fund-design/components/ProspectusRulesPanel"
 import { useFundDraftInit } from "@/features/fund-design/hooks/useFundDraftInit"
+import {
+  formatPortfolioSize,
+  isPortfolioSizeReady,
+  parsePortfolioSize,
+} from "@/features/fund-design/lib/portfolioSize"
 import {
   formatUnitPrice,
   isUnitPriceReady,
   parseUnitPrice,
 } from "@/features/fund-design/lib/unitPrice"
 import { isFundNameReady, validateFundName } from "@/features/fund-design/lib/fundName"
-import { ABOVE_5_PCT_SUM_MAX } from "@/features/fund-design/model/prospectusConstants"
 import Button from "@/shared/ui/Button"
 import FormAlert from "@/shared/ui/FormAlert"
 import TextField from "@/shared/ui/TextField"
@@ -18,27 +23,6 @@ import styles from "@/features/fund-design/styles/StartFundDraftPage.module.css"
 
 const CREATE_ERROR_FALLBACK =
   "Fon taslağı oluşturulamadı. Lütfen tekrar deneyin."
-
-function InfoIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M12 10.5v6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <circle cx="12" cy="7.5" r="1" fill="currentColor" />
-    </svg>
-  )
-}
 
 function EquityIcon() {
   return (
@@ -95,42 +79,88 @@ function LiquidityIcon() {
   )
 }
 
-function StatusDot({ tone }: { tone: "ok" | "info" }) {
-  return (
-    <span
-      className={[styles.statusDot, tone === "ok" ? styles.dotOk : styles.dotInfo]
-        .join(" ")}
-      aria-hidden="true"
-    />
-  )
-}
-
 export default function StartFundDraftPage() {
   const navigate = useNavigate()
   const {
     init,
     error: initError,
     reload: reloadInit,
-  } = useFundDraftInit()
+  } = useFundDraftInit({ page: "START" })
+  const startInit = init?.page === "START" ? init : null
   const [fundName, setFundName] = useState("")
   const [fundNameError, setFundNameError] = useState("")
+  const [portfolioSizeInput, setPortfolioSizeInput] = useState("")
   const [unitPriceInput, setUnitPriceInput] = useState("")
-  const [currencyCode, setCurrencyCode] = useState("")
+  const [portfolioSizeError, setPortfolioSizeError] = useState("")
+  const [unitPriceError, setUnitPriceError] = useState("")
+  const [portfolioFeedback, setPortfolioFeedback] = useState<
+    "idle" | "rejected"
+  >("idle")
+  const [unitPriceFeedback, setUnitPriceFeedback] = useState<
+    "idle" | "rejected"
+  >("idle")
   const [formError, setFormError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!init) return
-    setCurrencyCode((current) => current || init.defaultCurrency)
+    if (!startInit) return
+    setPortfolioSizeInput((current) =>
+      current || formatPortfolioSize(startInit.minInitialPortfolioSize),
+    )
     setUnitPriceInput((current) => current || formatUnitPrice("1"))
-  }, [init])
+  }, [startInit])
 
   const nameReady = isFundNameReady(fundName)
-  const unitPriceReady = isUnitPriceReady(unitPriceInput, init)
-  const currencyReady =
-    Boolean(currencyCode) &&
-    Boolean(init?.currencies.some((currency) => currency.code === currencyCode))
-  const canContinue = Boolean(init) && nameReady && unitPriceReady && currencyReady
+  const portfolioSizeReady = isPortfolioSizeReady(portfolioSizeInput, startInit)
+  const unitPriceReady = isUnitPriceReady(unitPriceInput, startInit)
+  const canContinue =
+    Boolean(startInit) && nameReady && portfolioSizeReady && unitPriceReady
+
+  useEffect(() => {
+    if (portfolioSizeReady) setPortfolioSizeError("")
+  }, [portfolioSizeReady])
+
+  useEffect(() => {
+    if (unitPriceReady) setUnitPriceError("")
+  }, [unitPriceReady])
+
+  function pulseReject(field: "portfolio" | "unit") {
+    const setFeedback =
+      field === "portfolio" ? setPortfolioFeedback : setUnitPriceFeedback
+    setFeedback("idle")
+    requestAnimationFrame(() => setFeedback("rejected"))
+    window.setTimeout(() => setFeedback("idle"), 450)
+  }
+
+  function portfolioSizeRangeText() {
+    if (!startInit) return "Portföy büyüklüğü izin verilen aralıkta olmalıdır."
+    return `İzin verilen aralık: ${formatPortfolioSize(startInit.minInitialPortfolioSize)} – ${formatPortfolioSize(startInit.maxInitialPortfolioSize)} TL`
+  }
+
+  function unitPriceRangeText() {
+    if (!startInit) return "Fon pay fiyatı izin verilen aralıkta olmalıdır."
+    return `İzin verilen aralık: ${startInit.minUnitPrice} – ${startInit.maxUnitPrice} TL`
+  }
+
+  function validatePortfolioSizeField(raw: string) {
+    if (!startInit) return
+    if (isPortfolioSizeReady(raw, startInit)) {
+      setPortfolioSizeError("")
+      return
+    }
+    setPortfolioSizeError(portfolioSizeRangeText())
+    pulseReject("portfolio")
+  }
+
+  function validateUnitPriceField(raw: string) {
+    if (!startInit) return
+    if (isUnitPriceReady(raw, startInit)) {
+      setUnitPriceError("")
+      return
+    }
+    setUnitPriceError(unitPriceRangeText())
+    pulseReject("unit")
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -141,17 +171,25 @@ export default function StartFundDraftPage() {
       return
     }
 
+    validatePortfolioSizeField(portfolioSizeInput)
+    validateUnitPriceField(unitPriceInput)
+
+    const portfolioSize = parsePortfolioSize(portfolioSizeInput)
     const unitPrice = parseUnitPrice(unitPriceInput)
-    if (!canContinue || !init || unitPrice == null) return
+    if (!canContinue || !startInit || portfolioSize == null || unitPrice == null) {
+      return
+    }
 
     setFormError("")
     setFundNameError("")
+    setPortfolioSizeError("")
+    setUnitPriceError("")
     setIsSubmitting(true)
 
     try {
       const draft = await createFundDraft({
         name: fundName.trim(),
-        initialPortfolioSize: init.minInitialPortfolioSize,
+        initialPortfolioSize: portfolioSize,
         unitPrice,
       })
       await navigate(`/fund-design/${draft.draftId}/strategy`)
@@ -197,69 +235,88 @@ export default function StartFundDraftPage() {
               className={styles.formCard}
               onSubmit={(event) => void handleSubmit(event)}
             >
-              <h3 className={styles.blockTitle}>Fon Bilgileri</h3>
+              <div className={styles.formCardHeader}>
+                <h3 className={styles.blockTitle}>Fon Bilgileri</h3>
+                <span className={styles.currencyBadge} title="Para birimi sistem tarafından atanır">
+                  {startInit?.defaultCurrency ?? "TRY"}
+                </span>
+              </div>
 
-              <TextField
-                id="fundName"
-                label="Fon Adı *"
-                autoComplete="off"
-                placeholder="Örn. Finovation Hisse Senedi Fonu"
-                value={fundName}
-                error={fundNameError}
-                onChange={(value) => {
-                  setFundName(value)
-                  setFundNameError(
-                    value.trim() ? (validateFundName(value) ?? "") : "",
-                  )
-                  setFormError("")
-                }}
-              />
-
-              <div className={styles.fundInfoRow}>
+              <div className={styles.fieldStack}>
                 <TextField
-                  id="unitPrice"
-                  label={
-                    <span className={styles.unitPriceLabel}>
-                      Fon Pay Fiyatı (TL) *
-                      <span
-                        className={styles.infoIcon}
-                        title="İzin verilen aralık profil kurallarına göre kontrol edilir."
-                      >
-                        <InfoIcon />
-                      </span>
-                    </span>
-                  }
-                  inputMode="decimal"
+                  id="fundName"
+                  label="Fon Adı *"
                   autoComplete="off"
-                  placeholder="1"
-                  value={unitPriceInput}
-                  className={styles.unitPriceInput}
+                  placeholder="Örn. Finovation Hisse Senedi Fonu"
+                  value={fundName}
+                  error={fundNameError}
                   onChange={(value) => {
-                    setUnitPriceInput(formatUnitPrice(value))
+                    setFundName(value)
+                    setFundNameError(
+                      value.trim() ? (validateFundName(value) ?? "") : "",
+                    )
                     setFormError("")
                   }}
                 />
 
-                <label className={styles.selectField} htmlFor="currency">
-                  <span className={styles.selectLabel}>Para Birimi *</span>
-                  <select
-                    id="currency"
-                    className={styles.select}
-                    value={currencyCode}
-                    disabled={!init}
-                    onChange={(event) => {
-                      setCurrencyCode(event.target.value)
+                <div className={styles.moneyRow}>
+                  <TextField
+                    id="initialPortfolioSize"
+                    label="Portföy Büyüklüğü *"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder={
+                      startInit
+                        ? formatPortfolioSize(startInit.minInitialPortfolioSize)
+                        : "1.000.000"
+                    }
+                    value={portfolioSizeInput}
+                    endAdornment="TL"
+                    error={portfolioSizeError}
+                    className={
+                      portfolioFeedback === "rejected"
+                        ? styles.inputRejected
+                        : ""
+                    }
+                    onBlur={() => validatePortfolioSizeField(portfolioSizeInput)}
+                    onChange={(value) => {
+                      const next = formatPortfolioSize(value)
+                      setPortfolioSizeInput(next)
                       setFormError("")
+                      if (
+                        portfolioSizeError &&
+                        isPortfolioSizeReady(next, startInit)
+                      ) {
+                        setPortfolioSizeError("")
+                      }
                     }}
-                  >
-                    {!init && <option value="">Yükleniyor…</option>}
-                    {init?.currencies.map((currency) => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  />
+
+                  <TextField
+                    id="unitPrice"
+                    label="Fon Pay Fiyatı *"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="1"
+                    value={unitPriceInput}
+                    endAdornment="TL"
+                    error={unitPriceError}
+                    className={
+                      unitPriceFeedback === "rejected"
+                        ? styles.inputRejected
+                        : ""
+                    }
+                    onBlur={() => validateUnitPriceField(unitPriceInput)}
+                    onChange={(value) => {
+                      const next = formatUnitPrice(value)
+                      setUnitPriceInput(next)
+                      setFormError("")
+                      if (unitPriceError && isUnitPriceReady(next, startInit)) {
+                        setUnitPriceError("")
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </form>
 
@@ -311,119 +368,14 @@ export default function StartFundDraftPage() {
             </div>
           </div>
 
-          <aside className={styles.rulesPanel} aria-label="İzahname ve kural kontrolü">
-            <div className={styles.rulesHeader}>
-              <h3 className={styles.blockTitle}>İzahname ve Kural Kontrolü</h3>
-              <span className={styles.infoIcon} title="Kısıtlar fon izahnamesine göre kontrol edilir.">
-                <InfoIcon />
-              </span>
-            </div>
-
-            {init ? (
-              <ul className={styles.ruleList}>
-                <li className={styles.ruleItem}>
-                  <StatusDot tone="ok" />
-                  <div className={styles.ruleBody}>
-                    <p className={styles.ruleLabel}>Hisse Senedi Oranı</p>
-                    <p className={styles.ruleValue}>
-                      %{init.minEquityWeightPct} - %{init.maxEquityWeightPct}
-                    </p>
-                  </div>
-                  <span className={styles.ruleDash}>—</span>
-                </li>
-                <li className={styles.ruleItem}>
-                  <StatusDot tone="ok" />
-                  <div className={styles.ruleBody}>
-                    <p className={styles.ruleLabel}>TPP Oranı</p>
-                    <p className={styles.ruleValue}>
-                      %{init.minLiquidityTargetPct} - %
-                      {init.maxLiquidityTargetPct}
-                    </p>
-                  </div>
-                  <span className={styles.ruleDash}>—</span>
-                </li>
-                <li className={styles.ruleItem}>
-                  <StatusDot tone="ok" />
-                  <div className={styles.ruleBody}>
-                    <p className={styles.ruleLabel}>Tek Hisse Ağırlığı</p>
-                    <p className={styles.ruleValue}>
-                      %{init.minSingleStockMaxPct} - %
-                      {init.maxSingleStockMaxPct}
-                    </p>
-                  </div>
-                  <span className={styles.ruleDash}>—</span>
-                </li>
-                <li className={styles.ruleItem}>
-                  <StatusDot tone="ok" />
-                  <div className={styles.ruleBody}>
-                    <p className={styles.ruleLabel}>
-                      %5 Üzerindeki Hisselerin Toplamı
-                    </p>
-                    <p className={styles.ruleValue}>
-                      ≤ %{ABOVE_5_PCT_SUM_MAX}
-                    </p>
-                  </div>
-                  <span className={styles.ruleDash}>—</span>
-                </li>
-                <li className={styles.ruleItem}>
-                  <StatusDot tone="info" />
-                  <div className={styles.ruleBody}>
-                    <p className={styles.ruleLabel}>Sektör Ağırlığı</p>
-                    <p className={styles.ruleValue}>
-                      Maks. %{Math.round(init.sectorMaxPct)}
-                    </p>
-                    <span className={styles.immutableTag}>
-                      Kısıt (Değiştirilemez)
-                    </span>
-                  </div>
-                  <span className={styles.ruleDash}>—</span>
-                </li>
-                <li className={styles.ruleItem}>
-                  <StatusDot tone="ok" />
-                  <div className={styles.ruleBody}>
-                    <p className={styles.ruleLabel}>Hisse Sayısı</p>
-                    <p className={styles.ruleValue}>
-                      {init.minStockCount} - {init.maxStockCount}
-                    </p>
-                  </div>
-                  <span className={styles.ruleDash}>—</span>
-                </li>
-              </ul>
-            ) : (
-              <p className={styles.rulesLoading}>Kısıtlar yükleniyor…</p>
-            )}
-
-            <div className={styles.legend}>
-              <p className={styles.legendTitle}>Durum</p>
-              <ul className={styles.legendList}>
-                <li>
-                  <span className={[styles.legendDot, styles.dotOk].join(" ")} />
-                  Yeşil: Kendi Kriterinize ve İzahnameye Uygun
-                </li>
-                <li>
-                  <span
-                    className={[styles.legendDot, styles.dotWarn].join(" ")}
-                  />
-                  Turuncu: Yalnızca İzahnameye Uygun
-                </li>
-                <li>
-                  <span
-                    className={[styles.legendDot, styles.dotBad].join(" ")}
-                  />
-                  Kırmızı: İzahnameye Uygun Değil
-                </li>
-                <li>
-                  <span
-                    className={[styles.legendDot, styles.dotInfo].join(" ")}
-                  />
-                  Gri: Bilgi / Kısıt (Değiştirilemez)
-                </li>
-              </ul>
-              <p className={styles.legendFoot}>
-                Kısıtlar fon izahnamesine göre kontrol edilmektedir.
-              </p>
-            </div>
-          </aside>
+          <ProspectusRulesPanel
+            init={startInit}
+            startCreateLimits={startInit}
+            startCreateCompliance={{
+              portfolioSizeOk: portfolioSizeReady,
+              unitPriceOk: unitPriceReady,
+            }}
+          />
         </div>
       </section>
     </FundDesignLayout>

@@ -76,8 +76,35 @@ export function getFundDraftsUrl(): string {
   return buildUrl(API_PATHS.fundDrafts)
 }
 
-export function getFundDraftInitUrl(): string {
-  return `${getFundDraftsUrl()}/init`
+export function getFundDraftInitUrl(
+  page: string,
+  draftId?: string,
+): string {
+  const params = new URLSearchParams({ page })
+  if (draftId) {
+    params.set("draftId", draftId)
+  }
+  return `${getFundDraftsUrl()}/init?${params.toString()}`
+}
+
+export function getFundDraftUrl(draftId: string): string {
+  return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}`
+}
+
+export function getFundDraftPortfolioRulesUrl(draftId: string): string {
+  return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}/portfolio-rules`
+}
+
+export function getFundDraftAnalysisUrl(draftId: string): string {
+  return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}/analysis`
+}
+
+export function getFundDraftSelectedProposalUrl(draftId: string): string {
+  return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}/selected-proposal`
+}
+
+export function getFundDraftModelUniverseUrl(): string {
+  return `${getFundDraftsUrl()}/model-universe`
 }
 
 export function getFundsUrl(): string {

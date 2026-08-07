@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
 
 import { getFundDraftInit } from "@/features/fund-design/api/fundDraftApi"
-import type { FundDraftInit } from "@/features/fund-design/model/fundDraftSchemas"
+import type {
+  FundDesignInitPage,
+  FundDraftInit,
+} from "@/features/fund-design/model/fundDraftSchemas"
+
+type UseFundDraftInitOptions = {
+  page: FundDesignInitPage
+  draftId?: string
+}
 
 type UseFundDraftInitResult = {
   init: FundDraftInit | null
@@ -10,7 +18,10 @@ type UseFundDraftInitResult = {
   reload: () => void
 }
 
-export function useFundDraftInit(): UseFundDraftInitResult {
+export function useFundDraftInit({
+  page,
+  draftId,
+}: UseFundDraftInitOptions): UseFundDraftInitResult {
   const [init, setInit] = useState<FundDraftInit | null>(null)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -21,12 +32,23 @@ export function useFundDraftInit(): UseFundDraftInitResult {
   }, [])
 
   useEffect(() => {
+    if (page === "STRATEGY" && !draftId) {
+      setInit(null)
+      setError("Fon taslağı bulunamadı.")
+      setIsLoading(false)
+      return
+    }
+
     const controller = new AbortController()
     setIsLoading(true)
 
     void (async () => {
       try {
-        const nextInit = await getFundDraftInit(controller.signal)
+        const nextInit = await getFundDraftInit({
+          page,
+          draftId,
+          signal: controller.signal,
+        })
         if (controller.signal.aborted) return
 
         setInit(nextInit)
@@ -50,7 +72,7 @@ export function useFundDraftInit(): UseFundDraftInitResult {
     return () => {
       controller.abort()
     }
-  }, [reloadKey])
+  }, [page, draftId, reloadKey])
 
   return { init, error, isLoading, reload }
 }

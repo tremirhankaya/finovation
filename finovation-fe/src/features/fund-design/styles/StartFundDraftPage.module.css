@@ -76,6 +76,74 @@
   gap: 0;
 }
 
+.formCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.formCardHeader .blockTitle {
+  margin: 0;
+}
+
+.currencyBadge {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #d7e4e8;
+  background: #f3f8f8;
+  color: #3d5363;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.fieldStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.moneyRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.inputRejected {
+  border-color: #c62828 !important;
+  background: #ffebee;
+  animation: inputReject 0.42s ease;
+}
+
+@keyframes inputReject {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+.fieldLabelWithTip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .blockTitle {
   margin: 0 0 1rem;
   color: #0f1f3c;
@@ -134,6 +202,13 @@
 
 .unitPriceInput {
   height: 44px;
+}
+
+.fieldHint {
+  margin: 0;
+  color: #6b7c8c;
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .infoIcon {
@@ -246,6 +321,19 @@
   align-items: start;
 }
 
+.ruleItemLocked .ruleLabel {
+  color: #8a97a6;
+}
+
+.ruleItemLocked .ruleValue {
+  color: #9aa6b2;
+}
+
+.ruleItemLocked .immutableTag {
+  color: #9aa6b2;
+  background: #e8ecf0;
+}
+
 .statusDot,
 .legendDot {
   width: 0.7rem;
@@ -263,7 +351,7 @@
 }
 
 .dotBad {
-  background: #d97864;
+  background: #c62828;
 }
 
 .dotInfo {
@@ -354,6 +442,7 @@
 
 @media (max-width: 560px) {
   .fundInfoRow,
+  .moneyRow,
   .universeTiles {
     grid-template-columns: 1fr;
   }
