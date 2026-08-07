@@ -1,6 +1,7 @@
 package com.infina.portfoliomanagement.company.controller.docs;
 
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
+import com.infina.portfoliomanagement.company.dto.CreateCompanyRequest;
 import com.infina.portfoliomanagement.company.dto.CompanyResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,4 +24,22 @@ public interface CompanyControllerDocs {
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<List<CompanyResponse>> getCompanies(UserDetails userDetails);
+
+    @Operation(
+            summary = "Create company",
+            description = "Creates an active company. Available only to SUPER_ADMIN.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<CompanyResponse> createCompany(
+            UserDetails userDetails,
+            CreateCompanyRequest request
+    );
+
+    @Operation(
+            summary = "Delete company",
+            description = "Soft-deletes the company and all of its active users. " +
+                    "Available only to SUPER_ADMIN.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<Void> deleteCompany(UserDetails userDetails, Long id);
 }

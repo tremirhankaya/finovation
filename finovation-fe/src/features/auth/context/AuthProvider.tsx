@@ -68,16 +68,17 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const tokens = await login(credentials)
-      if (operationVersion !== operationVersionRef.current) return
+      if (operationVersion !== operationVersionRef.current) return null
 
       saveAccessToken(tokens.accessToken)
       saveRefreshToken(tokens.refreshToken)
 
       const currentUser = await getCurrentUser()
-      if (operationVersion !== operationVersionRef.current) return
+      if (operationVersion !== operationVersionRef.current) return null
 
       setUser(currentUser)
       setSessionExpired(false)
+      return currentUser
     } catch (error) {
       if (operationVersion === operationVersionRef.current) {
         invalidateAuthSession()
