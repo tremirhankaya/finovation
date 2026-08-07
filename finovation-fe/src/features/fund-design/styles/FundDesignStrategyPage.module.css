@@ -1,0 +1,477 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.header {
+  margin-bottom: 0.15rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #0f1f3c;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.introLead {
+  margin: 0.55rem 0 0;
+  color: #0f1f3c;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.intro {
+  margin: 0.25rem 0 0;
+  max-width: 44rem;
+  color: #6b7c8c;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.retry {
+  margin-left: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.retry:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card {
+  padding: 1.2rem 1.25rem;
+  border: 1px solid #e5edf1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 32, 64, 0.04);
+}
+
+.blockTitle {
+  margin: 0 0 1rem;
+  color: #0f1f3c;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.approachGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.approachCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 100%;
+  padding: 1rem 0.95rem;
+  border: 1.5px solid #e5edf1;
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.approachCard:hover {
+  border-color: #c9ddd8;
+}
+
+.approachCardSelected {
+  border-color: #2ec4a7;
+  background: #f3fbf9;
+  box-shadow: 0 0 0 1px rgba(46, 196, 167, 0.25);
+}
+
+.approachIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  color: #1a9e86;
+  background: #e7f6f2;
+}
+
+.approachCardSelected .approachIcon {
+  color: #fff;
+  background: #2ec4a7;
+}
+
+.approachLabel {
+  margin: 0;
+  color: #0f1f3c;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.approachText {
+  margin: 0;
+  color: #6b7c8c;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.paramList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.paramField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.paramHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.paramHeadingActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paramLabel {
+  color: #0f1f3c;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.paramCaption {
+  margin: 0;
+  color: #8a97a6;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.paramCaptionDot {
+  margin: 0 0.35rem;
+  color: #c2ccd4;
+}
+
+.resetDefaults {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  color: #1a9e86;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resetDefaults:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.resetDefaults:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.resetDefaults:focus-visible {
+  outline: 2px solid #2ec4a7;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.preferredRow {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #e5edf1;
+}
+
+.preferredLabelGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.preferredLabel {
+  color: #3d5163;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.preferredValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1.5px solid #2ec4a7;
+  border-radius: 8px;
+  color: #0f1f3c;
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.preferredValueField {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 3.2rem;
+  height: 1.75rem;
+  padding: 0 0.4rem;
+  border: 1.5px solid #2ec4a7;
+  border-radius: 8px;
+  background: #fff;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.preferredValueFieldActive {
+  border-color: #2ec4a7;
+}
+
+.preferredValueFieldAccepted {
+  border-color: #2ec4a7;
+  box-shadow: 0 0 0 3px rgba(46, 196, 167, 0.18);
+}
+
+.preferredValueFieldAdjusted {
+  border-color: #e2a35a;
+  background: #fff8ef;
+  animation: preferredAdjust 0.45s ease;
+}
+
+.preferredValueFieldRejected {
+  border-color: #c62828;
+  background: #ffebee;
+  animation: preferredReject 0.42s ease;
+}
+
+@keyframes preferredReject {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes preferredAdjust {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.preferredHint {
+  min-height: 1rem;
+  margin: 0.15rem 0 0;
+  color: #8a97a6;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+.preferredValueField:focus-within {
+  box-shadow: 0 0 0 3px rgba(46, 196, 167, 0.15);
+}
+
+.preferredPrefix {
+  color: #0f1f3c;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.preferredValueInput {
+  width: 2.2rem;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  color: #0f1f3c;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  appearance: textfield;
+}
+
+.preferredValueInput::-webkit-outer-spin-button,
+.preferredValueInput::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.preferredValueInput:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.preferredSlider {
+  width: 100%;
+  height: 0.3rem;
+  appearance: none;
+  border-radius: 999px;
+  background: #e6eef2;
+  outline: none;
+  cursor: pointer;
+}
+
+.preferredSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #1a9e86;
+  box-shadow: 0 1px 4px rgba(15, 32, 64, 0.2);
+  cursor: pointer;
+}
+
+.preferredSlider::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #1a9e86;
+  box-shadow: 0 1px 4px rgba(15, 32, 64, 0.2);
+  cursor: pointer;
+}
+
+.preferredSlider:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.readonlyField {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 0.875rem;
+  border: 1.5px solid rgba(15, 32, 64, 0.12);
+  border-radius: 12px;
+  color: #6b7c8c;
+  background: #f3f6f8;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.5rem;
+  height: 44px;
+  padding: 0 1.25rem;
+  border: 1.5px solid #d5e0e6;
+  border-radius: 12px;
+  color: #3d5163;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back:hover {
+  border-color: #b8c6cf;
+  background: #f8fbfb;
+}
+
+.back:focus-visible {
+  outline: 3px solid #2ec4a7;
+  outline-offset: 2px;
+}
+
+.continue {
+  min-width: 7.5rem;
+  height: 44px;
+  border-radius: 12px;
+  background: #2ec4a7;
+  box-shadow: none;
+}
+
+.continue:disabled {
+  background: #c5d4d1;
+  opacity: 1;
+}
+
+.continue:not(:disabled):hover {
+  filter: brightness(1.04);
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .approachGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .back,
+  .continue {
+    width: 100%;
+  }
+}
