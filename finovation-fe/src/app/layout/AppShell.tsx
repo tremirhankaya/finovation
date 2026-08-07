@@ -27,9 +27,9 @@ const PRODUCT_NAVIGATION: NavigationItem[] = [
 ]
 
 const ROLE_LABELS = {
-  ADMIN: "Admin",
+  COMPANY_MANAGER: "Company Manager",
   USER: "Kullanıcı",
-  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
 } as const
 
 function NavigationIcon({ icon }: { icon: NavigationItem["icon"] }) {

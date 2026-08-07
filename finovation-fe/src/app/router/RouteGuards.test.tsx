@@ -12,13 +12,13 @@ import GuestRoute from "@/app/router/GuestRoute"
 import ProtectedRoute from "@/app/router/ProtectedRoute"
 import type { AuthContextValue } from "@/features/auth/context/AuthContext"
 
-const ADMIN = {
+const COMPANY_MANAGER = {
   id: 1,
   username: "batuhan",
   firstName: "Batuhan",
   lastName: "Pınar",
   email: "batuhan@example.com",
-  role: "ADMIN" as const,
+  role: "COMPANY_MANAGER" as const,
   status: "ACTIVE" as const,
   passwordChangeRequired: false,
   companyId: 2,
@@ -30,21 +30,21 @@ const ADMIN = {
   deletableRoles: ["USER" as const],
 }
 
-const SUPER_ADMIN = {
-  ...ADMIN,
+const ADMIN = {
+  ...COMPANY_MANAGER,
   id: 2,
-  role: "SUPER_ADMIN" as const,
+  role: "ADMIN" as const,
   companyId: null,
   companyName: null,
   canAccessPanel: true,
   canCreateUser: true,
   canDeleteUser: true,
-  assignableRoles: ["ADMIN" as const, "SUPER_ADMIN" as const],
-  deletableRoles: ["ADMIN" as const],
+  assignableRoles: ["COMPANY_MANAGER" as const, "ADMIN" as const],
+  deletableRoles: ["COMPANY_MANAGER" as const],
 }
 
 const USER = {
-  ...ADMIN,
+  ...COMPANY_MANAGER,
   id: 3,
   role: "USER" as const,
   canAccessPanel: false,
@@ -94,7 +94,7 @@ describe("route guards", () => {
   })
 
   it("giriş yapmış kullanıcıyı guest route'tan dashboard'a gönderir", async () => {
-    useAuthMock.mockReturnValue(authValue({ user: ADMIN }))
+    useAuthMock.mockReturnValue(authValue({ user: COMPANY_MANAGER }))
 
     render(
       <MemoryRouter initialEntries={["/login"]}>
@@ -116,7 +116,7 @@ describe("route guards", () => {
   })
 
   it("giriş yapmış super admini guest route'tan kullanıcı yönetimine gönderir", async () => {
-    useAuthMock.mockReturnValue(authValue({ user: SUPER_ADMIN }))
+    useAuthMock.mockReturnValue(authValue({ user: ADMIN }))
 
     render(
       <MemoryRouter initialEntries={["/login"]}>
@@ -182,7 +182,7 @@ describe("route guards", () => {
   })
 
   it("adminin kullanıcı yönetimi route'una erişmesine izin verir", async () => {
-    useAuthMock.mockReturnValue(authValue({ user: ADMIN }))
+    useAuthMock.mockReturnValue(authValue({ user: COMPANY_MANAGER }))
 
     render(
       <MemoryRouter initialEntries={["/users"]}>
@@ -196,7 +196,7 @@ describe("route guards", () => {
   })
 
   it("super adminin ürün route'larına erişimini kullanıcı yönetimine yönlendirir", async () => {
-    useAuthMock.mockReturnValue(authValue({ user: SUPER_ADMIN }))
+    useAuthMock.mockReturnValue(authValue({ user: ADMIN }))
 
     render(
       <MemoryRouter initialEntries={["/dashboard"]}>

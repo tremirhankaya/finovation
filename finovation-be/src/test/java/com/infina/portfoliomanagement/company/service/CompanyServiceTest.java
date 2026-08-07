@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class CompanyServiceTest {
 
-    private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 7, 10, 0);
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, Month.AUGUST, 7, 10, 0);
 
     @Mock
     private CompanyRepository companyRepository;
@@ -64,7 +65,7 @@ class CompanyServiceTest {
         superAdminActor = User.builder()
                 .id(1L)
                 .username("superadmin")
-                .role(Role.SUPER_ADMIN)
+                .role(Role.ADMIN)
                 .build();
     }
 
@@ -91,7 +92,7 @@ class CompanyServiceTest {
         User admin = User.builder()
                 .id(2L)
                 .username("admin")
-                .role(Role.ADMIN)
+                .role(Role.COMPANY_MANAGER)
                 .company(ownCompany)
                 .build();
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
@@ -107,15 +108,13 @@ class CompanyServiceTest {
         User admin = User.builder()
                 .id(2L)
                 .username("admin")
-                .role(Role.ADMIN)
+                .role(Role.COMPANY_MANAGER)
                 .company(company(10L, "Acme"))
                 .build();
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        CreateCompanyRequest request = new CreateCompanyRequest("Yeni Şirket");
 
-        assertThatThrownBy(() -> companyService.createCompany(
-                "admin",
-                new CreateCompanyRequest("Yeni Şirket")
-        ))
+        assertThatThrownBy(() -> companyService.createCompany("admin", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(error -> ((BaseException) error).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
@@ -156,11 +155,9 @@ class CompanyServiceTest {
         when(userRepository.findByUsername("superadmin"))
                 .thenReturn(Optional.of(superAdminActor));
         when(companyRepository.existsByNameIgnoreCase("Acme")).thenReturn(true);
+        CreateCompanyRequest request = new CreateCompanyRequest("Acme");
 
-        assertThatThrownBy(() -> companyService.createCompany(
-                "superadmin",
-                new CreateCompanyRequest("Acme")
-        ))
+        assertThatThrownBy(() -> companyService.createCompany("superadmin", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(error -> ((BaseException) error).getErrorCode())
                 .isEqualTo(ErrorCode.COMPANY_NAME_ALREADY_EXISTS);
@@ -218,7 +215,7 @@ class CompanyServiceTest {
         return User.builder()
                 .id(id)
                 .username(username)
-                .role(Role.ADMIN)
+                .role(Role.COMPANY_MANAGER)
                 .company(company)
                 .deleted(false)
                 .build();

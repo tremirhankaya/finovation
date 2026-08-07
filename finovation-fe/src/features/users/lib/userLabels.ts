@@ -2,10 +2,10 @@ import type { UserRole, UserStatus } from "@/features/users/model/user.types"
 
 export function formatRoleLabel(role: UserRole): string {
   switch (role) {
-    case "SUPER_ADMIN":
-      return "Super Admin"
     case "ADMIN":
       return "Admin"
+    case "COMPANY_MANAGER":
+      return "Company Manager"
     case "USER":
       return "Kullanıcı"
   }

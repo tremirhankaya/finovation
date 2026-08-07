@@ -18,6 +18,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String ADMIN_ROLE = "ADMIN";
+    private static final String COMPANY_MANAGER_ROLE = "COMPANY_MANAGER";
+
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
@@ -27,6 +30,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
 
         http
+                // This API authenticates each request with a bearer JWT and never uses a browser session cookie.
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .sessionManagement(session ->
@@ -57,13 +61,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/me")
                         .authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/companies")
-                        .hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .hasAnyRole(ADMIN_ROLE, COMPANY_MANAGER_ROLE)
                         .requestMatchers("/api/v1/companies", "/api/v1/companies/**")
-                        .hasRole("SUPER_ADMIN")
+                        .hasRole(ADMIN_ROLE)
                         .requestMatchers("/api/v1/users/**")
-                        .hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .hasAnyRole(ADMIN_ROLE, COMPANY_MANAGER_ROLE)
                         .requestMatchers("/api/v1/**")
-                        .hasAnyRole("ADMIN", "USER")
+                        .hasAnyRole(COMPANY_MANAGER_ROLE, "USER")
                         .anyRequest().authenticated()
                 )
 

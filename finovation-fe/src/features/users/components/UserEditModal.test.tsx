@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import UserEditModal from "@/features/users/components/UserEditModal"
 
-const ADMIN_USER = {
+const COMPANY_MANAGER_USER = {
   id: 2,
   username: "admin",
   firstName: "Admin",
@@ -12,20 +12,20 @@ const ADMIN_USER = {
   email: "admin@example.com",
   companyId: 7,
   companyName: "Infina",
-  role: "ADMIN" as const,
+  role: "COMPANY_MANAGER" as const,
   status: "ACTIVE" as const,
   createdAt: "2026-08-03T00:00:00",
 }
 
 describe("UserEditModal", () => {
-  it("şirketli ADMIN için desteklenmeyen SUPER_ADMIN geçişini sunmaz", () => {
+  it("şirketli COMPANY_MANAGER için desteklenmeyen ADMIN geçişini sunmaz", () => {
     render(
       <UserEditModal
         open
-        user={ADMIN_USER}
+        user={COMPANY_MANAGER_USER}
         currentUserId={1}
-        actorRole="SUPER_ADMIN"
-        assignableRoles={["ADMIN", "SUPER_ADMIN"]}
+        actorRole="ADMIN"
+        assignableRoles={["COMPANY_MANAGER", "ADMIN"]}
         companies={[{ id: 7, name: "Infina" }]}
         companiesLoading={false}
         companiesError=""
@@ -37,9 +37,9 @@ describe("UserEditModal", () => {
     )
 
     const roleSelect = screen.getByLabelText(/Rol/)
-    expect(roleSelect).toHaveValue("ADMIN")
+    expect(roleSelect).toHaveValue("COMPANY_MANAGER")
     expect(
-      screen.queryByRole("option", { name: "Super Admin" }),
+      screen.queryByRole("option", { name: "Admin" }),
     ).not.toBeInTheDocument()
   })
 })

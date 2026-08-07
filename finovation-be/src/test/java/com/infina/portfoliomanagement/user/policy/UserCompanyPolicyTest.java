@@ -15,21 +15,21 @@ class UserCompanyPolicyTest {
     @Test
     void queryCompany_nullFilter_isAllowed() {
         assertThatCode(() ->
-                policy.assertCanQueryCompany(Role.ADMIN, 10L, null)
+                policy.assertCanQueryCompany(Role.COMPANY_MANAGER, 10L, null)
         ).doesNotThrowAnyException();
     }
 
     @Test
     void queryCompany_sameCompany_isAllowed() {
         assertThatCode(() ->
-                policy.assertCanQueryCompany(Role.ADMIN, 10L, 10L)
+                policy.assertCanQueryCompany(Role.COMPANY_MANAGER, 10L, 10L)
         ).doesNotThrowAnyException();
     }
 
     @Test
     void queryCompany_otherCompany_isDenied() {
         assertThatThrownBy(() ->
-                policy.assertCanQueryCompany(Role.ADMIN, 10L, 99L)
+                policy.assertCanQueryCompany(Role.COMPANY_MANAGER, 10L, 99L)
         )
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
@@ -39,7 +39,7 @@ class UserCompanyPolicyTest {
     @Test
     void queryCompany_actorWithoutCompany_isDenied() {
         assertThatThrownBy(() ->
-                policy.assertCanQueryCompany(Role.ADMIN, null, 10L)
+                policy.assertCanQueryCompany(Role.COMPANY_MANAGER, null, 10L)
         )
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
@@ -49,14 +49,14 @@ class UserCompanyPolicyTest {
     @Test
     void manageTarget_adminInSameCompany_isAllowed() {
         assertThatCode(() ->
-                policy.assertCanManageTarget(Role.ADMIN, 10L, 10L)
+                policy.assertCanManageTarget(Role.COMPANY_MANAGER, 10L, 10L)
         ).doesNotThrowAnyException();
     }
 
     @Test
     void manageTarget_adminInOtherCompany_isDenied() {
         assertThatThrownBy(() ->
-                policy.assertCanManageTarget(Role.ADMIN, 10L, 99L)
+                policy.assertCanManageTarget(Role.COMPANY_MANAGER, 10L, 99L)
         )
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
@@ -66,7 +66,7 @@ class UserCompanyPolicyTest {
     @Test
     void manageTarget_superAdmin_isNotCompanyScoped() {
         assertThatCode(() ->
-                policy.assertCanManageTarget(Role.SUPER_ADMIN, null, 99L)
+                policy.assertCanManageTarget(Role.ADMIN, null, 99L)
         ).doesNotThrowAnyException();
     }
 }

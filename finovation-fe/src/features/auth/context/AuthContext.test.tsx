@@ -23,7 +23,7 @@ const CURRENT_USER = {
   firstName: "Batuhan",
   lastName: "Pınar",
   email: "batuhan@example.com",
-  role: "ADMIN" as const,
+  role: "COMPANY_MANAGER" as const,
   status: "ACTIVE" as const,
   passwordChangeRequired: false,
   companyId: 2,

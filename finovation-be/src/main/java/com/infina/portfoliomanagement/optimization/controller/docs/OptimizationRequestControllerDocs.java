@@ -15,6 +15,7 @@ import java.util.List;
         name = "Optimization Requests",
         description = "Create, read, run and approve/reject operations for optimization scenario requests."
 )
+@SuppressWarnings("unused") // Endpoints are invoked by Spring through their controller implementations.
 public interface OptimizationRequestControllerDocs {
 
     @Operation(
@@ -32,7 +33,7 @@ public interface OptimizationRequestControllerDocs {
 
     @Operation(
             summary = "Get optimization request",
-            description = "Returns a single optimization request. SUPER_ADMIN may access any request; " +
+            description = "Returns a single optimization request. ADMIN may access any request; " +
                     "other actors may only access requests they created.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
@@ -40,7 +41,7 @@ public interface OptimizationRequestControllerDocs {
 
     @Operation(
             summary = "List optimization requests for a fund",
-            description = "Returns optimization requests for the given fund. SUPER_ADMIN receives all " +
+            description = "Returns optimization requests for the given fund. ADMIN receives all " +
                     "requests for the fund; other actors receive only the requests they created.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )

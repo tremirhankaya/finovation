@@ -9,7 +9,7 @@ const BASE_PROPS = {
   companies: [],
   companiesLoading: false,
   companiesError: "",
-  actorRole: "SUPER_ADMIN" as const,
+  actorRole: "ADMIN" as const,
   onClose: vi.fn(),
   onErrorDismiss: vi.fn(),
   onRetryCompanies: vi.fn(),
@@ -22,7 +22,7 @@ describe("UserCreateModal", () => {
     render(
       <UserCreateModal
         {...BASE_PROPS}
-        assignableRoles={["SUPER_ADMIN"]}
+        assignableRoles={["ADMIN"]}
         onCreate={onCreate}
       />,
     )
@@ -44,7 +44,7 @@ describe("UserCreateModal", () => {
     render(
       <UserCreateModal
         {...BASE_PROPS}
-        assignableRoles={["ADMIN"]}
+        assignableRoles={["COMPANY_MANAGER"]}
         companiesLoading
         onCreate={vi.fn()}
       />,
