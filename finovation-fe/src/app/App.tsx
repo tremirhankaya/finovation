@@ -9,6 +9,7 @@ import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage"
 import StartFundDraftPage from "@/features/fund-design/pages/StartFundDraftPage"
 import FundDesignStrategyPage from "@/features/fund-design/pages/FundDesignStrategyPage"
 import FundMonitoringPage from "@/features/fund-monitoring/pages/FundMonitoringPage"
+import OptimizationRunningPage from "@/features/optimization/pages/OptimizationRunningPage"
 import UsersPage from "@/features/users/pages/UsersPage"
 
 export default function App() {
@@ -84,6 +85,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <FundMonitoringPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/optimization-requests/:requestId/running"
+            element={
+              <ProtectedRoute>
+                <OptimizationRunningPage />
               </ProtectedRoute>
             }
           />

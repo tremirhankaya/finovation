@@ -41,6 +41,16 @@ const ERROR_MESSAGES: Record<string, string> = {
   FUND_002: "Fon bulunamadı veya bu fonu görüntüleme yetkiniz yok.",
   FUND_003:
     "Fonun izleme verileri henüz hesaplanamıyor. Lütfen daha sonra tekrar deneyin.",
+  OPT_001: "Optimizasyon isteği bulunamadı.",
+  OPT_002: "Seçilen hisse yatırım evreninde tanımlı değil.",
+  OPT_003: "Girilen kısıt değerleri izin verilen aralığın dışında.",
+  OPT_004: "Girilen kısıtlar birlikte karşılanamıyor.",
+  OPT_005:
+    "Bir hisse aynı anda hem hariç tutulacaklar hem zorunlu eklenecekler arasında olamaz.",
+  OPT_006: "Hisse için girilen alt/üst limit birbiriyle uyumsuz.",
+  OPT_007:
+    "Bu istek başka bir işlemle güncellendi. Lütfen sayfayı yenileyip tekrar deneyin.",
+  OPT_008: "Bu optimizasyon isteği şu anki durumundan istenen duruma geçemez.",
 }
 
 function fallbackMessage(fallback: string): string {
