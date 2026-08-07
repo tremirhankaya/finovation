@@ -150,6 +150,12 @@ public enum ErrorCode {
             "Company assignment is invalid for the given role."
     ),
 
+    COMPANY_NAME_ALREADY_EXISTS(
+            "COMPANY_003",
+            HttpStatus.CONFLICT,
+            "Company name already exists."
+    ),
+
     EXTERNAL_SERVICE_ERROR(
             "EXT_001",
             HttpStatus.BAD_GATEWAY,
@@ -198,14 +204,33 @@ public enum ErrorCode {
             "This request was modified by another request. Please reload and try again."
     ),
 
+    OPT_INVALID_STATUS_TRANSITION(
+            "OPT_008",
+            HttpStatus.CONFLICT,
+            "This optimization request cannot change to the requested status from its current status."
+    ),
+
     FUND_INITIAL_SIZE_OUT_OF_RANGE(
             "FUND_001",
             HttpStatus.BAD_REQUEST,
             "The initial portfolio size is outside the allowed range."
     ),
+
+    FUND_NOT_FOUND(
+            "FUND_002",
+            HttpStatus.NOT_FOUND,
+            "Fund not found."
+    ),
+
+    FUND_MONITORING_DATA_UNAVAILABLE(
+            "FUND_003",
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "Fund monitoring data is not available."
+    ),
+
     STRESS_PORTFOLIO_NOT_AVAILABLE(
             "STRESS_001",
-            HttpStatus.UNPROCESSABLE_ENTITY,
+            HttpStatus.UNPROCESSABLE_CONTENT,
             "A selected portfolio is not available for stress testing."
     ),
 
@@ -219,8 +244,8 @@ public enum ErrorCode {
             "STRESS_003",
             HttpStatus.NOT_FOUND,
             "Stress test not found."
-    );
-
+    ),
+    ;
 
     private final String code;
     private final HttpStatus httpStatus;
