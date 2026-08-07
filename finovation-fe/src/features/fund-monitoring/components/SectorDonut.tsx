@@ -64,19 +64,6 @@ export default function SectorDonut({ allocations }: SectorDonutProps) {
             />
           )
         })}
-      <text x="80" y="77" textAnchor="middle" fill="#64748b" fontSize="10">
-        TOPLAM
-      </text>
-      <text
-        x="80"
-        y="96"
-        textAnchor="middle"
-        fill="#0f2d52"
-        fontSize="16"
-        fontWeight="700"
-      >
-        %{total.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}
-      </text>
     </svg>
   )
 }
