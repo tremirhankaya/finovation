@@ -21,7 +21,7 @@ type UserSearchToolbarProps = {
   onApplyFilters: (filters: UserListFilters) => void
 }
 
-const ROLE_OPTIONS: UserRole[] = ["USER", "ADMIN", "SUPER_ADMIN"]
+const ROLE_OPTIONS: UserRole[] = ["USER", "COMPANY_MANAGER", "ADMIN"]
 const STATUS_OPTIONS: UserStatus[] = ["ACTIVE", "INACTIVE", "LOCKED"]
 
 function formatShortDate(value: string) {

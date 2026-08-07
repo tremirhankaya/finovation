@@ -249,7 +249,7 @@ CI kurulurken aynı komut doğrudan kalite kapısı olarak kullanılabilir.
 - guest/protected route yönlendirmeleri,
 - şifre yenileme `AUTH_006` ve `AUTH_007` hata akışları,
 - kullanıcı ve şirket veri hook'larının başarı/tekrar deneme davranışları,
-- şirketli ADMIN için desteklenmeyen SUPER_ADMIN geçişinin gizlenmesi,
+- şirketli COMPANY_MANAGER için desteklenmeyen ADMIN geçişinin gizlenmesi,
 - parolanın değiştirilmeden create payloadına taşınması,
 - şirketler yüklenirken şirket zorunlu create işleminin engellenmesi,
 - rol ve şirket filtrelerinin doğru payload üretmesi.
@@ -291,11 +291,11 @@ endpoint de bulunmadığından bu iş yalnız frontend değişikliğiyle tamamla
 Endpoint, hata sözleşmesi ve ürün akışı belirlendikten sonra ayrı geliştirme
 olarak ele alınmalıdır.
 
-### ADMIN → SUPER_ADMIN geçişi
+### COMPANY_MANAGER → ADMIN geçişi
 
 Mevcut backend update servisi `companyId: null` değerini, hedef kullanıcının
-eski şirketini koruma talebi gibi yorumlar. Bu nedenle şirketli bir ADMIN'i
-şirketsiz SUPER_ADMIN rolüne aynı endpoint ile geçirmek mümkün değildir.
+eski şirketini koruma talebi gibi yorumlar. Bu nedenle şirketli bir COMPANY_MANAGER'i
+şirketsiz ADMIN rolüne aynı endpoint ile geçirmek mümkün değildir.
 Frontend başarısız olacağı bilinen bu seçeneği sunmaz. Gelecekte backend;
 “alan gönderilmedi” ile “şirketi null yap” durumlarını ayıran bir request modeli
 veya özel rol/şirket atama endpointi sağlarsa seçenek güvenle açılabilir.

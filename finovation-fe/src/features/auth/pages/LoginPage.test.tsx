@@ -110,7 +110,7 @@ describe("LoginPage", () => {
       firstName: "Super",
       lastName: "Admin",
       email: "superadmin@example.com",
-      role: "SUPER_ADMIN",
+      role: "ADMIN",
       status: "ACTIVE",
       passwordChangeRequired: false,
       companyId: null,
@@ -118,8 +118,8 @@ describe("LoginPage", () => {
       canAccessPanel: true,
       canCreateUser: true,
       canDeleteUser: true,
-      assignableRoles: ["ADMIN", "SUPER_ADMIN"],
-      deletableRoles: ["ADMIN"],
+      assignableRoles: ["COMPANY_MANAGER", "ADMIN"],
+      deletableRoles: ["COMPANY_MANAGER"],
     })
     const user = userEvent.setup()
 

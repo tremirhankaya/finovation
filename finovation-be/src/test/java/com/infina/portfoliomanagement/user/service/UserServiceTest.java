@@ -19,6 +19,7 @@ import com.infina.portfoliomanagement.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
@@ -29,6 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -83,14 +85,14 @@ class UserServiceTest {
         adminActor = User.builder()
                 .id(1L)
                 .username("admin1")
-                .role(Role.ADMIN)
+                .role(Role.COMPANY_MANAGER)
                 .company(company)
                 .build();
 
         superAdminActor = User.builder()
                 .id(2L)
                 .username("superadmin1")
-                .role(Role.SUPER_ADMIN)
+                .role(Role.ADMIN)
                 .company(null)
                 .build();
 
@@ -128,8 +130,9 @@ class UserServiceTest {
     @Test
     void adminCreatingAdminRole_isDeniedByRolePolicy() {
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
+        CreateUserRequest request = requestFor(Role.COMPANY_MANAGER, null);
 
-        assertThatThrownBy(() -> userService.createUser("admin1", requestFor(Role.ADMIN, null)))
+        assertThatThrownBy(() -> userService.createUser("admin1", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
@@ -140,8 +143,9 @@ class UserServiceTest {
         when(userRepository.findByUsername("superadmin1")).thenReturn(Optional.of(superAdminActor));
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
+        CreateUserRequest request = requestFor(Role.COMPANY_MANAGER, null);
 
-        assertThatThrownBy(() -> userService.createUser("superadmin1", requestFor(Role.ADMIN, null)))
+        assertThatThrownBy(() -> userService.createUser("superadmin1", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.COMPANY_ASSIGNMENT_INVALID);
@@ -154,10 +158,10 @@ class UserServiceTest {
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
         when(companyRepository.findById(10L)).thenReturn(Optional.of(company));
 
-        UserResponse response = userService.createUser("superadmin1", requestFor(Role.ADMIN, 10L));
+        UserResponse response = userService.createUser("superadmin1", requestFor(Role.COMPANY_MANAGER, 10L));
 
         assertThat(response.companyId()).isEqualTo(10L);
-        assertThat(response.role()).isEqualTo(Role.ADMIN);
+        assertThat(response.role()).isEqualTo(Role.COMPANY_MANAGER);
     }
 
     @Test
@@ -166,8 +170,9 @@ class UserServiceTest {
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
         when(companyRepository.findById(99L)).thenReturn(Optional.empty());
+        CreateUserRequest request = requestFor(Role.COMPANY_MANAGER, 99L);
 
-        assertThatThrownBy(() -> userService.createUser("superadmin1", requestFor(Role.ADMIN, 99L)))
+        assertThatThrownBy(() -> userService.createUser("superadmin1", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.COMPANY_NOT_FOUND);
@@ -178,8 +183,9 @@ class UserServiceTest {
         when(userRepository.findByUsername("superadmin1")).thenReturn(Optional.of(superAdminActor));
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
+        CreateUserRequest request = requestFor(Role.ADMIN, 10L);
 
-        assertThatThrownBy(() -> userService.createUser("superadmin1", requestFor(Role.SUPER_ADMIN, 10L)))
+        assertThatThrownBy(() -> userService.createUser("superadmin1", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.COMPANY_ASSIGNMENT_INVALID);
@@ -191,18 +197,19 @@ class UserServiceTest {
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
 
-        UserResponse response = userService.createUser("superadmin1", requestFor(Role.SUPER_ADMIN, null));
+        UserResponse response = userService.createUser("superadmin1", requestFor(Role.ADMIN, null));
 
         assertThat(response.companyId()).isNull();
-        assertThat(response.role()).isEqualTo(Role.SUPER_ADMIN);
+        assertThat(response.role()).isEqualTo(Role.ADMIN);
     }
 
     @Test
     void duplicateUsername_throwsUsernameAlreadyExists() {
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
         when(userRepository.existsByUsername("newuser")).thenReturn(true);
+        CreateUserRequest request = requestFor(Role.USER, null);
 
-        assertThatThrownBy(() -> userService.createUser("admin1", requestFor(Role.USER, null)))
+        assertThatThrownBy(() -> userService.createUser("admin1", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.USERNAME_ALREADY_EXISTS);
@@ -213,8 +220,9 @@ class UserServiceTest {
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(true);
+        CreateUserRequest request = requestFor(Role.USER, null);
 
-        assertThatThrownBy(() -> userService.createUser("admin1", requestFor(Role.USER, null)))
+        assertThatThrownBy(() -> userService.createUser("admin1", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -223,8 +231,9 @@ class UserServiceTest {
     @Test
     void unknownActor_throwsUserNotFound() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        CreateUserRequest request = requestFor(Role.USER, null);
 
-        assertThatThrownBy(() -> userService.createUser("ghost", requestFor(Role.USER, null)))
+        assertThatThrownBy(() -> userService.createUser("ghost", request))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -236,7 +245,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("admin1"))
                 .thenReturn(Optional.of(adminActor));
-        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(userRepository.findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(listedUser)));
 
         UserPageResponse response =
@@ -249,14 +258,14 @@ class UserServiceTest {
         assertThat(response.content().getFirst().companyId()).isEqualTo(10L);
         assertThat(response.content().getFirst().role()).isEqualTo(Role.USER);
 
-        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
+        verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class));
     }
 
     @Test
     void superAdminListsUsersAcrossAllCompanies() {
         when(userRepository.findByUsername("superadmin1"))
                 .thenReturn(Optional.of(superAdminActor));
-        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(userRepository.findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
         UserPageResponse response =
@@ -264,26 +273,26 @@ class UserServiceTest {
 
         assertThat(response.content()).isEmpty();
 
-        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
+        verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class));
     }
 
     @Test
     void superAdminCanFilterByRoleAndCompany() {
         when(userRepository.findByUsername("superadmin1"))
                 .thenReturn(Optional.of(superAdminActor));
-        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(userRepository.findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
-        userService.getUsers("superadmin1", criteria(0, 10, "", Role.ADMIN, null, 10L));
+        userService.getUsers("superadmin1", criteria(0, 10, "", Role.COMPANY_MANAGER, null, 10L));
 
-        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
+        verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class));
     }
 
     @Test
     void superAdminCanFilterByStatus() {
         when(userRepository.findByUsername("superadmin1"))
                 .thenReturn(Optional.of(superAdminActor));
-        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(userRepository.findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
         userService.getUsers(
@@ -291,22 +300,24 @@ class UserServiceTest {
                 criteria(0, 10, "", null, UserStatus.INACTIVE, null)
         );
 
-        verify(userRepository).findAll(any(Specification.class), any(Pageable.class));
+        verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), any(Pageable.class));
     }
 
     @Test
     void adminFilteringOtherCompanyIsDenied() {
         when(userRepository.findByUsername("admin1"))
                 .thenReturn(Optional.of(adminActor));
+        UserSearchCriteria criteria = criteria(0, 10, "", null, null, 99L);
 
-        assertThatThrownBy(() ->
-                userService.getUsers("admin1", criteria(0, 10, "", null, null, 99L))
-        )
+        assertThatThrownBy(() -> userService.getUsers("admin1", criteria))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
 
-        verify(userRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+        verify(userRepository, never()).findAll(
+                ArgumentMatchers.<Specification<User>>any(),
+                any(Pageable.class)
+        );
     }
 
     @Test
@@ -320,22 +331,24 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("user1"))
                 .thenReturn(Optional.of(userActor));
+        UserSearchCriteria criteria = criteria(0, 10, "", null, null, null);
 
-        assertThatThrownBy(() ->
-                userService.getUsers("user1", criteria(0, 10, "", null, null, null))
-        )
+        assertThatThrownBy(() -> userService.getUsers("user1", criteria))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
 
-        verify(userRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+        verify(userRepository, never()).findAll(
+                ArgumentMatchers.<Specification<User>>any(),
+                any(Pageable.class)
+        );
     }
 
     @Test
     void listUsersRejectsPageSizeGreaterThanTen() {
-        assertThatThrownBy(() ->
-                userService.getUsers("admin1", criteria(0, 11, "", null, null, null))
-        )
+        UserSearchCriteria criteria = criteria(0, 11, "", null, null, null);
+
+        assertThatThrownBy(() -> userService.getUsers("admin1", criteria))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.VALIDATION_ERROR);
@@ -345,9 +358,9 @@ class UserServiceTest {
 
     @Test
     void listUsersRejectsNegativePage() {
-        assertThatThrownBy(() ->
-                userService.getUsers("admin1", criteria(-1, 10, "", null, null, null))
-        )
+        UserSearchCriteria criteria = criteria(-1, 10, "", null, null, null);
+
+        assertThatThrownBy(() -> userService.getUsers("admin1", criteria))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.VALIDATION_ERROR);
@@ -360,21 +373,23 @@ class UserServiceTest {
         User invalidAdmin = User.builder()
                 .id(4L)
                 .username("invalid.admin")
-                .role(Role.ADMIN)
+                .role(Role.COMPANY_MANAGER)
                 .company(null)
                 .build();
 
         when(userRepository.findByUsername("invalid.admin"))
                 .thenReturn(Optional.of(invalidAdmin));
+        UserSearchCriteria criteria = criteria(0, 10, "", null, null, null);
 
-        assertThatThrownBy(() ->
-                userService.getUsers("invalid.admin", criteria(0, 10, "", null, null, null))
-        )
+        assertThatThrownBy(() -> userService.getUsers("invalid.admin", criteria))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.COMPANY_ASSIGNMENT_INVALID);
 
-        verify(userRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+        verify(userRepository, never()).findAll(
+                ArgumentMatchers.<Specification<User>>any(),
+                any(Pageable.class)
+        );
     }
 
     @Test
@@ -388,7 +403,7 @@ class UserServiceTest {
         UserResponse response = userService.updateUser(
                 "admin1",
                 11L,
-                updateRequest("Updated", "Name", "updated@example.com", null, Role.USER, 10L)
+                updateRequest("Updated", "Name", "updated@example.com", 10L)
         );
 
         assertThat(response.firstName()).isEqualTo("Updated");
@@ -407,14 +422,9 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
         when(userRepository.findById(12L)).thenReturn(Optional.of(target));
+        UpdateUserRequest request = updateRequest("Updated", "Name", "updated@example.com", 99L);
 
-        assertThatThrownBy(() ->
-                userService.updateUser(
-                        "admin1",
-                        12L,
-                        updateRequest("Updated", "Name", "updated@example.com", null, Role.USER, 99L)
-                )
-        )
+        assertThatThrownBy(() -> userService.updateUser("admin1", 12L, request))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
@@ -426,14 +436,9 @@ class UserServiceTest {
     void adminCannotChangeOwnRole() {
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
         when(userRepository.findById(1L)).thenReturn(Optional.of(adminActor));
+        UpdateUserRequest request = updateRequest("Admin", "One", "admin1@example.com", 10L);
 
-        assertThatThrownBy(() ->
-                userService.updateUser(
-                        "admin1",
-                        1L,
-                        updateRequest("Admin", "One", "admin1@example.com", null, Role.USER, 10L)
-                )
-        )
+        assertThatThrownBy(() -> userService.updateUser("admin1", 1L, request))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
@@ -445,22 +450,17 @@ class UserServiceTest {
     void adminCannotDeactivateOwnAccount() {
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
         when(userRepository.findById(1L)).thenReturn(Optional.of(adminActor));
+        UpdateUserRequest request = new UpdateUserRequest(
+                "Admin",
+                "One",
+                "admin1@example.com",
+                null,
+                Role.COMPANY_MANAGER,
+                UserStatus.INACTIVE,
+                10L
+        );
 
-        assertThatThrownBy(() ->
-                userService.updateUser(
-                        "admin1",
-                        1L,
-                        new UpdateUserRequest(
-                                "Admin",
-                                "One",
-                                "admin1@example.com",
-                                null,
-                                Role.ADMIN,
-                                UserStatus.INACTIVE,
-                                10L
-                        )
-                )
-        )
+        assertThatThrownBy(() -> userService.updateUser("admin1", 1L, request))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.VALIDATION_ERROR);
@@ -475,14 +475,9 @@ class UserServiceTest {
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
         when(userRepository.findById(11L)).thenReturn(Optional.of(target));
         when(userRepository.existsByEmailAndIdNot("taken@example.com", 11L)).thenReturn(true);
+        UpdateUserRequest request = updateRequest("Updated", "Name", "taken@example.com", 10L);
 
-        assertThatThrownBy(() ->
-                userService.updateUser(
-                        "admin1",
-                        11L,
-                        updateRequest("Updated", "Name", "taken@example.com", null, Role.USER, 10L)
-                )
-        )
+        assertThatThrownBy(() -> userService.updateUser("admin1", 11L, request))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -500,7 +495,7 @@ class UserServiceTest {
         userService.deleteUser("admin1", 11L);
 
         assertThat(target.isDeleted()).isTrue();
-        assertThat(target.getUpdatedAt()).isEqualTo(LocalDateTime.of(2026, 7, 30, 10, 0));
+        assertThat(target.getUpdatedAt()).isEqualTo(LocalDateTime.of(2026, Month.JULY, 30, 10, 0));
         verify(userRepository).saveAndFlush(target);
         verify(refreshTokenService).revokeAllForUser(target.getUsername());
     }
@@ -520,7 +515,7 @@ class UserServiceTest {
 
     @Test
     void adminCannotDeleteAdmin() {
-        User targetAdmin = listedUser(13L, "other.admin", Role.ADMIN);
+        User targetAdmin = listedUser(13L, "other.admin", Role.COMPANY_MANAGER);
 
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(adminActor));
         when(userRepository.findById(13L)).thenReturn(Optional.of(targetAdmin));
@@ -537,16 +532,14 @@ class UserServiceTest {
             String firstName,
             String lastName,
             String email,
-            String password,
-            Role role,
             Long companyId
     ) {
         return new UpdateUserRequest(
                 firstName,
                 lastName,
                 email,
-                password,
-                role,
+                null,
+                Role.USER,
                 UserStatus.ACTIVE,
                 companyId
         );
@@ -584,8 +577,8 @@ class UserServiceTest {
                 .status(UserStatus.ACTIVE)
                 .deleted(false)
                 .company(company)
-                .createdAt(LocalDateTime.of(2026, 7, 30, 10, 0))
-                .updatedAt(LocalDateTime.of(2026, 7, 30, 10, 0))
+                .createdAt(LocalDateTime.of(2026, Month.JULY, 30, 10, 0))
+                .updatedAt(LocalDateTime.of(2026, Month.JULY, 30, 10, 0))
                 .build();
     }
 }

@@ -15,7 +15,7 @@ public class UserCompanyPolicy {
             Long actorCompanyId,
             Long targetCompanyId
     ) {
-        if (actorRole != Role.ADMIN) {
+        if (actorRole != Role.COMPANY_MANAGER) {
             return;
         }
 
@@ -40,7 +40,7 @@ public class UserCompanyPolicy {
             return;
         }
 
-        if (actorRole == Role.ADMIN
+        if (actorRole == Role.COMPANY_MANAGER
                 && (actorCompanyId == null || !actorCompanyId.equals(requestedCompanyId))) {
             log.debug(
                     "Company assignment denied for role {}: actorCompanyId={}, requestedCompanyId={}",

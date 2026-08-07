@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class CompanyManagementPolicy {
 
     public void assertCanManageCompanies(Role actorRole) {
-        if (actorRole == Role.SUPER_ADMIN) {
+        if (actorRole == Role.ADMIN) {
             return;
         }
 

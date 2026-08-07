@@ -84,11 +84,11 @@ public class UserService {
 
     private Company resolveCompany(User actor, Role targetRole, Long requestedCompanyId) {
 
-        if (actor.getRole() == Role.ADMIN) {
+        if (actor.getRole() == Role.COMPANY_MANAGER) {
             return actor.getCompany();
         }
 
-        if (targetRole == Role.SUPER_ADMIN) {
+        if (targetRole == Role.ADMIN) {
             if (requestedCompanyId != null) {
                 throw new BaseException(ErrorCode.COMPANY_ASSIGNMENT_INVALID);
             }
@@ -186,7 +186,7 @@ public class UserService {
     }
 
     private Long resolveEffectiveCompanyId(User actor, Long requestedCompanyId) {
-        if (actor.getRole() != Role.ADMIN) {
+        if (actor.getRole() != Role.COMPANY_MANAGER) {
             return requestedCompanyId;
         }
 

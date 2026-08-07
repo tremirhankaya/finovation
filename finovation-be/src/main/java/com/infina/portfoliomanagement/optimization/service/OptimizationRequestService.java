@@ -68,20 +68,8 @@ public class OptimizationRequestService {
     public OptimizationRequestResponse create(String actorUsername, CreateOptimizationRequestRequest requestBody) {
         User actor = resolveActor(actorUsername);
 
-        assertWithinRange(
-                requestBody.tppMinWeight(),
-                requestBody.tppMaxWeight(),
-                TPP_WEIGHT_FLOOR,
-                TPP_WEIGHT_CEILING,
-                TPP_WEIGHT_MIN_RANGE_WIDTH
-        );
-        assertCountWithinRange(
-                requestBody.stockCountMin(),
-                requestBody.stockCountMax(),
-                STOCK_COUNT_FLOOR,
-                STOCK_COUNT_CEILING,
-                STOCK_COUNT_MIN_RANGE_WIDTH
-        );
+        assertTppWeightWithinRange(requestBody.tppMinWeight(), requestBody.tppMaxWeight());
+        assertStockCountWithinRange(requestBody.stockCountMin(), requestBody.stockCountMax());
         assertPreferencesValid(requestBody.assetPreferences(), requestBody.stockCountMax());
 
         LocalDateTime now = LocalDateTime.now(clock);
@@ -120,7 +108,7 @@ public class OptimizationRequestService {
     public List<OptimizationRequestResponse> listByFund(String actorUsername, Long fundId) {
         User actor = resolveActor(actorUsername);
 
-        List<OptimizationRequest> requests = actor.getRole() == Role.SUPER_ADMIN
+        List<OptimizationRequest> requests = actor.getRole() == Role.ADMIN
                 ? optimizationRequestRepository.findAllByFundId(fundId)
                 : optimizationRequestRepository.findAllByFundIdAndRequestedById(fundId, actor.getId());
 
@@ -375,22 +363,17 @@ public class OptimizationRequestService {
         }
     }
 
-    private void assertWithinRange(
-            BigDecimal min,
-            BigDecimal max,
-            BigDecimal floor,
-            BigDecimal ceiling,
-            BigDecimal minRangeWidth
-    ) {
-        if (min == null || max == null || min.compareTo(floor) < 0 || max.compareTo(ceiling) > 0
-                || min.compareTo(max) > 0 || max.subtract(min).compareTo(minRangeWidth) < 0) {
+    private void assertTppWeightWithinRange(BigDecimal min, BigDecimal max) {
+        if (min == null || max == null || min.compareTo(TPP_WEIGHT_FLOOR) < 0
+                || max.compareTo(TPP_WEIGHT_CEILING) > 0 || min.compareTo(max) > 0
+                || max.subtract(min).compareTo(TPP_WEIGHT_MIN_RANGE_WIDTH) < 0) {
             throw new BaseException(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
         }
     }
 
-    private void assertCountWithinRange(Integer min, Integer max, int floor, int ceiling, int minRangeWidth) {
-        if (min == null || max == null || min < floor || max > ceiling || min > max
-                || max - min < minRangeWidth) {
+    private void assertStockCountWithinRange(Integer min, Integer max) {
+        if (min == null || max == null || min < STOCK_COUNT_FLOOR || max > STOCK_COUNT_CEILING
+                || min > max || max - min < STOCK_COUNT_MIN_RANGE_WIDTH) {
             throw new BaseException(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
         }
     }

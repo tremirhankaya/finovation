@@ -11,13 +11,13 @@ vi.mock("@/features/auth/context/AuthContext", () => ({
 
 import AppShell from "@/app/layout/AppShell"
 
-const ADMIN = {
+const COMPANY_MANAGER = {
   id: 1,
   username: "batuhan",
   firstName: "Batuhan",
   lastName: "Pınar",
   email: "batuhan@example.com",
-  role: "ADMIN" as const,
+  role: "COMPANY_MANAGER" as const,
   status: "ACTIVE" as const,
   passwordChangeRequired: false,
   companyId: 2,
@@ -56,7 +56,7 @@ describe("AppShell", () => {
   beforeEach(() => {
     useAuthMock.mockReset()
     signOutMock.mockReset().mockResolvedValue(undefined)
-    useAuthMock.mockReturnValue({ user: ADMIN, signOut: signOutMock })
+    useAuthMock.mockReturnValue({ user: COMPANY_MANAGER, signOut: signOutMock })
   })
 
   it("ürün menüsünü ve oturumdaki admin bilgisini gösterir", () => {
@@ -80,7 +80,7 @@ describe("AppShell", () => {
       screen.getByRole("link", { name: "Kullanıcı Yönetimi" }),
     ).toHaveAttribute("href", "/users")
     expect(screen.getByText("Batuhan Pınar")).toBeInTheDocument()
-    expect(screen.getByText("Admin")).toBeInTheDocument()
+    expect(screen.getByText("Company Manager")).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: "Çıkış Yap" }),
     ).toBeInTheDocument()
@@ -109,7 +109,7 @@ describe("AppShell", () => {
   it("panel capability'si olmayan kullanıcıya yönetim bağlantısını göstermez", () => {
     useAuthMock.mockReturnValue({
       user: {
-        ...ADMIN,
+        ...COMPANY_MANAGER,
         role: "USER",
         canAccessPanel: false,
       },
