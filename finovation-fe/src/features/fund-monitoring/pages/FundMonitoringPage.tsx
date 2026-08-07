@@ -1,10 +1,12 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useNavigate } from "react-router"
 
+import FundComparisonCard from "@/features/fund-monitoring/components/FundComparisonCard"
 import FundHoldingsCard from "@/features/fund-monitoring/components/FundHoldingsCard"
 import FundMetricsCard from "@/features/fund-monitoring/components/FundMetricsCard"
 import FundPriceCard from "@/features/fund-monitoring/components/FundPriceCard"
 import SectorAllocationCard from "@/features/fund-monitoring/components/SectorAllocationCard"
+import { useFundMonitoring } from "@/features/fund-monitoring/hooks/useFundMonitoring"
 import type {
   FundMonitoringSnapshot,
   FundOption,
@@ -36,6 +38,24 @@ export function FundMonitoringView({
 }: FundMonitoringViewProps) {
   const [period, setPeriod] = useState<PricePeriod>("1M")
   const hasFund = funds.length > 0
+  const comparisonAssets = useMemo(
+    () =>
+      snapshot
+        ? (snapshot.comparisonAssets ?? [
+            {
+              id: snapshot.fund.id,
+              code: snapshot.fund.name.slice(0, 5).toLocaleUpperCase("tr-TR"),
+              name: snapshot.fund.name,
+              color: "#0d9488",
+              isFund: true,
+              returns: Object.fromEntries(
+                snapshot.periodReturns.map((item) => [item.period, item.value]),
+              ),
+            },
+          ])
+        : [],
+    [snapshot],
+  )
 
   return (
     <main className={styles.page} aria-busy={isLoading}>
@@ -132,6 +152,8 @@ export function FundMonitoringView({
             allocations={snapshot?.sectorAllocations ?? []}
           />
         </div>
+
+        <FundComparisonCard assets={comparisonAssets} />
       </div>
     </main>
   )
@@ -139,14 +161,25 @@ export function FundMonitoringView({
 
 export default function FundMonitoringPage() {
   const navigate = useNavigate()
+  const {
+    funds,
+    selectedFundId,
+    snapshot,
+    isLoading,
+    errorMessage,
+    selectFund,
+    reload,
+  } = useFundMonitoring()
 
-  // Backend fon izleme endpointi ve DTO'su kesinleştiğinde feature API adapterı
-  // bu görünüm modelini besleyecek. Üretim ekranında mock finansal veri tutulmaz.
   return (
     <FundMonitoringView
-      funds={[]}
-      selectedFundId=""
-      snapshot={null}
+      funds={funds}
+      selectedFundId={selectedFundId}
+      snapshot={snapshot}
+      isLoading={isLoading}
+      errorMessage={errorMessage}
+      onFundChange={selectFund}
+      onRetry={reload}
       onBack={() => navigate("/dashboard")}
     />
   )

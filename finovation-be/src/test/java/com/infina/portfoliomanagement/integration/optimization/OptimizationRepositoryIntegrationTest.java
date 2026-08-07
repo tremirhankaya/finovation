@@ -9,10 +9,9 @@ import com.infina.portfoliomanagement.optimization.entity.OptimizationResult;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationResultAsset;
 import com.infina.portfoliomanagement.optimization.entity.RequestConstraintTarget;
 import com.infina.portfoliomanagement.optimization.enums.AssetPreferenceType;
-import com.infina.portfoliomanagement.optimization.enums.LiquidityPreference;
+import com.infina.portfoliomanagement.optimization.enums.RiskProfile;
 import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
 import com.infina.portfoliomanagement.optimization.enums.ResultActionType;
-import com.infina.portfoliomanagement.optimization.enums.RiskLevel;
 import com.infina.portfoliomanagement.optimization.enums.OptimizationConstraintCode;
 import com.infina.portfoliomanagement.optimization.repository.AssetLimitOverrideRepository;
 import com.infina.portfoliomanagement.optimization.repository.AssetPreferenceRepository;
@@ -81,7 +80,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
                 .email("fon-yoneticisi@finovation.test")
                 .username("fon-yoneticisi")
                 .password("irrelevant-for-this-test")
-                .role(Role.SUPER_ADMIN)
+                .role(Role.ADMIN)
                 .status(UserStatus.ACTIVE)
                 .passwordChangeRequired(false)
                 .deleted(false)
@@ -101,8 +100,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
                 .dataTimestamp(now)
                 .modelVersion("v1")
                 .requestedBy(fundManager)
-                .riskLevel(RiskLevel.MEDIUM)
-                .liquidityPreference(LiquidityPreference.MEDIUM)
+                .riskProfile(RiskProfile.BALANCED)
                 .status(RequestStatus.PREPARING)
                 .version(0L)
                 .createdAt(now)
@@ -121,11 +119,10 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(found).isPresent();
         assertThat(found.get().getFundId()).isEqualTo(1L);
-        assertThat(found.get().getRiskLevel()).isEqualTo(RiskLevel.MEDIUM);
-        assertThat(found.get().getLiquidityPreference()).isEqualTo(LiquidityPreference.MEDIUM);
+        assertThat(found.get().getRiskProfile()).isEqualTo(RiskProfile.BALANCED);
         assertThat(found.get().getStatus()).isEqualTo(RequestStatus.PREPARING);
         assertThat(found.get().getRequestedBy().getId()).isEqualTo(fundManager.getId());
-        assertThat(found.get().getVersion()).isEqualTo(0L);
+        assertThat(found.get().getVersion()).isZero();
     }
 
     @Test

@@ -107,8 +107,8 @@ export default function UserEditModal({
 
     return assignableRoles.filter(
       (role) =>
-        role !== "SUPER_ADMIN" ||
-        user.role === "SUPER_ADMIN" ||
+        role !== "ADMIN" ||
+        user.role === "ADMIN" ||
         user.companyId === null,
     )
   }, [assignableRoles, isSelf, user])
@@ -125,7 +125,7 @@ export default function UserEditModal({
   if (!user) return null
 
   const requiresCompanySelection =
-    actorRole === "SUPER_ADMIN" && form.role !== "SUPER_ADMIN"
+    actorRole === "ADMIN" && form.role !== "ADMIN"
   const companySelectionUnavailable =
     requiresCompanySelection && (companiesLoading || companiesError !== "")
   const passwordError = resetPasswordOpen
@@ -150,7 +150,7 @@ export default function UserEditModal({
     setForm((current) => ({
       ...current,
       role,
-      companyId: role === "SUPER_ADMIN" ? null : current.companyId,
+      companyId: role === "ADMIN" ? null : current.companyId,
     }))
     setFieldErrors((current) => ({ ...current, companyId: undefined }))
     onErrorDismiss()
@@ -244,7 +244,7 @@ export default function UserEditModal({
                 id="edit-company-readonly"
                 className={styles.input}
                 value={
-                  form.role === "SUPER_ADMIN" ? "—" : (user.companyName ?? "—")
+                  form.role === "ADMIN" ? "—" : (user.companyName ?? "—")
                 }
                 disabled
               />

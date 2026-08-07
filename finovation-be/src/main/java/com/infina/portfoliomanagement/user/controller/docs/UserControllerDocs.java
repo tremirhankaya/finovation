@@ -19,12 +19,13 @@ import java.time.LocalDate;
         name = "Users",
         description = "User management operations."
 )
+@SuppressWarnings("unused") // Endpoints are invoked by Spring through their controller implementations.
 public interface UserControllerDocs {
 
     @Operation(
             summary = "Create user",
-            description = "Creates a new user. ADMIN may only create USER accounts within its own " +
-                    "company; SUPER_ADMIN may only create ADMIN or SUPER_ADMIN accounts.",
+            description = "Creates a new user. COMPANY_MANAGER may only create USER accounts within its own " +
+                    "company; ADMIN may only create COMPANY_MANAGER or ADMIN accounts.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<UserResponse> createUser(UserDetails userDetails, CreateUserRequest request);
@@ -32,8 +33,8 @@ public interface UserControllerDocs {
     @Operation(
             summary = "List users",
             description = "Returns users with optional username/full-name search, role, status, company " +
-                    "and createdAt date-range filters. Page size is limited to 10. ADMIN users are scoped " +
-                    "to their company; SUPER_ADMIN may filter by companyId.",
+                    "and createdAt date-range filters. Page size is limited to 10. COMPANY_MANAGER users are scoped " +
+                    "to their company; ADMIN may filter by companyId.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<UserPageResponse> getUsers(

@@ -8,9 +8,9 @@ type UserRoleChipProps = {
 
 export default function UserRoleChip({ role }: UserRoleChipProps) {
   const toneClass =
-    role === "SUPER_ADMIN"
-      ? styles.superAdmin
-      : role === "ADMIN"
+    role === "ADMIN"
+      ? styles.admin
+      : role === "COMPANY_MANAGER"
         ? styles.admin
         : styles.user
 

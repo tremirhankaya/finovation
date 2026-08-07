@@ -43,7 +43,7 @@ describe("user data hooks", () => {
           email: "batuhan@example.com",
           companyId: 2,
           companyName: "Infina",
-          role: "ADMIN",
+          role: "COMPANY_MANAGER",
           status: "ACTIVE",
           createdAt: "2026-08-03T00:00:00",
         },

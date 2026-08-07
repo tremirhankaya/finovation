@@ -66,7 +66,7 @@ class SecurityMockMvcIntegrationTest extends AbstractIntegrationTest {
                 .email("integration-user@finovation.test")
                 .username(USERNAME)
                 .password(passwordEncoder.encode(PASSWORD))
-                .role(Role.SUPER_ADMIN)
+                .role(Role.ADMIN)
                 .status(UserStatus.ACTIVE)
                 .passwordChangeRequired(false)
                 .deleted(false)
@@ -195,7 +195,7 @@ class SecurityMockMvcIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.email").value(
                         "integration-user@finovation.test"
                 ))
-                .andExpect(jsonPath("$.role").value("SUPER_ADMIN"))
+                .andExpect(jsonPath("$.role").value("ADMIN"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.passwordChangeRequired").value(false))
                 .andExpect(jsonPath("$.canAccessPanel").value(true));

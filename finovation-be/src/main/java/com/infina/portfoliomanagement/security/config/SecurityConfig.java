@@ -6,6 +6,7 @@ import com.infina.portfoliomanagement.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,6 +18,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String ADMIN_ROLE = "ADMIN";
+    private static final String COMPANY_MANAGER_ROLE = "COMPANY_MANAGER";
+
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
@@ -26,6 +30,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
 
         http
+                // This API authenticates each request with a bearer JWT and never uses a browser session cookie.
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .sessionManagement(session ->
@@ -53,6 +58,16 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/prometheus")
                         .permitAll()
+                        .requestMatchers("/api/v1/auth/me")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/companies")
+                        .hasAnyRole(ADMIN_ROLE, COMPANY_MANAGER_ROLE)
+                        .requestMatchers("/api/v1/companies", "/api/v1/companies/**")
+                        .hasRole(ADMIN_ROLE)
+                        .requestMatchers("/api/v1/users/**")
+                        .hasAnyRole(ADMIN_ROLE, COMPANY_MANAGER_ROLE)
+                        .requestMatchers("/api/v1/**")
+                        .hasAnyRole(COMPANY_MANAGER_ROLE, "USER")
                         .anyRequest().authenticated()
                 )
 

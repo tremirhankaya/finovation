@@ -110,4 +110,50 @@ describe("toApiRequestError", () => {
 
     expect(error.isPermissionError).toBe(true)
   })
+
+  it("OPT_003 kodunu kısıt aralığı mesajına çevirir", () => {
+    const error = toApiRequestError(
+      {
+        code: "OPT_003",
+        message: "The constraint value is outside the allowed range.",
+      },
+      400,
+      "Optimizasyon senaryosu oluşturulamadı",
+    )
+
+    expect(error.message).toBe(
+      "Girilen kısıt değerleri izin verilen aralığın dışında.",
+    )
+    expect(error.message).not.toContain("outside the allowed range")
+  })
+
+  it("OPT_005 kodunu çakışan hisse tercihi mesajına çevirir", () => {
+    const error = toApiRequestError(
+      {
+        code: "OPT_005",
+        message: "An asset cannot be both excluded and force-added.",
+      },
+      400,
+      "Optimizasyon senaryosu oluşturulamadı",
+    )
+
+    expect(error.message).toBe(
+      "Bir hisse aynı anda hem hariç tutulacaklar hem zorunlu eklenecekler arasında olamaz.",
+    )
+  })
+
+  it("OPT_008 kodunu geçersiz durum geçişi mesajına çevirir", () => {
+    const error = toApiRequestError(
+      {
+        code: "OPT_008",
+        message: "This optimization request cannot change status.",
+      },
+      409,
+      "İşlem tamamlanamadı",
+    )
+
+    expect(error.message).toBe(
+      "Bu optimizasyon isteği şu anki durumundan istenen duruma geçemez.",
+    )
+  })
 })

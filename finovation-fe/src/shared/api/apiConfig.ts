@@ -20,6 +20,10 @@ export const API_PATHS = {
     "/v1/auth/password-reset/reset",
   fundDrafts:
     import.meta.env.VITE_FUND_DRAFTS_PATH?.trim() || "/v1/fund-drafts",
+  funds: import.meta.env.VITE_FUNDS_PATH?.trim() || "/v1/funds",
+  optimizationRequests:
+    import.meta.env.VITE_OPTIMIZATION_REQUESTS_PATH?.trim() ||
+    "/v1/optimization-requests",
 } as const
 
 function normalizePath(path: string): string {
@@ -51,8 +55,9 @@ export function getUsersUrl(userId?: number): string {
   return userId == null ? base : `${base}/${userId}`
 }
 
-export function getCompaniesUrl(): string {
-  return buildUrl(API_PATHS.companies)
+export function getCompaniesUrl(companyId?: number): string {
+  const base = buildUrl(API_PATHS.companies)
+  return companyId == null ? base : `${base}/${companyId}`
 }
 
 export function getPasswordResetRequestUrl(): string {
@@ -73,4 +78,33 @@ export function getFundDraftsUrl(): string {
 
 export function getFundDraftLimitsUrl(): string {
   return `${getFundDraftsUrl()}/limits`
+}
+
+export function getFundsUrl(): string {
+  return buildUrl(API_PATHS.funds)
+}
+
+export function getFundMonitoringUrl(fundId: string): string {
+  return `${getFundsUrl()}/${encodeURIComponent(fundId)}/monitoring`
+}
+
+export function getOptimizationRequestsUrl(fundId?: string): string {
+  const base = buildUrl(API_PATHS.optimizationRequests)
+  return fundId == null ? base : `${base}?fundId=${encodeURIComponent(fundId)}`
+}
+
+export function getOptimizationRequestUrl(requestId: number): string {
+  return `${buildUrl(API_PATHS.optimizationRequests)}/${requestId}`
+}
+
+export function getOptimizationRequestRunUrl(requestId: number): string {
+  return `${getOptimizationRequestUrl(requestId)}/run`
+}
+
+export function getOptimizationRequestApproveUrl(requestId: number): string {
+  return `${getOptimizationRequestUrl(requestId)}/approve`
+}
+
+export function getOptimizationRequestRejectUrl(requestId: number): string {
+  return `${getOptimizationRequestUrl(requestId)}/reject`
 }

@@ -189,6 +189,7 @@
 
 .bottomGrid {
   grid-template-columns: minmax(0, 1.7fr) minmax(330px, 1fr);
+  margin-bottom: 18px;
 }
 
 .card {
@@ -545,6 +546,380 @@
   text-align: center;
 }
 
+.comparisonCard {
+  padding: 22px 24px;
+}
+
+.comparisonTitle {
+  margin: 0 0 16px;
+  color: #0f2d52;
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.comparisonToolbar,
+.comparisonExport,
+.viewToggle,
+.comparisonPeriods,
+.comparisonChecklist {
+  display: flex;
+  align-items: center;
+}
+
+.comparisonToolbar {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.comparisonSearch {
+  display: flex;
+  min-width: 260px;
+  min-height: 46px;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  gap: 12px;
+  padding: 5px 6px 5px 18px;
+  color: #94a3b8;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #dfe7ef;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.comparisonSearch:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.searchIcon {
+  display: grid;
+  width: 33px;
+  height: 33px;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #fff;
+  background: #0d9488;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.viewToggle {
+  gap: 8px;
+}
+
+.viewToggle button,
+.comparisonExport button {
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #dfe7ef;
+  cursor: pointer;
+}
+
+.viewToggle button {
+  min-height: 38px;
+  padding: 0 15px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.viewToggle .activeView {
+  color: #fff;
+  background: #0f2d52;
+  border-color: #0f2d52;
+}
+
+.comparisonPeriods {
+  gap: 2px;
+  padding: 4px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  border: 1px solid #dfe7ef;
+  border-radius: 11px;
+}
+
+.comparisonPeriods button {
+  padding: 8px 14px;
+  color: #64748b;
+  white-space: nowrap;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.comparisonPeriods .activeComparisonPeriod {
+  color: #fff;
+  background: #0f2d52;
+}
+
+.comparisonExport {
+  justify-content: flex-end;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.comparisonExport button {
+  padding: 5px 8px;
+  background: transparent;
+  border: 0;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.comparisonExport button:hover {
+  color: #0d9488;
+}
+
+.comparisonChart {
+  min-height: 340px;
+  overflow-x: auto;
+}
+
+.comparisonChart > svg {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+  height: 340px;
+}
+
+.comparisonChart > div {
+  display: grid;
+  min-height: 300px;
+  place-items: center;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.comparisonTableWrap {
+  overflow-x: auto;
+}
+
+.comparisonTable {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.comparisonTable th {
+  padding: 12px 14px;
+  color: #fff;
+  text-align: left;
+  background: #0f2d52;
+  font-size: 0.75rem;
+}
+
+.comparisonTable th:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.comparisonTable th:last-child {
+  text-align: right;
+  border-radius: 0 8px 8px 0;
+}
+
+.comparisonTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e8eef4;
+}
+
+.comparisonTable td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+}
+
+.comparisonTable td:first-child span {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+}
+
+.comparisonTable td:last-child {
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 800;
+}
+
+.comparisonChecklist {
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  padding-top: 16px;
+  margin-top: 18px;
+  border-top: 1px solid #dfe7ef;
+}
+
+.comparisonChecklist label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.comparisonChecklist input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+
+.comparisonChecklist label > span {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  color: #fff;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.comparisonChecklist input:focus-visible + span {
+  outline: 3px solid rgb(13 148 136 / 25%);
+  outline-offset: 2px;
+}
+
+.comparisonChecklist .fundChecklistItem {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.comparisonHint,
+.comparisonStatus {
+  min-height: 16px;
+  margin: 14px 0 0;
+  color: #94a3b8;
+  font-size: 0.69rem;
+}
+
+.comparisonStatus {
+  margin-top: 4px;
+  color: #0d9488;
+}
+
+.pickerOverlay {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 90px;
+  background: rgb(15 23 42 / 35%);
+  backdrop-filter: blur(2px);
+}
+
+.assetPicker {
+  width: min(440px, 92vw);
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgb(15 23 42 / 18%);
+}
+
+.pickerHeader {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #dfe7ef;
+}
+
+.pickerHeader label {
+  display: grid;
+  flex: 1;
+  gap: 5px;
+}
+
+.pickerHeader label span {
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pickerHeader input {
+  width: 100%;
+  padding: 4px 0;
+  color: #0f172a;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 0.84rem;
+}
+
+.pickerHeader button {
+  padding: 5px 8px;
+  color: #64748b;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pickerList {
+  max-height: 340px;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.pickerList > p {
+  padding: 20px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.pickerList button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 10px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  color: #0f172a;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.pickerList button:hover {
+  background: #f1f5f9;
+}
+
+.pickerList button > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.pickerList button strong {
+  font-size: 0.8rem;
+}
+
+.pickerList button small {
+  color: #94a3b8;
+  font-size: 0.68rem;
+}
+
 @media (max-width: 1080px) {
   .topGrid,
   .bottomGrid {
@@ -613,6 +988,25 @@
 
   .card {
     padding: 17px 15px;
+  }
+
+  .comparisonToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .comparisonSearch {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .viewToggle button {
+    flex: 1;
+  }
+
+  .comparisonExport {
+    justify-content: flex-start;
+    overflow-x: auto;
   }
 
   .returnsGrid {

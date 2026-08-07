@@ -3,15 +3,18 @@ import { Navigate } from "react-router"
 
 import { useAuth } from "@/features/auth/context/AuthContext"
 import RouteStatus from "@/app/router/RouteStatus"
+import { getAuthenticatedHomePath } from "@/app/router/routeAccess"
 
 type ProtectedRouteProps = {
   children: ReactNode
   requirePanelAccess?: boolean
+  requireProductAccess?: boolean
 }
 
 export default function ProtectedRoute({
   children,
   requirePanelAccess = false,
+  requireProductAccess = false,
 }: ProtectedRouteProps) {
   const {
     user,
@@ -46,7 +49,11 @@ export default function ProtectedRoute({
   }
 
   if (requirePanelAccess && !user.canAccessPanel) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={getAuthenticatedHomePath(user)} replace />
+  }
+
+  if (requireProductAccess && user.role === "ADMIN") {
+    return <Navigate to={getAuthenticatedHomePath(user)} replace />
   }
 
   return <>{children}</>

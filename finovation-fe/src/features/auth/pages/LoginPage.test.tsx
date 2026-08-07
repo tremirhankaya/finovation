@@ -30,6 +30,7 @@ function renderLoginPage() {
             }
           />
           <Route path="/dashboard" element={<div>Dashboard</div>} />
+          <Route path="/users" element={<div>Sistem Yönetimi</div>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -96,5 +97,37 @@ describe("LoginPage", () => {
     expect(screen.getByText("Kullanıcı adı zorunludur.")).toBeInTheDocument()
     expect(screen.getByText("Şifre zorunludur.")).toBeInTheDocument()
     expect(authServiceMocks.login).not.toHaveBeenCalled()
+  })
+
+  it("super admini girişten sonra doğrudan sistem yönetimine gönderir", async () => {
+    authServiceMocks.login.mockResolvedValue({
+      accessToken: "access",
+      refreshToken: "refresh",
+    })
+    authServiceMocks.getCurrentUser.mockResolvedValue({
+      id: 1,
+      username: "superadmin",
+      firstName: "Super",
+      lastName: "Admin",
+      email: "superadmin@example.com",
+      role: "ADMIN",
+      status: "ACTIVE",
+      passwordChangeRequired: false,
+      companyId: null,
+      companyName: null,
+      canAccessPanel: true,
+      canCreateUser: true,
+      canDeleteUser: true,
+      assignableRoles: ["COMPANY_MANAGER", "ADMIN"],
+      deletableRoles: ["COMPANY_MANAGER"],
+    })
+    const user = userEvent.setup()
+
+    renderLoginPage()
+    await user.type(await screen.findByLabelText("Kullanıcı Adı"), "superadmin")
+    await user.type(screen.getByLabelText("Şifre"), "Password123!")
+    await user.click(screen.getByRole("button", { name: "Giriş yap" }))
+
+    expect(await screen.findByText("Sistem Yönetimi")).toBeInTheDocument()
   })
 })

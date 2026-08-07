@@ -1,7 +1,7 @@
 package com.infina.portfoliomanagement.user.enums;
 
 public enum Role {
-    SUPER_ADMIN,
     ADMIN,
+    COMPANY_MANAGER,
     USER
 }

@@ -85,7 +85,7 @@ export default function UserCreateModal({
     setSubmitAttempted(false)
   }, [assignableRoles, open])
 
-  const requiresCompany = actorRole !== "ADMIN" && form.role !== "SUPER_ADMIN"
+  const requiresCompany = actorRole !== "COMPANY_MANAGER" && form.role !== "ADMIN"
   const companySelectionUnavailable =
     requiresCompany && (companiesLoading || companiesError !== "")
   const passwordError = getPasswordValidationMessage(form.password)
@@ -105,7 +105,7 @@ export default function UserCreateModal({
     setForm((current) => ({
       ...current,
       role,
-      companyId: role === "SUPER_ADMIN" ? null : current.companyId,
+      companyId: role === "ADMIN" ? null : current.companyId,
     }))
     setFieldErrors((current) => ({ ...current, companyId: undefined }))
     onErrorDismiss()
