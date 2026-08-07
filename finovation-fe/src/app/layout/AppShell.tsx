@@ -8,7 +8,7 @@ import Logo from "@/shared/ui/Logo"
 type NavigationItem = {
   label: string
   path: string
-  icon: "home" | "design" | "monitoring" | "users"
+  icon: "home" | "design" | "monitoring" | "optimization" | "users"
 }
 
 const PRODUCT_NAVIGATION: NavigationItem[] = [
@@ -18,6 +18,11 @@ const PRODUCT_NAVIGATION: NavigationItem[] = [
     label: "Fon İzleme ve Performans",
     path: "/fund-monitoring",
     icon: "monitoring",
+  },
+  {
+    label: "Fon Optimizasyonu",
+    path: "/optimization-requests/new",
+    icon: "optimization",
   },
 ]
 
@@ -49,6 +54,17 @@ function NavigationIcon({ icon }: { icon: NavigationItem["icon"] }) {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 20V10m6 10V4m6 16v-7m4 7H2" />
+      </svg>
+    )
+  }
+
+  if (icon === "optimization") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h10m4 0h2M4 12h4m4 0h10M4 18h13m4 0h1" />
+        <circle cx="16" cy="6" r="2" />
+        <circle cx="10" cy="12" r="2" />
+        <circle cx="19" cy="18" r="2" />
       </svg>
     )
   }

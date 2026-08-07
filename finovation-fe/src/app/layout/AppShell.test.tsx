@@ -44,6 +44,7 @@ function renderShell(initialEntry = "/dashboard") {
           <Route path="/dashboard" element={<LocationProbe />} />
           <Route path="/fund-design" element={<LocationProbe />} />
           <Route path="/fund-monitoring" element={<LocationProbe />} />
+          <Route path="/optimization-requests/new" element={<LocationProbe />} />
           <Route path="/users" element={<LocationProbe />} />
         </Route>
       </Routes>
@@ -72,6 +73,9 @@ describe("AppShell", () => {
     expect(
       screen.getByRole("link", { name: "Fon İzleme ve Performans" }),
     ).toHaveAttribute("href", "/fund-monitoring")
+    expect(
+      screen.getByRole("link", { name: "Fon Optimizasyonu" }),
+    ).toHaveAttribute("href", "/optimization-requests/new")
     expect(
       screen.getByRole("link", { name: "Kullanıcı Yönetimi" }),
     ).toHaveAttribute("href", "/users")
