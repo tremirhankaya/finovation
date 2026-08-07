@@ -1,0 +1,153 @@
+.page {
+  min-height: 100vh;
+  padding: 32px 24px;
+  background: #f8fafc;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.header h1 {
+  margin: 0 0 4px;
+  color: #0f2d52;
+  font-size: 1.4rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.errorBanner,
+.loadingBanner,
+.successBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
+.loadingBanner {
+  color: #155e75;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+}
+
+.successBanner {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+}
+
+.errorBanner {
+  justify-content: space-between;
+  color: #991b1b;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+}
+
+.errorBanner > div {
+  display: grid;
+  gap: 3px;
+}
+
+.errorBanner span,
+.successBanner span {
+  font-size: 0.8rem;
+}
+
+.successBanner button {
+  margin-top: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  color: #fff;
+  background: #0d9488;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.successBanner button:hover {
+  background: #0f766e;
+}
+
+.errorBanner button,
+.backButton {
+  min-height: 42px;
+  padding: 0 15px;
+  color: #0f2d52;
+  background: #fff;
+  border: 1px solid #dfe7ef;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition:
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.errorBanner button:hover:not(:disabled),
+.backButton:hover {
+  color: #0d9488;
+  border-color: #0d9488;
+}
+
+.errorBanner button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.errorBanner button:focus-visible,
+.backButton:focus-visible {
+  outline: 3px solid rgb(13 148 136 / 25%);
+  outline-offset: 2px;
+}
+
+.steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 18px 20px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.step {
+  position: relative;
+  padding-left: 22px;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.step::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: #14b8a6;
+  border-radius: 50%;
+}
+
+.backButton {
+  align-self: flex-start;
+}

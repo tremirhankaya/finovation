@@ -1,0 +1,268 @@
+import { useCallback, useEffect, useMemo, useState } from "react"
+
+import { createOptimizationRequest } from "@/features/optimization/api/optimizationApi"
+import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimizationError"
+import {
+  buildComplianceRows,
+  isComplianceReady,
+} from "@/features/optimization/lib/optimizationCompliance"
+import { PLACEHOLDER_INVESTMENT_UNIVERSE } from "@/features/optimization/lib/investmentUniverse"
+import type { WizardStep } from "@/features/optimization/components/OptimizationWizardSteps"
+import type {
+  AssetSelectionMap,
+  AssetSelectionType,
+} from "@/features/optimization/model/optimizationForm.types"
+import type {
+  AssetPreferenceRequest,
+  RiskProfile,
+} from "@/features/optimization/model/optimizationSchemas"
+import {
+  fetchFundMonitoring,
+  fetchFunds,
+} from "@/features/fund-monitoring/api/fundMonitoringService"
+import { getFundMonitoringErrorMessage } from "@/features/fund-monitoring/lib/fundMonitoringError"
+import type {
+  FundMonitoringSnapshot,
+  FundOption,
+} from "@/features/fund-monitoring/model/fundMonitoring.types"
+
+const DEFAULT_TPP_MIN_WEIGHT = 5
+const DEFAULT_TPP_MAX_WEIGHT = 15
+const DEFAULT_STOCK_COUNT_MIN = 16
+const DEFAULT_STOCK_COUNT_MAX = 30
+const DEFAULT_RISK_PROFILE: RiskProfile = "BALANCED"
+
+const PLACEHOLDER_OPTIMIZATION_FUND_ID = 1
+
+export function useOptimizationForm() {
+  const [step, setStep] = useState<WizardStep>(1)
+  const [funds, setFunds] = useState<FundOption[]>([])
+  const [selectedFundId, setSelectedFundId] = useState("")
+  const [snapshot, setSnapshot] = useState<FundMonitoringSnapshot | null>(null)
+  const [isLoadingFunds, setIsLoadingFunds] = useState(true)
+  const [isLoadingSnapshot, setIsLoadingSnapshot] = useState(false)
+  const [loadErrorMessage, setLoadErrorMessage] = useState("")
+
+  const [riskProfile, setRiskProfile] =
+    useState<RiskProfile>(DEFAULT_RISK_PROFILE)
+  const [selection, setSelection] = useState<AssetSelectionMap>({})
+  const [tppMinWeight, setTppMinWeight] = useState(DEFAULT_TPP_MIN_WEIGHT)
+  const [tppMaxWeight, setTppMaxWeight] = useState(DEFAULT_TPP_MAX_WEIGHT)
+  const [stockCountMin, setStockCountMin] = useState(DEFAULT_STOCK_COUNT_MIN)
+  const [stockCountMax, setStockCountMax] = useState(DEFAULT_STOCK_COUNT_MAX)
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitErrorMessage, setSubmitErrorMessage] = useState("")
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadFunds() {
+      setIsLoadingFunds(true)
+      setLoadErrorMessage("")
+
+      try {
+        const response = await fetchFunds(controller.signal)
+        setFunds(response)
+        setSelectedFundId((current) => current || response[0]?.id || "")
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setFunds([])
+          setLoadErrorMessage(getFundMonitoringErrorMessage(error))
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoadingFunds(false)
+      }
+    }
+
+    void loadFunds()
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    if (!selectedFundId) {
+      setSnapshot(null)
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function loadSnapshot() {
+      setIsLoadingSnapshot(true)
+      setLoadErrorMessage("")
+      setSelection({})
+
+      try {
+        setSnapshot(
+          await fetchFundMonitoring(selectedFundId, controller.signal),
+        )
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setSnapshot(null)
+          setLoadErrorMessage(getFundMonitoringErrorMessage(error))
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoadingSnapshot(false)
+      }
+    }
+
+    void loadSnapshot()
+    return () => controller.abort()
+  }, [selectedFundId])
+
+  const toggleSelection = useCallback(
+    (assetCode: string, type: AssetSelectionType) => {
+      setSelection((current) => {
+        const next = { ...current }
+        if (next[assetCode] === type) {
+          delete next[assetCode]
+        } else {
+          next[assetCode] = type
+        }
+        return next
+      })
+    },
+    [],
+  )
+
+  const keptAssets = useMemo(
+    () =>
+      (snapshot?.positions ?? []).filter(
+        (position) => selection[position.assetId] === "KEEP",
+      ),
+    [snapshot, selection],
+  )
+
+  const excludedAssetCodes = useMemo(
+    () =>
+      Object.entries(selection)
+        .filter(([, type]) => type === "EXCLUDE")
+        .map(([assetCode]) => assetCode),
+    [selection],
+  )
+
+  const forceAddedAssetCodes = useMemo(
+    () =>
+      Object.entries(selection)
+        .filter(([, type]) => type === "FORCE_ADD")
+        .map(([assetCode]) => assetCode),
+    [selection],
+  )
+
+  const keptWeightSum = useMemo(
+    () => keptAssets.reduce((sum, asset) => sum + asset.weightPercentage, 0),
+    [keptAssets],
+  )
+
+  const complianceRows = useMemo(
+    () =>
+      buildComplianceRows({
+        tppMinWeight,
+        tppMaxWeight,
+        stockCountMin,
+        stockCountMax,
+        keptAssetCount: keptAssets.length,
+        keptWeightSum,
+        forceAddedAssetCount: forceAddedAssetCodes.length,
+        excludedAssetCount: excludedAssetCodes.length,
+      }),
+    [
+      tppMinWeight,
+      tppMaxWeight,
+      stockCountMin,
+      stockCountMax,
+      keptAssets.length,
+      keptWeightSum,
+      forceAddedAssetCodes.length,
+      excludedAssetCodes.length,
+    ],
+  )
+
+  const canSubmit = isComplianceReady(complianceRows) && !isSubmitting
+
+  const submit = useCallback(
+    async (onSubmitted: (createdRequestId: number) => void) => {
+      if (!canSubmit) return
+
+      setIsSubmitting(true)
+      setSubmitErrorMessage("")
+
+      const assetPreferences: AssetPreferenceRequest[] = [
+        ...keptAssets.map((asset) => ({
+          assetCode: asset.assetId,
+          preferenceType: "KEEP" as const,
+          currentWeight: asset.weightPercentage,
+        })),
+        ...excludedAssetCodes.map((assetCode) => ({
+          assetCode,
+          preferenceType: "EXCLUDE" as const,
+          currentWeight: null,
+        })),
+        ...forceAddedAssetCodes.map((assetCode) => ({
+          assetCode,
+          preferenceType: "FORCE_ADD" as const,
+          currentWeight: null,
+        })),
+      ]
+
+      try {
+        const created = await createOptimizationRequest({
+          fundId: PLACEHOLDER_OPTIMIZATION_FUND_ID,
+          riskProfile,
+          assetPreferences,
+          tppMinWeight,
+          tppMaxWeight,
+          stockCountMin,
+          stockCountMax,
+        })
+        onSubmitted(created.id)
+      } catch (error) {
+        setSubmitErrorMessage(getOptimizationErrorMessage(error))
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [
+      canSubmit,
+      keptAssets,
+      excludedAssetCodes,
+      forceAddedAssetCodes,
+      riskProfile,
+      tppMinWeight,
+      tppMaxWeight,
+      stockCountMin,
+      stockCountMax,
+    ],
+  )
+
+  return {
+    step,
+    goToPreferences: () => setStep(2),
+    goToFundSelection: () => setStep(1),
+    funds,
+    selectedFundId,
+    selectFund: setSelectedFundId,
+    snapshot,
+    isLoadingFunds,
+    isLoading: isLoadingFunds || isLoadingSnapshot,
+    loadErrorMessage,
+    riskProfile,
+    setRiskProfile,
+    selection,
+    toggleSelection,
+    universeAssets: PLACEHOLDER_INVESTMENT_UNIVERSE,
+    tppMinWeight,
+    setTppMinWeight,
+    tppMaxWeight,
+    setTppMaxWeight,
+    stockCountMin,
+    setStockCountMin,
+    stockCountMax,
+    setStockCountMax,
+    complianceRows,
+    canSubmit,
+    isSubmitting,
+    submitErrorMessage,
+    submit,
+  }
+}

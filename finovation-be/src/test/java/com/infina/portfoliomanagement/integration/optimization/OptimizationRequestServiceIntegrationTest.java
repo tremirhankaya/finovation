@@ -36,6 +36,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest {
 
+    private static final String FUND_MANAGER_USERNAME = "fon-yoneticisi-service";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -79,9 +81,9 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 .firstName("Fon")
                 .lastName("Yoneticisi")
                 .email("fon-yoneticisi-service@finovation.test")
-                .username("fon-yoneticisi-service")
+                .username(FUND_MANAGER_USERNAME)
                 .password("irrelevant-for-this-test")
-                .role(Role.SUPER_ADMIN)
+                .role(Role.ADMIN)
                 .status(UserStatus.ACTIVE)
                 .passwordChangeRequired(false)
                 .deleted(false)
@@ -157,7 +159,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 35
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
@@ -175,7 +177,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 35
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
@@ -196,7 +198,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 35
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_ASSET_PREFERENCE_CONFLICT);
@@ -218,7 +220,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 21
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
@@ -239,7 +241,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 35
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
@@ -257,7 +259,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 35
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
@@ -275,7 +277,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 19
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);
@@ -293,7 +295,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 30
         );
 
-        assertThatThrownBy(() -> optimizationRequestService.create(fundManager.getUsername(), invalid))
+        assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
                 .isInstanceOf(BaseException.class)
                 .extracting(exception -> ((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.OPT_INVALID_CONSTRAINT_VALUE);

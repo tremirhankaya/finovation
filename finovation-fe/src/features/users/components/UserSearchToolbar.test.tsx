@@ -28,12 +28,12 @@ describe("UserSearchToolbar", () => {
       />,
     )
 
-    await userEvent.selectOptions(screen.getByLabelText("Rol"), "ADMIN")
+    await userEvent.selectOptions(screen.getByLabelText("Rol"), "COMPANY_MANAGER")
 
     expect(onApplyFilters).toHaveBeenCalledWith({
       ...FILTERS,
       q: "batuhan",
-      role: "ADMIN",
+      role: "COMPANY_MANAGER",
     })
   })
 

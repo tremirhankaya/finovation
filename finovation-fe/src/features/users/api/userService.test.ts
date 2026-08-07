@@ -27,7 +27,7 @@ describe("userService", () => {
       page: 2,
       size: 20,
       q: "  batuhan  ",
-      role: "ADMIN",
+      role: "COMPANY_MANAGER",
       status: "ACTIVE",
       companyId: 7,
       createdFrom: "2026-08-01",
@@ -35,7 +35,7 @@ describe("userService", () => {
     })
 
     expect(httpMocks.apiFetch).toHaveBeenCalledWith(
-      "/api/v1/users?page=2&size=20&q=batuhan&role=ADMIN&status=ACTIVE&companyId=7&createdFrom=2026-08-01&createdTo=2026-08-03",
+      "/api/v1/users?page=2&size=20&q=batuhan&role=COMPANY_MANAGER&status=ACTIVE&companyId=7&createdFrom=2026-08-01&createdTo=2026-08-03",
       expect.objectContaining({ errorMessage: "Kullanıcı listesi alınamadı" }),
       expect.any(Function),
     )
@@ -51,14 +51,14 @@ describe("userService", () => {
       lastName: "Pınar",
       email: "batuhan@example.com",
       password: " Valid1! ",
-      role: "ADMIN",
+      role: "COMPANY_MANAGER",
       companyId: 7,
     })
     await updateUser(2, {
       firstName: "Batuhan",
       lastName: "Pınar",
       email: "batuhan@example.com",
-      role: "ADMIN",
+      role: "COMPANY_MANAGER",
       status: "ACTIVE",
       companyId: 7,
     })

@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Navigate } from "react-router"
 
 import RouteStatus from "@/app/router/RouteStatus"
+import { getAuthenticatedHomePath } from "@/app/router/routeAccess"
 import { useAuth } from "@/features/auth/context/AuthContext"
 
 export default function GuestRoute({ children }: { children: ReactNode }) {
@@ -22,7 +23,7 @@ export default function GuestRoute({ children }: { children: ReactNode }) {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={getAuthenticatedHomePath(user)} replace />
   }
 
   return <>{children}</>

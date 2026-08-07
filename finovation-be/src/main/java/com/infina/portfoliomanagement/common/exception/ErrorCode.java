@@ -150,6 +150,12 @@ public enum ErrorCode {
             "Company assignment is invalid for the given role."
     ),
 
+    COMPANY_NAME_ALREADY_EXISTS(
+            "COMPANY_003",
+            HttpStatus.CONFLICT,
+            "Company name already exists."
+    ),
+
     EXTERNAL_SERVICE_ERROR(
             "EXT_001",
             HttpStatus.BAD_GATEWAY,
@@ -222,28 +228,22 @@ public enum ErrorCode {
             "Fund monitoring data is not available."
     ),
 
-    FUND_DRAFT_NOT_FOUND(
-            "FUND_004",
+    STRESS_PORTFOLIO_NOT_AVAILABLE(
+            "STRESS_001",
+            HttpStatus.UNPROCESSABLE_CONTENT,
+            "A selected portfolio is not available for stress testing."
+    ),
+
+    STRESS_SCENARIO_NOT_FOUND(
+            "STRESS_002",
             HttpStatus.NOT_FOUND,
-            "Fund draft not found."
+            "Stress scenario not found."
     ),
 
-    FUND_DESIGN_PROFILE_NOT_FOUND(
-            "FUND_005",
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Fund design profile configuration is missing."
-    ),
-
-    FUND_UNIT_PRICE_OUT_OF_RANGE(
-            "FUND_006",
-            HttpStatus.BAD_REQUEST,
-            "The fund unit price is outside the allowed range."
-    ),
-
-    FUND_NAME_INVALID(
-            "FUND_007",
-            HttpStatus.BAD_REQUEST,
-            "The fund name is invalid."
+    STRESS_TEST_NOT_FOUND(
+            "STRESS_003",
+            HttpStatus.NOT_FOUND,
+            "Stress test not found."
     ),
     ;
 

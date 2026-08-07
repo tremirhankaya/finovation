@@ -5,8 +5,8 @@ import { userRoleSchema, userStatusSchema } from "@/shared/model/userIdentity"
 export { userRoleSchema, userStatusSchema } from "@/shared/model/userIdentity"
 
 export const companyListItemSchema = z.object({
-  id: z.number(),
-  name: z.string(),
+  id: z.number().int().positive(),
+  name: z.string().min(1).max(150),
 })
 
 export const userListItemSchema = z.object({

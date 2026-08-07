@@ -35,6 +35,7 @@ function toSnapshot(response: FundMonitoringResponse): FundMonitoringSnapshot {
     periodReturns: response.periodReturns,
     positions: response.positions,
     sectorAllocations: response.sectorAllocations,
+    comparisonAssets: response.comparisonAssets,
   }
 }
 

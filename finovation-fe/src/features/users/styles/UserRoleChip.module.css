@@ -16,7 +16,7 @@
   background: currentColor;
 }
 
-.superAdmin {
+.admin {
   color: var(--color-navy-900);
   background: rgba(15, 32, 64, 0.08);
   border: 1px solid rgba(15, 32, 64, 0.12);

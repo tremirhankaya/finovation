@@ -59,6 +59,25 @@ const SNAPSHOT = {
       weightPercentage: 18.4,
     },
   ],
+  comparisonAssets: [
+    {
+      id: "bist-100",
+      code: "BIST100",
+      name: "BIST 100",
+      color: "#7c3aed",
+      isFund: false,
+      returns: {
+        "1W": 1.1,
+        "1M": 2.2,
+        "3M": 3.3,
+        "6M": 4.4,
+        YTD: 5.5,
+        "1Y": 6.6,
+        "3Y": 7.7,
+        "5Y": 8.8,
+      },
+    },
+  ],
 } as const
 
 describe("fundMonitoringService", () => {
@@ -94,6 +113,7 @@ describe("fundMonitoringService", () => {
 
     expect(result.currentSharePrice).toBe(112.5)
     expect(result.positions[0]?.symbol).toBe("THYAO")
+    expect(result.comparisonAssets).toEqual(SNAPSHOT.comparisonAssets)
     expect(result.fund.type).toBe("Hisse Senedi Yoğun Fon")
     expect(httpMocks.apiFetch).toHaveBeenCalledWith(
       `/api/v1/funds/${FUND.id}/monitoring`,

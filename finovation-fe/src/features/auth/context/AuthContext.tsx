@@ -8,7 +8,7 @@ export type AuthContextValue = {
   isInitializing: boolean
   initializationError: string
   sessionExpired: boolean
-  signIn: (credentials: LoginCredentials) => Promise<void>
+  signIn: (credentials: LoginCredentials) => Promise<MeResponse | null>
   refreshUser: () => Promise<void>
   signOut: () => Promise<void>
 }
