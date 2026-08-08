@@ -10,10 +10,6 @@ public record FundMonitoringProperties(
         BigDecimal policyRatePercent
 ) {
 
-    public FundMonitoringProperties(BigDecimal fixedOutstandingShares) {
-        this(fixedOutstandingShares, new BigDecimal("37"));
-    }
-
     public FundMonitoringProperties {
         if (fixedOutstandingShares == null || fixedOutstandingShares.signum() <= 0) {
             throw new IllegalArgumentException("Fixed outstanding shares must be positive.");

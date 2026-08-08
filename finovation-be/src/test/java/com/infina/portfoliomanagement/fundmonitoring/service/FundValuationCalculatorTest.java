@@ -32,7 +32,10 @@ class FundValuationCalculatorTest {
     @BeforeEach
     void setUp() {
         calculator = new FundValuationCalculator(
-                new FundMonitoringProperties(new BigDecimal("100"))
+                new FundMonitoringProperties(
+                        new BigDecimal("100"),
+                        new BigDecimal("37")
+                )
         );
         firstAsset = asset(1L, "AAA.E");
         secondAsset = asset(2L, "BBB.E");
