@@ -5,6 +5,7 @@ import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundDraftInitResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
+import com.infina.portfoliomanagement.fund.dto.FundEstimatesResponse;
 import com.infina.portfoliomanagement.fund.dto.ModelUniverseAssetResponse;
 import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPortfolioRulesRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
@@ -14,6 +15,7 @@ import com.infina.portfoliomanagement.fund.dto.analysis.UpdateWorkingPortfolioRe
 import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
 import com.infina.portfoliomanagement.fund.service.FundDraftService;
+import com.infina.portfoliomanagement.fund.service.FundEstimationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -38,6 +40,7 @@ import java.util.UUID;
 public class FundDraftController implements FundDraftControllerDocs {
 
     private final FundDraftService fundDraftService;
+    private final FundEstimationService fundEstimationService;
 
     @Override
     @PostMapping
@@ -67,6 +70,14 @@ public class FundDraftController implements FundDraftControllerDocs {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         return fundDraftService.listInProgressDrafts(userDetails.getUsername());
+    }
+
+    @Override
+    @GetMapping("/completed")
+    public List<FundDraftSummaryResponse> listCompletedDrafts(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return fundDraftService.listCompletedDrafts(userDetails.getUsername());
     }
 
     @Override
@@ -151,5 +162,22 @@ public class FundDraftController implements FundDraftControllerDocs {
                 draftId,
                 request.assets()
         );
+    }
+
+    @Override
+    @PostMapping("/{draftId}/completion")
+    public FundDraftResponse completeDraft(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID draftId
+    ) {
+        return fundDraftService.completeDraft(userDetails.getUsername(), draftId);
+    }
+
+    @GetMapping("/{draftId}/estimates")
+    public FundEstimatesResponse getEstimates(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable java.util.UUID draftId
+    ) {
+        return fundEstimationService.estimateDraft(userDetails.getUsername(), draftId);
     }
 }

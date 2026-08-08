@@ -2,15 +2,19 @@ package com.infina.portfoliomanagement.fund.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.enums.AssetType;
+import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAssetDto;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelProposalDto;
+import com.infina.portfoliomanagement.fund.dto.analysis.FundPositionResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
 import com.infina.portfoliomanagement.fund.entity.ModelRun;
+import com.infina.portfoliomanagement.fund.enums.ConstraintCode;
 import com.infina.portfoliomanagement.fund.enums.FundDesignSteps;
 import com.infina.portfoliomanagement.fund.enums.ModelRunStatus;
 import com.infina.portfoliomanagement.fund.enums.PortfolioType;
@@ -18,12 +22,17 @@ import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
 import com.infina.portfoliomanagement.fund.repository.ModelRunRepository;
+import com.infina.portfoliomanagement.fund.rules.PortfolioRuleLimits;
+import com.infina.portfoliomanagement.fund.rules.RuleViolation;
+import com.infina.portfoliomanagement.fund.rules.WorkingPortfolioRules;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,6 +44,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FundAnalysisPersistenceService {
@@ -237,17 +247,45 @@ public class FundAnalysisPersistenceService {
                 .map(Short::intValue)
                 .orElse(null);
 
+        List<FundPositionResponse> assets =
+                fundPositionRepository.findPositionResponsesByPortfolioId(working.getId());
+
+        BigDecimal equityWeightPct = assets.stream()
+                .filter(a -> a.assetType() == AssetType.EQUITY)
+                .map(FundPositionResponse::weight)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal tppWeightPct = assets.stream()
+                .filter(a -> a.assetType() == AssetType.TPP)
+                .map(FundPositionResponse::weight)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int stockCount = (int) assets.stream()
+                .filter(a -> a.assetType() == AssetType.EQUITY)
+                .count();
+
+        int sectorCount = (int) assets.stream()
+                .filter(a -> a.assetType() == AssetType.EQUITY && a.sectorName() != null)
+                .map(FundPositionResponse::sectorName)
+                .distinct()
+                .count();
+
         return new WorkingPortfolioResponse(
                 sourceRank,
                 working.getLabel(),
-                toProposalDto(working).assets()
+                assets,
+                equityWeightPct,
+                tppWeightPct,
+                stockCount,
+                sectorCount
         );
     }
 
     @Transactional
     public WorkingPortfolioResponse replaceWorking(
             FundDraft draft,
-            List<FundModelAssetDto> assets
+            List<FundModelAssetDto> assets,
+            FundProperties profileLimits
     ) {
         if (assets == null || assets.isEmpty()) {
             throw new BaseException(ErrorCode.FUND_WORKING_PORTFOLIO_INVALID);
@@ -256,11 +294,65 @@ public class FundAnalysisPersistenceService {
         FundPortfolio selected = fundPortfolioRepository
                 .findByFundDraftIdAndSelectedTrue(draft.getId())
                 .orElse(null);
-        String label = selected != null && selected.getLabel() != null
-                ? selected.getLabel()
-                : "Working";
+        String label = resolvePortfolioLabel(selected);
         upsertWorking(draft, label, assets, now);
-        return getWorking(draft);
+
+        WorkingPortfolioResponse response = getWorking(draft);
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public void assertWorkingPortfolioIsCompliant(FundDraft draft, FundProperties profileLimits) {
+        assertRulesSatisfied(draft, getWorking(draft), profileLimits);
+    }
+
+    private void assertRulesSatisfied(
+            FundDraft draft,
+            WorkingPortfolioResponse response,
+            FundProperties profileLimits
+    ) {
+        List<RuleViolation> violations = WorkingPortfolioRules.validate(
+                response.assets(),
+                PortfolioRuleLimits.from(draft, profileLimits)
+        );
+        if (violations.isEmpty()) {
+            return;
+        }
+        log.warn(
+                "Working portfolio for draft {} rejected by {} rule violations: {}",
+                draft.getPublicId(),
+                violations.size(),
+                violations
+        );
+        throw new BaseException(toErrorCode(violations.getFirst().code()));
+    }
+
+    private static ErrorCode toErrorCode(ConstraintCode constraintCode) {
+        return switch (constraintCode) {
+            case TOTAL_WEIGHT -> ErrorCode.FUND_RULE_TOTAL_WEIGHT;
+            case EQUITY_MIN -> ErrorCode.FUND_RULE_EQUITY_MIN;
+            case EQUITY_MAX -> ErrorCode.FUND_RULE_EQUITY_MAX;
+            case TPP_MIN -> ErrorCode.FUND_RULE_TPP_MIN;
+            case TPP_MAX -> ErrorCode.FUND_RULE_TPP_MAX;
+            case SINGLE_STOCK_MAX -> ErrorCode.FUND_RULE_SINGLE_STOCK_MAX;
+            case ABOVE_THRESHOLD_SUM_MAX -> ErrorCode.FUND_RULE_ABOVE_THRESHOLD_SUM_MAX;
+            case SECTOR_MAX -> ErrorCode.FUND_RULE_SECTOR_MAX;
+            case MIN_STOCK_COUNT -> ErrorCode.FUND_RULE_MIN_STOCK_COUNT;
+            case MAX_STOCK_COUNT -> ErrorCode.FUND_RULE_MAX_STOCK_COUNT;
+        };
+    }
+
+    String resolvePortfolioLabel(FundPortfolio selected) {
+        if (selected == null) {
+            return PortfolioType.WORKING.getDefaultLabel();
+        }
+
+        if (selected.getLabel() != null) {
+            return selected.getLabel();
+        }
+
+        PortfolioType portfolioType = selected.getPortfolioType();
+        return portfolioType != null ? portfolioType.getDefaultLabel() : PortfolioType.WORKING.getDefaultLabel();
     }
 
     private void upsertWorking(
@@ -272,6 +364,12 @@ public class FundAnalysisPersistenceService {
         Map<String, Asset> assetsByCode = resolveAssets(
                 assets.stream().map(FundModelAssetDto::assetCode).toList()
         );
+
+        boolean hasTpp = assetsByCode.values().stream()
+                .anyMatch(a -> a.getAssetType() == AssetType.TPP);
+        if (!hasTpp) {
+            throw new BaseException(ErrorCode.FUND_WORKING_PORTFOLIO_INVALID);
+        }
 
         FundPortfolio working = fundPortfolioRepository
                 .findByFundDraft_IdAndPortfolioType(draft.getId(), PortfolioType.WORKING)
