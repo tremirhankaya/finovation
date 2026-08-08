@@ -6,7 +6,7 @@ import {
   USERNAME_MAX_LENGTH,
   validateProfileFields,
 } from "@/features/users/lib/userFormValidation"
-import PasswordPairFields from "@/features/users/components/PasswordPairFields"
+import PasswordPairFields from "@/shared/ui/PasswordPairFields"
 import UserProfileFields from "@/features/users/components/UserProfileFields"
 import type { CompanyListItem } from "@/features/users/model/company.types"
 import type {
@@ -85,7 +85,8 @@ export default function UserCreateModal({
     setSubmitAttempted(false)
   }, [assignableRoles, open])
 
-  const requiresCompany = actorRole !== "COMPANY_MANAGER" && form.role !== "ADMIN"
+  const requiresCompany =
+    actorRole !== "COMPANY_MANAGER" && form.role !== "ADMIN"
   const companySelectionUnavailable =
     requiresCompany && (companiesLoading || companiesError !== "")
   const passwordError = getPasswordValidationMessage(form.password)

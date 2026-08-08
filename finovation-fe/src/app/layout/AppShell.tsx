@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { NavLink, Outlet } from "react-router"
+import { NavLink, Outlet, useNavigate } from "react-router"
 
 import styles from "@/app/layout/AppShell.module.css"
+import AccountSecurityDialog from "@/features/account/components/AccountSecurityDialog"
 import { useAuth } from "@/features/auth/context/AuthContext"
 import Logo from "@/shared/ui/Logo"
 
@@ -96,7 +97,9 @@ function NavigationLink({ item }: { item: NavigationItem }) {
 
 export default function AppShell() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false)
 
   if (!user) {
     return null
@@ -151,7 +154,13 @@ export default function AppShell() {
             <span>Çıkış Yap</span>
           </button>
 
-          <div className={styles.userSummary}>
+          <button
+            type="button"
+            className={styles.userSummary}
+            aria-haspopup="dialog"
+            aria-label={`${fullName} hesap ve güvenlik`}
+            onClick={() => setIsAccountDialogOpen(true)}
+          >
             <span className={styles.avatar} aria-hidden="true">
               {fullName.charAt(0).toLocaleUpperCase("tr-TR")}
             </span>
@@ -159,7 +168,7 @@ export default function AppShell() {
               <strong>{fullName}</strong>
               <span>{ROLE_LABELS[user.role]}</span>
             </span>
-          </div>
+          </button>
         </div>
       </aside>
 
@@ -179,6 +188,21 @@ export default function AppShell() {
       <div className={styles.content}>
         <Outlet />
       </div>
+
+      <AccountSecurityDialog
+        open={isAccountDialogOpen}
+        user={user}
+        roleLabel={ROLE_LABELS[user.role]}
+        onClose={() => setIsAccountDialogOpen(false)}
+        onPasswordChanged={async () => {
+          setIsAccountDialogOpen(false)
+          await signOut()
+          navigate("/login", {
+            replace: true,
+            state: { passwordChanged: true },
+          })
+        }}
+      />
     </div>
   )
 }

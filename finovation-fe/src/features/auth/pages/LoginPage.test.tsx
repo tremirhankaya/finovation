@@ -16,9 +16,14 @@ import AuthProvider from "@/features/auth/context/AuthProvider"
 import LoginPage from "@/features/auth/pages/LoginPage"
 import { toApiRequestError } from "@/shared/api/apiError"
 
-function renderLoginPage() {
+type LoginEntry = {
+  pathname: string
+  state: unknown
+}
+
+function renderLoginPage(initialEntry: string | LoginEntry = "/login") {
   return render(
-    <MemoryRouter initialEntries={["/login"]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <AuthProvider>
         <Routes>
           <Route
@@ -97,6 +102,16 @@ describe("LoginPage", () => {
     expect(screen.getByText("Kullanıcı adı zorunludur.")).toBeInTheDocument()
     expect(screen.getByText("Şifre zorunludur.")).toBeInTheDocument()
     expect(authServiceMocks.login).not.toHaveBeenCalled()
+  })
+
+  it("parola değişikliği sonrası yeniden giriş mesajını gösterir", async () => {
+    renderLoginPage({ pathname: "/login", state: { passwordChanged: true } })
+
+    expect(
+      await screen.findByText(
+        "Parolanız değiştirildi. Yeni parolanızla giriş yapabilirsiniz.",
+      ),
+    ).toHaveAttribute("role", "status")
   })
 
   it("super admini girişten sonra doğrudan sistem yönetimine gönderir", async () => {

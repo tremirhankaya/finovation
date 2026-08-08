@@ -114,6 +114,18 @@ public enum ErrorCode {
             "Too many token refresh requests from this network. Please try again later."
     ),
 
+    PASSWORD_MUST_DIFFER_FROM_CURRENT(
+            "AUTH_018",
+            HttpStatus.BAD_REQUEST,
+            "The new password must be different from the current password."
+    ),
+
+    PASSWORD_CHANGE_REQUIRED(
+            "AUTH_019",
+            HttpStatus.FORBIDDEN,
+            "You must change your password before accessing this resource."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,

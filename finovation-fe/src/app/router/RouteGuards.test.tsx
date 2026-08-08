@@ -216,4 +216,76 @@ describe("route guards", () => {
 
     expect(await screen.findByText("/users")).toBeInTheDocument()
   })
+
+  it("zorunlu parola değişikliği olan kullanıcıyı modül yerine güvenlik route'una gönderir", async () => {
+    useAuthMock.mockReturnValue(
+      authValue({
+        user: { ...USER, passwordChangeRequired: true },
+      }),
+    )
+
+    render(
+      <MemoryRouter initialEntries={["/fund-monitoring"]}>
+        <Routes>
+          <Route
+            path="/fund-monitoring"
+            element={
+              <ProtectedRoute requireProductAccess>
+                <div>Fon İzleme</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account/password-required"
+            element={<LocationProbe />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(
+      await screen.findByText("/account/password-required"),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Fon İzleme")).not.toBeInTheDocument()
+  })
+
+  it("admini passwordChangeRequired true olsa bile güvenlik route'una göndermez", () => {
+    useAuthMock.mockReturnValue(
+      authValue({
+        user: { ...ADMIN, passwordChangeRequired: true },
+      }),
+    )
+
+    render(
+      <MemoryRouter>
+        <ProtectedRoute requirePanelAccess>
+          <div>Kullanıcı Yönetimi</div>
+        </ProtectedRoute>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText("Kullanıcı Yönetimi")).toBeInTheDocument()
+  })
+
+  it("zorunluluğu olmayan kullanıcıyı parola route'undan ana sayfasına gönderir", async () => {
+    useAuthMock.mockReturnValue(authValue({ user: USER }))
+
+    render(
+      <MemoryRouter initialEntries={["/account/password-required"]}>
+        <Routes>
+          <Route
+            path="/account/password-required"
+            element={
+              <ProtectedRoute allowPasswordChangeRequired>
+                <div>Parola Ekranı</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/dashboard" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText("/dashboard")).toBeInTheDocument()
+  })
 })

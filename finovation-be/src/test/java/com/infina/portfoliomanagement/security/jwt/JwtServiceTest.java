@@ -143,6 +143,7 @@ class JwtServiceTest {
                 "password",
                 Role.USER,
                 false,
+                false,
                 NOW.minusSeconds(1)
         );
 
@@ -203,6 +204,7 @@ class JwtServiceTest {
                 "password",
                 Role.USER,
                 true,
+                false,
                 credentialsChangedAt
         );
     }

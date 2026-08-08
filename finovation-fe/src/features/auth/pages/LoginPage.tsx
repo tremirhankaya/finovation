@@ -19,9 +19,12 @@ import styles from "@/features/auth/styles/LoginPage.module.css"
 const UNKNOWN_LOGIN_ERROR = "Giriş sırasında beklenmeyen bir hata oluştu."
 const SESSION_EXPIRED_MESSAGE =
   "Oturumunuz sona erdi. Lütfen tekrar giriş yapın."
+const PASSWORD_CHANGED_MESSAGE =
+  "Parolanız değiştirildi. Yeni parolanızla giriş yapabilirsiniz."
 
 type LoginLocationState = {
   sessionExpired?: boolean
+  passwordChanged?: boolean
 }
 
 export default function LoginPage() {
@@ -37,6 +40,11 @@ export default function LoginPage() {
       ? SESSION_EXPIRED_MESSAGE
       : "",
   )
+  const [successMessage, setSuccessMessage] = useState(() =>
+    (location.state as LoginLocationState | null)?.passwordChanged
+      ? PASSWORD_CHANGED_MESSAGE
+      : "",
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -49,6 +57,7 @@ export default function LoginPage() {
 
     setFieldErrors(validation.errors)
     setFormError("")
+    setSuccessMessage("")
 
     if (!validation.success) return
 
@@ -86,6 +95,11 @@ export default function LoginPage() {
           </header>
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            {successMessage && (
+              <p className={styles.successMessage} role="status">
+                {successMessage}
+              </p>
+            )}
             {formError && <FormAlert>{formError}</FormAlert>}
 
             <TextField
