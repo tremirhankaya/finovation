@@ -43,6 +43,18 @@ describe("toApiRequestError", () => {
     )
   })
 
+  it("zorunlu parola değişikliği kodunu kullanıcı dostu mesaja çevirir", () => {
+    const apiError = toApiRequestError(
+      { code: "AUTH_019" },
+      403,
+      "İşlem tamamlanamadı",
+    )
+
+    expect(apiError.message).toBe(
+      "Devam etmek için ilk parolanızı değiştirmeniz gerekiyor.",
+    )
+  })
+
   it("alan doğrulama mesajını kullanıcıya taşımaz", () => {
     const error = toApiRequestError(
       {

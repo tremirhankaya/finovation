@@ -120,6 +120,12 @@ public enum ErrorCode {
             "The new password must be different from the current password."
     ),
 
+    PASSWORD_CHANGE_REQUIRED(
+            "AUTH_019",
+            HttpStatus.FORBIDDEN,
+            "You must change your password before accessing this resource."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,

@@ -38,6 +38,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -125,6 +126,7 @@ class UserServiceTest {
         assertThat(response.role()).isEqualTo(Role.USER);
         assertThat(response.status()).isEqualTo(UserStatus.ACTIVE);
         verify(passwordEncoder).encode("Password123!");
+        verify(userRepository).save(argThat(User::isPasswordChangeRequired));
     }
 
     @Test
@@ -201,6 +203,7 @@ class UserServiceTest {
 
         assertThat(response.companyId()).isNull();
         assertThat(response.role()).isEqualTo(Role.ADMIN);
+        verify(userRepository).save(argThat(user -> !user.isPasswordChangeRequired()));
     }
 
     @Test

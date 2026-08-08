@@ -23,6 +23,7 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final Role role;
     private final boolean enabled;
+    private final boolean passwordChangeRequired;
     private final Instant credentialsChangedAt;
 
     @Override
@@ -49,5 +50,13 @@ public class CustomUserDetails implements UserDetails {
 
     public Instant getCredentialsChangedAt() {
         return credentialsChangedAt;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public boolean isPasswordChangeRequired() {
+        return passwordChangeRequired;
     }
 }

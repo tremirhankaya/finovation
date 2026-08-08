@@ -37,6 +37,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getPassword(),
                 user.getRole(),
                 user.getStatus() == UserStatus.ACTIVE,
+                user.isPasswordChangeRequired(),
                 user.getCredentialsChangedAt().atZone(clock.getZone()).toInstant()
         );
     }

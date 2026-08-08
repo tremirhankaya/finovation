@@ -12,6 +12,7 @@ type AccountSecurityDialogProps = {
   open: boolean
   user: MeResponse
   roleLabel: string
+  initialPasswordFormOpen?: boolean
   onClose: () => void
   onPasswordChanged: () => Promise<void> | void
 }
@@ -20,6 +21,7 @@ export default function AccountSecurityDialog({
   open,
   user,
   roleLabel,
+  initialPasswordFormOpen = false,
   onClose,
   onPasswordChanged,
 }: AccountSecurityDialogProps) {
@@ -28,7 +30,9 @@ export default function AccountSecurityDialog({
   const [submitted, setSubmitted] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState("")
-  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false)
+  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(
+    initialPasswordFormOpen,
+  )
 
   useEffect(() => {
     if (!open) return
@@ -37,8 +41,8 @@ export default function AccountSecurityDialog({
     setSubmitted(false)
     setIsSaving(false)
     setError("")
-    setIsPasswordFormOpen(false)
-  }, [open])
+    setIsPasswordFormOpen(initialPasswordFormOpen)
+  }, [initialPasswordFormOpen, open])
 
   const handleClose = () => {
     if (!isSaving) onClose()
