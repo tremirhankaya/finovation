@@ -9,7 +9,13 @@ import Logo from "@/shared/ui/Logo"
 type NavigationItem = {
   label: string
   path: string
-  icon: "home" | "design" | "monitoring" | "optimization" | "users"
+  icon:
+      | "home"
+      | "design"
+      | "monitoring"
+      | "optimization"
+      | "stress"
+      | "users"
 }
 
 const PRODUCT_NAVIGATION: NavigationItem[] = [
@@ -24,6 +30,11 @@ const PRODUCT_NAVIGATION: NavigationItem[] = [
     label: "Fon Optimizasyonu",
     path: "/optimization-requests/new",
     icon: "optimization",
+  },
+  {
+    label: "Stres Testi",
+    path: "/stress-test",
+    icon: "stress",
   },
 ]
 
@@ -67,6 +78,14 @@ function NavigationIcon({ icon }: { icon: NavigationItem["icon"] }) {
         <circle cx="10" cy="12" r="2" />
         <circle cx="19" cy="18" r="2" />
       </svg>
+    )
+  }
+  if (icon === "stress") {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 12h4l2-6 4 12 2-6h6" />
+          <path d="M4 21h16" />
+        </svg>
     )
   }
 

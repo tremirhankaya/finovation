@@ -7,8 +7,6 @@ export const API_PATHS = {
   refresh: import.meta.env.VITE_REFRESH_PATH?.trim() || "/v1/auth/refresh",
   logout: import.meta.env.VITE_LOGOUT_PATH?.trim() || "/v1/auth/logout",
   me: import.meta.env.VITE_ME_PATH?.trim() || "/v1/auth/me",
-  passwordChange:
-    import.meta.env.VITE_PASSWORD_CHANGE_PATH?.trim() || "/v1/auth/password",
   users: import.meta.env.VITE_USERS_PATH?.trim() || "/v1/users",
   companies: import.meta.env.VITE_COMPANIES_PATH?.trim() || "/v1/companies",
   passwordResetRequest:
@@ -26,6 +24,13 @@ export const API_PATHS = {
   optimizationRequests:
     import.meta.env.VITE_OPTIMIZATION_REQUESTS_PATH?.trim() ||
     "/v1/optimization-requests",
+  stressScenarios:
+      import.meta.env.VITE_STRESS_SCENARIOS_PATH?.trim() ||
+      "/v1/stress-scenarios",
+
+  stressTests:
+      import.meta.env.VITE_STRESS_TESTS_PATH?.trim() ||
+      "/v1/stress-tests",
   investmentUniverse:
     import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
     "/v1/investment-universe",
@@ -45,10 +50,6 @@ export function getLoginUrl(): string {
 
 export function getMeUrl(): string {
   return buildUrl(API_PATHS.me)
-}
-
-export function getPasswordChangeUrl(): string {
-  return buildUrl(API_PATHS.passwordChange)
 }
 
 export function getRefreshUrl(): string {
@@ -143,8 +144,4 @@ export function getOptimizationRequestApproveUrl(requestId: number): string {
 
 export function getOptimizationRequestRejectUrl(requestId: number): string {
   return `${getOptimizationRequestUrl(requestId)}/reject`
-}
-
-export function getInvestmentUniverseUrl(): string {
-  return buildUrl(API_PATHS.investmentUniverse)
 }

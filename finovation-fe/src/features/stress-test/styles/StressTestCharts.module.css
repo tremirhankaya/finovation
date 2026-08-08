@@ -1,0 +1,292 @@
+.chartCard {
+    height: 100%;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+}
+
+.chartHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.chartHeader span {
+    display: block;
+    margin-bottom: 4px;
+    color: #0d9488;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.chartHeader h2 {
+    margin: 0;
+    color: #0f2d52;
+    font-size: 1.05rem;
+}
+
+.chartHeader p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+.contributionChart {
+    display: grid;
+    gap: 15px;
+}
+
+.contributionRow {
+    display: grid;
+    grid-template-columns: 110px minmax(260px, 1fr) 76px;
+    align-items: center;
+    gap: 16px;
+}
+
+.contributionLabel,
+.impactLabel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.contributionLabel strong,
+.impactLabel strong {
+    overflow: hidden;
+    color: #0f2d52;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contributionLabel span,
+.impactLabel span {
+    margin-top: 2px;
+    color: #94a3b8;
+    font-size: 0.64rem;
+    font-weight: 700;
+}
+
+.contributionTrack {
+    position: relative;
+    height: 24px;
+    overflow: hidden;
+    background: #f8fafc;
+    border-radius: 6px;
+}
+
+.zeroLine {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: #94a3b8;
+}
+
+.contributionBar {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    min-width: 2px;
+    border-radius: 4px;
+}
+
+.positiveBar {
+    background: #35a58d;
+}
+
+.negativeBar {
+    background: #dc6b6b;
+}
+
+.neutralBar {
+    background: #94a3b8;
+}
+
+.contributionRow > strong,
+.impactRow > strong {
+    font-size: 0.78rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.chartAxis {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    padding: 10px 92px 0 126px;
+    color: #94a3b8;
+    font-size: 0.65rem;
+}
+
+.chartAxis span:first-child {
+    text-align: left;
+}
+
+.chartAxis span:last-child {
+    text-align: right;
+}
+
+.impactChart {
+    display: grid;
+    gap: 15px;
+}
+
+.impactRow {
+    display: grid;
+    grid-template-columns: 110px minmax(260px, 1fr) 76px;
+    align-items: center;
+    gap: 16px;
+}
+
+.impactTrack {
+    height: 18px;
+    overflow: hidden;
+    background: #f1f5f9;
+    border-radius: 5px;
+}
+
+.impactBar {
+    height: 100%;
+    min-width: 2px;
+    border-radius: 5px;
+    transition: width 200ms ease;
+}
+
+.positiveValue {
+    color: #15803d;
+}
+
+.negativeValue {
+    color: #b91c1c;
+}
+
+.neutralValue {
+    color: #475569;
+}
+
+@media (max-width: 760px) {
+    .chartHeader {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .contributionRow {
+        grid-template-columns: 80px minmax(160px, 1fr) 68px;
+        gap: 9px;
+    }
+
+    .impactRow {
+        grid-template-columns: 80px minmax(150px, 1fr) 68px;
+        gap: 9px;
+    }
+
+    .chartAxis {
+        display: none;
+    }
+}
+.donutCard {
+    height: 100%;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+}
+
+.donutContent {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    align-items: center;
+    gap: 28px;
+}
+
+.donut {
+    position: relative;
+    display: grid;
+    width: 180px;
+    height: 180px;
+    place-items: center;
+    border-radius: 50%;
+}
+
+.donutCenter {
+    display: grid;
+    width: 108px;
+    height: 108px;
+    place-items: center;
+    align-content: center;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px #eef2f7;
+}
+
+.donutCenter strong {
+    color: #0f2d52;
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.donutCenter span {
+    margin-top: 5px;
+    color: #94a3b8;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.donutLegend {
+    display: grid;
+    gap: 10px;
+}
+
+.donutLegendItem {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.donutLegendColor {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.donutLegendItem strong {
+    overflow: hidden;
+    color: #334155;
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.donutLegendItem > span:last-child {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+    .donutContent {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .donutLegend {
+        width: 100%;
+    }
+}

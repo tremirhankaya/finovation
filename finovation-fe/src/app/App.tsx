@@ -16,6 +16,7 @@ import OptimizationFormPage from "@/features/optimization/pages/OptimizationForm
 import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
 import OptimizationRunningPage from "@/features/optimization/pages/OptimizationRunningPage"
 import UsersPage from "@/features/users/pages/UsersPage"
+import StressTestPage from "@/features/stress-test/pages/StressTestPage"
 import PasswordChangeRequiredPage from "@/features/account/pages/PasswordChangeRequiredPage"
 
 export default function App() {
@@ -47,15 +48,6 @@ export default function App() {
               <GuestRoute>
                 <ForgotPasswordPage />
               </GuestRoute>
-            }
-          />
-
-          <Route
-            path="/account/password-required"
-            element={
-              <ProtectedRoute allowPasswordChangeRequired>
-                <PasswordChangeRequiredPage />
-              </ProtectedRoute>
             }
           />
 
