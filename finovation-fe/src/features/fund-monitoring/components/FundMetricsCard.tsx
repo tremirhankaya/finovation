@@ -4,6 +4,7 @@ import {
   indicatorToneClass,
 } from "@/features/fund-monitoring/lib/fundMonitoringFormatters"
 import type {
+  BenchmarkDefinition,
   PeriodReturn,
   TechnicalIndicator,
 } from "@/features/fund-monitoring/model/fundMonitoring.types"
@@ -18,17 +19,27 @@ const EMPTY_INDICATORS: TechnicalIndicator[] = [
   },
   {
     code: "MAX_DRAWDOWN",
-    label: "Maksimum Düşüş",
+    label: "Maksimum Düşüş (Yıllık)",
     value: null,
     unit: "PERCENT",
   },
-  { code: "BETA", label: "Beta", value: null, unit: "RATIO" },
-  { code: "SHARPE", label: "Sharpe Oranı", value: null, unit: "RATIO" },
   {
-    code: "SECTOR_CONCENTRATION",
-    label: "Sektörel Yoğunluk",
+    code: "TRACKING_ERROR",
+    label: "Tracking Error (Yıllık)",
     value: null,
     unit: "PERCENT",
+  },
+  {
+    code: "CALMAR",
+    label: "Calmar Oranı (Yıllık)",
+    value: null,
+    unit: "RATIO",
+  },
+  {
+    code: "INFORMATION_RATIO",
+    label: "Information Ratio (Yıllık)",
+    value: null,
+    unit: "RATIO",
   },
   {
     code: "LIQUIDITY_RATIO",
@@ -36,6 +47,26 @@ const EMPTY_INDICATORS: TechnicalIndicator[] = [
     value: null,
     unit: "PERCENT",
   },
+  { code: "BETA", label: "Beta (Yıllık)", value: null, unit: "RATIO" },
+  {
+    code: "DOWNSIDE_DEVIATION",
+    label: "Downside Deviation (Yıllık)",
+    value: null,
+    unit: "PERCENT",
+  },
+  {
+    code: "SORTINO",
+    label: "Sortino Oranı (Yıllık)",
+    value: null,
+    unit: "RATIO",
+  },
+  {
+    code: "SHARPE",
+    label: "Sharpe Oranı (Yıllık)",
+    value: null,
+    unit: "RATIO",
+  },
+  { code: "ALPHA", label: "Alpha (Yıllık)", value: null, unit: "PERCENT" },
 ]
 
 const EMPTY_RETURNS: PeriodReturn[] = [
@@ -45,11 +76,13 @@ const EMPTY_RETURNS: PeriodReturn[] = [
 ]
 
 type FundMetricsCardProps = {
+  benchmark?: BenchmarkDefinition
   indicators?: TechnicalIndicator[]
   periodReturns?: PeriodReturn[]
 }
 
 export default function FundMetricsCard({
+  benchmark,
   indicators = EMPTY_INDICATORS,
   periodReturns = EMPTY_RETURNS,
 }: FundMetricsCardProps) {
@@ -57,15 +90,52 @@ export default function FundMetricsCard({
     <section className={styles.card}>
       <h2 className={styles.cardTitle}>Teknik Göstergeler</h2>
       <dl className={styles.indicatorList}>
-        {indicators.map((indicator) => (
-          <div className={styles.indicatorRow} key={indicator.code}>
-            <dt>{indicator.label}</dt>
-            <dd className={styles[indicatorToneClass(indicator)]}>
-              {formatIndicatorValue(indicator.value, indicator.unit)}
-            </dd>
-          </div>
-        ))}
+        {indicators.map((indicator) => {
+          const descriptionId = `indicator-${indicator.code.toLowerCase()}-description`
+
+          return (
+            <div className={styles.indicatorRow} key={indicator.code}>
+              <dt className={styles.indicatorLabel}>
+                <span>{indicator.label}</span>
+                {indicator.description && (
+                  <span className={styles.indicatorHelp}>
+                    <button
+                      type="button"
+                      aria-label={`${indicator.label} açıklaması`}
+                      aria-describedby={descriptionId}
+                    >
+                      i
+                    </button>
+                    <span id={descriptionId} role="tooltip">
+                      {indicator.description}
+                    </span>
+                  </span>
+                )}
+              </dt>
+              <dd className={styles[indicatorToneClass(indicator)]}>
+                {formatIndicatorValue(indicator.value, indicator.unit)}
+              </dd>
+            </div>
+          )
+        })}
       </dl>
+
+      {benchmark && benchmark.components.length > 0 && (
+        <section
+          className={styles.benchmarkDefinition}
+          aria-labelledby="benchmark-title"
+        >
+          <h3 id="benchmark-title">{benchmark.name}</h3>
+          <ul>
+            {benchmark.components.map((component) => (
+              <li key={component.code}>
+                <span>{component.name}</span>
+                <strong>%{component.weightPercentage}</strong>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <h3 className={styles.returnsTitle}>Getiri Özeti</h3>
       <div className={styles.returnsGrid}>
