@@ -1,16 +1,21 @@
-import { type FormEvent, useState } from "react"
+import { type FormEvent, useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 
 import { createFundDraft } from "@/features/fund-design/api/fundDraftApi"
 import FundDesignLayout from "@/features/fund-design/components/FundDesignLayout"
-import { useFundDraftLimits } from "@/features/fund-design/hooks/useFundDraftLimits"
+import ProspectusRulesPanel from "@/features/fund-design/components/ProspectusRulesPanel"
+import { useFundDraftInit } from "@/features/fund-design/hooks/useFundDraftInit"
 import {
   formatPortfolioSize,
   isPortfolioSizeReady,
-  limitBarPosition,
   parsePortfolioSize,
 } from "@/features/fund-design/lib/portfolioSize"
-import { FUND_TYPE_LABELS } from "@/features/fund-design/model/fundDraftSchemas"
+import {
+  formatUnitPrice,
+  isUnitPriceReady,
+  parseUnitPrice,
+} from "@/features/fund-design/lib/unitPrice"
+import { isFundNameReady, validateFundName } from "@/features/fund-design/lib/fundName"
 import Button from "@/shared/ui/Button"
 import FormAlert from "@/shared/ui/FormAlert"
 import TextField from "@/shared/ui/TextField"
@@ -19,36 +24,174 @@ import styles from "@/features/fund-design/styles/StartFundDraftPage.module.css"
 const CREATE_ERROR_FALLBACK =
   "Fon taslağı oluşturulamadı. Lütfen tekrar deneyin."
 
-const UNIVERSE_ITEMS = [
-  "Sistem tarafından tanımlanan BIST payları",
-  "Kısa vadeli likidite bileşeni",
-] as const
+function EquityIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 16.5 9 11l3.5 3.5L20 7"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 7h5v5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function LiquidityIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <rect
+        x="5"
+        y="4"
+        width="14"
+        height="16"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M9 9h6M9 13h6M9 17h3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
 
 export default function StartFundDraftPage() {
   const navigate = useNavigate()
   const {
-    limits,
-    error: limitsError,
-    reload: reloadLimits,
-  } = useFundDraftLimits()
-  const [sizeInput, setSizeInput] = useState("")
+    init,
+    error: initError,
+    reload: reloadInit,
+  } = useFundDraftInit({ page: "START" })
+  const startInit = init?.page === "START" ? init : null
+  const [fundName, setFundName] = useState("")
+  const [fundNameError, setFundNameError] = useState("")
+  const [portfolioSizeInput, setPortfolioSizeInput] = useState("")
+  const [unitPriceInput, setUnitPriceInput] = useState("")
+  const [portfolioSizeError, setPortfolioSizeError] = useState("")
+  const [unitPriceError, setUnitPriceError] = useState("")
+  const [portfolioFeedback, setPortfolioFeedback] = useState<
+    "idle" | "rejected"
+  >("idle")
+  const [unitPriceFeedback, setUnitPriceFeedback] = useState<
+    "idle" | "rejected"
+  >("idle")
   const [formError, setFormError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const canContinue = isPortfolioSizeReady(sizeInput, limits)
-  const marker = limits == null ? null : limitBarPosition(sizeInput, limits)
+  useEffect(() => {
+    if (!startInit) return
+    setPortfolioSizeInput((current) =>
+      current || formatPortfolioSize(startInit.minInitialPortfolioSize),
+    )
+    setUnitPriceInput((current) => current || formatUnitPrice("1"))
+  }, [startInit])
+
+  const nameReady = isFundNameReady(fundName)
+  const portfolioSizeReady = isPortfolioSizeReady(portfolioSizeInput, startInit)
+  const unitPriceReady = isUnitPriceReady(unitPriceInput, startInit)
+  const canContinue =
+    Boolean(startInit) && nameReady && portfolioSizeReady && unitPriceReady
+
+  useEffect(() => {
+    if (portfolioSizeReady) setPortfolioSizeError("")
+  }, [portfolioSizeReady])
+
+  useEffect(() => {
+    if (unitPriceReady) setUnitPriceError("")
+  }, [unitPriceReady])
+
+  function pulseReject(field: "portfolio" | "unit") {
+    const setFeedback =
+      field === "portfolio" ? setPortfolioFeedback : setUnitPriceFeedback
+    setFeedback("idle")
+    requestAnimationFrame(() => setFeedback("rejected"))
+    window.setTimeout(() => setFeedback("idle"), 450)
+  }
+
+  function portfolioSizeRangeText() {
+    if (!startInit) return "Portföy büyüklüğü izin verilen aralıkta olmalıdır."
+    return `İzin verilen aralık: ${formatPortfolioSize(startInit.minInitialPortfolioSize)} – ${formatPortfolioSize(startInit.maxInitialPortfolioSize)} TL`
+  }
+
+  function unitPriceRangeText() {
+    if (!startInit) return "Fon pay fiyatı izin verilen aralıkta olmalıdır."
+    return `İzin verilen aralık: ${startInit.minUnitPrice} – ${startInit.maxUnitPrice} TL`
+  }
+
+  function validatePortfolioSizeField(raw: string) {
+    if (!startInit) return
+    if (isPortfolioSizeReady(raw, startInit)) {
+      setPortfolioSizeError("")
+      return
+    }
+    setPortfolioSizeError(portfolioSizeRangeText())
+    pulseReject("portfolio")
+  }
+
+  function validateUnitPriceField(raw: string) {
+    if (!startInit) return
+    if (isUnitPriceReady(raw, startInit)) {
+      setUnitPriceError("")
+      return
+    }
+    setUnitPriceError(unitPriceRangeText())
+    pulseReject("unit")
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const value = parsePortfolioSize(sizeInput)
-    if (!canContinue || value == null) return
+    const nameError = validateFundName(fundName)
+    if (nameError) {
+      setFundNameError(nameError)
+      return
+    }
+
+    validatePortfolioSizeField(portfolioSizeInput)
+    validateUnitPriceField(unitPriceInput)
+
+    const portfolioSize = parsePortfolioSize(portfolioSizeInput)
+    const unitPrice = parseUnitPrice(unitPriceInput)
+    if (!canContinue || !startInit || portfolioSize == null || unitPrice == null) {
+      return
+    }
 
     setFormError("")
+    setFundNameError("")
+    setPortfolioSizeError("")
+    setUnitPriceError("")
     setIsSubmitting(true)
 
     try {
-      const draft = await createFundDraft(value)
+      const draft = await createFundDraft({
+        name: fundName.trim(),
+        initialPortfolioSize: portfolioSize,
+        unitPrice,
+      })
       await navigate(`/fund-design/${draft.draftId}/strategy`)
     } catch (error) {
       setFormError(
@@ -62,26 +205,23 @@ export default function StartFundDraftPage() {
   return (
     <FundDesignLayout step={1}>
       <section className={styles.panel}>
-        <header>
-          <p className={styles.badge}>
-            <span className={styles.badgeDot} aria-hidden="true" />
-            YENİ FON TASLAĞI
-          </p>
-          <h2 className={styles.sectionTitle}>Fon taslağını başlatın</h2>
+        <header className={styles.header}>
+          <h2 className={styles.sectionTitle}>1. Taslağı Başlat</h2>
+          <p className={styles.introLead}>Fon Tasarımı</p>
           <p className={styles.intro}>
-            Başlangıç portföy büyüklüğünü belirleyin. Strateji ve kurallar bir
-            sonraki adımda tanımlanacaktır.
+            Yeni fon oluşturmak için temel bilgileri girin ve tasarım sürecini
+            başlatın.
           </p>
         </header>
 
         {formError && <FormAlert>{formError}</FormAlert>}
-        {limitsError && (
+        {initError && (
           <FormAlert>
-            {limitsError}
+            {initError}
             <button
               className={styles.retry}
               type="button"
-              onClick={reloadLimits}
+              onClick={reloadInit}
             >
               Tekrar dene
             </button>
@@ -89,105 +229,154 @@ export default function StartFundDraftPage() {
         )}
 
         <div className={styles.grid}>
-          <form
-            id="start-fund-draft-form"
-            className={styles.formCard}
-            onSubmit={(event) => void handleSubmit(event)}
-          >
-            <h3 className={styles.blockTitle}>Başlangıç Bilgisi</h3>
-            <TextField
-              id="initialPortfolioSize"
-              label="Başlangıç Portföy Büyüklüğü *"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="Tutar girin"
-              value={sizeInput}
-              endAdornment="TL"
-              className={styles.sizeInput}
-              onChange={(value) => {
-                setSizeInput(formatPortfolioSize(value))
-                setFormError("")
-              }}
-            />
-            <p className={styles.hint}>
-              Bu tutar önerilen ağırlıkların parasal karşılıklarının
-              hesaplanmasında kullanılır.
-            </p>
-            {limits && (
-              <div
-                className={styles.limitBar}
-                aria-label={`İzin verilen aralık ${formatPortfolioSize(limits.minInitialPortfolioSize)} TL ile ${formatPortfolioSize(limits.maxInitialPortfolioSize)} TL arası`}
-              >
-                <div className={styles.limitLabels}>
-                  <span>
-                    Min {formatPortfolioSize(limits.minInitialPortfolioSize)} TL
-                  </span>
-                  <span>
-                    Max {formatPortfolioSize(limits.maxInitialPortfolioSize)} TL
-                  </span>
-                </div>
-                <div className={styles.limitTrack}>
-                  {marker != null && (
-                    <span
-                      className={[
-                        styles.limitMarker,
-                        canContinue
-                          ? styles.limitMarkerOk
-                          : styles.limitMarkerOff,
-                      ].join(" ")}
-                      style={{ left: `${marker * 100}%` }}
-                    />
-                  )}
+          <div className={styles.mainColumn}>
+            <form
+              id="start-fund-draft-form"
+              className={styles.formCard}
+              onSubmit={(event) => void handleSubmit(event)}
+            >
+              <div className={styles.formCardHeader}>
+                <h3 className={styles.blockTitle}>Fon Bilgileri</h3>
+                <span className={styles.currencyBadge} title="Para birimi sistem tarafından atanır">
+                  {startInit?.defaultCurrency ?? "TRY"}
+                </span>
+              </div>
+
+              <div className={styles.fieldStack}>
+                <TextField
+                  id="fundName"
+                  label="Fon Adı *"
+                  autoComplete="off"
+                  placeholder="Örn. Finovation Hisse Senedi Fonu"
+                  value={fundName}
+                  error={fundNameError}
+                  onChange={(value) => {
+                    setFundName(value)
+                    setFundNameError(
+                      value.trim() ? (validateFundName(value) ?? "") : "",
+                    )
+                    setFormError("")
+                  }}
+                />
+
+                <div className={styles.moneyRow}>
+                  <TextField
+                    id="initialPortfolioSize"
+                    label="Portföy Büyüklüğü *"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder={
+                      startInit
+                        ? formatPortfolioSize(startInit.minInitialPortfolioSize)
+                        : "1.000.000"
+                    }
+                    value={portfolioSizeInput}
+                    endAdornment="TL"
+                    error={portfolioSizeError}
+                    className={
+                      portfolioFeedback === "rejected"
+                        ? styles.inputRejected
+                        : ""
+                    }
+                    onBlur={() => validatePortfolioSizeField(portfolioSizeInput)}
+                    onChange={(value) => {
+                      const next = formatPortfolioSize(value)
+                      setPortfolioSizeInput(next)
+                      setFormError("")
+                      if (
+                        portfolioSizeError &&
+                        isPortfolioSizeReady(next, startInit)
+                      ) {
+                        setPortfolioSizeError("")
+                      }
+                    }}
+                  />
+
+                  <TextField
+                    id="unitPrice"
+                    label="Fon Pay Fiyatı *"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="1"
+                    value={unitPriceInput}
+                    endAdornment="TL"
+                    error={unitPriceError}
+                    className={
+                      unitPriceFeedback === "rejected"
+                        ? styles.inputRejected
+                        : ""
+                    }
+                    onBlur={() => validateUnitPriceField(unitPriceInput)}
+                    onChange={(value) => {
+                      const next = formatUnitPrice(value)
+                      setUnitPriceInput(next)
+                      setFormError("")
+                      if (unitPriceError && isUnitPriceReady(next, startInit)) {
+                        setUnitPriceError("")
+                      }
+                    }}
+                  />
                 </div>
               </div>
-            )}
-          </form>
+            </form>
 
-          <aside className={styles.summary} aria-label="Fon taslağı özeti">
-            <h3 className={styles.blockTitle}>Fon Taslağı Özeti</h3>
+            <section className={styles.universeCard} aria-labelledby="universe-title">
+              <h3 id="universe-title" className={styles.blockTitle}>
+                Yatırım Evreni
+              </h3>
+              <p className={styles.universeIntro}>
+                Tanımlı hisse evreni ve kısa vadeli likidite bileşeni
+                kullanılacaktır.
+              </p>
+              <div className={styles.universeTiles}>
+                <article className={styles.universeTile}>
+                  <span className={styles.universeIcon}>
+                    <EquityIcon />
+                  </span>
+                  <div>
+                    <p className={styles.universeTitle}>Hisse Senetleri</p>
+                    <p className={styles.universeText}>
+                      BIST&apos;te işlem gören uygun hisseler
+                    </p>
+                  </div>
+                </article>
+                <article className={styles.universeTile}>
+                  <span className={styles.universeIcon}>
+                    <LiquidityIcon />
+                  </span>
+                  <div>
+                    <p className={styles.universeTitle}>TPP (1 Gün)</p>
+                    <p className={styles.universeText}>
+                      Takasbank Para Piyasası (1 Gün)
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </section>
 
-            <p className={styles.summaryLabel}>FON TÜRÜ</p>
-            <p className={styles.summaryValue}>
-              {FUND_TYPE_LABELS.EQUITY_INTENSIVE}
-            </p>
-
-            <p className={styles.summaryLabel}>YATIRIM EVRENİ</p>
-            <ul className={styles.summaryList}>
-              {UNIVERSE_ITEMS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-
-            <p className={styles.summaryLabel}>PARA BİRİMİ</p>
-            <p className={styles.summaryValue}>TRY</p>
-
-            <p className={styles.summaryLabel}>İZAHNAME VE KURAL KONTROLÜ</p>
-            <div className={styles.progressHead}>
-              <span>Portföy uygunluğu</span>
-              <span className={styles.progressStatus}>Henüz hesaplanmadı</span>
+            <div className={styles.actions}>
+              <Button
+                className={styles.continue}
+                type="submit"
+                form="start-fund-draft-form"
+                disabled={!canContinue}
+                isLoading={isSubmitting}
+                loadingText="Oluşturuluyor…"
+              >
+                İleri →
+              </Button>
             </div>
-            <div className={styles.progressTrack} />
-            <p className={styles.statusNote}>
-              AI analizi sonrasında aktifleşir.
-            </p>
+          </div>
 
-            <Button
-              className={styles.continue}
-              type="submit"
-              form="start-fund-draft-form"
-              disabled={!canContinue}
-              isLoading={isSubmitting}
-              loadingText="Oluşturuluyor…"
-            >
-              Devam Et →
-            </Button>
-          </aside>
+          <ProspectusRulesPanel
+            init={startInit}
+            startCreateLimits={startInit}
+            startCreateCompliance={{
+              portfolioSizeOk: portfolioSizeReady,
+              unitPriceOk: unitPriceReady,
+            }}
+          />
         </div>
-
-        <p className={styles.disclaimer}>
-          Bu modül gerçek fon kuruluşu veya emir iletimi yapmaz; karar destek
-          amaçlı fon taslağı üretir.
-        </p>
       </section>
     </FundDesignLayout>
   )

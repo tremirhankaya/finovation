@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
 
 import AssetComparisonPanel from "@/features/optimization/components/AssetComparisonPanel"
@@ -14,6 +15,8 @@ export default function OptimizationResultPage() {
   const requestId = Number(params.requestId)
   const review = useOptimizationResultReview(requestId)
   const fundName = (location.state as { fundName?: string } | null)?.fundName
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
 
   if (review.isLoadingRequest) {
     return (
@@ -40,6 +43,7 @@ export default function OptimizationResultPage() {
   }
 
   if (review.decidedAs) {
+    const request = review.request
     return (
       <main className={styles.page}>
         <div className={styles.wizardShell}>
@@ -54,13 +58,70 @@ export default function OptimizationResultPage() {
                 ? "Önerilen portföy ağırlıkları fon için onaylandı."
                 : "Optimizasyon sonucu reddedildi, fon üzerinde bir değişiklik yapılmadı."}
             </p>
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={() => navigate("/optimization-requests/new")}
-            >
-              Yeni Optimizasyon Başlat
-            </button>
+            <div className={styles.successActions}>
+              {review.decidedAs === "approve" && request && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    disabled={isExportingPdf}
+                    onClick={async () => {
+                      setIsExportingPdf(true)
+                      try {
+                        const { downloadOptimizationResultPdf } = await import(
+                          "@/features/optimization/lib/optimizationPdfExport"
+                        )
+                        await downloadOptimizationResultPdf({
+                          fundName: fundName || `Fon #${request.fundId}`,
+                          request,
+                          assets: review.assets,
+                          summary: review.summary,
+                          constraintMetrics: review.constraintMetrics,
+                          infoMetrics: review.infoMetrics,
+                        })
+                      } finally {
+                        setIsExportingPdf(false)
+                      }
+                    }}
+                  >
+                    {isExportingPdf ? "Hazırlanıyor…" : "PDF İndir"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    disabled={isExportingExcel}
+                    onClick={async () => {
+                      setIsExportingExcel(true)
+                      try {
+                        const { downloadOptimizationResultExcel } =
+                          await import(
+                            "@/features/optimization/lib/optimizationExcelExport"
+                          )
+                        await downloadOptimizationResultExcel({
+                          fundName: fundName || `Fon #${request.fundId}`,
+                          request,
+                          assets: review.assets,
+                          summary: review.summary,
+                          constraintMetrics: review.constraintMetrics,
+                          infoMetrics: review.infoMetrics,
+                        })
+                      } finally {
+                        setIsExportingExcel(false)
+                      }
+                    }}
+                  >
+                    {isExportingExcel ? "Hazırlanıyor…" : "Excel İndir"}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => navigate("/optimization-requests/new")}
+              >
+                Yeni Optimizasyon Başlat
+              </button>
+            </div>
           </div>
         </div>
       </main>

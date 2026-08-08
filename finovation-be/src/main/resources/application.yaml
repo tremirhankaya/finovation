@@ -53,8 +53,6 @@ infina:
   read-timeout: 15s
 
 fund:
-  min-initial-portfolio-size: ${FUND_MIN_INITIAL_PORTFOLIO_SIZE:1000000}
-  max-initial-portfolio-size: ${FUND_MAX_INITIAL_PORTFOLIO_SIZE:100000000000}
   monitoring:
     fixed-outstanding-shares: ${FUND_MONITORING_FIXED_OUTSTANDING_SHARES:1000000}
 

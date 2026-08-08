@@ -1,0 +1,52 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #8a97a6;
+  background: transparent;
+  cursor: pointer;
+}
+
+.trigger:hover {
+  color: #1a9e86;
+  background: rgba(46, 196, 167, 0.08);
+}
+
+.triggerOpen {
+  color: #1a9e86;
+  border-color: rgba(46, 196, 167, 0.35);
+  background: rgba(46, 196, 167, 0.1);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid #2ec4a7;
+  outline-offset: 2px;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 4;
+  width: min(20rem, calc(100vw - 2.5rem));
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e5edf1;
+  border-radius: 10px;
+  color: #3d5163;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 32, 64, 0.1);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
