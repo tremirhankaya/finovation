@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.auth.controller;
 
 import com.infina.portfoliomanagement.auth.controller.docs.AuthControllerDocs;
 import com.infina.portfoliomanagement.auth.dto.*;
+import com.infina.portfoliomanagement.auth.service.AuthenticatedPasswordService;
 import com.infina.portfoliomanagement.auth.service.AuthService;
 import com.infina.portfoliomanagement.auth.service.PasswordResetService;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ public class AuthController implements AuthControllerDocs {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final AuthenticatedPasswordService authenticatedPasswordService;
 
     @Override
     @PostMapping("/login")
@@ -45,6 +47,17 @@ public class AuthController implements AuthControllerDocs {
                 authService.getCurrentUser(userDetails.getUsername())
         );
     }
+
+    @Override
+    @PutMapping("/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody PasswordChangeRequest request
+    ) {
+        authenticatedPasswordService.changePassword(userDetails.getUsername(), request);
+    }
+
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(

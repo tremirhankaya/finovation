@@ -5,7 +5,7 @@ import {
   PASSWORD_RULES_HELP,
 } from "@/shared/lib/passwordPolicy"
 import EyeIcon from "@/shared/ui/icons/EyeIcon"
-import styles from "@/features/users/styles/UserFormModal.module.css"
+import styles from "@/shared/ui/PasswordPairFields.module.css"
 
 type PasswordPairFieldsProps = {
   idPrefix: string
@@ -36,10 +36,10 @@ export default function PasswordPairFields({
 
   return (
     <>
-      <div className={styles.grid2}>
+      <div className={styles.grid}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor={`${idPrefix}-password`}>
-            {passwordLabel} <span className={styles.req}>*</span>
+            {passwordLabel} <span className={styles.required}>*</span>
           </label>
           <div className={styles.passwordControl}>
             <input
@@ -73,7 +73,7 @@ export default function PasswordPairFields({
             className={styles.label}
             htmlFor={`${idPrefix}-password-confirm`}
           >
-            Parola tekrar <span className={styles.req}>*</span>
+            Parola tekrar <span className={styles.required}>*</span>
           </label>
           <div className={styles.passwordControl}>
             <input

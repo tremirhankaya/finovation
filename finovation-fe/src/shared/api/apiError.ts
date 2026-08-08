@@ -32,6 +32,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Bu ağdan çok fazla doğrulama denemesi yapıldı. Lütfen daha sonra tekrar deneyin.",
   AUTH_017:
     "Çok fazla oturum yenileme isteği yapıldı. Lütfen daha sonra tekrar deneyin.",
+  AUTH_018: "Yeni parolanız mevcut parolanızdan farklı olmalıdır.",
   USER_001: "Kullanıcı bulunamadı.",
   USER_002: "Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor.",
   USER_003: "Bu kullanıcı adı daha önce alınmış.",

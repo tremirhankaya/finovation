@@ -44,7 +44,10 @@ function renderShell(initialEntry = "/dashboard") {
           <Route path="/dashboard" element={<LocationProbe />} />
           <Route path="/fund-design" element={<LocationProbe />} />
           <Route path="/fund-monitoring" element={<LocationProbe />} />
-          <Route path="/optimization-requests/new" element={<LocationProbe />} />
+          <Route
+            path="/optimization-requests/new"
+            element={<LocationProbe />}
+          />
           <Route path="/users" element={<LocationProbe />} />
         </Route>
       </Routes>
@@ -131,6 +134,22 @@ describe("AppShell", () => {
     await user.click(screen.getByRole("button", { name: "Çıkış Yap" }))
 
     expect(signOutMock).toHaveBeenCalledOnce()
+  })
+
+  it("kullanıcı kartından hesap ve güvenlik dialogunu açar", async () => {
+    const user = userEvent.setup()
+    renderShell()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Batuhan Pınar hesap ve güvenlik",
+      }),
+    )
+
+    expect(
+      screen.getByRole("dialog", { name: "Hesap ve Güvenlik" }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("batuhan@example.com")).toBeInTheDocument()
   })
 
   it("menü bağlantısından ilgili ürün route'una geçer", async () => {

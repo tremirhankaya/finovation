@@ -89,6 +89,7 @@
 
 .navigationLink:focus-visible,
 .signOutButton:focus-visible,
+.userSummary:focus-visible,
 .sidebarToggle:focus-visible {
   outline: 3px solid rgb(13 148 136 / 25%);
   outline-offset: 2px;
@@ -122,11 +123,23 @@
 
 .userSummary {
   display: flex;
+  width: 100%;
   min-width: 0;
   align-items: center;
   gap: 11px;
   padding: 10px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  text-align: left;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.userSummary:hover {
+  background: #f1f5f9;
 }
 
 .avatar {
