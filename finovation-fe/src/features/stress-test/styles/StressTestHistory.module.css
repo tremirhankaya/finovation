@@ -1,0 +1,160 @@
+.historySection {
+    margin-top: 34px;
+}
+
+.historyTableWrapper {
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+}
+
+.historyTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+}
+
+.historyTable th {
+    padding: 13px 16px;
+    color: #475569;
+    background: #f8fafc;
+    border-bottom: 1px solid #dfe7ef;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.historyTable td {
+    padding: 15px 16px;
+    color: #334155;
+    border-bottom: 1px solid #eef2f7;
+    white-space: nowrap;
+}
+
+.historyTable tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.historyTable tbody tr:hover {
+    background: #f8fafc;
+}
+
+.historyScenario {
+    color: #0f2d52 !important;
+    font-weight: 750;
+}
+
+.historyActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.historyActions button {
+    padding: 6px 10px;
+    color: #0f2d52;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.historyActions button:hover {
+    background: #f8fafc;
+}
+
+.deleteAction {
+    color: #b91c1c !important;
+    border-color: #fecaca !important;
+}
+
+.deleteAction:hover {
+    background: #fff1f2 !important;
+}
+.loadingBanner,
+.errorBanner,
+.emptyState {
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 0.84rem;
+}
+
+.loadingBanner {
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #dfe7ef;
+}
+
+.errorBanner {
+    display: grid;
+    gap: 3px;
+    color: #991b1b;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+}
+
+.errorBanner span {
+    font-size: 0.8rem;
+}
+
+.emptyState {
+    padding: 30px;
+    color: #64748b;
+    background: #fff;
+    border: 1px dashed #cbd5e1;
+    text-align: center;
+}
+
+.positiveValue {
+    color: #15803d;
+}
+
+.negativeValue {
+    color: #b91c1c;
+}
+
+.neutralValue {
+    color: #475569;
+}
+.sectionHeading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 14px;
+}
+
+.sectionHeading span {
+    display: block;
+    margin-bottom: 4px;
+    color: #0d9488;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sectionHeading h2 {
+    margin: 0;
+    color: #0f2d52;
+    font-size: 1.05rem;
+}
+
+.sectionHeading p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 760px) {
+    .sectionHeading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+}

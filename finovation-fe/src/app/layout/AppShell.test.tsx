@@ -45,6 +45,7 @@ function renderShell(initialEntry = "/dashboard") {
           <Route path="/fund-design" element={<LocationProbe />} />
           <Route path="/fund-monitoring" element={<LocationProbe />} />
           <Route path="/optimization-requests/new" element={<LocationProbe />} />
+          <Route path="/stress-test" element={<LocationProbe />} />
           <Route path="/users" element={<LocationProbe />} />
         </Route>
       </Routes>
@@ -76,6 +77,9 @@ describe("AppShell", () => {
     expect(
       screen.getByRole("link", { name: "Fon Optimizasyonu" }),
     ).toHaveAttribute("href", "/optimization-requests/new")
+    expect(
+      screen.getByRole("link", { name: "Stres Testi" }),
+    ).toHaveAttribute("href", "/stress-test")
     expect(
       screen.getByRole("link", { name: "Kullanıcı Yönetimi" }),
     ).toHaveAttribute("href", "/users")
@@ -142,5 +146,15 @@ describe("AppShell", () => {
     )
 
     expect(screen.getByTestId("location")).toHaveTextContent("/fund-monitoring")
+  })
+  it("stres testi menü bağlantısından ilgili route'a geçer", async () => {
+    const user = userEvent.setup()
+    renderShell()
+
+    await user.click(
+        screen.getByRole("link", { name: "Stres Testi" }),
+    )
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/stress-test")
   })
 })
