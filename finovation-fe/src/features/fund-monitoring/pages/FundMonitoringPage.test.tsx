@@ -72,6 +72,7 @@ const READY_PROPS: FundMonitoringViewProps = {
       { period: "1M", label: "1 Aylık Getiri", value: 4.2 },
       { period: "3M", label: "3 Aylık Getiri", value: 11.8 },
       { period: "6M", label: "6 Aylık Getiri", value: 19.5 },
+      { period: "1Y", label: "1 Yıllık Getiri", value: 28.4 },
     ],
     positions: [
       {
@@ -145,9 +146,16 @@ describe("FundMonitoringView", () => {
 
     expect(screen.getByText("₺18,4271")).toBeInTheDocument()
     expect(screen.getByText("%24,60")).toBeInTheDocument()
+    expect(screen.getByText("1 Yıllık Getiri").parentElement).toHaveTextContent(
+      "+%28,40",
+    )
     expect(screen.getByText("THYAO")).toBeInTheDocument()
-    expect(screen.getByText("BIST 100 Getiri Endeksi")).toBeInTheDocument()
-    expect(screen.getByText("%90")).toBeInTheDocument()
+    expect(
+      screen.queryByText("Fon Karşılaştırma Ölçütü"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("BIST 100 Getiri Endeksi"),
+    ).not.toBeInTheDocument()
     expect(screen.getAllByText("Ulaştırma")).toHaveLength(2)
     expect(
       screen.getByRole("img", {

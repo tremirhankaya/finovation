@@ -36,7 +36,7 @@ const benchmarkDefinitionSchema = z.object({
 })
 
 const periodReturnSchema = z.object({
-  period: z.enum(["1M", "3M", "6M"]),
+  period: z.enum(["1M", "3M", "6M", "1Y"]),
   label: z.string().min(1),
   value: z.number().nullable(),
 })
