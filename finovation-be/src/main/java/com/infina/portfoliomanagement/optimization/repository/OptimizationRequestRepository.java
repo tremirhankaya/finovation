@@ -4,10 +4,11 @@ import com.infina.portfoliomanagement.optimization.entity.OptimizationRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface OptimizationRequestRepository extends JpaRepository<OptimizationRequest, Long> {
 
-    List<OptimizationRequest> findAllByFundId(Long fundId);
+    List<OptimizationRequest> findAllByFundId(UUID fundId);
 
-    List<OptimizationRequest> findAllByFundIdAndRequestedById(Long fundId, Long requestedById);
+    List<OptimizationRequest> findAllByFundIdAndRequestedById(UUID fundId, Long requestedById);
 }

@@ -4,10 +4,11 @@ import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
 import com.infina.portfoliomanagement.optimization.enums.RiskProfile;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record OptimizationRequestResponse(
         Long id,
-        Long fundId,
+        UUID fundId,
         LocalDateTime dataTimestamp,
         String modelVersion,
         Long requestedByUserId,

@@ -9,6 +9,7 @@ const fundMonitoringMocks = vi.hoisted(() => ({
 }))
 const optimizationApiMocks = vi.hoisted(() => ({
   createOptimizationRequest: vi.fn(),
+  fetchInvestmentUniverse: vi.fn(),
 }))
 
 vi.mock(
@@ -90,6 +91,11 @@ describe("OptimizationFormPage", () => {
       .mockReset()
       .mockResolvedValue(snapshot())
     optimizationApiMocks.createOptimizationRequest.mockReset()
+    optimizationApiMocks.fetchInvestmentUniverse
+      .mockReset()
+      .mockResolvedValue([
+        { assetCode: "MGROS", name: "Migros", sectorName: "Perakende Ticaret" },
+      ])
   })
 
   it("fon verileri yüklenirken yükleniyor bandı gösterir", () => {

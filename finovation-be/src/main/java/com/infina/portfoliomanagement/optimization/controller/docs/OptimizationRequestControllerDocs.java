@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(
         name = "Optimization Requests",
@@ -47,7 +48,7 @@ public interface OptimizationRequestControllerDocs {
     )
     ResponseEntity<List<OptimizationRequestResponse>> getOptimizationRequests(
             UserDetails userDetails,
-            Long fundId
+            UUID fundId
     );
 
     @Operation(

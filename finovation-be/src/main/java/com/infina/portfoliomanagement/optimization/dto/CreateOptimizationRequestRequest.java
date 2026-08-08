@@ -6,11 +6,12 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public record CreateOptimizationRequestRequest(
 
         @NotNull(message = "Fund id must not be null.")
-        Long fundId,
+        UUID fundId,
 
         @NotNull(message = "Risk profile must not be null.")
         RiskProfile riskProfile,

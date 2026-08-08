@@ -36,6 +36,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -105,7 +106,7 @@ public class OptimizationRequestService {
     }
 
     @Transactional(readOnly = true)
-    public List<OptimizationRequestResponse> listByFund(String actorUsername, Long fundId) {
+    public List<OptimizationRequestResponse> listByFund(String actorUsername, UUID fundId) {
         User actor = resolveActor(actorUsername);
 
         List<OptimizationRequest> requests = actor.getRole() == Role.ADMIN
