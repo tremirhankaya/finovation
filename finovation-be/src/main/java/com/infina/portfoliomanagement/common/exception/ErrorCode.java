@@ -401,6 +401,25 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "Stress test not found."
     ),
+
+
+    FUND_ENGINE_UNAVAILABLE(
+            "ENGINE_001",
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "The portfolio engine is temporarily unavailable. Please try again later."
+    ),
+
+    FUND_ENGINE_ERROR(
+            "ENGINE_002",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "The portfolio engine returned an unexpected error."
+    ),
+
+    FUND_ENGINE_INVALID_REQUEST(
+            "ENGINE_003",
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "The portfolio engine rejected the request due to invalid parameters."
+    ),
     ;
 
     private final String code;
