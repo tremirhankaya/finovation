@@ -36,6 +36,14 @@ public record FundModelAnalysisRequest(
 
         @NotNull
         @JsonProperty("tpp_min_weight")
-        BigDecimal tppMinWeight
+        BigDecimal tppMinWeight,
+
+        @NotNull
+        @JsonProperty("single_stock_max_weight")
+        BigDecimal singleStockMaxWeight,
+
+        @NotNull
+        @JsonProperty("sector_max_weight")
+        BigDecimal sectorMaxWeight
 ) {
 }

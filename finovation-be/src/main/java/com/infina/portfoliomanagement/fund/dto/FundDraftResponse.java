@@ -70,6 +70,8 @@ public record FundDraftResponse(
 
         FundDraftStatus status,
 
+        LocalDateTime createdAt,
+
         LocalDateTime updatedAt,
 
         List<String> excludedAssetCodes,
@@ -137,6 +139,8 @@ public record FundDraftResponse(
                 .currentStep(draft.getCurrentStep() == null ? null : draft.getCurrentStep().intValue())
 
                 .status(draft.getStatus())
+
+                .createdAt(draft.getCreatedAt())
 
                 .updatedAt(draft.getUpdatedAt())
 
