@@ -1,4 +1,5 @@
 import {
+  getInvestmentUniverseUrl,
   getOptimizationRequestApproveUrl,
   getOptimizationRequestRejectUrl,
   getOptimizationRequestRunUrl,
@@ -8,7 +9,9 @@ import {
 import { apiFetch } from "@/shared/api/httpClient"
 import {
   type CreateOptimizationRequestPayload,
+  type InvestmentUniverseAssetResponse,
   type OptimizationRequestResponse,
+  investmentUniverseResponseSchema,
   optimizationRequestListResponseSchema,
   optimizationRequestResponseSchema,
 } from "@/features/optimization/model/optimizationSchemas"
@@ -91,5 +94,18 @@ export async function rejectOptimizationRequest(
       errorMessage: "Optimizasyon sonucu reddedilemedi",
     },
     optimizationRequestResponseSchema.parse,
+  )
+}
+
+export async function fetchInvestmentUniverse(
+  signal?: AbortSignal,
+): Promise<InvestmentUniverseAssetResponse[]> {
+  return apiFetch(
+    getInvestmentUniverseUrl(),
+    {
+      errorMessage: "Yatırım evreni alınamadı",
+      signal,
+    },
+    investmentUniverseResponseSchema.parse,
   )
 }

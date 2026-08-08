@@ -17,7 +17,7 @@ import {
 
 const sampleResponse = {
   id: 1,
-  fundId: 42,
+  fundId: "11111111-1111-4111-8111-111111111111",
   dataTimestamp: null,
   modelVersion: null,
   requestedByUserId: 7,
@@ -40,7 +40,7 @@ describe("optimizationApi", () => {
     httpMocks.apiFetch.mockResolvedValue(sampleResponse)
 
     const payload = {
-      fundId: 42,
+      fundId: "11111111-1111-4111-8111-111111111111",
       riskProfile: "BALANCED" as const,
       assetPreferences: [],
       tppMinWeight: 5,

@@ -18,7 +18,7 @@ const RISK_PROFILE_TERM_LABELS: Record<RiskProfile, string> = {
 }
 
 export type OptimizationRunningViewProps = {
-  fundId: number | null
+  fundId: string | null
   fundName?: string | null
   riskProfile: RiskProfile | null
   isRunning: boolean

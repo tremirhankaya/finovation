@@ -26,6 +26,9 @@ export const API_PATHS = {
   optimizationRequests:
     import.meta.env.VITE_OPTIMIZATION_REQUESTS_PATH?.trim() ||
     "/v1/optimization-requests",
+  investmentUniverse:
+    import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
+    "/v1/investment-universe",
 } as const
 
 function normalizePath(path: string): string {
@@ -140,4 +143,8 @@ export function getOptimizationRequestApproveUrl(requestId: number): string {
 
 export function getOptimizationRequestRejectUrl(requestId: number): string {
   return `${getOptimizationRequestUrl(requestId)}/reject`
+}
+
+export function getInvestmentUniverseUrl(): string {
+  return buildUrl(API_PATHS.investmentUniverse)
 }

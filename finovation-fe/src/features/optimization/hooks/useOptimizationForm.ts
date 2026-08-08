@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { createOptimizationRequest } from "@/features/optimization/api/optimizationApi"
+import {
+  createOptimizationRequest,
+  fetchInvestmentUniverse,
+} from "@/features/optimization/api/optimizationApi"
 import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimizationError"
 import {
   buildComplianceRows,
   isComplianceReady,
 } from "@/features/optimization/lib/optimizationCompliance"
-import { PLACEHOLDER_INVESTMENT_UNIVERSE } from "@/features/optimization/lib/investmentUniverse"
 import type { WizardStep } from "@/features/optimization/components/OptimizationWizardSteps"
 import type {
   AssetSelectionMap,
   AssetSelectionType,
+  UniverseAsset,
 } from "@/features/optimization/model/optimizationForm.types"
 import type {
   AssetPreferenceRequest,
@@ -32,8 +35,6 @@ const DEFAULT_STOCK_COUNT_MIN = 16
 const DEFAULT_STOCK_COUNT_MAX = 30
 const DEFAULT_RISK_PROFILE: RiskProfile = "BALANCED"
 
-const PLACEHOLDER_OPTIMIZATION_FUND_ID = 1
-
 export function useOptimizationForm() {
   const [step, setStep] = useState<WizardStep>(1)
   const [funds, setFunds] = useState<FundOption[]>([])
@@ -42,6 +43,8 @@ export function useOptimizationForm() {
   const [isLoadingFunds, setIsLoadingFunds] = useState(true)
   const [isLoadingSnapshot, setIsLoadingSnapshot] = useState(false)
   const [loadErrorMessage, setLoadErrorMessage] = useState("")
+  const [universeAssets, setUniverseAssets] = useState<UniverseAsset[]>([])
+  const [isLoadingUniverse, setIsLoadingUniverse] = useState(true)
 
   const [riskProfile, setRiskProfile] =
     useState<RiskProfile>(DEFAULT_RISK_PROFILE)
@@ -76,6 +79,36 @@ export function useOptimizationForm() {
     }
 
     void loadFunds()
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadUniverse() {
+      setIsLoadingUniverse(true)
+
+      try {
+        const response = await fetchInvestmentUniverse(controller.signal)
+        setUniverseAssets(
+          response.map((asset) => ({
+            assetCode: asset.assetCode,
+            symbol: asset.assetCode,
+            name: asset.name,
+            sectorName: asset.sectorName,
+          })),
+        )
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setUniverseAssets([])
+          setLoadErrorMessage(getOptimizationErrorMessage(error))
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoadingUniverse(false)
+      }
+    }
+
+    void loadUniverse()
     return () => controller.abort()
   }, [])
 
@@ -178,11 +211,12 @@ export function useOptimizationForm() {
     ],
   )
 
-  const canSubmit = isComplianceReady(complianceRows) && !isSubmitting
+  const canSubmit =
+    isComplianceReady(complianceRows) && !isSubmitting && !!selectedFundId
 
   const submit = useCallback(
     async (onSubmitted: (createdRequestId: number) => void) => {
-      if (!canSubmit) return
+      if (!canSubmit || !selectedFundId) return
 
       setIsSubmitting(true)
       setSubmitErrorMessage("")
@@ -207,7 +241,7 @@ export function useOptimizationForm() {
 
       try {
         const created = await createOptimizationRequest({
-          fundId: PLACEHOLDER_OPTIMIZATION_FUND_ID,
+          fundId: selectedFundId,
           riskProfile,
           assetPreferences,
           tppMinWeight,
@@ -224,6 +258,7 @@ export function useOptimizationForm() {
     },
     [
       canSubmit,
+      selectedFundId,
       keptAssets,
       excludedAssetCodes,
       forceAddedAssetCodes,
@@ -244,13 +279,14 @@ export function useOptimizationForm() {
     selectFund: setSelectedFundId,
     snapshot,
     isLoadingFunds,
-    isLoading: isLoadingFunds || isLoadingSnapshot,
+    isLoading: isLoadingFunds || isLoadingSnapshot || isLoadingUniverse,
     loadErrorMessage,
     riskProfile,
     setRiskProfile,
     selection,
     toggleSelection,
-    universeAssets: PLACEHOLDER_INVESTMENT_UNIVERSE,
+    universeAssets,
+    isLoadingUniverse,
     tppMinWeight,
     setTppMinWeight,
     tppMaxWeight,

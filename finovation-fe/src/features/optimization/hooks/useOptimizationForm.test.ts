@@ -7,6 +7,7 @@ const fundMonitoringMocks = vi.hoisted(() => ({
 }))
 const optimizationApiMocks = vi.hoisted(() => ({
   createOptimizationRequest: vi.fn(),
+  fetchInvestmentUniverse: vi.fn(),
 }))
 
 vi.mock(
@@ -63,6 +64,11 @@ describe("useOptimizationForm", () => {
       .mockReset()
       .mockResolvedValue(snapshot())
     optimizationApiMocks.createOptimizationRequest.mockReset()
+    optimizationApiMocks.fetchInvestmentUniverse
+      .mockReset()
+      .mockResolvedValue([
+        { assetCode: "MGROS", name: "Migros", sectorName: "Perakende Ticaret" },
+      ])
   })
 
   it("fonları ve ilk fonun anlık görüntüsünü yükler", async () => {
@@ -152,7 +158,7 @@ describe("useOptimizationForm", () => {
 
     expect(optimizationApiMocks.createOptimizationRequest).toHaveBeenCalledWith(
       expect.objectContaining({
-        fundId: 1,
+        fundId: FUND.id,
         riskProfile: "BALANCED",
         tppMinWeight: 5,
         tppMaxWeight: 15,

@@ -20,7 +20,7 @@ const boldFontBytes = readFileSync(resolve(fontsDir, "Roboto-Bold.ttf"))
 
 const REQUEST: OptimizationRequestResponse = {
   id: 9001,
-  fundId: 42,
+  fundId: "11111111-1111-4111-8111-111111111111",
   dataTimestamp: "2026-08-06T10:00:00",
   modelVersion: "v1.2.0",
   requestedByUserId: 7,

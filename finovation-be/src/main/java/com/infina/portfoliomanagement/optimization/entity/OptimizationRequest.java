@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "optimization_requests")
@@ -22,7 +23,7 @@ public class OptimizationRequest {
     private Long id;
 
     @Column(name = "fund_id", nullable = false)
-    private Long fundId;
+    private UUID fundId;
 
     @Column(name = "data_timestamp")
     private LocalDateTime dataTimestamp;
