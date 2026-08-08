@@ -4,12 +4,11 @@ import type { ModelUniverseAsset } from "@/features/fund-design/model/fundDraftS
 import styles from "@/features/fund-design/styles/AssetPreferencePicker.module.css"
 import Dialog from "@/shared/ui/Dialog"
 
-export const MAX_ASSET_PREFERENCES = 5
-
 type Props = {
   forcedCodes: string[]
   excludedCodes: string[]
   minStockCount: number
+  maxAssetPreferences: number
   universe: ModelUniverseAsset[]
   disabled?: boolean
   onForcedChange: (codes: string[]) => void
@@ -97,6 +96,7 @@ export default function AssetPreferencePicker({
   forcedCodes,
   excludedCodes,
   minStockCount,
+  maxAssetPreferences,
   universe,
   disabled = false,
   onForcedChange,
@@ -106,8 +106,8 @@ export default function AssetPreferencePicker({
   const [query, setQuery] = useState("")
   const [listQuery, setListQuery] = useState("")
 
-  const forcedLimit = Math.min(MAX_ASSET_PREFERENCES, Math.max(1, minStockCount))
-  const excludedLimit = MAX_ASSET_PREFERENCES
+  const forcedLimit = Math.min(maxAssetPreferences, Math.max(1, minStockCount))
+  const excludedLimit = maxAssetPreferences
   const status: UniverseStatus = disabled ? "idle" : "ready"
 
   const searchMatches = useMemo(() => {
@@ -190,7 +190,7 @@ export default function AssetPreferencePicker({
       <p className={styles.hint}>
         İsteğe bağlı. Kod veya şirket adıyla arayıp ekleyin. Tüm listeyi görmek
         için hisseleri listeleyin. Her listede en fazla{" "}
-        {MAX_ASSET_PREFERENCES} hisse.
+        {maxAssetPreferences} hisse.
       </p>
 
       <div className={styles.summaryCountsRow}>

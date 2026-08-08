@@ -10,18 +10,25 @@ const STEPS = [
   "Alternatifler",
   "Düzenleme",
   "Onay",
+  "Tamamlandı",
 ] as const
 
 function pathForStep(stepNumber: number, draftId: string | undefined): string | null {
   switch (stepNumber) {
     case 1:
-      return "/fund-design"
+      return "/fund-design/new"
     case 2:
       return draftId ? `/fund-design/${draftId}/strategy` : null
     case 3:
       return draftId ? `/fund-design/${draftId}/analysis` : null
     case 4:
       return draftId ? `/fund-design/${draftId}/alternatives` : null
+    case 5:
+      return draftId ? `/fund-design/${draftId}/edit` : null
+    case 6:
+      return draftId ? `/fund-design/${draftId}/approve` : null
+    case 7:
+      return draftId ? `/fund-design/${draftId}/completed` : null
     default:
       return null
   }
@@ -29,11 +36,13 @@ function pathForStep(stepNumber: number, draftId: string | undefined): string | 
 
 type FundDesignLayoutProps = {
   step: number
+  wide?: boolean
   children: ReactNode
 }
 
 export default function FundDesignLayout({
   step,
+  wide = false,
   children,
 }: FundDesignLayoutProps) {
   const navigate = useNavigate()
@@ -41,7 +50,7 @@ export default function FundDesignLayout({
   const currentLabel = STEPS[step - 1] ?? STEPS[0]
 
   return (
-    <div className={styles.page}>
+    <div className={[styles.page, wide && styles.pageWide].filter(Boolean).join(" ")}>
       <header className={styles.header}>
         <h1 className={styles.title}>AI Destekli Fon Tasarımı</h1>
         <p className={styles.subtitle}>

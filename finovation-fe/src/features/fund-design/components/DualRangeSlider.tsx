@@ -331,7 +331,10 @@ export default function DualRangeSlider({
         <div className={styles.track} aria-hidden="true" />
         <div
           className={styles.range}
-          style={{ left: `${lowPercent}%`, right: `${100 - highPercent}%` }}
+          style={{
+            left: `calc(${lowPercent}% + ${0.55 - (lowPercent / 100) * 1.1}rem)`,
+            right: `calc(${100 - highPercent}% + ${0.55 - ((100 - highPercent) / 100) * 1.1}rem)`,
+          }}
           aria-hidden="true"
         />
 
