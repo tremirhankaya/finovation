@@ -13,5 +13,9 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
 
     List<Asset> findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType assetType);
 
+    List<Asset> findAllByAssetTypeAndInModelUniverseTrueAndActiveTrueOrderByAssetCodeAsc(
+            AssetType assetType
+    );
+
     List<Asset> findAllByInModelUniverseTrueAndActiveTrueOrderByAssetCodeAsc();
 }

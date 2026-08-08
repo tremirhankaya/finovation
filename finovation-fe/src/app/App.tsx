@@ -9,6 +9,8 @@ import DashboardPage from "@/features/dashboard/pages/DashboardPage"
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage"
 import StartFundDraftPage from "@/features/fund-design/pages/StartFundDraftPage"
 import FundDesignStrategyPage from "@/features/fund-design/pages/FundDesignStrategyPage"
+import FundDesignAnalysisPage from "@/features/fund-design/pages/FundDesignAnalysisPage"
+import FundDesignAlternativesPage from "@/features/fund-design/pages/FundDesignAlternativesPage"
 import FundMonitoringPage from "@/features/fund-monitoring/pages/FundMonitoringPage"
 import OptimizationFormPage from "@/features/optimization/pages/OptimizationFormPage"
 import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
@@ -69,6 +71,14 @@ export default function App() {
             <Route
               path="/fund-design/:draftId/strategy"
               element={<FundDesignStrategyPage />}
+            />
+            <Route
+              path="/fund-design/:draftId/analysis"
+              element={<FundDesignAnalysisPage />}
+            />
+            <Route
+              path="/fund-design/:draftId/alternatives"
+              element={<FundDesignAlternativesPage />}
             />
             <Route path="/fund-monitoring" element={<FundMonitoringPage />} />
             <Route
