@@ -61,6 +61,10 @@ export function getLogoutUrl(): string {
   return buildUrl(API_PATHS.logout)
 }
 
+export function getPasswordChangeUrl(): string {
+  return buildUrl(API_PATHS.passwordChange)
+}
+
 export function getUsersUrl(userId?: number): string {
   const base = buildUrl(API_PATHS.users)
   return userId == null ? base : `${base}/${userId}`
@@ -160,4 +164,16 @@ export function getOptimizationRequestRejectUrl(requestId: number): string {
 }
 export function getInvestmentUniverseUrl(): string {
   return buildUrl(API_PATHS.investmentUniverse)
+}
+
+export function getStressScenariosUrl(): string {
+  return buildUrl(API_PATHS.stressScenarios)
+}
+
+export function getStressTestsUrl(): string {
+  return buildUrl(API_PATHS.stressTests)
+}
+
+export function getStressTestUrl(testId: string): string {
+  return `${buildUrl(API_PATHS.stressTests)}/${encodeURIComponent(testId)}`
 }
