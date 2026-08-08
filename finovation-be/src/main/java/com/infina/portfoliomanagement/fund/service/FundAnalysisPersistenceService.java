@@ -5,6 +5,7 @@ import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
+import com.infina.portfoliomanagement.fund.enums.AIAssetCodeMapping;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineAlternativeDto;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineCreateResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
@@ -138,11 +139,20 @@ public class FundAnalysisPersistenceService {
             FundPortfolio saved = fundPortfolioRepository.save(portfolio);
             
             List<FundModelAssetDto> assets = alt.weights().entrySet().stream()
-                    .map(entry -> new FundModelAssetDto(
-                            entry.getKey(),
-                            BigDecimal.valueOf(entry.getValue()).multiply(BigDecimal.valueOf(100)), // Map decimal back to % for DB
-                            null // aiNote is not provided in create response
-                    ))
+                    .map(entry -> {
+                        String note = null;
+                        if (alt.reasonTexts() != null && alt.reasonTexts().containsKey(entry.getKey())) {
+                            List<String> reasons = alt.reasonTexts().get(entry.getKey());
+                            if (reasons != null && !reasons.isEmpty()) {
+                                note = String.join(", ", reasons);
+                            }
+                        }
+                        return new FundModelAssetDto(
+                                entry.getKey(),
+                                BigDecimal.valueOf(entry.getValue()).multiply(BigDecimal.valueOf(100)), // Map decimal back to % for DB
+                                note
+                        );
+                    })
                     .toList();
                     
             savePositions(saved, assets, assetsByCode, now);
@@ -150,6 +160,9 @@ public class FundAnalysisPersistenceService {
         }
 
         run.setStatus(ModelRunStatus.COMPLETED);
+        if (response.snapshotId() != null) {
+            run.setModelVersion(response.snapshotId());
+        }
         run.setRulesFingerprint(rulesFingerprint);
         run.setCompletedAt(now);
         run.setUpdatedAt(now);
@@ -488,6 +501,7 @@ public class FundAnalysisPersistenceService {
     }
 
     private static String normalizeCode(String code) {
-        return code.trim().toUpperCase(Locale.ROOT);
+        String normalized = code.trim().toUpperCase(Locale.ROOT);
+        return AIAssetCodeMapping.resolveInternalCode(normalized).orElse(normalized);
     }
 }
