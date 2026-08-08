@@ -1,12 +1,9 @@
 import { getFundMonitoringUrl, getFundsUrl } from "@/shared/api/apiConfig"
-
 import { apiFetch } from "@/shared/api/httpClient"
-
 import type {
   FundMonitoringSnapshot,
   FundOption,
 } from "@/features/fund-monitoring/model/fundMonitoring.types"
-
 import {
   fundMonitoringResponseSchema,
   fundSummaryListResponseSchema,
@@ -21,9 +18,7 @@ const FUND_TYPE_LABELS: Record<FundSummaryResponse["type"], string> = {
 function toFundOption(response: FundSummaryResponse): FundOption {
   return {
     id: response.id,
-
     name: response.name,
-
     type: FUND_TYPE_LABELS[response.type],
   }
 }
@@ -31,23 +26,16 @@ function toFundOption(response: FundSummaryResponse): FundOption {
 function toSnapshot(response: FundMonitoringResponse): FundMonitoringSnapshot {
   return {
     fund: toFundOption(response.fund),
-
     asOfDate: response.asOfDate,
-
     currency: response.currency,
-
     currentSharePrice: response.currentSharePrice,
-
     dailyChangePercentage: response.dailyChangePercentage,
     priceHistory: response.priceHistory,
     benchmark: response.benchmark,
     technicalIndicators: response.technicalIndicators,
     periodReturns: response.periodReturns,
-
     positions: response.positions,
-
     sectorAllocations: response.sectorAllocations,
-
     comparisonAssets: response.comparisonAssets,
   }
 }
@@ -55,13 +43,10 @@ function toSnapshot(response: FundMonitoringResponse): FundMonitoringSnapshot {
 export async function fetchFunds(signal?: AbortSignal): Promise<FundOption[]> {
   const response = await apiFetch(
     getFundsUrl(),
-
     {
       errorMessage: "Fonlar yüklenemedi",
-
       signal,
     },
-
     (body) => fundSummaryListResponseSchema.parse(body),
   )
 
@@ -70,18 +55,14 @@ export async function fetchFunds(signal?: AbortSignal): Promise<FundOption[]> {
 
 export async function fetchFundMonitoring(
   fundId: string,
-
   signal?: AbortSignal,
 ): Promise<FundMonitoringSnapshot> {
   const response = await apiFetch(
     getFundMonitoringUrl(fundId),
-
     {
       errorMessage: "Fon izleme verileri yüklenemedi",
-
       signal,
     },
-
     (body) => fundMonitoringResponseSchema.parse(body),
   )
 
