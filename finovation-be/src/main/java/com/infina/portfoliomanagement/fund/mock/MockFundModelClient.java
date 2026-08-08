@@ -11,6 +11,7 @@ import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAssetDto;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelProposalDto;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
+import com.infina.portfoliomanagement.marketdata.repository.EquityDetailRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,8 +21,10 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -31,10 +34,11 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class MockFundModelClient implements FundModelClient {
 
-    private static final double MIN_STOCK_WEIGHT = 0.03;
-    private static final double MAX_STOCK_WEIGHT = 0.10;
-    private static final double ABOVE_5_PCT_THRESHOLD = 0.05;
-    private static final double ABOVE_5_PCT_SUM_MAX = 0.40;
+    private static final double TOTAL_WEIGHT_PCT = 100.0;
+    private static final double MIN_STOCK_WEIGHT_PCT = 3.0;
+    private static final double MAX_STOCK_WEIGHT_PCT = 10.0;
+    private static final double ABOVE_5_PCT_THRESHOLD = 5.0;
+    private static final double ABOVE_5_PCT_SUM_MAX = 40.0;
 
     private static final List<String> SAMPLE_NOTES = List.of(
             "Yüksek momentum",
@@ -53,6 +57,7 @@ public class MockFundModelClient implements FundModelClient {
     );
 
     private final AssetRepository assetRepository;
+    private final EquityDetailRepository equityDetailRepository;
 
     @Override
     public FundModelAnalysisResponse analyze(FundModelAnalysisRequest request) {
@@ -64,8 +69,6 @@ public class MockFundModelClient implements FundModelClient {
                 request.tppMaxWeight()
         );
 
-        // TODO: Burada Python model servisine HTTP isteği atılacak.
-
         try {
             Thread.sleep(2500);
         } catch (InterruptedException interrupted) {
@@ -74,6 +77,7 @@ public class MockFundModelClient implements FundModelClient {
 
         List<String> equityCodes = loadEquityUniverseCodes(request);
         String tppCode = loadTppCode();
+        Map<String, String> sectorByCode = loadSectorNamesByCode();
 
         int proposalCount = 2;
         List<FundModelProposalDto> proposals = new ArrayList<>(proposalCount);
@@ -81,7 +85,7 @@ public class MockFundModelClient implements FundModelClient {
             proposals.add(new FundModelProposalDto(
                     rank,
                     PROPOSAL_LABELS.get((rank - 1) % PROPOSAL_LABELS.size()),
-                    buildRuleCompliantPortfolio(request, equityCodes, tppCode)
+                    buildRuleCompliantPortfolio(request, equityCodes, tppCode, sectorByCode)
             ));
         }
 
@@ -120,15 +124,21 @@ public class MockFundModelClient implements FundModelClient {
     private List<FundModelAssetDto> buildRuleCompliantPortfolio(
             FundModelAnalysisRequest request,
             List<String> equityCodes,
-            String tppCode
+            String tppCode,
+            Map<String, String> sectorByCode
     ) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
         double tppWeight = resolveFixedTppWeight(request);
-        double equityBudget = 1.0 - tppWeight;
+        double equityBudget = TOTAL_WEIGHT_PCT - tppWeight;
 
-        double maxStockWeight = Math.min(MAX_STOCK_WEIGHT, equityBudget);
-        double minStockWeight = Math.min(MIN_STOCK_WEIGHT, maxStockWeight);
+        double requestedSingleStockMax = request.singleStockMaxWeight().doubleValue();
+        double singleStockCap = requestedSingleStockMax > 0
+                ? Math.min(MAX_STOCK_WEIGHT_PCT, requestedSingleStockMax)
+                : MAX_STOCK_WEIGHT_PCT;
+
+        double maxStockWeight = Math.min(singleStockCap, equityBudget);
+        double minStockWeight = Math.min(MIN_STOCK_WEIGHT_PCT, maxStockWeight);
 
         List<String> mandatory = request.mandatoryAssets() == null
                 ? List.of()
@@ -164,18 +174,41 @@ public class MockFundModelClient implements FundModelClient {
         Collections.shuffle(remainder, random);
         tickers.addAll(remainder);
 
+        double sectorCap = resolveSectorCap(request);
+        Map<String, Double> sectorTotals = new HashMap<>();
+
         List<FundModelAssetDto> assets = new ArrayList<>(stockCount + 1);
-        for (int i = 0; i < stockCount; i++) {
-            String code = tickers.get(i);
+        int cursor = 0;
+        for (int i = 0; i < stockCount && cursor < tickers.size(); i++) {
+            double weight = stockWeights.get(i);
+            int picked = pickTickerWithSectorHeadroom(
+                    tickers,
+                    cursor,
+                    sectorByCode,
+                    sectorTotals,
+                    weight,
+                    sectorCap,
+                    mandatory
+            );
+            if (picked < 0) {
+                break;
+            }
+            String code = tickers.get(picked);
+            Collections.swap(tickers, cursor, picked);
+            cursor++;
+
+            String sector = sectorByCode.get(code);
+            if (sector != null) {
+                sectorTotals.merge(sector, weight, Double::sum);
+            }
+
             String note = mandatory.contains(code)
                     ? "Zorunlu hisse"
                     : SAMPLE_NOTES.get(random.nextInt(SAMPLE_NOTES.size()));
-            assets.add(new FundModelAssetDto(
-                    code,
-                    toWeight(stockWeights.get(i)),
-                    note
-            ));
+            assets.add(new FundModelAssetDto(code, toWeight(weight), note));
         }
+
+        redistributeUnusedBudget(assets, stockWeights, maxStockWeight);
 
         assets.sort(Comparator.comparing(FundModelAssetDto::weight).reversed());
 
@@ -186,6 +219,92 @@ public class MockFundModelClient implements FundModelClient {
         ));
 
         return assets;
+    }
+
+    private Map<String, String> loadSectorNamesByCode() {
+        List<Asset> assets = assetRepository
+                .findAllByAssetTypeAndInModelUniverseTrueAndActiveTrueOrderByAssetCodeAsc(
+                        AssetType.EQUITY
+                );
+        if (assets.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, String> sectorByCode = new HashMap<>();
+        equityDetailRepository
+                .findAllByAssetIdIn(assets.stream().map(Asset::getId).toList())
+                .forEach(detail -> {
+                    if (detail.getAsset() == null || detail.getSector() == null) {
+                        return;
+                    }
+                    sectorByCode.put(
+                            detail.getAsset().getAssetCode(),
+                            detail.getSector().getName()
+                    );
+                });
+        return sectorByCode;
+    }
+
+    private double resolveSectorCap(FundModelAnalysisRequest request) {
+        double requested = request.sectorMaxWeight().doubleValue();
+        return requested > 0 ? requested : TOTAL_WEIGHT_PCT;
+    }
+
+    private int pickTickerWithSectorHeadroom(
+            List<String> tickers,
+            int from,
+            Map<String, String> sectorByCode,
+            Map<String, Double> sectorTotals,
+            double weight,
+            double sectorCap,
+            List<String> mandatory
+    ) {
+        for (int i = from; i < tickers.size(); i++) {
+            String code = tickers.get(i);
+            if (mandatory.contains(code)) {
+                return i;
+            }
+            String sector = sectorByCode.get(code);
+            if (sector == null) {
+                return i;
+            }
+            double current = sectorTotals.getOrDefault(sector, 0.0);
+            if (current + weight <= sectorCap + 1e-9) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void redistributeUnusedBudget(
+            List<FundModelAssetDto> assets,
+            List<Double> plannedWeights,
+            double maxStockWeight
+    ) {
+        if (assets.isEmpty() || assets.size() == plannedWeights.size()) {
+            return;
+        }
+        double planned = plannedWeights.stream().mapToDouble(Double::doubleValue).sum();
+        double placed = assets.stream()
+                .mapToDouble(asset -> asset.weight().doubleValue())
+                .sum();
+        double leftover = planned - placed;
+
+        for (int i = 0; i < assets.size() && leftover > 1e-9; i++) {
+            FundModelAssetDto asset = assets.get(i);
+            double current = asset.weight().doubleValue();
+            double headroom = maxStockWeight - current;
+            if (headroom <= 1e-9) {
+                continue;
+            }
+            double added = Math.min(headroom, leftover);
+            assets.set(i, new FundModelAssetDto(
+                    asset.assetCode(),
+                    toWeight(current + added),
+                    asset.aiNote()
+            ));
+            leftover -= added;
+        }
     }
 
     private double resolveFixedTppWeight(FundModelAnalysisRequest request) {

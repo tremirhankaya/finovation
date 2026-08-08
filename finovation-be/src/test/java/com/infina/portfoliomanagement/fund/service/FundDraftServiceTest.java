@@ -102,7 +102,11 @@ class FundDraftServiceTest {
                 95,
                 SECTOR_MAX_PCT,
                 3,
-                5
+                5,
+                new BigDecimal("5"),
+                new BigDecimal("40"),
+                new BigDecimal("0.05"),
+                3
         );
 
         fundDraftService = new FundDraftService(
