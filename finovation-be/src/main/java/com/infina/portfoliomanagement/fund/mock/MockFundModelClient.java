@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class MockFundModelClient implements FundModelClient {
 
     private static final double MIN_STOCK_WEIGHT = 0.03;
+    private static final double MAX_STOCK_WEIGHT = 0.10;
     private static final double ABOVE_5_PCT_THRESHOLD = 0.05;
     private static final double ABOVE_5_PCT_SUM_MAX = 0.40;
 
@@ -56,12 +57,11 @@ public class MockFundModelClient implements FundModelClient {
     @Override
     public FundModelAnalysisResponse analyze(FundModelAnalysisRequest request) {
         log.info(
-                "Mock fund model analysis started (minStock={}, maxStock={}, tpp={}–{}, preferred={})",
+                "Mock fund model analysis started (minStock={}, maxStock={}, tpp={}–{})",
                 request.minStockCount(),
                 request.maxStockCount(),
                 request.tppMinWeight(),
-                request.tppMaxWeight(),
-                request.preferredTppWeight()
+                request.tppMaxWeight()
         );
 
         // TODO: Burada Python model servisine HTTP isteği atılacak.
@@ -127,15 +127,12 @@ public class MockFundModelClient implements FundModelClient {
         double tppWeight = resolveFixedTppWeight(request);
         double equityBudget = 1.0 - tppWeight;
 
-        double maxStockWeight = Math.min(
-                request.maxAnyStockWeight() / 100.0,
-                equityBudget
-        );
+        double maxStockWeight = Math.min(MAX_STOCK_WEIGHT, equityBudget);
         double minStockWeight = Math.min(MIN_STOCK_WEIGHT, maxStockWeight);
 
-        List<String> forced = request.forcedAssets() == null
+        List<String> mandatory = request.mandatoryAssets() == null
                 ? List.of()
-                : request.forcedAssets().stream()
+                : request.mandatoryAssets().stream()
                 .filter(equityCodes::contains)
                 .distinct()
                 .toList();
@@ -149,7 +146,7 @@ public class MockFundModelClient implements FundModelClient {
                 maxStockWeight,
                 random
         );
-        stockCount = Math.max(stockCount, forced.size());
+        stockCount = Math.max(stockCount, mandatory.size());
         stockCount = Math.min(stockCount, equityCodes.size());
 
         List<Double> stockWeights = allocateStockWeights(
@@ -160,9 +157,9 @@ public class MockFundModelClient implements FundModelClient {
                 random
         );
 
-        List<String> tickers = new ArrayList<>(forced);
+        List<String> tickers = new ArrayList<>(mandatory);
         List<String> remainder = equityCodes.stream()
-                .filter(code -> !forced.contains(code))
+                .filter(code -> !mandatory.contains(code))
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         Collections.shuffle(remainder, random);
         tickers.addAll(remainder);
@@ -170,7 +167,7 @@ public class MockFundModelClient implements FundModelClient {
         List<FundModelAssetDto> assets = new ArrayList<>(stockCount + 1);
         for (int i = 0; i < stockCount; i++) {
             String code = tickers.get(i);
-            String note = forced.contains(code)
+            String note = mandatory.contains(code)
                     ? "Zorunlu hisse"
                     : SAMPLE_NOTES.get(random.nextInt(SAMPLE_NOTES.size()));
             assets.add(new FundModelAssetDto(
@@ -192,14 +189,10 @@ public class MockFundModelClient implements FundModelClient {
     }
 
     private double resolveFixedTppWeight(FundModelAnalysisRequest request) {
-        int preferred = request.preferredTppWeight() != null
-                ? request.preferredTppWeight()
-                : (request.tppMinWeight() + request.tppMaxWeight()) / 2;
-        int clamped = Math.max(
-                request.tppMinWeight(),
-                Math.min(request.tppMaxWeight(), preferred)
-        );
-        return clamped / 100.0;
+        double min = request.tppMinWeight().doubleValue();
+        double max = request.tppMaxWeight().doubleValue();
+        double mid = (min + max) / 2.0;
+        return Math.max(min, Math.min(max, mid));
     }
 
     private int pickFeasibleStockCount(

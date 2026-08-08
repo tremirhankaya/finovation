@@ -42,6 +42,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -317,8 +319,7 @@ public class FundDraftService {
             return new FundModelAnalysisResponse(existing.proposals());
         }
 
-        FundProperties limits = fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE);
-        FundModelAnalysisRequest request = toAnalysisRequest(draft, limits);
+        FundModelAnalysisRequest request = toAnalysisRequest(draft);
         ModelRun run = fundAnalysisPersistenceService.startRun(draft, fingerprint);
         try {
             FundModelAnalysisResponse response = fundModelClient.analyze(request);
@@ -522,33 +523,24 @@ public class FundDraftService {
         }
     }
 
-    private FundModelAnalysisRequest toAnalysisRequest(FundDraft draft, FundProperties limits) {
+    private FundModelAnalysisRequest toAnalysisRequest(FundDraft draft) {
         InvestmentHorizon horizon =
                 draft.getHorizon() != null ? draft.getHorizon() : InvestmentHorizon.M12;
-        int singleStockMax = draft.getSingleStockMaxPct() != null
-                ? draft.getSingleStockMaxPct()
-                : limits.maxSingleStockMaxPct();
-        int equityMin = draft.getEquityMinPct() != null
-                ? draft.getEquityMinPct()
-                : limits.minEquityWeightPct();
-        int equityMax = draft.getEquityMaxPct() != null
-                ? draft.getEquityMaxPct()
-                : limits.maxEquityWeightPct();
-
         return new FundModelAnalysisRequest(
-                horizon,
-                draft.getMinStockCount().intValue(),
-                draft.getMaxStockCount().intValue(),
-                draft.getTppMinPct().intValue(),
-                draft.getTppMaxPct().intValue(),
-                draft.getPreferredTppPct().intValue(),
-                singleStockMax,
-                limits.sectorMaxPct(),
-                equityMin,
-                equityMax,
                 loadExcludedCodes(draft.getId()),
-                loadForcedCodes(draft.getId())
+                horizon,
+                loadForcedCodes(draft.getId()),
+                draft.getMaxStockCount().intValue(),
+                draft.getMinStockCount().intValue(),
+                toWeightFraction(draft.getTppMaxPct()),
+                toWeightFraction(draft.getTppMinPct())
         );
+    }
+
+    private static BigDecimal toWeightFraction(Short percent) {
+        int value = percent == null ? 0 : percent.intValue();
+        return BigDecimal.valueOf(value)
+                .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
     }
 
     private FundDraft requireOwnedDraft(String actorUsername, UUID draftId) {
