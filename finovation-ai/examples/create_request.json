@@ -1,0 +1,11 @@
+{
+  "request_id": "create-example-001",
+  "horizon": "6M",
+  "min_stock_count": 16,
+  "max_stock_count": 20,
+  "tpp_min_weight": 0.07,
+  "tpp_max_weight": 0.14,
+  "mandatory_assets": ["ASELS.E"],
+  "excluded_assets": ["FENER.E", "GSRAY.E"],
+  "max_universe58_beta": 1.10
+}
