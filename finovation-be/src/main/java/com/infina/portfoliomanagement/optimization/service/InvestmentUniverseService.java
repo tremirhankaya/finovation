@@ -8,6 +8,7 @@ import com.infina.portfoliomanagement.marketdata.repository.EquityDetailReposito
 import com.infina.portfoliomanagement.optimization.dto.InvestmentUniverseAssetResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ public class InvestmentUniverseService {
     private final AssetRepository assetRepository;
     private final EquityDetailRepository equityDetailRepository;
 
+    @Transactional(readOnly = true)
     public List<InvestmentUniverseAssetResponse> listInvestmentUniverse() {
         List<Asset> assets = assetRepository
                 .findAllByAssetTypeAndInModelUniverseTrueAndActiveTrueOrderByAssetCodeAsc(
