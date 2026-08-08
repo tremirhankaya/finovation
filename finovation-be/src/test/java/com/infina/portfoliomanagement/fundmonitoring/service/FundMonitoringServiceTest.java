@@ -98,7 +98,10 @@ class FundMonitoringServiceTest {
                 benchmarkService,
                 similarFundService,
                 riskFreeRateProvider,
-                new FundMonitoringProperties(new BigDecimal("1000000")),
+                new FundMonitoringProperties(
+                        new BigDecimal("1000000"),
+                        new BigDecimal("37")
+                ),
                 CLOCK
         );
     }
