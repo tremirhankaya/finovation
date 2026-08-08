@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.security.config;
 import com.infina.portfoliomanagement.security.handler.CustomAccessDeniedHandler;
 import com.infina.portfoliomanagement.security.handler.CustomAuthenticationEntryPoint;
 import com.infina.portfoliomanagement.security.jwt.JwtAuthenticationFilter;
+import com.infina.portfoliomanagement.security.password.PasswordChangeRequiredFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,7 @@ public class SecurityConfig {
 
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PasswordChangeRequiredFilter passwordChangeRequiredFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
 
@@ -58,7 +60,7 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/prometheus")
                         .permitAll()
-                        .requestMatchers("/api/v1/auth/me")
+                        .requestMatchers("/api/v1/auth/me", "/api/v1/auth/password")
                         .authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/companies")
                         .hasAnyRole(ADMIN_ROLE, COMPANY_MANAGER_ROLE)
@@ -74,6 +76,10 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterAfter(
+                        passwordChangeRequiredFilter,
+                        JwtAuthenticationFilter.class
                 );
 
         return http.build();

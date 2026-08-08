@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/optimization-requests")
@@ -53,7 +54,7 @@ public class OptimizationRequestController implements OptimizationRequestControl
     @GetMapping
     public ResponseEntity<List<OptimizationRequestResponse>> getOptimizationRequests(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam Long fundId
+            @RequestParam UUID fundId
     ) {
         return ResponseEntity.ok(
                 optimizationRequestService.listByFund(userDetails.getUsername(), fundId)

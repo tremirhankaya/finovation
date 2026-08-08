@@ -1,14 +1,6 @@
 export type PricePeriod = "1W" | "1M" | "3M" | "6M" | "1Y"
 
-export type ComparisonPeriod =
-  | "1W"
-  | "1M"
-  | "3M"
-  | "6M"
-  | "YTD"
-  | "1Y"
-  | "3Y"
-  | "5Y"
+export type ComparisonPeriod = "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "3Y" | "5Y"
 
 export type FundOption = {
   id: string
@@ -29,10 +21,22 @@ export type TechnicalIndicator = {
   value: number | null
   unit: IndicatorUnit
   tone?: "positive" | "negative" | "neutral"
+  description?: string
+}
+
+export type BenchmarkComponent = {
+  code: string
+  name: string
+  weightPercentage: number
+}
+
+export type BenchmarkDefinition = {
+  name: string
+  components: BenchmarkComponent[]
 }
 
 export type PeriodReturn = {
-  period: "1M" | "3M" | "6M"
+  period: "1M" | "3M" | "6M" | "1Y"
   label: string
   value: number | null
 }
@@ -67,6 +71,7 @@ export type FundMonitoringSnapshot = {
   currentSharePrice: number
   dailyChangePercentage: number
   priceHistory: Partial<Record<PricePeriod, PricePoint[]>>
+  benchmark: BenchmarkDefinition
   technicalIndicators: TechnicalIndicator[]
   periodReturns: PeriodReturn[]
   positions: FundPosition[]

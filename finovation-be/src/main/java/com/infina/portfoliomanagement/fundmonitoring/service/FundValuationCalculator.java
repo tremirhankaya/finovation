@@ -36,6 +36,22 @@ public class FundValuationCalculator {
             List<Asset> assets,
             Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset
     ) {
+        return calculate(
+                fund,
+                positions,
+                assets,
+                unitValuesByAsset,
+                fund.getCreatedAt().toLocalDate()
+        );
+    }
+
+    public FundValuationResult calculate(
+            FundDraft fund,
+            List<FundPosition> positions,
+            List<Asset> assets,
+            Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
+            LocalDate historyStartDate
+    ) {
         if (positions.isEmpty()) {
             throw unavailable();
         }
@@ -46,7 +62,7 @@ public class FundValuationCalculator {
                 .collect(Collectors.toMap(Asset::getId, Function.identity()));
         assertUnitValuesAvailable(assets, unitValuesByAsset);
         SortedSet<LocalDate> commonDates = resolveCommonDates(
-                fund.getCreatedAt().toLocalDate(),
+                historyStartDate,
                 positions,
                 unitValuesByAsset
         );

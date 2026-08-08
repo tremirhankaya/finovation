@@ -36,12 +36,28 @@ const READY_PROPS: FundMonitoringViewProps = {
         { date: "2026-08-04", value: 18.4271 },
       ],
     },
+    benchmark: {
+      name: "Fon Karşılaştırma Ölçütü",
+      components: [
+        {
+          code: "XU100_CFNNTLTL",
+          name: "BIST 100 Getiri Endeksi",
+          weightPercentage: 90,
+        },
+        {
+          code: "REPBR",
+          name: "BIST-KYD Repo (Brüt) Endeksi",
+          weightPercentage: 10,
+        },
+      ],
+    },
     technicalIndicators: [
       {
         code: "VOLATILITY",
         label: "Volatilite (Yıllık)",
         value: 24.6,
         unit: "PERCENT",
+        description: "Son 252 işlem günündeki yıllıklandırılmış dalgalanma.",
       },
       {
         code: "SHARPE",
@@ -49,12 +65,14 @@ const READY_PROPS: FundMonitoringViewProps = {
         value: 1.34,
         unit: "RATIO",
         tone: "positive",
+        description: "Risksiz getiri üzerindeki performans.",
       },
     ],
     periodReturns: [
       { period: "1M", label: "1 Aylık Getiri", value: 4.2 },
       { period: "3M", label: "3 Aylık Getiri", value: 11.8 },
       { period: "6M", label: "6 Aylık Getiri", value: 19.5 },
+      { period: "1Y", label: "1 Yıllık Getiri", value: 28.4 },
     ],
     positions: [
       {
@@ -128,7 +146,16 @@ describe("FundMonitoringView", () => {
 
     expect(screen.getByText("₺18,4271")).toBeInTheDocument()
     expect(screen.getByText("%24,60")).toBeInTheDocument()
+    expect(screen.getByText("1 Yıllık Getiri").parentElement).toHaveTextContent(
+      "+%28,40",
+    )
     expect(screen.getByText("THYAO")).toBeInTheDocument()
+    expect(
+      screen.queryByText("Fon Karşılaştırma Ölçütü"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("BIST 100 Getiri Endeksi"),
+    ).not.toBeInTheDocument()
     expect(screen.getAllByText("Ulaştırma")).toHaveLength(2)
     expect(
       screen.getByRole("img", {

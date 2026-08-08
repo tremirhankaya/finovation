@@ -8,6 +8,7 @@ import com.infina.portfoliomanagement.auth.dto.PasswordResetRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetStartRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetVerifyRequest;
 import com.infina.portfoliomanagement.auth.dto.PasswordResetVerifyResponse;
+import com.infina.portfoliomanagement.auth.dto.PasswordChangeRequest;
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -39,6 +40,13 @@ public interface AuthControllerDocs {
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<MeResponse> getCurrentUser(UserDetails userDetails);
+
+    @Operation(
+            summary = "Change current password",
+            description = "Updates the authenticated user's password after confirmation and revokes existing sessions.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    void changePassword(UserDetails userDetails, PasswordChangeRequest request);
 
     @Operation(
             summary = "Request a password reset code",

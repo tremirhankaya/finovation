@@ -27,6 +27,34 @@ describe("toApiRequestError", () => {
     expect(apiError.message).toBe("Kullanıcı adı veya şifre hatalı.")
   })
 
+  it("aynı parola hata kodunu kullanıcı dostu mesaja çevirir", () => {
+    const apiError = toApiRequestError(
+      {
+        code: "AUTH_018",
+        message:
+          "The new password must be different from the current password.",
+      },
+      400,
+      "Parola değiştirilemedi",
+    )
+
+    expect(apiError.message).toBe(
+      "Yeni parolanız mevcut parolanızdan farklı olmalıdır.",
+    )
+  })
+
+  it("zorunlu parola değişikliği kodunu kullanıcı dostu mesaja çevirir", () => {
+    const apiError = toApiRequestError(
+      { code: "AUTH_019" },
+      403,
+      "İşlem tamamlanamadı",
+    )
+
+    expect(apiError.message).toBe(
+      "Devam etmek için ilk parolanızı değiştirmeniz gerekiyor.",
+    )
+  })
+
   it("alan doğrulama mesajını kullanıcıya taşımaz", () => {
     const error = toApiRequestError(
       {

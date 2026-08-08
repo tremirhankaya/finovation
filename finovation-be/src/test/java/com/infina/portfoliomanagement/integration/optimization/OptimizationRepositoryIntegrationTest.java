@@ -32,11 +32,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
+
+    private static final UUID FUND_ID = UUID.fromString("11111111-1111-4111-8111-111111111111");
 
     @Autowired
     private UserRepository userRepository;
@@ -96,7 +99,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
         LocalDateTime now = LocalDateTime.now();
 
         OptimizationRequest request = OptimizationRequest.builder()
-                .fundId(1L)
+                .fundId(FUND_ID)
                 .dataTimestamp(now)
                 .modelVersion("v1")
                 .requestedBy(fundManager)
@@ -118,7 +121,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
                 optimizationRequestRepository.findById(saved.getId());
 
         assertThat(found).isPresent();
-        assertThat(found.get().getFundId()).isEqualTo(1L);
+        assertThat(found.get().getFundId()).isEqualTo(FUND_ID);
         assertThat(found.get().getRiskProfile()).isEqualTo(RiskProfile.BALANCED);
         assertThat(found.get().getStatus()).isEqualTo(RequestStatus.PREPARING);
         assertThat(found.get().getRequestedBy().getId()).isEqualTo(fundManager.getId());

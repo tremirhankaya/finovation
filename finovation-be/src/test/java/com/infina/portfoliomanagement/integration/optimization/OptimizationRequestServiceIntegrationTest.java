@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest {
 
     private static final String FUND_MANAGER_USERNAME = "fon-yoneticisi-service";
+    private static final UUID FUND_ID = UUID.fromString("11111111-1111-4111-8111-111111111111");
 
     @Autowired
     private UserRepository userRepository;
@@ -97,7 +99,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
 
     private CreateOptimizationRequestRequest validRequest() {
         return new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.BALANCED,
                 List.of(
                         new AssetPreferenceRequest("AKBNK", AssetPreferenceType.KEEP, new BigDecimal("8")),
@@ -117,7 +119,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 optimizationRequestService.create(fundManager.getUsername(), validRequest());
 
         assertThat(response.id()).isNotNull();
-        assertThat(response.fundId()).isEqualTo(1L);
+        assertThat(response.fundId()).isEqualTo(FUND_ID);
         assertThat(response.riskProfile()).isEqualTo(RiskProfile.BALANCED);
         assertThat(response.status()).isEqualTo(RequestStatus.PREPARING);
         assertThat(response.requestedByUsername()).isEqualTo(fundManager.getUsername());
@@ -150,7 +152,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
     @Test
     void create_withTppRangeOutsideAllowedBounds_throwsInvalidConstraintValue() {
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.AGGRESSIVE,
                 List.of(),
                 new BigDecimal("2"),
@@ -168,7 +170,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
     @Test
     void create_withKeepPreferenceMissingCurrentWeight_throwsInvalidConstraintValue() {
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.CONSERVATIVE,
                 List.of(new AssetPreferenceRequest("AKBNK", AssetPreferenceType.KEEP, null)),
                 new BigDecimal("5"),
@@ -186,7 +188,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
     @Test
     void create_withSameAssetExcludedAndForceAdded_throwsAssetPreferenceConflict() {
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.BALANCED,
                 List.of(
                         new AssetPreferenceRequest("MGROS", AssetPreferenceType.EXCLUDE, null),
@@ -211,7 +213,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 .toList();
 
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.BALANCED,
                 twentyTwoKeptAssets,
                 new BigDecimal("5"),
@@ -229,7 +231,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
     @Test
     void create_withKeptAndForceAddedWeightExceedingUsableEquity_throwsInvalidConstraintValue() {
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.BALANCED,
                 List.of(
                         new AssetPreferenceRequest("AKBNK", AssetPreferenceType.KEEP, new BigDecimal("50")),
@@ -250,7 +252,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
     @Test
     void create_withTppRangeNarrowerThanMinimumWidth_throwsInvalidConstraintValue() {
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.BALANCED,
                 List.of(),
                 new BigDecimal("10"),
@@ -268,7 +270,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
     @Test
     void create_withStockCountRangeNarrowerThanMinimumWidth_throwsInvalidConstraintValue() {
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.BALANCED,
                 List.of(),
                 new BigDecimal("5"),
@@ -286,7 +288,7 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
     @Test
     void create_withStockCountRangeBelowNewFloor_throwsInvalidConstraintValue() {
         CreateOptimizationRequestRequest invalid = new CreateOptimizationRequestRequest(
-                1L,
+                FUND_ID,
                 RiskProfile.BALANCED,
                 List.of(),
                 new BigDecimal("5"),

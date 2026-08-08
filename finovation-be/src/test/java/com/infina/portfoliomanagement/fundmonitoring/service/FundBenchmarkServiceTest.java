@@ -45,7 +45,7 @@ class FundBenchmarkServiceTest {
     }
 
     @Test
-    void comparisonAssets_calculatesBistAndInflationReturns() {
+    void comparisonAssets_buildsNinetyTenCompositeBenchmark() {
         when(benchmarkPriceApi.fetchIndexRange(
                 "XU030",
                 FROM_DATE,
@@ -55,12 +55,20 @@ class FundBenchmarkServiceTest {
                 indexPrice("XU030", AS_OF_DATE, "110")
         ));
         when(benchmarkPriceApi.fetchIndexRange(
-                "XU100",
+                "XU100_CFNNTLTL",
                 FROM_DATE,
                 AS_OF_DATE
         )).thenReturn(List.of(
-                indexPrice("XU100", AS_OF_DATE.minusMonths(1), "200"),
-                indexPrice("XU100", AS_OF_DATE, "240")
+                indexPrice("XU100_CFNNTLTL", AS_OF_DATE.minusMonths(1), "200"),
+                indexPrice("XU100_CFNNTLTL", AS_OF_DATE, "240")
+        ));
+        when(benchmarkPriceApi.fetchIndexRange(
+                "REPBR",
+                FROM_DATE,
+                AS_OF_DATE
+        )).thenReturn(List.of(
+                indexPrice("REPBR", AS_OF_DATE.minusMonths(1), "1000"),
+                indexPrice("REPBR", AS_OF_DATE, "1100")
         ));
         when(benchmarkPriceApi.fetchEconomicRange(
                 "TUCPIM",
@@ -82,12 +90,38 @@ class FundBenchmarkServiceTest {
                         item -> item.returns().get("1M")
                 )
                 .containsExactly(
+                        tuple(
+                                "BENCHMARK",
+                                "Fon Karşılaştırma Ölçütü",
+                                false,
+                                new BigDecimal("19.0000")
+                        ),
                         tuple("BIST30", "BIST 30", false, new BigDecimal("10.0000")),
-                        tuple("BIST100", "BIST 100", false, new BigDecimal("20.0000")),
+                        tuple(
+                                "BIST100G",
+                                "BIST 100 Getiri Endeksi",
+                                false,
+                                new BigDecimal("20.0000")
+                        ),
+                        tuple(
+                                "REPBR",
+                                "BIST-KYD Repo (Brüt) Endeksi",
+                                false,
+                                new BigDecimal("10.0000")
+                        ),
                         tuple("TUFE", "TÜFE", false, new BigDecimal("5.0000"))
                 );
-        assertThat(snapshot.bist100Values())
-                .containsEntry(AS_OF_DATE, new BigDecimal("240"));
+        assertThat(snapshot.benchmarkValues())
+                .containsEntry(AS_OF_DATE, new BigDecimal("119.000000000000"));
+        assertThat(snapshot.benchmarkDefinition().components())
+                .extracting(
+                        component -> component.code(),
+                        component -> component.weightPercentage()
+                )
+                .containsExactly(
+                        tuple("XU100_CFNNTLTL", new BigDecimal("90")),
+                        tuple("REPBR", new BigDecimal("10"))
+                );
     }
 
     private IndexPriceRecord indexPrice(

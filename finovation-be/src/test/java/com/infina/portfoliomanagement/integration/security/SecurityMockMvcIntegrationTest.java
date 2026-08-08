@@ -202,6 +202,43 @@ class SecurityMockMvcIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void passwordChangeRequired_nonAdminCanReadMeButCannotAccessModules()
+            throws Exception {
+        testUser.setRole(Role.USER);
+        testUser.setPasswordChangeRequired(true);
+        userRepository.saveAndFlush(testUser);
+        String accessToken = loginAndExtractAccessToken();
+
+        mockMvc.perform(
+                        get(ME_ENDPOINT)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.passwordChangeRequired").value(true));
+
+        mockMvc.perform(
+                        get("/api/v1/users")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("AUTH_019"));
+    }
+
+    @Test
+    void passwordChangeRequired_adminRemainsExempt()
+            throws Exception {
+        testUser.setPasswordChangeRequired(true);
+        userRepository.saveAndFlush(testUser);
+        String accessToken = loginAndExtractAccessToken();
+
+        mockMvc.perform(
+                        get("/api/v1/users")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void refreshToken_usedTwice_secondRequestReturnsInvalidToken()
             throws Exception {
 

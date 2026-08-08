@@ -95,7 +95,8 @@
 .fundSelect select:focus-visible,
 .backButton:focus-visible,
 .periods button:focus-visible,
-.errorBanner button:focus-visible {
+.errorBanner button:focus-visible,
+.indicatorHelp button:focus-visible {
   outline: 3px solid rgb(13 148 136 / 25%);
   outline-offset: 2px;
 }
@@ -179,7 +180,7 @@
 .bottomGrid {
   display: grid;
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .topGrid {
@@ -193,7 +194,9 @@
 }
 
 .card {
+  height: 100%;
   min-width: 0;
+  box-sizing: border-box;
   padding: 20px 22px;
   background: #fff;
   border: 1px solid #dfe7ef;
@@ -351,6 +354,62 @@
   font-size: 0.78rem;
 }
 
+.indicatorLabel {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.indicatorHelp {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.indicatorHelp button {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  place-items: center;
+  color: #0d9488;
+  background: #ecfdf5;
+  border: 1px solid #99f6e4;
+  border-radius: 50%;
+  font-size: 0.67rem;
+  font-weight: 900;
+  cursor: help;
+}
+
+.indicatorHelp [role="tooltip"] {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  width: min(260px, 72vw);
+  padding: 9px 11px;
+  visibility: hidden;
+  color: #f8fafc;
+  background: #0f2d52;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 18%);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.indicatorHelp:hover [role="tooltip"],
+.indicatorHelp:focus-within [role="tooltip"] {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 .indicatorRow dd {
   margin: 0;
   color: #0f172a;
@@ -380,7 +439,7 @@
 
 .returnsGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
@@ -509,6 +568,49 @@
 .donutWrap svg {
   display: block;
   width: 100%;
+}
+
+.donutChart {
+  position: relative;
+}
+
+.donutChart circle[tabindex] {
+  cursor: pointer;
+  transition: stroke-width 120ms ease, opacity 120ms ease;
+}
+
+.donutChart circle[tabindex]:focus-visible {
+  outline: none;
+  filter: drop-shadow(0 0 3px rgb(13 148 136 / 50%));
+}
+
+.sectorHoverDetail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 92px;
+  color: #64748b;
+  font-size: 0.67rem;
+  line-height: 1.25;
+  text-align: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.sectorHoverDetail strong {
+  overflow: hidden;
+  color: #0f2d52;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+}
+
+.sectorHoverDetail span {
+  margin-top: 3px;
+  color: #0d9488;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .sectorLegend {
@@ -1029,4 +1131,3 @@
     transition: none;
   }
 }
-

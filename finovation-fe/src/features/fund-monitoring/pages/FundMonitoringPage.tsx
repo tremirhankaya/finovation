@@ -140,10 +140,7 @@ export function FundMonitoringView({
             period={period}
             onPeriodChange={setPeriod}
           />
-          <FundMetricsCard
-            indicators={snapshot?.technicalIndicators}
-            periodReturns={snapshot?.periodReturns}
-          />
+          <FundMetricsCard indicators={snapshot?.technicalIndicators} />
         </div>
 
         <div className={styles.bottomGrid}>

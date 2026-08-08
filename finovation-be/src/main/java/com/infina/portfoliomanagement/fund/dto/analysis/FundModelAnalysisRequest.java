@@ -8,53 +8,34 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record FundModelAnalysisRequest(
+        @NotNull
+        @JsonProperty("excluded_assets")
+        List<String> excludedAssets,
+
         @NotNull
         @JsonProperty("horizon")
         InvestmentHorizon horizon,
 
         @NotNull
-        @JsonProperty("min_stock_count")
-        Integer minStockCount,
+        @JsonProperty("mandatory_assets")
+        List<String> mandatoryAssets,
 
         @NotNull
         @JsonProperty("max_stock_count")
         Integer maxStockCount,
 
         @NotNull
-        @JsonProperty("tpp_min_weight")
-        Integer tppMinWeight,
+        @JsonProperty("min_stock_count")
+        Integer minStockCount,
 
         @NotNull
         @JsonProperty("tpp_max_weight")
-        Integer tppMaxWeight,
-
-        @JsonProperty("preferred_tpp_weight")
-        Integer preferredTppWeight,
+        BigDecimal tppMaxWeight,
 
         @NotNull
-        @JsonProperty("max_any_stock_weight")
-        Integer maxAnyStockWeight,
-
-        @NotNull
-        @JsonProperty("max_sector_weight")
-        BigDecimal maxSectorWeight,
-
-        @NotNull
-        @JsonProperty("equity_min_weight")
-        Integer equityMinWeight,
-
-        @NotNull
-        @JsonProperty("equity_max_weight")
-        Integer equityMaxWeight,
-
-        @NotNull
-        @JsonProperty("excluded_assets")
-        List<String> excludedAssets,
-
-        @JsonProperty("forced_assets")
-        List<String> forcedAssets
+        @JsonProperty("tpp_min_weight")
+        BigDecimal tppMinWeight
 ) {
 }

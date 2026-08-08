@@ -9,6 +9,7 @@ import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
 import com.infina.portfoliomanagement.fundmonitoring.classification.AssetClassificationProviderRegistry;
 import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
+import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.BenchmarkDefinitionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
@@ -97,7 +98,10 @@ class FundMonitoringServiceTest {
                 benchmarkService,
                 similarFundService,
                 riskFreeRateProvider,
-                new FundMonitoringProperties(new BigDecimal("1000000")),
+                new FundMonitoringProperties(
+                        new BigDecimal("1000000"),
+                        new BigDecimal("37")
+                ),
                 CLOCK
         );
     }
@@ -135,19 +139,28 @@ class FundMonitoringServiceTest {
         when(classificationProviderRegistry.loadProfiles(List.of()))
                 .thenReturn(Map.of());
         when(valuationCalculator.calculate(
-                selectedFund,
-                List.of(),
-                List.of(),
-                Map.of()
+                eq(selectedFund),
+                eq(List.of()),
+                eq(List.of()),
+                eq(Map.of()),
+                any(LocalDate.class)
         )).thenReturn(valuation("100", "110"));
         when(valuationCalculator.calculate(
-                otherFund,
-                List.of(),
-                List.of(),
-                Map.of()
+                eq(otherFund),
+                eq(List.of()),
+                eq(List.of()),
+                eq(Map.of()),
+                any(LocalDate.class)
         )).thenReturn(valuation("100", "120"));
         when(benchmarkService.load(AS_OF_DATE)).thenReturn(
-                new BenchmarkSnapshot(List.of(), new TreeMap<>())
+                new BenchmarkSnapshot(
+                        List.of(),
+                        new TreeMap<>(),
+                        new BenchmarkDefinitionResponse(
+                                "Fon Karşılaştırma Ölçütü",
+                                List.of()
+                        )
+                )
         );
         when(similarFundService.comparisonAssets(
                 FundType.EQUITY_INTENSIVE,

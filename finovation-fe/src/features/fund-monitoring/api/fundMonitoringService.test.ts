@@ -33,6 +33,21 @@ const SNAPSHOT = {
     "6M": [{ date: "2026-08-04", value: 112.5 }],
     "1Y": [{ date: "2025-08-05", value: 100 }],
   },
+  benchmark: {
+    name: "Fon Karşılaştırma Ölçütü",
+    components: [
+      {
+        code: "XU100_CFNNTLTL",
+        name: "BIST 100 Getiri Endeksi",
+        weightPercentage: 90,
+      },
+      {
+        code: "REPBR",
+        name: "BIST-KYD Repo (Brüt) Endeksi",
+        weightPercentage: 10,
+      },
+    ],
+  },
   technicalIndicators: [
     {
       code: "VOLATILITY",
@@ -40,6 +55,7 @@ const SNAPSHOT = {
       value: 18.2,
       unit: "PERCENT",
       tone: "neutral",
+      description: "Son 252 işlem günündeki yıllıklandırılmış dalgalanma.",
     },
   ],
   periodReturns: [{ period: "1M", label: "1 Aylık Getiri", value: 2.1 }],
@@ -114,6 +130,7 @@ describe("fundMonitoringService", () => {
     expect(result.currentSharePrice).toBe(112.5)
     expect(result.positions[0]?.symbol).toBe("THYAO")
     expect(result.comparisonAssets).toEqual(SNAPSHOT.comparisonAssets)
+    expect(result.benchmark.components).toHaveLength(2)
     expect(result.fund.type).toBe("Hisse Senedi Yoğun Fon")
     expect(httpMocks.apiFetch).toHaveBeenCalledWith(
       `/api/v1/funds/${FUND.id}/monitoring`,

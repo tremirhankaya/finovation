@@ -71,7 +71,7 @@ public class UserService {
                 .role(request.role())
                 .status(UserStatus.ACTIVE)
                 .deleted(false)
-                .passwordChangeRequired(true)
+                .passwordChangeRequired(request.role() != Role.ADMIN)
                 .createdAt(now)
                 .updatedAt(now)
                 .credentialsChangedAt(now)
@@ -270,9 +270,15 @@ public class UserService {
 
         target.setCompany(resolveCompany(actor, request.role(), companyId));
 
+        if (request.role() == Role.ADMIN) {
+            target.setPasswordChangeRequired(false);
+        } else if (previousRole == Role.ADMIN) {
+            target.setPasswordChangeRequired(true);
+        }
+
         if (passwordChanged) {
             target.setPassword(passwordEncoder.encode(request.password()));
-            target.setPasswordChangeRequired(true);
+            target.setPasswordChangeRequired(request.role() != Role.ADMIN);
             target.setCredentialsChangedAt(LocalDateTime.now(clock));
         }
 

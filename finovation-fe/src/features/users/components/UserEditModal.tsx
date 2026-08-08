@@ -8,7 +8,7 @@ import {
   type ProfileFieldErrors,
   validateProfileFields,
 } from "@/features/users/lib/userFormValidation"
-import PasswordPairFields from "@/features/users/components/PasswordPairFields"
+import PasswordPairFields from "@/shared/ui/PasswordPairFields"
 import UserProfileFields from "@/features/users/components/UserProfileFields"
 import type { CompanyListItem } from "@/features/users/model/company.types"
 import type {
@@ -107,9 +107,7 @@ export default function UserEditModal({
 
     return assignableRoles.filter(
       (role) =>
-        role !== "ADMIN" ||
-        user.role === "ADMIN" ||
-        user.companyId === null,
+        role !== "ADMIN" || user.role === "ADMIN" || user.companyId === null,
     )
   }, [assignableRoles, isSelf, user])
 
@@ -243,9 +241,7 @@ export default function UserEditModal({
               <input
                 id="edit-company-readonly"
                 className={styles.input}
-                value={
-                  form.role === "ADMIN" ? "—" : (user.companyName ?? "—")
-                }
+                value={form.role === "ADMIN" ? "—" : (user.companyName ?? "—")}
                 disabled
               />
             </div>

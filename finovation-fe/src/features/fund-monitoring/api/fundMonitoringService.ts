@@ -31,6 +31,7 @@ function toSnapshot(response: FundMonitoringResponse): FundMonitoringSnapshot {
     currentSharePrice: response.currentSharePrice,
     dailyChangePercentage: response.dailyChangePercentage,
     priceHistory: response.priceHistory,
+    benchmark: response.benchmark,
     technicalIndicators: response.technicalIndicators,
     periodReturns: response.periodReturns,
     positions: response.positions,

@@ -31,6 +31,9 @@ export const API_PATHS = {
   stressTests:
       import.meta.env.VITE_STRESS_TESTS_PATH?.trim() ||
       "/v1/stress-tests",
+  investmentUniverse:
+    import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
+    "/v1/investment-universe",
 } as const
 
 function normalizePath(path: string): string {
@@ -141,15 +144,4 @@ export function getOptimizationRequestApproveUrl(requestId: number): string {
 
 export function getOptimizationRequestRejectUrl(requestId: number): string {
   return `${getOptimizationRequestUrl(requestId)}/reject`
-}
-export function getStressScenariosUrl(): string {
-  return buildUrl(API_PATHS.stressScenarios)
-}
-
-export function getStressTestsUrl(): string {
-  return buildUrl(API_PATHS.stressTests)
-}
-
-export function getStressTestUrl(testId: string): string {
-  return `${getStressTestsUrl()}/${encodeURIComponent(testId)}`
 }

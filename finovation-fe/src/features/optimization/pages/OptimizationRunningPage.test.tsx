@@ -8,7 +8,7 @@ import {
 } from "@/features/optimization/pages/OptimizationRunningPage"
 
 const RUNNING_PROPS: OptimizationRunningViewProps = {
-  fundId: 42,
+  fundId: "11111111-1111-4111-8111-111111111111",
   riskProfile: "BALANCED",
   isRunning: true,
   isCompleted: false,
@@ -21,7 +21,7 @@ describe("OptimizationRunningView", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Optimizasyon çalıştırılıyor",
     )
-    expect(screen.getByText(/Fon #42/)).toBeInTheDocument()
+    expect(screen.getByText(/Fon #11111111/)).toBeInTheDocument()
     expect(screen.getByText(/Dengeli yaklaşım/)).toBeInTheDocument()
     expect(screen.getByText(/6 aylık değerlendirme vadesi/)).toBeInTheDocument()
     expect(screen.getByRole("main")).toHaveAttribute("aria-busy", "true")
@@ -36,7 +36,7 @@ describe("OptimizationRunningView", () => {
     )
 
     expect(screen.getByText(/Deneme Hisse Fonu/)).toBeInTheDocument()
-    expect(screen.queryByText(/Fon #42/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Fon #11111111/)).not.toBeInTheDocument()
   })
 
   it("optimizasyon adımlarını listeler", () => {

@@ -24,7 +24,7 @@ export const assetPreferenceTypeSchema = z.enum([
 
 export const optimizationRequestResponseSchema = z.object({
   id: z.number(),
-  fundId: z.number(),
+  fundId: z.uuid(),
   dataTimestamp: z.iso.datetime({ local: true }).nullable(),
   modelVersion: z.string().nullable(),
   requestedByUserId: z.number().nullable(),
@@ -49,7 +49,7 @@ export const assetPreferenceRequestSchema = z.object({
 })
 
 export const createOptimizationRequestSchema = z.object({
-  fundId: z.number(),
+  fundId: z.uuid(),
   riskProfile: riskProfileSchema,
   assetPreferences: z.array(assetPreferenceRequestSchema),
   tppMinWeight: z.number(),
@@ -58,9 +58,20 @@ export const createOptimizationRequestSchema = z.object({
   stockCountMax: z.number(),
 })
 
+export const investmentUniverseAssetResponseSchema = z.object({
+  assetCode: z.string(),
+  name: z.string(),
+  sectorName: z.string().nullable(),
+})
+
+export const investmentUniverseResponseSchema = z.array(
+  investmentUniverseAssetResponseSchema,
+)
+
 export type RiskProfile = z.infer<typeof riskProfileSchema>
 export type RequestStatus = z.infer<typeof requestStatusSchema>
 export type AssetPreferenceType = z.infer<typeof assetPreferenceTypeSchema>
 export type OptimizationRequestResponse = z.infer<typeof optimizationRequestResponseSchema>
 export type AssetPreferenceRequest = z.infer<typeof assetPreferenceRequestSchema>
 export type CreateOptimizationRequestPayload = z.infer<typeof createOptimizationRequestSchema>
+export type InvestmentUniverseAssetResponse = z.infer<typeof investmentUniverseAssetResponseSchema>
