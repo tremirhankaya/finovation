@@ -1,0 +1,1510 @@
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useNavigate, useParams } from "react-router"
+
+import {
+  getFundDraftAnalysisState,
+  getWorkingPortfolio,
+  selectFundDraftProposal,
+  updateWorkingPortfolio,
+  type FundPositionResponse,
+  type FundModelProposal,
+} from "@/features/fund-design/api/fundDraftApi"
+import FundDesignLayout from "@/features/fund-design/components/FundDesignLayout"
+import ProspectusRulesPanel, {
+  type LivePortfolioCompliance,
+} from "@/features/fund-design/components/ProspectusRulesPanel"
+import { useFundDraftInit } from "@/features/fund-design/hooks/useFundDraftInit"
+import Button from "@/shared/ui/Button"
+import FormAlert from "@/shared/ui/FormAlert"
+import styles from "@/features/fund-design/styles/FundDesignEditPage.module.css"
+
+type EditablePosition = {
+  assetCode: string
+  sectorName: string | null
+  assetType: "EQUITY" | "TPP"
+  weightPct: number
+  aiNote?: string | null
+}
+
+function assetLabelForCode(
+  universe: { assetCode: string; displayName: string }[] | undefined,
+  code: string,
+) {
+  const hit = universe?.find((asset) => asset.assetCode === code)
+  if (!hit?.displayName || hit.displayName === code) return code
+  return `${code} · ${hit.displayName}`
+}
+
+function toEditablePositions(assets: FundPositionResponse[]): EditablePosition[] {
+  const mapped = assets.map((a) => ({
+    assetCode: a.asset_code,
+    sectorName: a.sector_name ?? null,
+    assetType: a.asset_type,
+    weightPct: Math.round(a.weight * 10) / 10,
+    aiNote: a.ai_note,
+  }))
+
+  const nonTpp = mapped.filter((a) => a.assetType !== "TPP")
+  const tpp = mapped.filter((a) => a.assetType === "TPP")
+  return [...nonTpp, ...tpp]
+}
+
+function TrashIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+
+
+function formatPct(value: number): string {
+  return value.toLocaleString("tr-TR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+}
+
+function EditableWeightInput({
+  value,
+  onChange,
+  className,
+  hasError,
+}: {
+  value: number
+  onChange: (newVal: number) => void
+  className?: string
+  hasError?: boolean
+}) {
+  const [localStr, setLocalStr] = useState<string | null>(null)
+
+  const displayValue =
+    localStr !== null
+      ? localStr
+      : value === 0
+      ? ""
+      : String(value)
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      className={[className, hasError ? styles.inputError : ""].filter(Boolean).join(" ")}
+      placeholder="0"
+      value={displayValue}
+      onFocus={(e) => {
+        setLocalStr(value === 0 ? "" : String(value))
+        e.target.select()
+      }}
+      onBlur={() => {
+        setLocalStr(null)
+      }}
+      onChange={(e) => {
+        const rawInput = e.target.value
+        // Sadece rakamlar (0-9), nokta (.) ve virgüle (,) izin ver
+        let filtered = rawInput.replace(/[^0-9.,]/g, "")
+
+        // Birden fazla nokta/virgül girilmesini engelle
+        const firstSepIndex = filtered.search(/[.,]/)
+        if (firstSepIndex !== -1) {
+          const firstPart = filtered.slice(0, firstSepIndex + 1)
+          const rest = filtered.slice(firstSepIndex + 1).replace(/[.,]/g, "")
+          filtered = firstPart + rest
+        }
+
+        setLocalStr(filtered)
+
+        const normalized = filtered.replace(",", ".")
+        if (normalized === "" || normalized === "." || normalized === ",") {
+          onChange(0)
+        } else {
+          const parsed = parseFloat(normalized)
+          if (!isNaN(parsed)) {
+            onChange(parsed)
+          }
+        }
+      }}
+    />
+  )
+}
+
+
+
+export default function FundDesignEditPage() {
+  const navigate = useNavigate()
+  const { draftId } = useParams<{ draftId: string }>()
+
+  const [proposals, setProposals] = useState<FundModelProposal[]>([])
+  const [positions, setPositions] = useState<EditablePosition[]>([])
+  const [selectedProposalRank, setSelectedProposalRank] = useState<
+    number | null
+  >(null)
+  const [formError, setFormError] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  
+  const [isAddingAsset, setIsAddingAsset] = useState(false)
+  const [selectedAssetCodeToAdd, setSelectedAssetCodeToAdd] = useState("")
+  const [isAddStockModalOpen, setIsAddStockModalOpen] = useState(false)
+  const [isAutocompleteOpen, setIsAutocompleteOpen] = useState(false)
+  const [modalSearchText, setModalSearchText] = useState("")
+
+  const [tableFilterText, setTableFilterText] = useState("")
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([])
+  const [tableSortKey, setTableSortKey] = useState<"NONE" | "WEIGHT_DESC" | "WEIGHT_ASC">("NONE")
+
+  const [successToast, setSuccessToast] = useState("")
+  const [highlightedAssetCode, setHighlightedAssetCode] = useState("")
+  const [isProposalDropdownOpen, setIsProposalDropdownOpen] = useState(false)
+  const [isSectorDropdownOpen, setIsSectorDropdownOpen] = useState(false)
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false)
+
+  // Toplu hisse seçme & silme state'i
+  const [selectedRowCodes, setSelectedRowCodes] = useState<string[]>([])
+
+  // Silme onay modalı state'i
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    items: string[]
+    onConfirm: () => void
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    items: [],
+    onConfirm: () => {},
+  })
+
+  // Modal içinde toplu hisse seçme & yüzde belirleme state'i: Record<assetCode, weightPct>
+  const [modalSelectedAssets, setModalSelectedAssets] = useState<Record<string, number>>({})
+
+  const proposalRef = useRef<HTMLDivElement>(null)
+  const sectorRef = useRef<HTMLDivElement>(null)
+  const sortRef = useRef<HTMLDivElement>(null)
+
+  const [debouncedFilterText, setDebouncedFilterText] = useState("")
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilterText(tableFilterText)
+    }, 180)
+    return () => clearTimeout(timer)
+  }, [tableFilterText])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (proposalRef.current && !proposalRef.current.contains(e.target as Node)) {
+        setIsProposalDropdownOpen(false)
+      }
+      if (sectorRef.current && !sectorRef.current.contains(e.target as Node)) {
+        setIsSectorDropdownOpen(false)
+      }
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setIsSortDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  const availableSectors = useMemo(() => {
+    const set = new Set<string>()
+    positions.forEach((p) => {
+      if (p.sectorName) set.add(p.sectorName)
+    })
+    return Array.from(set).sort()
+  }, [positions])
+
+  const filteredPositions = useMemo(() => {
+    const allMapped = positions.map((pos, originalIndex) => ({ pos, originalIndex }))
+    
+    // TPP'yi her zaman ayırıyoruz
+    const tppItem = allMapped.find(({ pos }) => pos.assetType === "TPP")
+    const stocks = allMapped.filter(({ pos }) => pos.assetType !== "TPP")
+
+    // Sadece hisseleri filtreliyoruz
+    const filteredStocks = stocks.filter(({ pos }) => {
+      if (debouncedFilterText) {
+        const query = debouncedFilterText.toLocaleLowerCase("tr-TR").trim()
+        const matchesCode = pos.assetCode.toLocaleLowerCase("tr-TR").includes(query)
+        const matchesSector = pos.sectorName?.toLocaleLowerCase("tr-TR").includes(query) ?? false
+        if (!matchesCode && !matchesSector) return false
+      }
+      if (selectedSectors.length > 0) {
+        if (!pos.sectorName || !selectedSectors.includes(pos.sectorName)) {
+          return false
+        }
+      }
+      return true
+    })
+
+    // Sadece hisseleri sıralıyoruz
+    if (tableSortKey === "WEIGHT_DESC") {
+      filteredStocks.sort((a, b) => b.pos.weightPct - a.pos.weightPct)
+    } else if (tableSortKey === "WEIGHT_ASC") {
+      filteredStocks.sort((a, b) => a.pos.weightPct - b.pos.weightPct)
+    }
+
+    // TPP'yi HER ZAMAN en sona sabitliyoruz!
+    return tppItem ? [...filteredStocks, tppItem] : filteredStocks
+  }, [positions, debouncedFilterText, selectedSectors, tableSortKey])
+
+  const { init, error: initError, reload: reloadInit } = useFundDraftInit({
+    page: "EDIT",
+    draftId,
+  })
+  const editInit = init?.page === "EDIT" ? init : null
+  const editModelUniverse = editInit?.modelUniverse ?? []
+  const editDraft = editInit?.draft ?? null
+
+  useEffect(() => {
+    if (!draftId) return
+    const controller = new AbortController()
+
+    async function loadData() {
+      try {
+        const analysisState = await getFundDraftAnalysisState(
+          draftId!,
+          controller.signal,
+        )
+        if (controller.signal.aborted) return
+
+        setProposals(analysisState.proposals)
+        const initialRank = analysisState.selectedRank ?? 1
+        setSelectedProposalRank(initialRank)
+
+        const working = await getWorkingPortfolio(draftId!, controller.signal)
+        if (controller.signal.aborted) return
+
+        setPositions(toEditablePositions(working.assets))
+      } catch (err) {
+        if (controller.signal.aborted) return
+        setFormError(
+          err instanceof Error
+            ? err.message
+            : "Portföy verileri yüklenirken bir hata oluştu.",
+        )
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    }
+
+    void loadData()
+    return () => controller.abort()
+  }, [draftId])
+
+  async function handleProposalChange(rank: number) {
+    if (!draftId) return
+    setSelectedProposalRank(rank)
+    setIsUpdating(true)
+    setFormError("")
+    try {
+      await selectFundDraftProposal(draftId, rank)
+      const working = await getWorkingPortfolio(draftId)
+      const loadedPositions = toEditablePositions(working.assets)
+      setPositions(loadedPositions)
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "Öneri değiştirilemedi",
+      )
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  function handleWeightChange(index: number, newWeight: number) {
+    const clamped = Math.max(0, Math.min(100, Math.round(newWeight * 100) / 100))
+    setPositions((prev) => {
+      const next = [...prev]
+      next[index] = { ...next[index], weightPct: clamped }
+      return next
+    })
+  }
+
+  function requestDeleteSingle(index: number) {
+    const targetCode = positions[index]?.assetCode
+    if (!targetCode) return
+    setDeleteConfirmState({
+      isOpen: true,
+      title: "Hisseyi Çıkar",
+      message: `${targetCode} hissesini portföyden çıkarmak istediğinize emin misiniz?`,
+      items: [assetLabelForCode(editModelUniverse, targetCode)],
+      onConfirm: () => {
+        setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }))
+        void handleDeletePosition(index)
+      },
+    })
+  }
+
+  function requestDeleteBulk() {
+    const count = selectedRowCodes.length
+    const items = selectedRowCodes.map((code) =>
+      assetLabelForCode(editModelUniverse, code),
+    )
+    setDeleteConfirmState({
+      isOpen: true,
+      title: "Hisseleri Çıkar",
+      message: `Seçilen ${count} hisseyi portföyden çıkarmak istediğinize emin misiniz?`,
+      items,
+      onConfirm: () => {
+        setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }))
+        void handleBulkDelete()
+      },
+    })
+  }
+
+  async function handleDeletePosition(index: number) {
+    if (!draftId) return
+    setIsUpdating(true)
+    setFormError("")
+    try {
+      const nextPositions = positions.filter((_, i) => i !== index)
+      const payload = nextPositions.map((p) => ({
+        asset_code: p.assetCode,
+        weight: p.weightPct,
+        ai_note: p.aiNote ?? undefined,
+      }))
+
+      const res = await updateWorkingPortfolio(draftId, payload)
+      const loadedPositions = toEditablePositions(res.assets)
+      setPositions(loadedPositions)
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "Hisse silinirken bir hata oluştu.",
+      )
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  async function handleAddAsset(codeToAdd?: string) {
+    const targetCode = codeToAdd || selectedAssetCodeToAdd
+    if (!draftId || !targetCode) return
+    setIsAddingAsset(true)
+    setFormError("")
+    try {
+      const payload = [
+        ...positions.map((p) => ({
+          asset_code: p.assetCode,
+          weight: p.weightPct,
+          ai_note: p.aiNote ?? undefined,
+        })),
+        {
+          asset_code: targetCode,
+          weight: 0,
+        },
+      ]
+
+      const res = await updateWorkingPortfolio(draftId, payload)
+      const loadedPositions = toEditablePositions(res.assets)
+      setPositions(loadedPositions)
+      setSelectedAssetCodeToAdd("")
+      
+      setSuccessToast(`✓ ${targetCode} portföye eklendi.`)
+      setHighlightedAssetCode(targetCode)
+      setTimeout(() => setSuccessToast(""), 3500)
+      setTimeout(() => setHighlightedAssetCode(""), 3500)
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "Hisse eklenemedi",
+      )
+    } finally {
+      setIsAddingAsset(false)
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!draftId || selectedRowCodes.length === 0) return
+    setIsUpdating(true)
+    setFormError("")
+    try {
+      const nextPositions = positions.filter((p) => !selectedRowCodes.includes(p.assetCode))
+      const payload = nextPositions.map((p) => ({
+        asset_code: p.assetCode,
+        weight: p.weightPct,
+        ai_note: p.aiNote ?? undefined,
+      }))
+
+      const res = await updateWorkingPortfolio(draftId, payload)
+      const loadedPositions = toEditablePositions(res.assets)
+      setPositions(loadedPositions)
+      setSelectedRowCodes([])
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Toplu silme işleminde hata oluştu.")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  async function handleBatchAddModalAssets() {
+    const entries = Object.entries(modalSelectedAssets)
+    if (!draftId || entries.length === 0) return
+    setIsAddingAsset(true)
+    setFormError("")
+    try {
+      const newItems = entries.map(([code, weightPct]) => ({
+        asset_code: code,
+        weight: weightPct,
+      }))
+
+      const payload = [
+        ...positions.map((p) => ({
+          asset_code: p.assetCode,
+          weight: p.weightPct,
+          ai_note: p.aiNote ?? undefined,
+        })),
+        ...newItems,
+      ]
+
+      const res = await updateWorkingPortfolio(draftId, payload)
+      const loadedPositions = toEditablePositions(res.assets)
+      setPositions(loadedPositions)
+      setIsAddStockModalOpen(false)
+      setModalSelectedAssets({})
+      setSuccessToast(`✓ ${entries.length} hisse eklendi.`)
+      setTimeout(() => setSuccessToast(""), 3500)
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Hisseler eklenemedi")
+    } finally {
+      setIsAddingAsset(false)
+    }
+  }
+
+  const totalWeight = useMemo(
+    () => Math.round(positions.reduce((sum, p) => sum + p.weightPct, 0) * 10) / 10,
+    [positions],
+  )
+
+  const summary = useMemo(() => {
+    let tppWeight = 0
+    let equityWeight = 0
+    let equityCount = 0
+    let maxSingleStock = 0
+    let above5Sum = 0
+    const sectorWeights: Record<string, number> = {}
+
+    for (const pos of positions) {
+      if (pos.assetType === "TPP") {
+        tppWeight += pos.weightPct
+      } else {
+        equityWeight += pos.weightPct
+        equityCount += 1
+        const sector = pos.sectorName ?? "Diğer"
+        sectorWeights[sector] = (sectorWeights[sector] || 0) + pos.weightPct
+
+        if (pos.weightPct > maxSingleStock) maxSingleStock = pos.weightPct
+        if (init && pos.weightPct > init.aboveThresholdPct) above5Sum += pos.weightPct
+      }
+    }
+
+    let maxSector = 0
+    for (const sec in sectorWeights) {
+      if (sectorWeights[sec] > maxSector) maxSector = sectorWeights[sec]
+    }
+
+    return {
+      hisseOrani: Math.round(equityWeight * 10) / 10,
+      tppOrani: Math.round(tppWeight * 10) / 10,
+      hisseSayisi: equityCount,
+      sektorSayisi: Object.keys(sectorWeights).length,
+      maxSingleStockWeight: Math.round(maxSingleStock * 10) / 10,
+      above5PctStockSum: Math.round(above5Sum * 10) / 10,
+      maxSectorWeight: Math.round(maxSector * 10) / 10,
+    }
+  }, [positions])
+
+  const heldEquityCodes = useMemo(
+    () =>
+      new Set(
+        positions
+          .filter((p) => p.assetType === "EQUITY")
+          .map((p) => p.assetCode),
+      ),
+    [positions],
+  )
+
+  const liveCompliance: LivePortfolioCompliance = useMemo(
+    () => ({
+      equityWeightPct: summary.hisseOrani,
+      tppWeightPct: summary.tppOrani,
+      maxSingleStockWeightPct: summary.maxSingleStockWeight,
+      above5PctStockSumWeightPct: summary.above5PctStockSum,
+      maxSectorWeightPct: summary.maxSectorWeight,
+      stockCount: summary.hisseSayisi,
+      violatingStocks: init
+        ? positions
+            .filter(
+              (p) =>
+                p.assetType === "EQUITY" &&
+                (p.weightPct > init.maxSingleStockMaxPct ||
+                  (init.minSingleStockMaxPct > 0 && p.weightPct < init.minSingleStockMaxPct)),
+            )
+            .map((p) => ({
+              code: p.assetCode,
+              type: p.weightPct > init.maxSingleStockMaxPct ? "max" : "min",
+            }))
+        : [],
+      missingForcedAssets: (editInit?.draft.forcedAssetCodes ?? []).filter(
+        (code) => !heldEquityCodes.has(code),
+      ),
+      presentExcludedAssets: (editInit?.draft.excludedAssetCodes ?? []).filter(
+        (code) => heldEquityCodes.has(code),
+      ),
+    }),
+    [summary, positions, init, editInit, heldEquityCodes],
+  )
+
+  const isProspectusCompliant = useMemo(() => {
+    if (!init) return true
+    if (Math.abs(totalWeight - 100) > 0.01) return false
+    if (
+      summary.hisseOrani < init.minEquityWeightPct ||
+      summary.hisseOrani > init.maxEquityWeightPct
+    )
+      return false
+    if (
+      summary.tppOrani < init.minLiquidityTargetPct ||
+      summary.tppOrani > init.maxLiquidityTargetPct
+    )
+      return false
+    if (summary.maxSingleStockWeight > init.maxSingleStockMaxPct) return false
+    if (summary.above5PctStockSum > init.aboveThresholdSumMax) return false
+    if (summary.maxSectorWeight > init.sectorMaxPct) return false
+    if (
+      summary.hisseSayisi < init.minStockCount ||
+      summary.hisseSayisi > init.maxStockCount
+    )
+      return false
+
+    return true
+  }, [init, totalWeight, summary])
+
+  async function handleSaveAndContinue() {
+    if (!draftId) return
+    if (!isProspectusCompliant) {
+      setFormError("İzahname kurallarına uymayan değerler var. Lütfen sağ paneldeki kırmızı kural ihlallerini düzeltip tekrar deneyiniz.")
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      return
+    }
+    setIsSaving(true)
+    setFormError("")
+    try {
+      const payload = positions.map((p) => ({
+        asset_code: p.assetCode,
+        weight: p.weightPct,
+        ai_note: p.aiNote,
+      }))
+
+      await updateWorkingPortfolio(draftId, payload)
+      void navigate(`/fund-design/${draftId}/approve`)
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "Çalışma portföyü kaydedilemedi",
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <FundDesignLayout step={5} wide>
+      <section className={styles.panel}>
+        <header className={styles.header}>
+          <h2 className={styles.sectionTitle}>5. Portföy Düzenleme</h2>
+          <p className={styles.intro}>
+            Seçtiğiniz portföyü düzenleyin ve tercihlerinize göre ince ayarlar yapın.
+          </p>
+        </header>
+
+        {formError ? <FormAlert>{formError}</FormAlert> : null}
+        {initError ? (
+          <FormAlert>
+            {initError}
+            <button className={styles.retry} type="button" onClick={reloadInit}>
+              Tekrar dene
+            </button>
+          </FormAlert>
+        ) : null}
+
+        <div className={styles.grid}>
+          <div className={styles.mainColumn} style={{ position: "relative" }}>
+            {isLoading ? (
+              <div className={styles.loadingSkeleton}>
+                <div className={styles.skeletonSummary}>
+                  <div className={styles.skeletonCard} />
+                  <div className={styles.skeletonCard} />
+                  <div className={styles.skeletonCard} />
+                </div>
+                <div className={styles.skeletonTable}>
+                  <div className={styles.skeletonRow} />
+                  <div className={styles.skeletonRow} />
+                  <div className={styles.skeletonRow} />
+                  <div className={styles.skeletonRow} />
+                  <div className={styles.skeletonRow} />
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", opacity: isUpdating ? 0.5 : 1, pointerEvents: isUpdating ? "none" : "auto", transition: "opacity 0.2s ease", height: "100%" }}>
+                {isUpdating && (
+                  <div className={styles.updatingOverlay}>
+                    <div className={styles.spinner}></div>
+                    <p>Güncelleniyor...</p>
+                  </div>
+                )}
+                <div className={styles.summaryBar}>
+                  <div className={styles.summaryCardItem}>
+                    <p className={styles.summaryCardLabel}>Hisse Senedi Oranı</p>
+                    <p className={styles.summaryCardValue}>
+                      %{formatPct(summary.hisseOrani)}
+                    </p>
+                  </div>
+                  <div className={styles.summaryCardItem}>
+                    <p className={styles.summaryCardLabel}>TPP (Para Piyasası)</p>
+                    <p className={styles.summaryCardValue}>
+                      %{formatPct(summary.tppOrani)}
+                    </p>
+                  </div>
+                  <div className={styles.summaryCardItem}>
+                    <p className={styles.summaryCardLabel}>Hisse Sayısı</p>
+                    <p className={styles.summaryCardValue}>{summary.hisseSayisi}</p>
+                  </div>
+                  <div className={styles.summaryCardItem}>
+                    <p className={styles.summaryCardLabel}>Sektör Sayısı</p>
+                    <p className={styles.summaryCardValue}>{summary.sektorSayisi}</p>
+                  </div>
+                </div>
+
+                <div className={styles.totalWeightCard}>
+                  <div className={styles.totalWeightHeader}>
+                    <span className={styles.totalWeightLabel}>Toplam Portföy Ağırlığı</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      {Math.abs(totalWeight - 100) > 0.01 && (
+                        <span className={styles.totalWeightHint}>
+                          {totalWeight < 100
+                            ? `%${formatPct(100 - totalWeight)} eksik`
+                            : `%${formatPct(totalWeight - 100)} fazla`}
+                        </span>
+                      )}
+                      <div
+                        className={[
+                          styles.statusBanner,
+                          isProspectusCompliant
+                            ? styles.statusBannerOk
+                            : styles.statusBannerWarn,
+                        ].join(" ")}
+                      >
+                        <span>
+                          {isProspectusCompliant
+                            ? "✓ Portföy İzahname ve Kurallara UYGUN"
+                            : "⚠ İzahname / Kural İhlali Var"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.totalWeightThickTrack}>
+                    <div
+                      className={[
+                        styles.totalWeightThickFill,
+                        Math.abs(totalWeight - 100) <= 0.01
+                          ? styles.totalWeightFillOk
+                          : Math.abs(totalWeight - 100) <= 2
+                            ? styles.totalWeightFillWarn
+                            : styles.totalWeightFillBad,
+                      ].join(" ")}
+                      style={{ width: `${Math.min(totalWeight, 100)}%` }}
+                    >
+                      <span className={styles.totalWeightInnerPct}>
+                        %{formatPct(totalWeight)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.tableCard}>
+                  <div className={styles.toolbar}>
+                    <div className={styles.selectWrap}>
+                      <label className={styles.selectLabel}>
+                        Düzenlenen Portföy:
+                      </label>
+                      <div ref={proposalRef} style={{ position: "relative" }}>
+                        <button
+                          type="button"
+                          onClick={() => setIsProposalDropdownOpen((prev) => !prev)}
+                          className={styles.customProposalBtn}
+                        >
+                          <span>
+                            {proposals.find((p) => p.rank === selectedProposalRank)?.label ||
+                              `AI Önerisi (${selectedProposalRank})`}
+                          </span>
+                          <span style={{ fontSize: "0.75rem", color: "#64748b" }}>▼</span>
+                        </button>
+                        {isProposalDropdownOpen && (
+                          <div className={styles.customProposalMenu}>
+                            {(proposals.length > 0
+                              ? proposals
+                              : [{ rank: 1, label: "AI Birincil Önerisi (Agresif)" }]
+                            ).map((prop) => (
+                              <div
+                                key={prop.rank}
+                                className={[
+                                  styles.customProposalMenuItem,
+                                  prop.rank === selectedProposalRank ? styles.activeMenuItem : "",
+                                ].join(" ")}
+                                onClick={() => {
+                                  setIsProposalDropdownOpen(false)
+                                  void handleProposalChange(prop.rank)
+                                }}
+                              >
+                                <span>{prop.label || `AI Önerisi (${prop.rank})`}</span>
+                                {prop.rank === selectedProposalRank && (
+                                  <span style={{ color: "#2ec4a7", fontWeight: 700 }}>✓</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.toolbarActions}>
+                      {successToast && (
+                        <div className={styles.successToast}>
+                          {successToast}
+                        </div>
+                      )}
+                      <div className={styles.addStockQuick}>
+                        <div style={{ position: "relative" }}>
+                          <input
+                            type="text"
+                            value={selectedAssetCodeToAdd}
+                            onChange={(e) => {
+                              setSelectedAssetCodeToAdd(e.target.value.toUpperCase())
+                              setIsAutocompleteOpen(true)
+                            }}
+                            onFocus={() => setIsAutocompleteOpen(true)}
+                            onBlur={() => setTimeout(() => setIsAutocompleteOpen(false), 200)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && selectedAssetCodeToAdd) {
+                                e.preventDefault()
+                                void handleAddAsset()
+                                setIsAutocompleteOpen(false)
+                              }
+                            }}
+                            placeholder="Hisse Kodu..."
+                            className={styles.quickInput}
+                            maxLength={6}
+                          />
+                          {isAutocompleteOpen && selectedAssetCodeToAdd && (
+                            <div className={styles.autocompleteDropdown}>
+                              {(() => {
+                                const filtered = editModelUniverse
+                                  .filter(
+                                    (a) =>
+                                      !positions.some((p) => p.assetCode === a.assetCode) &&
+                                      (a.assetCode.toLowerCase().includes(selectedAssetCodeToAdd.toLowerCase()) ||
+                                        a.displayName.toLowerCase().includes(selectedAssetCodeToAdd.toLowerCase())),
+                                  )
+                                  .slice(0, 5)
+
+                                if (filtered.length === 0) {
+                                  return <div className={styles.autocompleteItemEmpty}>Sonuç bulunamadı</div>
+                                }
+                                return filtered.map(a => (
+                                  <div 
+                                    key={a.assetCode} 
+                                    className={styles.autocompleteItem}
+                                    onClick={() => {
+                                      setIsAutocompleteOpen(false)
+                                      void handleAddAsset(a.assetCode)
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
+                                      <span className={styles.autocompleteCode}>{a.assetCode}</span>
+                                      <span className={styles.autocompleteName}>{a.displayName}</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2ec4a7', marginLeft: 'auto' }}>+ Ekle</span>
+                                  </div>
+                                ))
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddStockModalOpen(true)}
+                        className={styles.openListBtn}
+                      >
+                        <span aria-hidden="true" className={styles.openListIcon}>
+                          +
+                        </span>
+                        Listeden Seç
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.tableFilterBar}>
+                    <div className={styles.filterLeft}>
+                      <div className={styles.searchBox} style={{ maxWidth: '320px' }}>
+                        <span className={styles.searchIcon}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                          </svg>
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Tabloda hisse veya sektör ara..."
+                          value={tableFilterText}
+                          onChange={(e) => setTableFilterText(e.target.value)}
+                          className={styles.tableSearchInput}
+                        />
+                        {tableFilterText && (
+                          <button
+                            type="button"
+                            onClick={() => setTableFilterText("")}
+                            className={styles.clearFilterBtn}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.filterRight}>
+                      {/* Clear All Filters Button - Always Visible */}
+                      {(() => {
+                        const hasActiveFilters = Boolean(debouncedFilterText || selectedSectors.length > 0 || tableSortKey !== "NONE")
+                        return (
+                          <button
+                            type="button"
+                            disabled={!hasActiveFilters}
+                            onClick={() => {
+                              setTableFilterText("")
+                              setSelectedSectors([])
+                              setTableSortKey("NONE")
+                            }}
+                            className={[
+                              styles.clearAllFiltersBtn,
+                              !hasActiveFilters ? styles.clearAllFiltersBtnDisabled : "",
+                            ].join(" ")}
+                          >
+                            Filtreleri Temizle ✕
+                          </button>
+                        )
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={{ width: '40px', textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              className={styles.checkboxInput}
+                              checked={
+                                positions.filter(p => p.assetType !== "TPP").length > 0 &&
+                                selectedRowCodes.length === positions.filter(p => p.assetType !== "TPP").length
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedRowCodes(positions.filter(p => p.assetType !== "TPP").map(p => p.assetCode))
+                                } else {
+                                  setSelectedRowCodes([])
+                                }
+                              }}
+                            />
+                          </th>
+                          <th>HİSSE</th>
+                          <th>
+                            {/* Sector Dropdown directly inside Column Header */}
+                            <div ref={sectorRef} style={{ position: "relative", display: "inline-block" }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsSectorDropdownOpen((prev) => !prev)
+                                  setIsSortDropdownOpen(false)
+                                }}
+                                title={
+                                  selectedSectors.length === 1
+                                    ? selectedSectors[0]
+                                    : selectedSectors.length > 1
+                                    ? selectedSectors.join(", ")
+                                    : undefined
+                                }
+                                className={[
+                                  styles.thHeaderBtn,
+                                  selectedSectors.length > 0 ? styles.thHeaderBtnActive : "",
+                                ].join(" ")}
+                              >
+                                <span>
+                                  SEKTÖR {selectedSectors.length > 0 ? `(${selectedSectors.length})` : ""}
+                                </span>
+                                <span style={{ fontSize: "0.65rem" }}>▼</span>
+                              </button>
+                              {isSectorDropdownOpen && (
+                                <div className={styles.customFilterMenu} style={{ top: "calc(100% + 6px)", left: 0 }}>
+                                  <div
+                                    className={styles.customFilterMenuHeader}
+                                    onClick={() => setSelectedSectors([])}
+                                  >
+                                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#108e75" }}>
+                                      ✓ Tüm Sektörler (Sıfırla)
+                                    </span>
+                                  </div>
+                                  <div className={styles.customFilterMenuDivider} />
+                                  {availableSectors.map((sec) => {
+                                    const isChecked = selectedSectors.includes(sec)
+                                    return (
+                                      <div
+                                        key={sec}
+                                        className={[
+                                          styles.customProposalMenuItem,
+                                          isChecked ? styles.activeMenuItem : "",
+                                        ].join(" ")}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setSelectedSectors((prev) =>
+                                            prev.includes(sec)
+                                              ? prev.filter((s) => s !== sec)
+                                              : [...prev, sec]
+                                          )
+                                        }}
+                                      >
+                                        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                                          <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={() => {}}
+                                            className={styles.checkboxInput}
+                                          />
+                                          <span>{sec}</span>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th>
+                            {/* Sort Dropdown directly inside Weight Column Header */}
+                            <div ref={sortRef} style={{ position: "relative", display: "inline-block" }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsSortDropdownOpen((prev) => !prev)
+                                  setIsSectorDropdownOpen(false)
+                                }}
+                                className={[
+                                  styles.thHeaderBtn,
+                                  tableSortKey !== "NONE" ? styles.thHeaderBtnActive : "",
+                                ].join(" ")}
+                              >
+                                <span>
+                                  AĞIRLIK (%) {tableSortKey === "WEIGHT_DESC" ? "↓" : tableSortKey === "WEIGHT_ASC" ? "↑" : ""}
+                                </span>
+                                <span style={{ fontSize: "0.65rem" }}>▼</span>
+                              </button>
+                              {isSortDropdownOpen && (
+                                <div className={styles.customFilterMenu} style={{ top: "calc(100% + 6px)", left: 0, minWidth: '180px' }}>
+                                  {[
+                                    { key: "NONE", label: "Varsayılan" },
+                                    { key: "WEIGHT_DESC", label: "Ağırlık: Azalan (↓)" },
+                                    { key: "WEIGHT_ASC", label: "Ağırlık: Artan (↑)" },
+                                  ].map((opt) => (
+                                    <div
+                                      key={opt.key}
+                                      className={[
+                                        styles.customProposalMenuItem,
+                                        tableSortKey === opt.key ? styles.activeMenuItem : "",
+                                      ].join(" ")}
+                                      onClick={() => {
+                                        setTableSortKey(opt.key as any)
+                                        setIsSortDropdownOpen(false)
+                                      }}
+                                    >
+                                      <span>{opt.label}</span>
+                                      {tableSortKey === opt.key && (
+                                        <span style={{ color: "#2ec4a7", fontWeight: 700 }}>✓</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th>HEDEF ARALIK</th>
+                          <th>HEDEFE GÖRE</th>
+                          <th style={{ textAlign: "center" }}>İŞLEM</th>
+                        </tr>
+                      </thead>
+                      <tbody key={`${debouncedFilterText}-${selectedSectors.join(",")}-${tableSortKey}`}>
+                        {filteredPositions.filter(p => p.pos.assetType !== "TPP").length === 0 && (
+                          <tr>
+                            <td colSpan={7} className={styles.emptyFilterRow}>
+                              <div className={styles.emptyFilterBox}>
+                                <span className={styles.emptyFilterText}>
+                                  Arama kriterlerinize uygun hisse bulunamadı.
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTableFilterText("")
+                                    setSelectedSectors([])
+                                  }}
+                                  className={styles.clearAllFiltersBtn}
+                                  style={{ marginTop: '0.25rem' }}
+                                >
+                                  Filtreleri Temizle ✕
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        {filteredPositions.map(({ pos, originalIndex }) => {
+                          let targetMin = 3;
+                          let targetMax = 10;
+                          let prospectusMax = 10;
+                          let targetText = "";
+
+                          if (pos.assetType === "TPP") {
+                            targetMin = editDraft?.tppMinPct ?? 3;
+                            targetMax = editDraft?.tppMaxPct ?? 15;
+                            prospectusMax = init?.maxLiquidityTargetPct ?? 15;
+                            targetText = `%${targetMin} - %${targetMax}`;
+                          } else {
+                            targetMin = 0; // Tek hisse için özel minimum limit bulunmuyor
+                            targetMax = editDraft?.singleStockMaxPct ?? init?.maxSingleStockMaxPct ?? 10;
+                            prospectusMax = init?.maxSingleStockMaxPct ?? 10;
+                            targetText = editDraft?.singleStockMaxPct != null 
+                              ? `Maks %${targetMax}` 
+                              : `Maks %${targetMax}`;
+                          }
+
+                          const isProspectusExceeded = pos.weightPct > prospectusMax;
+                          const isCustomExceeded = pos.weightPct > targetMax;
+                          const isCustomMinViolated = pos.weightPct > 0 && targetMin > 0 && pos.weightPct < targetMin;
+
+                          let statusClass = styles.statusOk;
+                          let statusLabel = "Uygun";
+
+                          if (isProspectusExceeded) {
+                            statusClass = styles.statusBad;
+                            statusLabel = "İhlal";
+                          } else if (isCustomExceeded || isCustomMinViolated) {
+                            statusClass = styles.statusWarn;
+                            statusLabel = "Hedef Dışı";
+                          } else if (pos.weightPct < targetMax && pos.weightPct >= targetMax * 0.85) {
+                            statusClass = styles.statusWarn;
+                            statusLabel = "Sınıra Yakın";
+                          }
+
+                          return (
+                            <tr 
+                              key={pos.assetCode}
+                              className={pos.assetCode === highlightedAssetCode ? styles.rowHighlightAdded : ""}
+                            >
+                              <td style={{ textAlign: 'center' }}>
+                                {pos.assetType !== "TPP" && (
+                                  <input
+                                    type="checkbox"
+                                    className={styles.checkboxInput}
+                                    checked={selectedRowCodes.includes(pos.assetCode)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedRowCodes((prev) => [...prev, pos.assetCode])
+                                      } else {
+                                        setSelectedRowCodes((prev) => prev.filter((c) => c !== pos.assetCode))
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </td>
+                              <td>
+                                <div className={styles.assetBadge}>
+                                  <span className={styles.assetCodeText}>
+                                    {pos.assetCode}
+                                  </span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className={styles.sectorTag} title={pos.sectorName ?? undefined}>
+                                  {pos.sectorName ?? "—"}
+                                </span>
+                              </td>
+                              <td>
+                                <div className={styles.weightCell}>
+                                  <button
+                                    type="button"
+                                    className={[styles.stepBtn, styles.stepBtnMinus].join(" ")}
+                                    title="0.1% Azalt"
+                                    onClick={() =>
+                                      handleWeightChange(
+                                        originalIndex,
+                                        Math.max(0, Math.round((pos.weightPct - 0.1) * 100) / 100),
+                                      )
+                                    }
+                                  >
+                                    -
+                                  </button>
+                                  <EditableWeightInput
+                                    value={pos.weightPct}
+                                    hasError={init ? (pos.weightPct > init.maxSingleStockMaxPct || (init.minSingleStockMaxPct > 0 && pos.weightPct < init.minSingleStockMaxPct)) : false}
+                                    onChange={(newVal) => handleWeightChange(originalIndex, newVal)}
+                                    className={styles.weightInput}
+                                  />
+                                  <button
+                                    type="button"
+                                    className={styles.stepBtn}
+                                    title="0.1% Artır"
+                                    onClick={() =>
+                                      handleWeightChange(
+                                        originalIndex,
+                                        Math.min(100, Math.round((pos.weightPct + 0.1) * 100) / 100),
+                                      )
+                                    }
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </td>
+                                <td>
+                                <span className={styles.targetRange}>
+                                  {targetText}
+                                </span>
+                              </td>
+                              <td>
+                                <div
+                                  className={[
+                                    styles.statusPill,
+                                    statusClass,
+                                  ].join(" ")}
+                                >
+                                  <span className={styles.statusDot} />
+                                  <span>{statusLabel}</span>
+                                </div>
+                              </td>
+                               <td style={{ textAlign: "center" }}>
+                                 {pos.assetType !== "TPP" && (
+                                   <button
+                                     type="button"
+                                     className={styles.deleteBtn}
+                                     title="Hisseyi çıkar"
+                                     onClick={() => requestDeleteSingle(originalIndex)}
+                                   >
+                                     <TrashIcon />
+                                   </button>
+                                 )}
+                               </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.actions}>
+              <button
+                className={styles.back}
+                type="button"
+                onClick={() => {
+                  if (!draftId) return
+                  void navigate(`/fund-design/${draftId}/alternatives`)
+                }}
+              >
+                ← Geri
+              </button>
+              <Button
+                className={styles.continue}
+                type="button"
+                disabled={!isProspectusCompliant || isLoading || isSaving}
+                onClick={() => void handleSaveAndContinue()}
+              >
+                {isSaving ? "Kaydediliyor…" : "Kaydet ve İlerle →"}
+              </Button>
+            </div>
+          </div>
+
+          <div style={{ position: "sticky", top: "2rem", alignSelf: "start" }}>
+            <ProspectusRulesPanel init={init} liveCompliance={liveCompliance} />
+          </div>
+        </div>
+      </section>
+
+      {/* FULL LIST MODAL WITH BATCH WEIGHT INPUT */}
+      {isAddStockModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsAddStockModalOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 className={styles.modalTitle}>Hisse Seçin ve Ağırlık Belirleyin</h3>
+                <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: '0.2rem 0 0 0' }}>
+                  Hisseleri işaretleyip oranlarını (%) yanına yazarak topluca ekleyebilirsiniz.
+                </p>
+              </div>
+              <button className={styles.closeModalBtn} onClick={() => setIsAddStockModalOpen(false)}>×</button>
+            </div>
+            <div className={styles.modalSearchBox}>
+              <input
+                type="text"
+                placeholder="Kod veya isme göre ara..."
+                value={modalSearchText}
+                onChange={(e) => setModalSearchText(e.target.value)}
+                className={styles.modalSearchInput}
+              />
+            </div>
+            <div className={styles.modalList} style={{ maxHeight: '340px' }}>
+              {editModelUniverse
+                .filter((asset) => !positions.some((p) => p.assetCode === asset.assetCode))
+                .filter((asset) => {
+                  if (!modalSearchText) return true;
+                  const query = modalSearchText.toLocaleLowerCase("tr-TR").trim();
+                  return asset.assetCode.toLocaleLowerCase("tr-TR").includes(query) || asset.displayName.toLocaleLowerCase("tr-TR").includes(query);
+                })
+                .map((asset) => {
+                  const isChecked = asset.assetCode in modalSelectedAssets
+                  const currentWeight = modalSelectedAssets[asset.assetCode] ?? 3.0
+
+                  return (
+                    <div 
+                      key={asset.assetCode} 
+                      className={[
+                        styles.modalListItem,
+                        isChecked ? styles.modalListItemActive : "",
+                      ].join(" ")}
+                    >
+                      <div className={styles.modalAssetInfo}>
+                        <input
+                          type="checkbox"
+                          className={styles.checkboxInput}
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setModalSelectedAssets((prev) => ({ ...prev, [asset.assetCode]: 3.0 }))
+                            } else {
+                              setModalSelectedAssets((prev) => {
+                                const next = { ...prev }
+                                delete next[asset.assetCode]
+                                return next
+                              })
+                            }
+                          }}
+                        />
+                        <span className={styles.modalAssetCode}>{asset.assetCode}</span>
+                        <span className={styles.modalAssetDesc}>{asset.displayName}</span>
+                      </div>
+
+                      {isChecked ? (
+                        (() => {
+                          const isMinViolated = init && init.minSingleStockMaxPct > 0 && currentWeight < init.minSingleStockMaxPct;
+                          const isMaxViolated = init && currentWeight > init.maxSingleStockMaxPct;
+                          const hasError = !!isMinViolated || !!isMaxViolated;
+                          
+                          return (
+                            <div className={styles.modalWeightBox}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: hasError ? '#ef4444' : '#64748b' }}>Ağırlık %</span>
+                              <EditableWeightInput
+                                value={currentWeight}
+                                hasError={hasError}
+                                onChange={(val) => {
+                                  setModalSelectedAssets((prev) => ({ ...prev, [asset.assetCode]: val }))
+                                }}
+                                className={styles.modalWeightInput}
+                              />
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.modalAddBtn}
+                          onClick={() => {
+                            setModalSelectedAssets((prev) => ({ ...prev, [asset.assetCode]: 3.0 }))
+                          }}
+                        >
+                          + Seç
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              {editModelUniverse.filter((asset) => !positions.some((p) => p.assetCode === asset.assetCode)).length === 0 && (
+                <p style={{ color: '#64748b', textAlign: 'center', padding: '1rem' }}>Eklenebilecek yeni hisse bulunmuyor.</p>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              {(() => {
+                const entries = Object.entries(modalSelectedAssets);
+                const invalidCodes = entries
+                  .filter(([_, weight]) => {
+                    if (!init) return false;
+                    return (init.minSingleStockMaxPct > 0 && weight < init.minSingleStockMaxPct) || weight > init.maxSingleStockMaxPct;
+                  })
+                  .map(([code]) => code);
+
+                const hasValidationError = invalidCodes.length > 0;
+
+                return (
+                  <>
+                    <span style={{ fontSize: '0.8125rem', color: hasValidationError ? '#ef4444' : '#475569', fontWeight: 600 }}>
+                      {hasValidationError 
+                        ? `${invalidCodes.join(", ")} ağırlığı hatalı!`
+                        : entries.length > 0
+                          ? `Seçili: ${entries.length} Hisse (Toplam %${entries.reduce((a, [_, b]) => a + b, 0).toFixed(1)})`
+                          : "Henüz hisse seçilmedi"
+                      }
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.modalBatchSubmitBtn}
+                      disabled={entries.length === 0 || isAddingAsset || hasValidationError}
+                      onClick={() => void handleBatchAddModalAssets()}
+                    >
+                      {isAddingAsset ? "Ekleniyor…" : `Portföye Ekle (${entries.length})`}
+                    </button>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* FLOATING BULK SELECTION ACTION BAR */}
+      {selectedRowCodes.length > 0 && (
+        <div className={styles.floatingBulkBar}>
+          <div className={styles.floatingBulkText}>
+            <span className={styles.floatingBulkBadge}>{selectedRowCodes.length}</span>
+            <span>Hisse Seçildi</span>
+          </div>
+          <div className={styles.floatingBulkActions}>
+            <button
+              type="button"
+              className={styles.floatingCancelBtn}
+              onClick={() => setSelectedRowCodes([])}
+            >
+              Seçimi Temizle
+            </button>
+            <button
+              type="button"
+              className={styles.floatingDeleteBtn}
+              onClick={() => requestDeleteBulk()}
+            >
+              Portföyden Çıkar ({selectedRowCodes.length})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION MODAL */}
+      {deleteConfirmState.isOpen && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }))}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "400px", padding: "1.5rem" }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
+              <div
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  background: "#fee2e2",
+                  color: "#ef4444",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.25rem",
+                  fontWeight: 700,
+                  margin: "0 auto 0.75rem auto",
+                }}
+              >
+                ?
+              </div>
+              <h3 style={{ margin: "0 0 0.4rem 0", color: "#0f1f3c", fontSize: "1.125rem", fontWeight: 700 }}>
+                {deleteConfirmState.title}
+              </h3>
+              <p style={{ margin: 0, color: "#475569", fontSize: "0.875rem", lineHeight: "1.5" }}>
+                {deleteConfirmState.message}
+              </p>
+              {deleteConfirmState.items.length > 0 && (
+                <div
+                  style={{
+                    marginTop: "0.9rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.35rem",
+                    alignItems: "center",
+                    maxHeight: "220px",
+                    overflowY: "auto",
+                    padding: "0 0.5rem"
+                  }}
+                >
+                  {deleteConfirmState.items.map((item) => (
+                    <span
+                      key={item}
+                      style={{
+                        display: "inline-flex",
+                        maxWidth: "100%",
+                        padding: "0.3rem 0.6rem",
+                        borderRadius: "999px",
+                        background: "#f8fafc",
+                        color: "#0f1f3c",
+                        fontSize: "0.8125rem",
+                        fontWeight: 600,
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }))}
+                className={styles.floatingCancelBtn}
+                style={{ flex: 1, height: "40px" }}
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteConfirmState.onConfirm()}
+                className={styles.floatingDeleteBtn}
+                style={{ flex: 1, height: "40px" }}
+              >
+                Evet, Çıkar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </FundDesignLayout>
+  )
+}
