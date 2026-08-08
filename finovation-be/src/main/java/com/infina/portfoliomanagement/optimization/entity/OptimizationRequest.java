@@ -39,6 +39,9 @@ public class OptimizationRequest {
     @Column(name = "risk_profile", nullable = false, length = 15)
     private RiskProfile riskProfile;
 
+    @Column(name = "max_additions", nullable = false)
+    private Integer maxAdditions;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RequestStatus status;

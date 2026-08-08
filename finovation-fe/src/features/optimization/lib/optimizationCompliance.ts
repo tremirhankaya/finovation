@@ -10,7 +10,7 @@ const STOCK_COUNT_FLOOR = 16
 const STOCK_COUNT_CEILING = 30
 const STOCK_COUNT_MIN_RANGE_WIDTH = 5
 const USABLE_EQUITY_WEIGHT_CEILING = 95
-const FORCE_ADD_MINIMUM_WEIGHT = 1
+const FORCE_ADD_MINIMUM_WEIGHT = 3
 
 export type ComplianceInput = {
   tppMinWeight: number
@@ -107,7 +107,7 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
       key: "forced-excluded-assets",
       label: "Zorunlu ve hariç tutulan hisseler",
       status: "UYUMLU",
-      detail: `${input.forceAddedAssetCount} hisse zorunlu eklenecek · ${input.excludedAssetCount} hisse hariç tutuldu; zorunlu hisseler için en az %1 ağırlık ayrılır`,
+      detail: `${input.forceAddedAssetCount} hisse zorunlu eklenecek · ${input.excludedAssetCount} hisse hariç tutuldu; zorunlu hisseler için en az %3 ağırlık ayrılır`,
     },
     {
       key: "sector-concentration",

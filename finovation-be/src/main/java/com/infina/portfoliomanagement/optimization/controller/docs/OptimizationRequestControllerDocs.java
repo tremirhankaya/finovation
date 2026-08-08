@@ -1,8 +1,10 @@
 package com.infina.portfoliomanagement.optimization.controller.docs;
 
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
+import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -61,11 +63,28 @@ public interface OptimizationRequestControllerDocs {
     ResponseEntity<OptimizationRequestResponse> runOptimizationRequest(UserDetails userDetails, Long id);
 
     @Operation(
-            summary = "Approve optimization request",
-            description = "Approves a COMPLETED optimization request.",
+            summary = "Get optimization result",
+            description = "Returns the per-asset proposed portfolio for a completed optimization request " +
+                    "(current/proposed/final weights, action type and rationale). Weights are expressed as " +
+                    "percentages (0-100). Returns 404 if the request has not produced a result yet.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
-    ResponseEntity<OptimizationRequestResponse> approveOptimizationRequest(UserDetails userDetails, Long id);
+    ResponseEntity<OptimizationResultResponse> getOptimizationResult(UserDetails userDetails, Long id);
+
+    @Operation(
+            summary = "Approve optimization request",
+            description = "Approves a COMPLETED optimization request. Directly updates the fund's active " +
+                    "portfolio with the proposed weights (GK-02) and records the approval on the " +
+                    "optimization result for audit and reporting purposes (GK-03). An optional list of " +
+                    "per-asset final weight overrides may be supplied; assets without an override keep the " +
+                    "engine's proposed weight.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<OptimizationRequestResponse> approveOptimizationRequest(
+            UserDetails userDetails,
+            Long id,
+            ApproveOptimizationRequestRequest request
+    );
 
     @Operation(
             summary = "Reject optimization request",

@@ -39,15 +39,15 @@ function snapshot() {
     periodReturns: [],
     positions: [
       {
-        assetId: "AKBNK",
-        symbol: "AKBNK",
+        assetId: "101",
+        symbol: "AKBNK.E",
         name: "Akbank",
         sectorName: "Bankacılık",
         weightPercentage: 8,
       },
       {
-        assetId: "ASELS",
-        symbol: "ASELS",
+        assetId: "102",
+        symbol: "ASELS.E",
         name: "Aselsan",
         sectorName: "Savunma",
         weightPercentage: 7,
@@ -119,9 +119,9 @@ describe("useOptimizationForm", () => {
     const { result } = renderHook(() => useOptimizationForm())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
 
-    await waitFor(() => expect(result.current.selection.AKBNK).toBe("KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
     const keptRow = result.current.complianceRows.find(
       (row) => row.key === "kept-assets",
     )
@@ -132,12 +132,12 @@ describe("useOptimizationForm", () => {
     const { result } = renderHook(() => useOptimizationForm())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
-    await waitFor(() => expect(result.current.selection.AKBNK).toBe("KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
 
-    await waitFor(() => expect(result.current.selection.AKBNK).toBeUndefined())
+    await waitFor(() => expect(result.current.selection["101"]).toBeUndefined())
   })
 
   it("submit çağrıldığında isteği doğru payload ile gönderip onSubmitted'ı çağırır", async () => {
@@ -148,8 +148,8 @@ describe("useOptimizationForm", () => {
     const { result } = renderHook(() => useOptimizationForm())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
-    await waitFor(() => expect(result.current.selection.AKBNK).toBe("KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
 
     const onSubmitted = vi.fn()
     await act(async () => {
@@ -166,7 +166,7 @@ describe("useOptimizationForm", () => {
         stockCountMax: 30,
         assetPreferences: [
           {
-            assetCode: "AKBNK",
+            assetCode: "AKBNK.E",
             preferenceType: "KEEP",
             currentWeight: 8,
           },

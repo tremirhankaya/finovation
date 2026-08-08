@@ -1,8 +1,10 @@
 package com.infina.portfoliomanagement.optimization.controller;
 
 import com.infina.portfoliomanagement.optimization.controller.docs.OptimizationRequestControllerDocs;
+import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
 import com.infina.portfoliomanagement.optimization.service.OptimizationRequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -73,13 +75,25 @@ public class OptimizationRequestController implements OptimizationRequestControl
     }
 
     @Override
-    @PostMapping("/{id}/approve")
-    public ResponseEntity<OptimizationRequestResponse> approveOptimizationRequest(
+    @GetMapping("/{id}/result")
+    public ResponseEntity<OptimizationResultResponse> getOptimizationResult(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(
-                optimizationRequestService.approve(userDetails.getUsername(), id)
+                optimizationRequestService.getResult(userDetails.getUsername(), id)
+        );
+    }
+
+    @Override
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<OptimizationRequestResponse> approveOptimizationRequest(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) ApproveOptimizationRequestRequest request
+    ) {
+        return ResponseEntity.ok(
+                optimizationRequestService.approve(userDetails.getUsername(), id, request)
         );
     }
 

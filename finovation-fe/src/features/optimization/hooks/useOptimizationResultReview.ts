@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   approveOptimizationRequest,
   fetchOptimizationRequest,
+  fetchOptimizationResult,
   rejectOptimizationRequest,
 } from "@/features/optimization/api/optimizationApi"
 import {
@@ -10,14 +11,13 @@ import {
   evaluateInfoMetrics,
   isApprovalBlockedByConstraints,
 } from "@/features/optimization/lib/optimizationMetricsEvaluation"
-import {
-  PLACEHOLDER_CONSTRAINT_METRIC_INPUT,
-  PLACEHOLDER_CURRENT_RISK_METRICS,
-  PLACEHOLDER_PROPOSED_RISK_METRICS,
-} from "@/features/optimization/lib/optimizationMetricsPlaceholder"
+import { buildConstraintMetricInput } from "@/features/optimization/lib/optimizationConstraintMetricInput"
+import { buildRiskMetricsSnapshots } from "@/features/optimization/lib/optimizationRiskMetricsInput"
 import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimizationError"
-import { PLACEHOLDER_OPTIMIZATION_RESULT } from "@/features/optimization/lib/optimizationResultPlaceholder"
-import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
+import type {
+  OptimizationResultAsset,
+  OptimizationResultMetric,
+} from "@/features/optimization/model/optimizationResultSchemas"
 import type {
   RiskProfile,
   OptimizationRequestResponse,
@@ -27,6 +27,7 @@ export type ReviewStep = 3 | 4
 export type Decision = "approve" | "reject"
 
 const REVIEWABLE_STATUSES = new Set(["COMPLETED"])
+const RESULT_AVAILABLE_STATUSES = new Set(["COMPLETED", "APPROVED", "REJECTED"])
 
 export function useOptimizationResultReview(requestId: number) {
   const [request, setRequest] = useState<OptimizationRequestResponse | null>(
@@ -36,9 +37,8 @@ export function useOptimizationResultReview(requestId: number) {
   const [loadErrorMessage, setLoadErrorMessage] = useState("")
 
   const [reviewStep, setReviewStep] = useState<ReviewStep>(3)
-  const [assets, setAssets] = useState<OptimizationResultAsset[]>(
-    PLACEHOLDER_OPTIMIZATION_RESULT.assets,
-  )
+  const [assets, setAssets] = useState<OptimizationResultAsset[]>([])
+  const [metrics, setMetrics] = useState<OptimizationResultMetric[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitErrorMessage, setSubmitErrorMessage] = useState("")
   const [decidedAs, setDecidedAs] = useState<Decision | null>(null)
@@ -62,6 +62,14 @@ export function useOptimizationResultReview(requestId: number) {
           setRequest(current)
           if (current.status === "APPROVED") setDecidedAs("approve")
           if (current.status === "REJECTED") setDecidedAs("reject")
+        }
+
+        if (RESULT_AVAILABLE_STATUSES.has(current.status)) {
+          const result = await fetchOptimizationResult(requestId)
+          if (!cancelled) {
+            setAssets(result.assets)
+            setMetrics(result.metrics)
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -120,18 +128,24 @@ export function useOptimizationResultReview(requestId: number) {
   )
 
   const constraintMetrics = useMemo(
-    () => evaluateConstraintMetrics(PLACEHOLDER_CONSTRAINT_METRIC_INPUT),
-    [],
+    () =>
+      evaluateConstraintMetrics(
+        buildConstraintMetricInput(
+          assets,
+          request?.tppMinWeight ?? null,
+          request?.tppMaxWeight ?? null,
+          request?.stockCountMin ?? null,
+          request?.stockCountMax ?? null,
+        ),
+      ),
+    [assets, request],
   )
 
   const infoMetrics = useMemo(() => {
     const riskProfile: RiskProfile = request?.riskProfile ?? "BALANCED"
-    return evaluateInfoMetrics(
-      PLACEHOLDER_CURRENT_RISK_METRICS,
-      PLACEHOLDER_PROPOSED_RISK_METRICS,
-      riskProfile,
-    )
-  }, [request?.riskProfile])
+    const { current, proposed } = buildRiskMetricsSnapshots(metrics)
+    return evaluateInfoMetrics(current, proposed, riskProfile)
+  }, [metrics, request?.riskProfile])
 
   const isApprovalBlocked = useMemo(
     () => isApprovalBlockedByConstraints(constraintMetrics),
@@ -150,7 +164,15 @@ export function useOptimizationResultReview(requestId: number) {
 
       try {
         if (decision === "approve") {
-          await approveOptimizationRequest(requestId)
+          const weightOverrides = assets
+            .filter(
+              (asset) => asset.manuallyOverridden && asset.finalWeight != null,
+            )
+            .map((asset) => ({
+              assetCode: asset.assetCode,
+              finalWeight: asset.finalWeight as number,
+            }))
+          await approveOptimizationRequest(requestId, weightOverrides)
         } else {
           await rejectOptimizationRequest(requestId)
         }
@@ -161,7 +183,7 @@ export function useOptimizationResultReview(requestId: number) {
         setIsSubmitting(false)
       }
     },
-    [requestId, isApprovalBlocked],
+    [requestId, isApprovalBlocked, assets],
   )
 
   return {

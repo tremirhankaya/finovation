@@ -31,6 +31,11 @@ export const optimizationRequestResponseSchema = z.object({
   requestedByUsername: z.string().nullable(),
   riskProfile: riskProfileSchema,
   status: requestStatusSchema,
+  maxAdditions: z.number().nullable(),
+  tppMinWeight: z.number().nullable(),
+  tppMaxWeight: z.number().nullable(),
+  stockCountMin: z.number().nullable(),
+  stockCountMax: z.number().nullable(),
   startedAt: z.iso.datetime({ local: true }).nullable(),
   completedAt: z.iso.datetime({ local: true }).nullable(),
   errorMessage: z.string().nullable(),
@@ -56,6 +61,7 @@ export const createOptimizationRequestSchema = z.object({
   tppMaxWeight: z.number(),
   stockCountMin: z.number(),
   stockCountMax: z.number(),
+  maxAdditions: z.number(),
 })
 
 export const investmentUniverseAssetResponseSchema = z.object({

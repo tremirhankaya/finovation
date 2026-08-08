@@ -137,6 +137,10 @@ export function getOptimizationRequestRunUrl(requestId: number): string {
   return `${getOptimizationRequestUrl(requestId)}/run`
 }
 
+export function getOptimizationRequestResultUrl(requestId: number): string {
+  return `${getOptimizationRequestUrl(requestId)}/result`
+}
+
 export function getOptimizationRequestApproveUrl(requestId: number): string {
   return `${getOptimizationRequestUrl(requestId)}/approve`
 }

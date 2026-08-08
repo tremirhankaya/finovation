@@ -2,6 +2,7 @@ import {
   getInvestmentUniverseUrl,
   getOptimizationRequestApproveUrl,
   getOptimizationRequestRejectUrl,
+  getOptimizationRequestResultUrl,
   getOptimizationRequestRunUrl,
   getOptimizationRequestUrl,
   getOptimizationRequestsUrl,
@@ -15,6 +16,10 @@ import {
   optimizationRequestListResponseSchema,
   optimizationRequestResponseSchema,
 } from "@/features/optimization/model/optimizationSchemas"
+import {
+  type OptimizationResult,
+  optimizationResultSchema,
+} from "@/features/optimization/model/optimizationResultSchemas"
 
 export async function createOptimizationRequest(
   payload: CreateOptimizationRequestPayload,
@@ -71,13 +76,37 @@ export async function runOptimizationRequest(
   )
 }
 
+export async function fetchOptimizationResult(
+  requestId: number,
+  signal?: AbortSignal,
+): Promise<OptimizationResult> {
+  return apiFetch(
+    getOptimizationRequestResultUrl(requestId),
+    {
+      errorMessage: "Optimizasyon sonucu alınamadı",
+      signal,
+    },
+    optimizationResultSchema.parse,
+  )
+}
+
+export type AssetWeightOverride = {
+  assetCode: string
+  finalWeight: number
+}
+
 export async function approveOptimizationRequest(
   requestId: number,
+  weightOverrides?: AssetWeightOverride[],
 ): Promise<OptimizationRequestResponse> {
   return apiFetch(
     getOptimizationRequestApproveUrl(requestId),
     {
       method: "POST",
+      body:
+        weightOverrides && weightOverrides.length > 0
+          ? { weightOverrides }
+          : undefined,
       errorMessage: "Optimizasyon sonucu onaylanamadı",
     },
     optimizationRequestResponseSchema.parse,

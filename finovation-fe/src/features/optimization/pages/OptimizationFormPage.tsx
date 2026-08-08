@@ -125,7 +125,7 @@ export default function OptimizationFormPage() {
 
                 <AssetTogglePanel
                   title="D · Zorunlu Eklenecek Hisseler"
-                  description="İşaretlenen hisse portföye mutlaka girer; sistem her biri için en az %1 ağırlık ayırır."
+                  description="İşaretlenen hisse portföye mutlaka girer; sistem her biri için en az %3 ağırlık ayırır."
                   assets={form.universeAssets}
                   selectedAssetCodes={forceAddedAssetCodes}
                   disabledAssetCodes={excludedAssetCodes}
@@ -161,6 +161,33 @@ export default function OptimizationFormPage() {
                   onMaxChange={form.setStockCountMax}
                   hint="Sistem sınırı: 16 ≤ hisse sayısı ≤ 30 · aralık genişliği en az 5 hisse"
                 />
+
+                <div className={styles.rangeField}>
+                  <div className={styles.rangeFieldHeader}>
+                    <span className={styles.rangeFieldLabel}>
+                      Eklenebilecek En Fazla Yeni Hisse
+                    </span>
+                    <span className={styles.rangeFieldBounds}>
+                      Min {form.maxAdditionsFloor} — Maks {form.maxAdditionsCeiling}
+                    </span>
+                  </div>
+                  <div className={styles.rangeInputs}>
+                    <input
+                      type="number"
+                      value={form.maxAdditions}
+                      min={form.maxAdditionsFloor}
+                      max={form.maxAdditionsCeiling}
+                      onChange={(event) =>
+                        form.setMaxAdditions(Number(event.target.value))
+                      }
+                      aria-label="Eklenebilecek en fazla yeni hisse"
+                    />
+                  </div>
+                  <p className={styles.rangeHint}>
+                    Optimizasyon sırasında portföye eklenebilecek yeni hisse
+                    sayısının üst sınırı
+                  </p>
+                </div>
               </section>
             </div>
 

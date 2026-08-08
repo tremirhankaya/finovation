@@ -34,6 +34,9 @@ const DEFAULT_TPP_MAX_WEIGHT = 15
 const DEFAULT_STOCK_COUNT_MIN = 16
 const DEFAULT_STOCK_COUNT_MAX = 30
 const DEFAULT_RISK_PROFILE: RiskProfile = "BALANCED"
+const DEFAULT_MAX_ADDITIONS = 3
+const MAX_ADDITIONS_FLOOR = 0
+const MAX_ADDITIONS_CEILING = 30
 
 export function useOptimizationForm() {
   const [step, setStep] = useState<WizardStep>(1)
@@ -53,6 +56,7 @@ export function useOptimizationForm() {
   const [tppMaxWeight, setTppMaxWeight] = useState(DEFAULT_TPP_MAX_WEIGHT)
   const [stockCountMin, setStockCountMin] = useState(DEFAULT_STOCK_COUNT_MIN)
   const [stockCountMax, setStockCountMax] = useState(DEFAULT_STOCK_COUNT_MAX)
+  const [maxAdditions, setMaxAdditions] = useState(DEFAULT_MAX_ADDITIONS)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitErrorMessage, setSubmitErrorMessage] = useState("")
@@ -223,7 +227,7 @@ export function useOptimizationForm() {
 
       const assetPreferences: AssetPreferenceRequest[] = [
         ...keptAssets.map((asset) => ({
-          assetCode: asset.assetId,
+          assetCode: asset.symbol,
           preferenceType: "KEEP" as const,
           currentWeight: asset.weightPercentage,
         })),
@@ -248,6 +252,7 @@ export function useOptimizationForm() {
           tppMaxWeight,
           stockCountMin,
           stockCountMax,
+          maxAdditions,
         })
         onSubmitted(created.id)
       } catch (error) {
@@ -267,6 +272,7 @@ export function useOptimizationForm() {
       tppMaxWeight,
       stockCountMin,
       stockCountMax,
+      maxAdditions,
     ],
   )
 
@@ -295,6 +301,10 @@ export function useOptimizationForm() {
     setStockCountMin,
     stockCountMax,
     setStockCountMax,
+    maxAdditions,
+    setMaxAdditions,
+    maxAdditionsFloor: MAX_ADDITIONS_FLOOR,
+    maxAdditionsCeiling: MAX_ADDITIONS_CEILING,
     complianceRows,
     canSubmit,
     isSubmitting,

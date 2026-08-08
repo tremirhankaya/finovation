@@ -11,6 +11,8 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
 
     Optional<Asset> findByAssetCode(String assetCode);
 
+    List<Asset> findAllByAssetCodeIn(List<String> assetCodes);
+
     List<Asset> findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType assetType);
 
     List<Asset> findAllByAssetTypeAndInModelUniverseTrueAndActiveTrueOrderByAssetCodeAsc(

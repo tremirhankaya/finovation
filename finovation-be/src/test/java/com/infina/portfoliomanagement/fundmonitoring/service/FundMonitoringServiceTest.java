@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.fundmonitoring.service;
 
+import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
@@ -11,11 +12,13 @@ import com.infina.portfoliomanagement.fundmonitoring.classification.AssetClassif
 import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.BenchmarkDefinitionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
+import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.TechnicalIndicatorResponse;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
 import com.infina.portfoliomanagement.fundmonitoring.service.FundBenchmarkService.BenchmarkSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.policy.FundMonitoringAccessPolicy;
 import com.infina.portfoliomanagement.fundmonitoring.valuation.AssetValuationProviderRegistry;
+import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
@@ -183,6 +186,46 @@ class FundMonitoringServiceTest {
                         tuple("Atlas Fonu", new BigDecimal("10.0000"), true, 8),
                         tuple("Nova Fonu", new BigDecimal("20.0000"), true, 8)
                 );
+    }
+
+    @Test
+    void computeMetricsForWeights_valuesProposedWeightsThroughRealMetricCalculator() {
+        FundDraft fund = fund(1L, "Atlas Fonu");
+        User actor = mock(User.class);
+
+        when(actor.getId()).thenReturn(7L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicIdAndStatus(
+                fund.getPublicId(),
+                FundDraftStatus.COMPLETED
+        )).thenReturn(Optional.of(fund));
+
+        Asset akbnk = Asset.builder().id(101L).assetCode("AKBNK.E").assetType(AssetType.EQUITY).build();
+        Asset tpp = Asset.builder().id(102L).assetCode("TPP1G").assetType(AssetType.TPP).build();
+        when(assetRepository.findAllByAssetCodeIn(any())).thenReturn(List.of(akbnk, tpp));
+
+        when(valuationProviderRegistry.loadUnitValues(any(), any(LocalDate.class), eq(AS_OF_DATE)))
+                .thenReturn(Map.of());
+        when(valuationCalculator.calculate(eq(fund), any(), any(), eq(Map.of()), any(LocalDate.class)))
+                .thenReturn(valuation("100", "110"));
+        when(benchmarkService.load(AS_OF_DATE)).thenReturn(
+                new BenchmarkSnapshot(
+                        List.of(),
+                        new TreeMap<>(),
+                        new BenchmarkDefinitionResponse("Fon Karşılaştırma Ölçütü", List.of())
+                )
+        );
+        when(riskFreeRateProvider.annualRate(AS_OF_DATE)).thenReturn(new BigDecimal("37"));
+
+        List<TechnicalIndicatorResponse> indicators = service.computeMetricsForWeights(
+                "manager",
+                fund.getPublicId(),
+                Map.of("AKBNK.E", new BigDecimal("0.60"), "TPP1G", new BigDecimal("0.40"))
+        );
+
+        assertThat(indicators)
+                .extracting(TechnicalIndicatorResponse::code)
+                .contains("BETA", "VOLATILITY", "SHARPE", "MAX_DRAWDOWN", "CALMAR", "ALPHA");
     }
 
     private FundDraft fund(Long id, String name) {

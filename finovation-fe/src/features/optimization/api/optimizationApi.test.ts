@@ -47,6 +47,7 @@ describe("optimizationApi", () => {
       tppMaxWeight: 15,
       stockCountMin: 16,
       stockCountMax: 30,
+      maxAdditions: 3,
     }
 
     await createOptimizationRequest(payload)
@@ -108,7 +109,7 @@ describe("optimizationApi", () => {
     )
   })
 
-  it("sonucu POST /{id}/approve ile onaylar", async () => {
+  it("sonucu POST /{id}/approve ile override olmadan onaylar", async () => {
     httpMocks.apiFetch.mockResolvedValue({
       ...sampleResponse,
       status: "APPROVED",
@@ -120,6 +121,28 @@ describe("optimizationApi", () => {
       "/api/v1/optimization-requests/1/approve",
       expect.objectContaining({
         method: "POST",
+        body: undefined,
+        errorMessage: "Optimizasyon sonucu onaylanamadı",
+      }),
+      expect.any(Function),
+    )
+  })
+
+  it("sonucu POST /{id}/approve ile ağırlık override'larıyla onaylar", async () => {
+    httpMocks.apiFetch.mockResolvedValue({
+      ...sampleResponse,
+      status: "APPROVED",
+    })
+
+    await approveOptimizationRequest(1, [
+      { assetCode: "AKBNK.E", finalWeight: 40 },
+    ])
+
+    expect(httpMocks.apiFetch).toHaveBeenCalledWith(
+      "/api/v1/optimization-requests/1/approve",
+      expect.objectContaining({
+        method: "POST",
+        body: { weightOverrides: [{ assetCode: "AKBNK.E", finalWeight: 40 }] },
         errorMessage: "Optimizasyon sonucu onaylanamadı",
       }),
       expect.any(Function),

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const optimizationApiMocks = vi.hoisted(() => ({
   fetchOptimizationRequest: vi.fn(),
+  fetchOptimizationResult: vi.fn(),
   approveOptimizationRequest: vi.fn(),
   rejectOptimizationRequest: vi.fn(),
 }))
@@ -12,47 +13,6 @@ const optimizationApiMocks = vi.hoisted(() => ({
 vi.mock("@/features/optimization/api/optimizationApi", () => ({
   ...optimizationApiMocks,
 }))
-
-const metricsPlaceholderMocks = vi.hoisted(() => ({
-  PLACEHOLDER_CONSTRAINT_METRIC_INPUT: {
-    totalEquityWeight: 90,
-    tppWeight: 9,
-    tppUserMin: 5,
-    tppUserMax: 15,
-    stockCount: 22,
-    stockCountUserMin: 16,
-    stockCountUserMax: 30,
-    maxSingleStockWeight: 7,
-    maxSectorConcentration: 20,
-  },
-  PLACEHOLDER_CURRENT_RISK_METRICS: {
-    beta: 1,
-    volatility: 18,
-    maxDrawdown: -20,
-    downsideDeviation: 12,
-    trackingError: 3,
-    sharpeRatio: 0.9,
-    calmarRatio: 0.4,
-    informationRatio: 0.3,
-    alpha: 1,
-  },
-  PLACEHOLDER_PROPOSED_RISK_METRICS: {
-    beta: 0.9,
-    volatility: 16,
-    maxDrawdown: -18,
-    downsideDeviation: 10,
-    trackingError: 2.5,
-    sharpeRatio: 1.1,
-    calmarRatio: 0.5,
-    informationRatio: 0.4,
-    alpha: 1.5,
-  },
-}))
-
-vi.mock(
-  "@/features/optimization/lib/optimizationMetricsPlaceholder",
-  () => metricsPlaceholderMocks,
-)
 
 const pdfExportMocks = vi.hoisted(() => ({
   downloadOptimizationResultPdf: vi.fn(),
@@ -81,12 +41,84 @@ const COMPLETED_REQUEST = {
   requestedByUsername: "fon-yoneticisi",
   riskProfile: "BALANCED",
   status: "COMPLETED",
+  tppMinWeight: 5,
+  tppMaxWeight: 15,
+  stockCountMin: 16,
+  stockCountMax: 30,
   startedAt: null,
   completedAt: "2026-08-07T09:00:00",
   errorMessage: null,
   createdAt: "2026-08-06T10:00:00",
   updatedAt: "2026-08-06T10:00:00",
 } as const
+
+const COMPLIANT_SECTORS = ["Bankacılık", "Savunma", "Perakende", "Enerji"]
+
+const COMPLIANT_RESULT = {
+  generatedAt: "2026-08-07T09:00:00",
+  assets: [
+    ...Array.from({ length: 16 }, (_unused, index) => ({
+      assetCode: `STK${index}`,
+      name: `Hisse ${index}`,
+      sectorName: COMPLIANT_SECTORS[index % COMPLIANT_SECTORS.length],
+      assetType: "EQUITY" as const,
+      currentWeight: 5.375,
+      proposedWeight: 5.375,
+      finalWeight: null,
+      changeAmount: 0,
+      actionType: "KEEP" as const,
+      manuallyOverridden: false,
+      rationale: null,
+    })),
+    {
+      assetCode: "TPP1G",
+      name: "TPP",
+      sectorName: null,
+      assetType: "TPP" as const,
+      currentWeight: 14,
+      proposedWeight: 14,
+      finalWeight: null,
+      changeAmount: 0,
+      actionType: "KEEP" as const,
+      manuallyOverridden: false,
+      rationale: null,
+    },
+  ],
+  metrics: [],
+}
+
+const RED_SECTOR_RESULT = {
+  generatedAt: "2026-08-07T09:00:00",
+  assets: [
+    {
+      assetCode: "STK0",
+      name: "Hisse 0",
+      sectorName: "Bankacılık",
+      assetType: "EQUITY" as const,
+      currentWeight: 40,
+      proposedWeight: 40,
+      finalWeight: null,
+      changeAmount: 0,
+      actionType: "KEEP" as const,
+      manuallyOverridden: false,
+      rationale: null,
+    },
+    {
+      assetCode: "TPP1G",
+      name: "TPP",
+      sectorName: null,
+      assetType: "TPP" as const,
+      currentWeight: 60,
+      proposedWeight: 60,
+      finalWeight: null,
+      changeAmount: 0,
+      actionType: "KEEP" as const,
+      manuallyOverridden: false,
+      rationale: null,
+    },
+  ],
+  metrics: [],
+}
 
 function renderPage(fundName?: string) {
   return render(
@@ -121,6 +153,9 @@ describe("OptimizationResultPage", () => {
     optimizationApiMocks.fetchOptimizationRequest
       .mockReset()
       .mockResolvedValue(COMPLETED_REQUEST)
+    optimizationApiMocks.fetchOptimizationResult
+      .mockReset()
+      .mockResolvedValue(COMPLIANT_RESULT)
     optimizationApiMocks.approveOptimizationRequest.mockReset()
     optimizationApiMocks.rejectOptimizationRequest.mockReset()
     pdfExportMocks.downloadOptimizationResultPdf.mockReset()
@@ -213,7 +248,7 @@ describe("OptimizationResultPage", () => {
     )
     expect(
       optimizationApiMocks.approveOptimizationRequest,
-    ).toHaveBeenCalledWith(1)
+    ).toHaveBeenCalledWith(1, [])
   })
 
   it("onaylayınca PDF İndir butonunu gösterir ve tıklanınca export'u tetikler", async () => {
@@ -351,7 +386,9 @@ describe("OptimizationResultPage", () => {
 
   it("kısıt metriği kırmızıysa Onayla butonunu devre dışı bırakır", async () => {
     const user = userEvent.setup()
-    metricsPlaceholderMocks.PLACEHOLDER_CONSTRAINT_METRIC_INPUT.maxSectorConcentration = 40
+    optimizationApiMocks.fetchOptimizationResult.mockResolvedValue(
+      RED_SECTOR_RESULT,
+    )
     renderPage()
 
     await waitFor(() =>
@@ -365,7 +402,5 @@ describe("OptimizationResultPage", () => {
     expect(
       screen.getByText(/Kısıt metriklerinden en az biri kırmızı durumda/),
     ).toBeInTheDocument()
-
-    metricsPlaceholderMocks.PLACEHOLDER_CONSTRAINT_METRIC_INPUT.maxSectorConcentration = 20
   })
 })

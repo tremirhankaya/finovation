@@ -222,6 +222,30 @@ public enum ErrorCode {
             "This optimization request cannot change to the requested status from its current status."
     ),
 
+    OPT_MAX_ADDITIONS_EXCEEDED(
+            "OPT_009",
+            HttpStatus.BAD_REQUEST,
+            "The number of force-added stocks exceeds the maximum additions limit for this optimization."
+    ),
+
+    OPT_MAX_REMOVALS_EXCEEDED(
+            "OPT_010",
+            HttpStatus.BAD_REQUEST,
+            "The number of excluded stocks exceeds the maximum removals limit for this optimization."
+    ),
+
+    OPT_WEIGHT_CHANGE_LIMIT_EXCEEDED(
+            "OPT_011",
+            HttpStatus.BAD_REQUEST,
+            "A force-added or excluded stock's required weight change exceeds the maximum allowed change per asset."
+    ),
+
+    OPT_RESULT_NOT_FOUND(
+            "OPT_012",
+            HttpStatus.NOT_FOUND,
+            "No result is available yet for this optimization request."
+    ),
+
     FUND_INITIAL_SIZE_OUT_OF_RANGE(
             "FUND_001",
             HttpStatus.BAD_REQUEST,

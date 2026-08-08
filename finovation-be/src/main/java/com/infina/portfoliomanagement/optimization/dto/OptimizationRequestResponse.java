@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.dto;
 import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
 import com.infina.portfoliomanagement.optimization.enums.RiskProfile;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,6 +16,11 @@ public record OptimizationRequestResponse(
         String requestedByUsername,
         RiskProfile riskProfile,
         RequestStatus status,
+        Integer maxAdditions,
+        BigDecimal tppMinWeight,
+        BigDecimal tppMaxWeight,
+        Integer stockCountMin,
+        Integer stockCountMax,
         LocalDateTime startedAt,
         LocalDateTime completedAt,
         String errorMessage,
