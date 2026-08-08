@@ -20,10 +20,13 @@ import java.util.TreeMap;
 @Component
 public class FundMetricCalculator {
 
-    private static final double TRADING_DAYS_PER_YEAR = 252.0;
+    static final int ANNUAL_RETURN_OBSERVATIONS = 252;
+    private static final int ANNUAL_PRICE_OBSERVATIONS = ANNUAL_RETURN_OBSERVATIONS + 1;
+    private static final double TRADING_DAYS_PER_YEAR = ANNUAL_RETURN_OBSERVATIONS;
     private static final double ZERO_TOLERANCE = 1.0e-12;
     private static final int METRIC_SCALE = 4;
     private static final String UNIT_PERCENT = "PERCENT";
+    private static final String UNIT_RATIO = "RATIO";
     private static final String TONE_NEUTRAL = "neutral";
 
     public BigDecimal dailyChange(List<FundValuationPoint> points) {
@@ -52,26 +55,108 @@ public class FundMetricCalculator {
             List<FundValuationPoint> points,
             NavigableMap<LocalDate, BigDecimal> benchmarkValues,
             BigDecimal annualRiskFreeRate,
-            BigDecimal sectorConcentration,
             BigDecimal liquidityRatio
     ) {
         BigDecimal volatility = annualizedVolatility(points);
         BigDecimal maximumDrawdown = maximumDrawdown(points);
+        BigDecimal trackingError = trackingError(points, benchmarkValues);
+        BigDecimal calmarRatio = calmarRatio(points);
+        BigDecimal informationRatio = informationRatio(points, benchmarkValues);
         BigDecimal beta = beta(points, benchmarkValues);
+        BigDecimal downsideDeviation = downsideDeviation(points);
+        BigDecimal sortinoRatio = sortinoRatio(points);
         BigDecimal sharpeRatio = sharpeRatio(points, annualRiskFreeRate);
+        BigDecimal alpha = alpha(points, benchmarkValues, annualRiskFreeRate);
 
         return List.of(
-                indicator("VOLATILITY", "Volatilite (Yıllık)", volatility,
-                        UNIT_PERCENT, TONE_NEUTRAL),
-                indicator("MAX_DRAWDOWN", "Maksimum Düşüş", maximumDrawdown,
-                        UNIT_PERCENT, maximumDrawdown == null ? TONE_NEUTRAL : "negative"),
-                indicator("BETA", "Beta", beta, "RATIO", TONE_NEUTRAL),
-                indicator("SHARPE", "Sharpe Oranı", sharpeRatio, "RATIO",
-                        metricTone(sharpeRatio)),
-                indicator("SECTOR_CONCENTRATION", "Sektörel Yoğunluk", sectorConcentration,
-                        UNIT_PERCENT, TONE_NEUTRAL),
-                indicator("LIQUIDITY_RATIO", "Likidite Oranı", liquidityRatio,
-                        UNIT_PERCENT, liquidityRatio.signum() > 0 ? "positive" : TONE_NEUTRAL)
+                indicator(
+                        "VOLATILITY",
+                        "Volatilite (Yıllık)",
+                        volatility,
+                        UNIT_PERCENT,
+                        TONE_NEUTRAL,
+                        "Son 252 işlem günündeki fon getirilerinin yıllıklandırılmış dalgalanmasını gösterir."
+                ),
+                indicator(
+                        "MAX_DRAWDOWN",
+                        "Maksimum Düşüş (Yıllık)",
+                        maximumDrawdown,
+                        UNIT_PERCENT,
+                        maximumDrawdown == null ? TONE_NEUTRAL : "negative",
+                        "Son 252 işlem gününde zirveden dip seviyeye yaşanan en büyük kaybı gösterir."
+                ),
+                indicator(
+                        "TRACKING_ERROR",
+                        "Tracking Error (Yıllık)",
+                        trackingError,
+                        UNIT_PERCENT,
+                        TONE_NEUTRAL,
+                        "Fonun bileşik karşılaştırma ölçütünden sapmasının yıllıklandırılmış standart sapmasıdır."
+                ),
+                indicator(
+                        "CALMAR",
+                        "Calmar Oranı (Yıllık)",
+                        calmarRatio,
+                        UNIT_RATIO,
+                        metricTone(calmarRatio),
+                        "Son bir yıllık getirinin mutlak maksimum düşüşe oranını gösterir."
+                ),
+                indicator(
+                        "INFORMATION_RATIO",
+                        "Information Ratio (Yıllık)",
+                        informationRatio,
+                        UNIT_RATIO,
+                        metricTone(informationRatio),
+                        "Bileşik ölçütün üzerindeki getirinin aktif riske göre verimliliğini gösterir."
+                ),
+                indicator(
+                        "LIQUIDITY_RATIO",
+                        "Likidite Oranı",
+                        liquidityRatio,
+                        UNIT_PERCENT,
+                        liquidityRatio.signum() > 0 ? "positive" : TONE_NEUTRAL,
+                        "Güncel portföy değerinin likit varlıklarda tutulan bölümünü gösterir."
+                ),
+                indicator(
+                        "BETA",
+                        "Beta (Yıllık)",
+                        beta,
+                        UNIT_RATIO,
+                        TONE_NEUTRAL,
+                        "Fonun bileşik karşılaştırma ölçütündeki hareketlere duyarlılığını gösterir."
+                ),
+                indicator(
+                        "DOWNSIDE_DEVIATION",
+                        "Downside Deviation (Yıllık)",
+                        downsideDeviation,
+                        UNIT_PERCENT,
+                        TONE_NEUTRAL,
+                        "MAR yüzde 0 altında kalan getirilerden hesaplanan yıllıklandırılmış aşağı yönlü risktir."
+                ),
+                indicator(
+                        "SORTINO",
+                        "Sortino Oranı (Yıllık)",
+                        sortinoRatio,
+                        UNIT_RATIO,
+                        metricTone(sortinoRatio),
+                        "MAR yüzde 0 üzerindeki getirinin aşağı yönlü riske oranını gösterir."
+                ),
+                indicator(
+                        "SHARPE",
+                        "Sharpe Oranı (Yıllık)",
+                        sharpeRatio,
+                        UNIT_RATIO,
+                        metricTone(sharpeRatio),
+                        "TCMB politika faizi üzerindeki getirinin toplam riske oranını gösterir."
+                ),
+                indicator(
+                        "ALPHA",
+                        "Alpha (Yıllık)",
+                        alpha,
+                        UNIT_PERCENT,
+                        metricTone(alpha),
+                        "Beta ve TCMB politika faizi dikkate alındıktan sonra üretilen yıllık ek getiriyi gösterir."
+                )
         );
     }
 
@@ -105,73 +190,141 @@ public class FundMetricCalculator {
     }
 
     public BigDecimal annualizedVolatility(List<FundValuationPoint> points) {
-        List<Double> returns = dailyReturns(points);
-        if (returns.size() < 2) {
+        List<Double> returns = annualFundReturns(points);
+        if (returns.isEmpty()) {
             return null;
         }
 
-        double annualizedPercentage = sampleStandardDeviation(returns)
-                * Math.sqrt(TRADING_DAYS_PER_YEAR) * 100;
+        return percentageMetric(
+                sampleStandardDeviation(returns) * Math.sqrt(TRADING_DAYS_PER_YEAR)
+        );
+    }
 
-        return metric(annualizedPercentage);
+    public BigDecimal maximumDrawdown(List<FundValuationPoint> points) {
+        List<FundValuationPoint> annualPoints = annualPoints(points);
+        if (annualPoints.isEmpty()) {
+            return null;
+        }
+
+        double peak = annualPoints.getFirst().sharePrice().doubleValue();
+        double worstDrawdown = 0;
+
+        for (FundValuationPoint point : annualPoints) {
+            double value = point.sharePrice().doubleValue();
+            peak = Math.max(peak, value);
+            worstDrawdown = Math.min(worstDrawdown, value / peak - 1);
+        }
+
+        return percentageMetric(worstDrawdown);
+    }
+
+    public BigDecimal trackingError(
+            List<FundValuationPoint> points,
+            NavigableMap<LocalDate, BigDecimal> benchmarkValues
+    ) {
+        AlignedReturns aligned = alignedAnnualReturns(points, benchmarkValues);
+        if (aligned.isEmpty()) {
+            return null;
+        }
+
+        return percentageMetric(
+                sampleStandardDeviation(aligned.activeReturns())
+                        * Math.sqrt(TRADING_DAYS_PER_YEAR)
+        );
+    }
+
+    public BigDecimal informationRatio(
+            List<FundValuationPoint> points,
+            NavigableMap<LocalDate, BigDecimal> benchmarkValues
+    ) {
+        AlignedReturns aligned = alignedAnnualReturns(points, benchmarkValues);
+        if (aligned.isEmpty()) {
+            return null;
+        }
+
+        List<Double> activeReturns = aligned.activeReturns();
+        double activeRisk = sampleStandardDeviation(activeReturns);
+        if (activeRisk < ZERO_TOLERANCE) {
+            return null;
+        }
+
+        return metric(
+                mean(activeReturns) / activeRisk * Math.sqrt(TRADING_DAYS_PER_YEAR)
+        );
+    }
+
+    public BigDecimal calmarRatio(List<FundValuationPoint> points) {
+        List<FundValuationPoint> annualPoints = annualPoints(points);
+        BigDecimal drawdown = maximumDrawdown(points);
+        if (annualPoints.isEmpty()
+                || drawdown == null
+                || drawdown.abs().doubleValue() < ZERO_TOLERANCE) {
+            return null;
+        }
+
+        BigDecimal annualReturn = percentageChange(
+                annualPoints.getFirst().sharePrice(),
+                annualPoints.getLast().sharePrice()
+        );
+        return annualReturn == null
+                ? null
+                : annualReturn.divide(drawdown.abs(), METRIC_SCALE, RoundingMode.HALF_UP);
     }
 
     public BigDecimal beta(
             List<FundValuationPoint> points,
             NavigableMap<LocalDate, BigDecimal> benchmarkValues
     ) {
-        Map<LocalDate, Double> fundReturns = datedDailyReturns(points);
-        Map<LocalDate, Double> benchmarkReturns = datedDailyReturns(benchmarkValues);
-        List<Double> alignedFundReturns = new ArrayList<>();
-        List<Double> alignedBenchmarkReturns = new ArrayList<>();
-
-        for (Map.Entry<LocalDate, Double> fundReturn : fundReturns.entrySet()) {
-            Double benchmarkReturn = benchmarkReturns.get(fundReturn.getKey());
-            if (benchmarkReturn != null) {
-                alignedFundReturns.add(fundReturn.getValue());
-                alignedBenchmarkReturns.add(benchmarkReturn);
-            }
-        }
-
-        if (alignedFundReturns.size() < 2) {
+        AlignedReturns aligned = alignedAnnualReturns(points, benchmarkValues);
+        if (aligned.isEmpty()) {
             return null;
         }
 
-        double fundMean = mean(alignedFundReturns);
-        double benchmarkMean = mean(alignedBenchmarkReturns);
-        double covariance = 0;
-        double benchmarkVariance = 0;
+        return beta(aligned);
+    }
 
-        for (int index = 0; index < alignedFundReturns.size(); index++) {
-            double fundDeviation = alignedFundReturns.get(index) - fundMean;
-            double benchmarkDeviation = alignedBenchmarkReturns.get(index)
-                    - benchmarkMean;
-            covariance += fundDeviation * benchmarkDeviation;
-            benchmarkVariance += benchmarkDeviation * benchmarkDeviation;
-        }
-
-        if (benchmarkVariance <= 0.0) {
+    public BigDecimal downsideDeviation(List<FundValuationPoint> points) {
+        List<Double> returns = annualFundReturns(points);
+        if (returns.isEmpty()) {
             return null;
         }
-        if (benchmarkVariance < ZERO_TOLERANCE) {
+
+        double downsideVariance = returns.stream()
+                .mapToDouble(value -> Math.pow(Math.min(0, value), 2))
+                .sum() / returns.size();
+        return percentageMetric(
+                Math.sqrt(downsideVariance) * Math.sqrt(TRADING_DAYS_PER_YEAR)
+        );
+    }
+
+    public BigDecimal sortinoRatio(List<FundValuationPoint> points) {
+        List<Double> returns = annualFundReturns(points);
+        if (returns.isEmpty()) {
             return null;
         }
-        return metric(covariance / benchmarkVariance);
+
+        double downsideVariance = returns.stream()
+                .mapToDouble(value -> Math.pow(Math.min(0, value), 2))
+                .sum() / returns.size();
+        double annualizedDownside = Math.sqrt(downsideVariance)
+                * Math.sqrt(TRADING_DAYS_PER_YEAR);
+        if (annualizedDownside < ZERO_TOLERANCE) {
+            return null;
+        }
+
+        return metric(mean(returns) * TRADING_DAYS_PER_YEAR / annualizedDownside);
     }
 
     public BigDecimal sharpeRatio(
             List<FundValuationPoint> points,
             BigDecimal annualRiskFreeRate
     ) {
-        List<Double> returns = dailyReturns(points);
-        if (returns.size() < 2 || annualRiskFreeRate == null) {
+        List<Double> returns = annualFundReturns(points);
+        if (returns.isEmpty() || annualRiskFreeRate == null) {
             return null;
         }
 
         double dailyStandardDeviation = sampleStandardDeviation(returns);
-        if (dailyStandardDeviation <= 0.0) {
-            return null;
-        }
         if (dailyStandardDeviation < ZERO_TOLERANCE) {
             return null;
         }
@@ -183,21 +336,26 @@ public class FundMetricCalculator {
         return metric(annualizedExcessReturn / annualizedStandardDeviation);
     }
 
-    public BigDecimal maximumDrawdown(List<FundValuationPoint> points) {
-        if (points.size() < 2) {
+    public BigDecimal alpha(
+            List<FundValuationPoint> points,
+            NavigableMap<LocalDate, BigDecimal> benchmarkValues,
+            BigDecimal annualRiskFreeRate
+    ) {
+        AlignedReturns aligned = alignedAnnualReturns(points, benchmarkValues);
+        BigDecimal beta = beta(aligned);
+        if (aligned.isEmpty() || beta == null || annualRiskFreeRate == null) {
             return null;
         }
 
-        double peak = points.getFirst().sharePrice().doubleValue();
-        double worstDrawdown = 0;
-
-        for (FundValuationPoint point : points) {
-            double value = point.sharePrice().doubleValue();
-            peak = Math.max(peak, value);
-            worstDrawdown = Math.min(worstDrawdown, (value / peak - 1) * 100);
-        }
-
-        return metric(worstDrawdown);
+        double annualFundReturn = mean(aligned.fundReturns()) * TRADING_DAYS_PER_YEAR;
+        double annualBenchmarkReturn = mean(aligned.benchmarkReturns())
+                * TRADING_DAYS_PER_YEAR;
+        double annualRiskFree = annualRiskFreeRate.doubleValue() / 100;
+        double alpha = annualFundReturn - (
+                annualRiskFree
+                        + beta.doubleValue() * (annualBenchmarkReturn - annualRiskFree)
+        );
+        return percentageMetric(alpha);
     }
 
     private PeriodReturnResponse periodReturn(
@@ -219,6 +377,18 @@ public class FundMetricCalculator {
                 ? null
                 : percentageChange(start.sharePrice(), points.getLast().sharePrice());
         return new PeriodReturnResponse(period, label, value);
+    }
+
+    private List<FundValuationPoint> annualPoints(List<FundValuationPoint> points) {
+        if (points.size() < ANNUAL_PRICE_OBSERVATIONS) {
+            return List.of();
+        }
+        return points.subList(points.size() - ANNUAL_PRICE_OBSERVATIONS, points.size());
+    }
+
+    private List<Double> annualFundReturns(List<FundValuationPoint> points) {
+        List<FundValuationPoint> annualPoints = annualPoints(points);
+        return annualPoints.isEmpty() ? List.of() : dailyReturns(annualPoints);
     }
 
     private List<Double> dailyReturns(List<FundValuationPoint> points) {
@@ -251,6 +421,58 @@ public class FundMetricCalculator {
         }
 
         return returns;
+    }
+
+    private AlignedReturns alignedAnnualReturns(
+            List<FundValuationPoint> points,
+            NavigableMap<LocalDate, BigDecimal> benchmarkValues
+    ) {
+        Map<LocalDate, Double> fundReturns = datedDailyReturns(points);
+        Map<LocalDate, Double> benchmarkReturns = datedDailyReturns(benchmarkValues);
+        List<Double> alignedFundReturns = new ArrayList<>();
+        List<Double> alignedBenchmarkReturns = new ArrayList<>();
+
+        for (Map.Entry<LocalDate, Double> fundReturn : fundReturns.entrySet()) {
+            Double benchmarkReturn = benchmarkReturns.get(fundReturn.getKey());
+            if (benchmarkReturn != null) {
+                alignedFundReturns.add(fundReturn.getValue());
+                alignedBenchmarkReturns.add(benchmarkReturn);
+            }
+        }
+
+        if (alignedFundReturns.size() < ANNUAL_RETURN_OBSERVATIONS) {
+            return AlignedReturns.empty();
+        }
+
+        int from = alignedFundReturns.size() - ANNUAL_RETURN_OBSERVATIONS;
+        return new AlignedReturns(
+                List.copyOf(alignedFundReturns.subList(from, alignedFundReturns.size())),
+                List.copyOf(alignedBenchmarkReturns.subList(from, alignedBenchmarkReturns.size()))
+        );
+    }
+
+    private BigDecimal beta(AlignedReturns aligned) {
+        if (aligned.isEmpty()) {
+            return null;
+        }
+
+        double fundMean = mean(aligned.fundReturns());
+        double benchmarkMean = mean(aligned.benchmarkReturns());
+        double covariance = 0;
+        double benchmarkVariance = 0;
+
+        for (int index = 0; index < aligned.fundReturns().size(); index++) {
+            double fundDeviation = aligned.fundReturns().get(index) - fundMean;
+            double benchmarkDeviation = aligned.benchmarkReturns().get(index)
+                    - benchmarkMean;
+            covariance += fundDeviation * benchmarkDeviation;
+            benchmarkVariance += benchmarkDeviation * benchmarkDeviation;
+        }
+
+        if (benchmarkVariance < ZERO_TOLERANCE) {
+            return null;
+        }
+        return metric(covariance / benchmarkVariance);
     }
 
     private double mean(List<Double> values) {
@@ -287,13 +509,45 @@ public class FundMetricCalculator {
             String label,
             BigDecimal value,
             String unit,
-            String tone
+            String tone,
+            String description
     ) {
-        return new TechnicalIndicatorResponse(code, label, value, unit, tone);
+        return new TechnicalIndicatorResponse(
+                code,
+                label,
+                value,
+                unit,
+                tone,
+                description
+        );
+    }
+
+    private BigDecimal percentageMetric(double decimalValue) {
+        return metric(decimalValue * 100);
     }
 
     private BigDecimal metric(double value) {
         return BigDecimal.valueOf(value).setScale(METRIC_SCALE, RoundingMode.HALF_UP);
     }
-}
 
+    private record AlignedReturns(
+            List<Double> fundReturns,
+            List<Double> benchmarkReturns
+    ) {
+        private static AlignedReturns empty() {
+            return new AlignedReturns(List.of(), List.of());
+        }
+
+        private boolean isEmpty() {
+            return fundReturns.isEmpty();
+        }
+
+        private List<Double> activeReturns() {
+            List<Double> active = new ArrayList<>(fundReturns.size());
+            for (int index = 0; index < fundReturns.size(); index++) {
+                active.add(fundReturns.get(index) - benchmarkReturns.get(index));
+            }
+            return active;
+        }
+    }
+}

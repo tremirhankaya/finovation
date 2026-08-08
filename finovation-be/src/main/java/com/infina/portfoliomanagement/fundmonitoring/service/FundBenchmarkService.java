@@ -1,6 +1,8 @@
 package com.infina.portfoliomanagement.fundmonitoring.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
+import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.BenchmarkComponentResponse;
+import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.BenchmarkDefinitionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
 import com.infina.portfoliomanagement.fundmonitoring.model.ComparisonPeriod;
 import com.infina.portfoliomanagement.marketdata.infina.api.BenchmarkPriceApi;
@@ -14,12 +16,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 
 @Service
@@ -29,8 +34,12 @@ public class FundBenchmarkService {
 
     private static final int HISTORY_LOOKBACK_BUFFER_DAYS = 45;
     private static final String BIST_30_SOURCE_CODE = "XU030";
-    private static final String BIST_100_SOURCE_CODE = "XU100";
+    private static final String BIST_100_RETURN_SOURCE_CODE = "XU100_CFNNTLTL";
+    private static final String REPO_GROSS_SOURCE_CODE = "REPBR";
     private static final String INFLATION_SOURCE_CODE = "TUCPIM";
+    private static final BigDecimal BIST_100_WEIGHT = new BigDecimal("0.90");
+    private static final BigDecimal REPO_GROSS_WEIGHT = new BigDecimal("0.10");
+    private static final BigDecimal COMPOSITE_BASE_VALUE = new BigDecimal("100");
 
     private final BenchmarkPriceApi benchmarkPriceApi;
     private final FundMetricCalculator metricCalculator;
@@ -42,16 +51,46 @@ public class FundBenchmarkService {
                 BIST_30_SOURCE_CODE,
                 () -> indexValues(BIST_30_SOURCE_CODE, from, asOfDate)
         );
-        NavigableMap<LocalDate, BigDecimal> bist100Values = safelyLoad(
-                BIST_100_SOURCE_CODE,
-                () -> indexValues(BIST_100_SOURCE_CODE, from, asOfDate)
+        NavigableMap<LocalDate, BigDecimal> bist100ReturnValues = safelyLoad(
+                BIST_100_RETURN_SOURCE_CODE,
+                () -> indexValues(BIST_100_RETURN_SOURCE_CODE, from, asOfDate)
+        );
+        NavigableMap<LocalDate, BigDecimal> repoGrossValues = safelyLoad(
+                REPO_GROSS_SOURCE_CODE,
+                () -> indexValues(REPO_GROSS_SOURCE_CODE, from, asOfDate)
         );
         NavigableMap<LocalDate, BigDecimal> inflationValues = safelyLoad(
                 INFLATION_SOURCE_CODE,
                 () -> economicValues(INFLATION_SOURCE_CODE, from, asOfDate)
         );
 
+        NavigableMap<LocalDate, BigDecimal> compositeBenchmarkValues =
+                compositeValues(bist100ReturnValues, repoGrossValues);
+        BenchmarkDefinitionResponse benchmarkDefinition = new BenchmarkDefinitionResponse(
+                "Fon Karşılaştırma Ölçütü",
+                List.of(
+                        new BenchmarkComponentResponse(
+                                BIST_100_RETURN_SOURCE_CODE,
+                                "BIST 100 Getiri Endeksi",
+                                new BigDecimal("90")
+                        ),
+                        new BenchmarkComponentResponse(
+                                REPO_GROSS_SOURCE_CODE,
+                                "BIST-KYD Repo (Brüt) Endeksi",
+                                new BigDecimal("10")
+                        )
+                )
+        );
+
         List<FundComparisonAssetResponse> assets = List.of(
+                comparisonAsset(
+                        "official-equity-benchmark",
+                        "BENCHMARK",
+                        "Fon Karşılaştırma Ölçütü",
+                        "#dc2626",
+                        compositeBenchmarkValues,
+                        asOfDate
+                ),
                 comparisonAsset(
                         "bist-30",
                         "BIST30",
@@ -61,11 +100,19 @@ public class FundBenchmarkService {
                         asOfDate
                 ),
                 comparisonAsset(
-                        "bist-100",
-                        "BIST100",
-                        "BIST 100",
+                        "bist-100-return",
+                        "BIST100G",
+                        "BIST 100 Getiri Endeksi",
                         "#7c3aed",
-                        bist100Values,
+                        bist100ReturnValues,
+                        asOfDate
+                ),
+                comparisonAsset(
+                        "repo-gross",
+                        "REPBR",
+                        "BIST-KYD Repo (Brüt) Endeksi",
+                        "#0891b2",
+                        repoGrossValues,
                         asOfDate
                 ),
                 comparisonAsset(
@@ -77,7 +124,60 @@ public class FundBenchmarkService {
                         asOfDate
                 )
         );
-        return new BenchmarkSnapshot(assets, bist100Values);
+        return new BenchmarkSnapshot(
+                assets,
+                compositeBenchmarkValues,
+                benchmarkDefinition
+        );
+    }
+
+    private NavigableMap<LocalDate, BigDecimal> compositeValues(
+            NavigableMap<LocalDate, BigDecimal> bist100ReturnValues,
+            NavigableMap<LocalDate, BigDecimal> repoGrossValues
+    ) {
+        NavigableSet<LocalDate> commonDates = new TreeSet<>(
+                bist100ReturnValues.navigableKeySet()
+        );
+        commonDates.retainAll(repoGrossValues.navigableKeySet());
+
+        NavigableMap<LocalDate, BigDecimal> composite = new TreeMap<>();
+        if (commonDates.isEmpty()) {
+            return composite;
+        }
+
+        LocalDate previousDate = commonDates.getFirst();
+        BigDecimal compositeValue = COMPOSITE_BASE_VALUE;
+        composite.put(previousDate, compositeValue);
+
+        for (LocalDate date : commonDates.tailSet(previousDate, false)) {
+            BigDecimal previousBist = bist100ReturnValues.get(previousDate);
+            BigDecimal currentBist = bist100ReturnValues.get(date);
+            BigDecimal previousRepo = repoGrossValues.get(previousDate);
+            BigDecimal currentRepo = repoGrossValues.get(date);
+            if (previousBist.signum() <= 0 || previousRepo.signum() <= 0) {
+                previousDate = date;
+                continue;
+            }
+
+            BigDecimal bistReturn = currentBist.divide(
+                    previousBist,
+                    16,
+                    RoundingMode.HALF_UP
+            ).subtract(BigDecimal.ONE);
+            BigDecimal repoReturn = currentRepo.divide(
+                    previousRepo,
+                    16,
+                    RoundingMode.HALF_UP
+            ).subtract(BigDecimal.ONE);
+            BigDecimal weightedReturn = bistReturn.multiply(BIST_100_WEIGHT)
+                    .add(repoReturn.multiply(REPO_GROSS_WEIGHT));
+            compositeValue = compositeValue.multiply(
+                    BigDecimal.ONE.add(weightedReturn)
+            ).setScale(12, RoundingMode.HALF_UP);
+            composite.put(date, compositeValue);
+            previousDate = date;
+        }
+        return composite;
     }
 
     private NavigableMap<LocalDate, BigDecimal> indexValues(
@@ -157,12 +257,13 @@ public class FundBenchmarkService {
 
     public record BenchmarkSnapshot(
             List<FundComparisonAssetResponse> comparisonAssets,
-            NavigableMap<LocalDate, BigDecimal> bist100Values
+            NavigableMap<LocalDate, BigDecimal> benchmarkValues,
+            BenchmarkDefinitionResponse benchmarkDefinition
     ) {
         public BenchmarkSnapshot {
             comparisonAssets = List.copyOf(comparisonAssets);
-            bist100Values = Collections.unmodifiableNavigableMap(
-                    new TreeMap<>(bist100Values)
+            benchmarkValues = Collections.unmodifiableNavigableMap(
+                    new TreeMap<>(benchmarkValues)
             );
         }
     }

@@ -21,6 +21,18 @@ const technicalIndicatorSchema = z.object({
   value: z.number().nullable(),
   unit: z.enum(["PERCENT", "RATIO"]),
   tone: z.enum(["positive", "negative", "neutral"]),
+  description: z.string().min(1),
+})
+
+const benchmarkDefinitionSchema = z.object({
+  name: z.string().min(1),
+  components: z.array(
+    z.object({
+      code: z.string().min(1),
+      name: z.string().min(1),
+      weightPercentage: z.number().min(0).max(100),
+    }),
+  ),
 })
 
 const periodReturnSchema = z.object({
@@ -79,6 +91,7 @@ export const fundMonitoringResponseSchema = z.object({
     "6M": z.array(pricePointSchema),
     "1Y": z.array(pricePointSchema),
   }),
+  benchmark: benchmarkDefinitionSchema,
   technicalIndicators: z.array(technicalIndicatorSchema),
   periodReturns: z.array(periodReturnSchema),
   positions: z.array(fundPositionSchema),

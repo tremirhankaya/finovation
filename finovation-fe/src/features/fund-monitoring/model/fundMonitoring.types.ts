@@ -29,6 +29,18 @@ export type TechnicalIndicator = {
   value: number | null
   unit: IndicatorUnit
   tone?: "positive" | "negative" | "neutral"
+  description?: string
+}
+
+export type BenchmarkComponent = {
+  code: string
+  name: string
+  weightPercentage: number
+}
+
+export type BenchmarkDefinition = {
+  name: string
+  components: BenchmarkComponent[]
 }
 
 export type PeriodReturn = {
@@ -67,6 +79,7 @@ export type FundMonitoringSnapshot = {
   currentSharePrice: number
   dailyChangePercentage: number
   priceHistory: Partial<Record<PricePeriod, PricePoint[]>>
+  benchmark: BenchmarkDefinition
   technicalIndicators: TechnicalIndicator[]
   periodReturns: PeriodReturn[]
   positions: FundPosition[]

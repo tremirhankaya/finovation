@@ -141,6 +141,7 @@ export function FundMonitoringView({
             onPeriodChange={setPeriod}
           />
           <FundMetricsCard
+            benchmark={snapshot?.benchmark}
             indicators={snapshot?.technicalIndicators}
             periodReturns={snapshot?.periodReturns}
           />

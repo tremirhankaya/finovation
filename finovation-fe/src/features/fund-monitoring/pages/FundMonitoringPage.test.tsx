@@ -36,12 +36,28 @@ const READY_PROPS: FundMonitoringViewProps = {
         { date: "2026-08-04", value: 18.4271 },
       ],
     },
+    benchmark: {
+      name: "Fon Karşılaştırma Ölçütü",
+      components: [
+        {
+          code: "XU100_CFNNTLTL",
+          name: "BIST 100 Getiri Endeksi",
+          weightPercentage: 90,
+        },
+        {
+          code: "REPBR",
+          name: "BIST-KYD Repo (Brüt) Endeksi",
+          weightPercentage: 10,
+        },
+      ],
+    },
     technicalIndicators: [
       {
         code: "VOLATILITY",
         label: "Volatilite (Yıllık)",
         value: 24.6,
         unit: "PERCENT",
+        description: "Son 252 işlem günündeki yıllıklandırılmış dalgalanma.",
       },
       {
         code: "SHARPE",
@@ -49,6 +65,7 @@ const READY_PROPS: FundMonitoringViewProps = {
         value: 1.34,
         unit: "RATIO",
         tone: "positive",
+        description: "Risksiz getiri üzerindeki performans.",
       },
     ],
     periodReturns: [
@@ -129,6 +146,8 @@ describe("FundMonitoringView", () => {
     expect(screen.getByText("₺18,4271")).toBeInTheDocument()
     expect(screen.getByText("%24,60")).toBeInTheDocument()
     expect(screen.getByText("THYAO")).toBeInTheDocument()
+    expect(screen.getByText("BIST 100 Getiri Endeksi")).toBeInTheDocument()
+    expect(screen.getByText("%90")).toBeInTheDocument()
     expect(screen.getAllByText("Ulaştırma")).toHaveLength(2)
     expect(
       screen.getByRole("img", {

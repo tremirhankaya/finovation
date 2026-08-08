@@ -44,7 +44,7 @@ import java.util.*;
 @Slf4j
 public class FundMonitoringService {
 
-    private static final BigDecimal ZERO_PERCENT = BigDecimal.ZERO.setScale(4);
+    private static final int ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS = 45;
     private static final List<String> COMPARISON_COLORS = List.of(
             "#0d9488",
             "#2563eb",
@@ -105,10 +105,6 @@ public class FundMonitoringService {
         List<FundPositionResponse> positions = positions(valuation, profilesByAssetId);
         List<SectorAllocationResponse> sectors = sectors(valuation, profilesByAssetId);
 
-        BigDecimal sectorConcentration = sectors.stream()
-                .map(SectorAllocationResponse::weightPercentage)
-                .max(BigDecimal::compareTo)
-                .orElse(ZERO_PERCENT);
         BigDecimal liquidityRatio = valuation.positions().stream()
                 .filter(position -> requireProfile(
                         profilesByAssetId,
@@ -139,11 +135,11 @@ public class FundMonitoringService {
                 latest.sharePrice(),
                 metricCalculator.dailyChange(points),
                 priceHistory(points, latest.date()),
+                benchmarks.benchmarkDefinition(),
                 metricCalculator.technicalIndicators(
                         points,
-                        benchmarks.bist100Values(),
+                        benchmarks.benchmarkValues(),
                         annualRiskFreeRate,
-                        sectorConcentration,
                         liquidityRatio
                 ),
                 metricCalculator.periodReturns(points, latest.date()),
@@ -183,14 +179,17 @@ public class FundMonitoringService {
         Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
                 valuationProviderRegistry.loadUnitValues(
                         assets,
-                        fund.getCreatedAt().toLocalDate(),
+                        today.minusYears(1)
+                                .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS),
                         today
                 );
         FundValuationResult valuation = valuationCalculator.calculate(
                 fund,
                 portfolioPositions,
                 assets,
-                unitValuesByAsset
+                unitValuesByAsset,
+                today.minusYears(1)
+                        .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS)
         );
         return new FundMonitoringCalculation(valuation, assets);
     }
@@ -210,6 +209,7 @@ public class FundMonitoringService {
                 );
         List<FundComparisonAssetResponse> assets = new ArrayList<>();
         assets.add(comparisonAsset(selectedFund, selectedValuation, 0));
+        assets.addAll(benchmarkAssets);
 
         for (FundDraft fund : visibleFunds) {
             if (fund.getPublicId().equals(selectedFund.getPublicId())) {
@@ -233,7 +233,6 @@ public class FundMonitoringService {
         }
 
         assets.addAll(similarFundAssets);
-        assets.addAll(benchmarkAssets);
 
         return List.copyOf(assets);
     }
