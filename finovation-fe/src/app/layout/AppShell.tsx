@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { NavLink, Outlet, useNavigate } from "react-router"
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router"
 
 import styles from "@/app/layout/AppShell.module.css"
 import AccountSecurityDialog from "@/features/account/components/AccountSecurityDialog"
@@ -8,13 +8,21 @@ import Logo from "@/shared/ui/Logo"
 
 type NavigationItem = {
   label: string
-  path: string
-  icon: "home" | "design" | "monitoring" | "optimization" | "users"
+  path?: string
+  icon: "home" | "design" | "monitoring" | "optimization" | "users" | "plus" | "briefcase"
+  children?: { label: string; path: string; icon: "plus" | "briefcase" }[]
 }
 
 const PRODUCT_NAVIGATION: NavigationItem[] = [
   { label: "Ana Sayfa", path: "/dashboard", icon: "home" },
-  { label: "Fon Tasarımı", path: "/fund-design", icon: "design" },
+  {
+    label: "Fon Tasarımı",
+    icon: "design",
+    children: [
+      { label: "Fon Oluştur", path: "/fund-design/create", icon: "plus" },
+      { label: "Aktif Fonlarım", path: "/fund-design/active", icon: "briefcase" },
+    ],
+  },
   {
     label: "Fon İzleme ve Performans",
     path: "/fund-monitoring",
@@ -45,8 +53,9 @@ function NavigationIcon({ icon }: { icon: NavigationItem["icon"] }) {
   if (icon === "design") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3v18M3 12h18" />
-        <circle cx="12" cy="12" r="9" />
+        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+        <polyline points="2 12 12 17 22 12" />
+        <polyline points="2 17 12 22 22 17" />
       </svg>
     )
   }
@@ -70,6 +79,24 @@ function NavigationIcon({ icon }: { icon: NavigationItem["icon"] }) {
     )
   }
 
+  if (icon === "plus") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    )
+  }
+
+  if (icon === "briefcase") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+    )
+  }
+
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87m-2-11.96a4 4 0 0 1 0 7.75" />
@@ -78,9 +105,72 @@ function NavigationIcon({ icon }: { icon: NavigationItem["icon"] }) {
 }
 
 function NavigationLink({ item }: { item: NavigationItem }) {
+  const location = useLocation()
+  const isMatch = item.path
+    ? location.pathname.startsWith(item.path)
+    : item.children?.some((child) => location.pathname.startsWith(child.path))
+  const [isHovered, setIsHovered] = useState(false)
+
+  const hasChildren = item.children && item.children.length > 0
+
+  if (hasChildren) {
+    return (
+      <div 
+        className={styles.navGroup}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <button
+          type="button"
+          className={`${styles.navigationLink} ${
+            isMatch ? styles.navigationLinkActive : ""
+          }`}
+          aria-expanded={isHovered}
+        >
+          <span className={styles.navigationIcon}>
+            <NavigationIcon icon={item.icon} />
+          </span>
+          <span>{item.label}</span>
+          <svg
+            className={styles.navigationLinkChevron}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+        {isHovered && (
+          <div className={styles.subNav}>
+            {item.children!.map((child) => (
+              <NavLink
+                key={child.path}
+                to={child.path}
+                className={({ isActive }) =>
+                  `${styles.subNavLink} ${
+                    isActive ? styles.subNavLinkActive : ""
+                  }`
+                }
+              >
+                <span className={styles.navigationIcon} style={{ opacity: 0.7, transform: 'scale(0.9)' }}>
+                  <NavigationIcon icon={child.icon} />
+                </span>
+                {child.label}
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <NavLink
-      to={item.path}
+      to={item.path!}
       className={({ isActive }) =>
         `${styles.navigationLink} ${
           isActive ? styles.navigationLinkActive : ""

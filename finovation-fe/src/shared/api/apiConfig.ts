@@ -8,27 +8,27 @@ export const API_PATHS = {
   logout: import.meta.env.VITE_LOGOUT_PATH?.trim() || "/v1/auth/logout",
   me: import.meta.env.VITE_ME_PATH?.trim() || "/v1/auth/me",
   passwordChange:
-    import.meta.env.VITE_PASSWORD_CHANGE_PATH?.trim() || "/v1/auth/password",
+      import.meta.env.VITE_PASSWORD_CHANGE_PATH?.trim() || "/v1/auth/password",
   users: import.meta.env.VITE_USERS_PATH?.trim() || "/v1/users",
   companies: import.meta.env.VITE_COMPANIES_PATH?.trim() || "/v1/companies",
   passwordResetRequest:
-    import.meta.env.VITE_PASSWORD_RESET_REQUEST_PATH?.trim() ||
-    "/v1/auth/password-reset/request",
+      import.meta.env.VITE_PASSWORD_RESET_REQUEST_PATH?.trim() ||
+      "/v1/auth/password-reset/request",
   passwordResetVerify:
-    import.meta.env.VITE_PASSWORD_RESET_VERIFY_PATH?.trim() ||
-    "/v1/auth/password-reset/verify",
+      import.meta.env.VITE_PASSWORD_RESET_VERIFY_PATH?.trim() ||
+      "/v1/auth/password-reset/verify",
   passwordReset:
-    import.meta.env.VITE_PASSWORD_RESET_PATH?.trim() ||
-    "/v1/auth/password-reset/reset",
+      import.meta.env.VITE_PASSWORD_RESET_PATH?.trim() ||
+      "/v1/auth/password-reset/reset",
   fundDrafts:
-    import.meta.env.VITE_FUND_DRAFTS_PATH?.trim() || "/v1/fund-drafts",
+      import.meta.env.VITE_FUND_DRAFTS_PATH?.trim() || "/v1/fund-drafts",
   funds: import.meta.env.VITE_FUNDS_PATH?.trim() || "/v1/funds",
   optimizationRequests:
-    import.meta.env.VITE_OPTIMIZATION_REQUESTS_PATH?.trim() ||
-    "/v1/optimization-requests",
+      import.meta.env.VITE_OPTIMIZATION_REQUESTS_PATH?.trim() ||
+      "/v1/optimization-requests",
   investmentUniverse:
-    import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
-    "/v1/investment-universe",
+      import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
+      "/v1/investment-universe",
 } as const
 
 function normalizePath(path: string): string {
@@ -86,8 +86,8 @@ export function getFundDraftsUrl(): string {
 }
 
 export function getFundDraftInitUrl(
-  page: string,
-  draftId?: string,
+    page: string,
+    draftId?: string,
 ): string {
   const params = new URLSearchParams({ page })
   if (draftId) {
@@ -100,6 +100,14 @@ export function getFundDraftUrl(draftId: string): string {
   return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}`
 }
 
+export function getFundDraftCompletionUrl(draftId: string): string {
+  return buildUrl(`${API_PATHS.fundDrafts}/${draftId}/completion`)
+}
+
+export function getFundEstimatesUrl(draftId: string): string {
+  return buildUrl(`${API_PATHS.fundDrafts}/${draftId}/estimates`)
+}
+
 export function getFundDraftPortfolioRulesUrl(draftId: string): string {
   return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}/portfolio-rules`
 }
@@ -110,6 +118,10 @@ export function getFundDraftAnalysisUrl(draftId: string): string {
 
 export function getFundDraftSelectedProposalUrl(draftId: string): string {
   return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}/selected-proposal`
+}
+
+export function getFundDraftWorkingPortfolioUrl(draftId: string): string {
+  return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}/working-portfolio`
 }
 
 export function getFundDraftModelUniverseUrl(): string {
