@@ -380,6 +380,50 @@
   font-size: 0.8125rem;
 }
 
+.ruleRightColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  min-width: 68px;
+}
+
+.ruleCurrentValue {
+  color: #0f1f3c;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.progressBarTrack {
+  width: 68px;
+  height: 5px;
+  border-radius: 999px;
+  background: #e8ecf0;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease, background-color 0.25s ease;
+}
+
+.fillOk {
+  background: #2ec4a7;
+}
+
+.fillWarn {
+  background: #e2a35a;
+}
+
+.fillBad {
+  background: #c62828;
+}
+
+.fillInfo {
+  background: #b0bcc7;
+}
+
 .immutableTag {
   display: inline-flex;
   margin-top: 0.35rem;
@@ -389,6 +433,51 @@
   background: #eef2f4;
   font-size: 0.625rem;
   font-weight: 600;
+}
+
+.violatingList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.violatingChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #fde8e8;
+  color: #c0392b;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.violationHint {
+  margin: 0.3rem 0 0;
+  font-size: 0.65rem;
+  font-style: italic;
+  color: #c0392b;
+}
+
+.softViolationHint {
+  margin: 0.3rem 0 0;
+  font-size: 0.65rem;
+  font-style: italic;
+  color: #b45309;
+}
+
+.softViolatingChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #b45309;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
 .legend {
