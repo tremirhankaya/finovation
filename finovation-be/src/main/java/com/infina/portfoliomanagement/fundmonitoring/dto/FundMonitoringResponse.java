@@ -13,6 +13,7 @@ public record FundMonitoringResponse(
         BigDecimal currentSharePrice,
         BigDecimal dailyChangePercentage,
         Map<String, List<PricePointResponse>> priceHistory,
+        BenchmarkDefinitionResponse benchmark,
         List<TechnicalIndicatorResponse> technicalIndicators,
         List<PeriodReturnResponse> periodReturns,
         List<FundPositionResponse> positions,
@@ -27,7 +28,21 @@ public record FundMonitoringResponse(
             String label,
             BigDecimal value,
             String unit,
-            String tone
+            String tone,
+            String description
+    ) {
+    }
+
+    public record BenchmarkDefinitionResponse(
+            String name,
+            List<BenchmarkComponentResponse> components
+    ) {
+    }
+
+    public record BenchmarkComponentResponse(
+            String code,
+            String name,
+            BigDecimal weightPercentage
     ) {
     }
 

@@ -55,6 +55,7 @@ infina:
 fund:
   monitoring:
     fixed-outstanding-shares: ${FUND_MONITORING_FIXED_OUTSTANDING_SHARES:1000000}
+    policy-rate-percent: ${TCMB_POLICY_RATE_PERCENT:37}
 
 marketdata:
   sync:
