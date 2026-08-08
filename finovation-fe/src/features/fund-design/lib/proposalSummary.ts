@@ -30,7 +30,7 @@ function isTpp(asset: FundModelAsset): boolean {
 }
 
 function toPct(weight: number): number {
-  return Math.round(weight * 1000) / 10
+  return Math.round(weight * 10) / 10
 }
 
 export function summarizeProposal(proposal: FundModelProposal): ProposalSummary {

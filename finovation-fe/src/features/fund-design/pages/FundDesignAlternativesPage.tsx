@@ -353,6 +353,7 @@ export default function FundDesignAlternativesPage() {
   const { draftId } = useParams<{ draftId: string }>()
   const { init, error: initError, reload: reloadInit } = useFundDraftInit({
     page: "ALTERNATIVES",
+    draftId,
   })
 
   const [proposals, setProposals] = useState<FundModelProposal[]>([])
@@ -422,6 +423,7 @@ export default function FundDesignAlternativesPage() {
     setFormError("")
     try {
       await selectFundDraftProposal(draftId, selectedRank)
+      void navigate(`/fund-design/${draftId}/edit`)
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : "Öneri seçilemedi",

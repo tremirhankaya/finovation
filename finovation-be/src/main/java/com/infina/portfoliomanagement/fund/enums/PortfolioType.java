@@ -1,6 +1,16 @@
 package com.infina.portfoliomanagement.fund.enums;
 
 public enum PortfolioType {
-    PROPOSAL,
-    WORKING
+    PROPOSAL("Proposal"),
+    WORKING("Working");
+
+    private final String defaultLabel;
+
+    PortfolioType(String defaultLabel) {
+        this.defaultLabel = defaultLabel;
+    }
+
+    public String getDefaultLabel() {
+        return defaultLabel;
+    }
 }

@@ -1,0 +1,156 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.successHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.iconContainer {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+/* Simple confetti simulation for the success icon */
+.confettiTopLeft, .confettiTopRight, .confettiBottomLeft, .confettiBottomRight {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.confettiTopLeft {
+  top: -10px;
+  left: -20px;
+  background-color: #3b82f6;
+  box-shadow: 10px -15px 0 #f59e0b, 25px -10px 0 #10b981;
+}
+.confettiTopRight {
+  top: -10px;
+  right: -20px;
+  background-color: #8b5cf6;
+  box-shadow: -10px -15px 0 #ec4899, -25px -10px 0 #06b6d4;
+}
+.confettiBottomLeft {
+  bottom: -10px;
+  left: -15px;
+  background-color: #ec4899;
+  box-shadow: 15px 20px 0 #f59e0b;
+}
+.confettiBottomRight {
+  bottom: -10px;
+  right: -15px;
+  background-color: #10b981;
+  box-shadow: -15px 20px 0 #3b82f6;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f1f3c;
+  margin: 0 0 0.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f1f3c;
+  margin: 0 0 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.featureBox {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.featureLabel {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f1f3c;
+  margin: 0 0 0.75rem;
+}
+
+.featureValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f1f3c;
+  margin: 0 0 0.75rem;
+}
+
+.featureDesc {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+}
+
+.linkButton {
+  padding: 0.625rem 1.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #0f1f3c;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.linkButton:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .linkButton {
+    width: 100%;
+    text-align: center;
+  }
+}

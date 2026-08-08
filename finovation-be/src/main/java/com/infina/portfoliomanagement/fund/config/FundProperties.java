@@ -19,7 +19,11 @@ public record FundProperties(
         int maxEquityWeightPct,
         BigDecimal sectorMaxPct,
         int minTppRangePct,
-        int minStockCountRange
+        int minStockCountRange,
+        BigDecimal aboveThresholdPct,
+        BigDecimal aboveThresholdSumMax,
+        BigDecimal weightSumTolerancePct,
+        int maxAssetPreferences
 ) {
     public static FundProperties from(FundDesignProfile profile) {
         return new FundProperties(
@@ -37,7 +41,11 @@ public record FundProperties(
                 profile.getMaxEquityWeightPct(),
                 profile.getSectorMaxPct(),
                 profile.getMinTppRangePct(),
-                profile.getMinStockCountRange()
+                profile.getMinStockCountRange(),
+                profile.getAboveThresholdPct(),
+                profile.getAboveThresholdSumMax(),
+                profile.getWeightSumTolerancePct(),
+                profile.getMaxAssetPreferences()
         );
     }
 }

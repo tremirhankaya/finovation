@@ -1,11 +1,14 @@
 import {
   getFundDraftAnalysisUrl,
+  getFundDraftCompletionUrl,
   getFundDraftInitUrl,
   getFundDraftModelUniverseUrl,
   getFundDraftPortfolioRulesUrl,
   getFundDraftSelectedProposalUrl,
+  getFundDraftWorkingPortfolioUrl,
   getFundDraftUrl,
   getFundDraftsUrl,
+  getFundEstimatesUrl,
 } from "@/shared/api/apiConfig"
 import { apiFetch } from "@/shared/api/httpClient"
 import {
@@ -15,16 +18,18 @@ import {
   type FundDraftInit,
   type FundDraftPortfolioRules,
   type ModelUniverseAsset,
+  type FundDraftSummary,
   createdFundDraftSchema,
   fundDraftInitSchema,
   fundDraftPortfolioRulesSchema,
   fundDraftSchema,
+  fundDraftSummarySchema,
   modelUniverseAssetSchema,
 } from "@/features/fund-design/model/fundDraftSchemas"
 import type { ManagementApproachCode } from "@/features/fund-design/model/managementApproach"
 import { z } from "zod"
 
-export type { ModelUniverseAsset }
+export type { ModelUniverseAsset, FundDraftSummary }
 
 export type CreateFundDraftInput = {
   name: string
@@ -73,6 +78,32 @@ export async function getFundDraft(
       signal,
     },
     fundDraftSchema.parse,
+  )
+}
+
+export async function listInProgressDrafts(
+  signal?: AbortSignal,
+): Promise<FundDraftSummary[]> {
+  return apiFetch(
+    getFundDraftsUrl(),
+    {
+      errorMessage: "Fon taslakları listesi alınamadı",
+      signal,
+    },
+    z.array(fundDraftSummarySchema).parse,
+  )
+}
+
+export async function listCompletedDrafts(
+  signal?: AbortSignal,
+): Promise<FundDraftSummary[]> {
+  return apiFetch(
+    `${getFundDraftsUrl()}/completed`,
+    {
+      errorMessage: "Aktif fonlar listesi alınamadı",
+      signal,
+    },
+    z.array(fundDraftSummarySchema).parse,
   )
 }
 
@@ -192,5 +223,88 @@ export async function selectFundDraftProposal(
       signal,
     },
     fundDraftAnalysisStateSchema.parse,
+  )
+}
+
+export async function completeFundDraft(
+  draftId: string,
+  signal?: AbortSignal,
+): Promise<FundDraft> {
+  return apiFetch(
+    getFundDraftCompletionUrl(draftId),
+    {
+      method: "POST",
+      errorMessage: "Taslak tamamlanamadı",
+      signal,
+    },
+    fundDraftSchema.parse,
+  )
+}
+
+export type FundEstimates = {
+  beta: number | null
+  volatilityPct: number | null
+  sharpeRatio: number | null
+  maxDrawdownPct: number | null
+}
+
+export async function getFundEstimates(draftId: string): Promise<FundEstimates> {
+  return apiFetch(getFundEstimatesUrl(draftId), {
+    method: "GET",
+    errorMessage: "Fon tahmin özellikleri alınamadı",
+  })
+}
+
+export const fundPositionResponseSchema = z.object({
+  asset_code: z.string(),
+  weight: z.coerce.number(),
+  ai_note: z.string().nullable().optional(),
+  sector_name: z.string().nullable().optional(),
+  asset_type: z.enum(["EQUITY", "TPP"]),
+})
+
+export const workingPortfolioResponseSchema = z.object({
+  sourceRank: z.number().int().nullable().optional(),
+  label: z.string().nullable().optional(),
+  assets: z.array(fundPositionResponseSchema),
+  equityWeightPct: z.coerce.number().optional(),
+  tppWeightPct: z.coerce.number().optional(),
+  stockCount: z.number().int().optional(),
+  sectorCount: z.number().int().optional(),
+})
+
+export type FundPositionResponse = z.infer<typeof fundPositionResponseSchema>
+export type WorkingPortfolioResponse = z.infer<
+  typeof workingPortfolioResponseSchema
+>
+
+export async function getWorkingPortfolio(
+  draftId: string,
+  signal?: AbortSignal,
+): Promise<WorkingPortfolioResponse> {
+  return apiFetch(
+    getFundDraftWorkingPortfolioUrl(draftId),
+    {
+      errorMessage: "Çalışma portföyü alınamadı",
+      signal,
+    },
+    workingPortfolioResponseSchema.parse,
+  )
+}
+
+export async function updateWorkingPortfolio(
+  draftId: string,
+  assets: Array<{ asset_code: string; weight: number; ai_note?: string | null }>,
+  signal?: AbortSignal,
+): Promise<WorkingPortfolioResponse> {
+  return apiFetch(
+    getFundDraftWorkingPortfolioUrl(draftId),
+    {
+      method: "PUT",
+      body: { assets },
+      errorMessage: "Çalışma portföyü güncellenemedi",
+      signal,
+    },
+    workingPortfolioResponseSchema.parse,
   )
 }

@@ -4,7 +4,6 @@ import { useNavigate, useParams } from "react-router"
 import FundDesignLayout from "@/features/fund-design/components/FundDesignLayout"
 import ProspectusRulesPanel from "@/features/fund-design/components/ProspectusRulesPanel"
 import {
-  getFundDraft,
   getFundDraftAnalysisState,
   runFundDraftAnalysis,
 } from "@/features/fund-design/api/fundDraftApi"
@@ -56,6 +55,15 @@ const EMPTY_PREFS: StrategyPrefs = {
   fundName: null,
   excludedAssetCodes: [],
   forcedAssetCodes: [],
+}
+
+function assetLabelForCode(
+  universe: { assetCode: string; displayName: string }[],
+  code: string,
+) {
+  const hit = universe.find((asset) => asset.assetCode === code)
+  if (!hit?.displayName || hit.displayName === code) return code
+  return `${code} · ${hit.displayName}`
 }
 
 function formatAnalysisDate(date: Date): string {
@@ -156,7 +164,11 @@ export default function FundDesignAnalysisPage() {
   const { draftId } = useParams<{ draftId: string }>()
   const { init, error: initError, reload: reloadInit } = useFundDraftInit({
     page: "ANALYSIS",
+    draftId,
   })
+  const analysisInit = init?.page === "ANALYSIS" ? init : null
+  const analysisDraft = analysisInit?.draft ?? null
+  const analysisModelUniverse = analysisInit?.modelUniverse ?? []
 
   const [formError, setFormError] = useState("")
   const [prefs, setPrefs] = useState<StrategyPrefs>(EMPTY_PREFS)
@@ -182,41 +194,24 @@ export default function FundDesignAnalysisPage() {
   )
 
   useEffect(() => {
-    if (!draftId) return
-    const controller = new AbortController()
+    if (!analysisDraft) return
 
-    async function hydrate() {
-      try {
-        const draft = await getFundDraft(draftId!, controller.signal)
-        if (controller.signal.aborted) return
-
-        setPrefs({
-          approach: draft.managementApproach ?? null,
-          tppMinPct: draft.tppMinPct ?? null,
-          tppMaxPct: draft.tppMaxPct ?? null,
-          preferredTppPct: draft.preferredTppPct ?? null,
-          minStockCount: draft.minStockCount ?? null,
-          maxStockCount: draft.maxStockCount ?? null,
-          equityMinPct: draft.equityMinPct ?? null,
-          equityMaxPct: draft.equityMaxPct ?? null,
-          singleStockMaxPct: draft.singleStockMaxPct ?? null,
-          fundName: draft.name?.trim() || null,
-          excludedAssetCodes: draft.excludedAssetCodes ?? [],
-          forcedAssetCodes: draft.forcedAssetCodes ?? [],
-        })
-        setIsReady(true)
-      } catch (error) {
-        if (controller.signal.aborted) return
-        setFormError(
-          error instanceof Error ? error.message : "Fon taslağı alınamadı",
-        )
-        setIsReady(true)
-      }
-    }
-
-    void hydrate()
-    return () => controller.abort()
-  }, [draftId])
+    setPrefs({
+      approach: analysisDraft.managementApproach ?? null,
+      tppMinPct: analysisDraft.tppMinPct ?? null,
+      tppMaxPct: analysisDraft.tppMaxPct ?? null,
+      preferredTppPct: analysisDraft.preferredTppPct ?? null,
+      minStockCount: analysisDraft.minStockCount ?? null,
+      maxStockCount: analysisDraft.maxStockCount ?? null,
+      equityMinPct: analysisDraft.equityMinPct ?? null,
+      equityMaxPct: analysisDraft.equityMaxPct ?? null,
+      singleStockMaxPct: analysisDraft.singleStockMaxPct ?? null,
+      fundName: analysisDraft.name?.trim() || null,
+      excludedAssetCodes: analysisDraft.excludedAssetCodes ?? [],
+      forcedAssetCodes: analysisDraft.forcedAssetCodes ?? [],
+    })
+    setIsReady(true)
+  }, [analysisDraft])
 
   useEffect(() => {
     if (!isReady || !draftId || analysisComplete || formError) return
@@ -287,7 +282,6 @@ export default function FundDesignAnalysisPage() {
   const equityMax = prefs.equityMaxPct ?? init?.maxEquityWeightPct ?? null
   const singleStockMax =
     prefs.singleStockMaxPct ?? init?.maxSingleStockMaxPct ?? null
-  const singleStockMin = init?.minSingleStockMaxPct ?? null
   const sectorMax =
     init?.sectorMaxPct != null ? Math.round(init.sectorMaxPct) : null
 
@@ -394,13 +388,17 @@ export default function FundDesignAnalysisPage() {
                     {prefs.forcedAssetCodes.length > 0 ? (
                       <PrefTile
                         label="Zorunlu Hisseler"
-                        value={prefs.forcedAssetCodes.join(", ")}
+                        value={prefs.forcedAssetCodes
+                          .map((code) => assetLabelForCode(analysisModelUniverse, code))
+                          .join(", ")}
                       />
                     ) : null}
                     {prefs.excludedAssetCodes.length > 0 ? (
                       <PrefTile
                         label="Hariç Tutulanlar"
-                        value={prefs.excludedAssetCodes.join(", ")}
+                        value={prefs.excludedAssetCodes
+                          .map((code) => assetLabelForCode(analysisModelUniverse, code))
+                          .join(", ")}
                       />
                     ) : null}
                   </div>
@@ -419,8 +417,8 @@ export default function FundDesignAnalysisPage() {
                       locked
                       label="Tek Hisse Ağırlığı"
                       value={
-                        singleStockMin != null && singleStockMax != null
-                          ? formatPctRange(singleStockMin, singleStockMax)
+                        init?.minSingleStockMaxPct != null && singleStockMax != null
+                          ? formatPctRange(init.minSingleStockMaxPct, singleStockMax)
                           : formatPct(singleStockMax)
                       }
                     />

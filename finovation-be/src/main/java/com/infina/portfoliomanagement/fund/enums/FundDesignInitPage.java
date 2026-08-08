@@ -6,5 +6,6 @@ public enum FundDesignInitPage {
     STRATEGY,
     ANALYSIS,
     ALTERNATIVES,
-    EDIT
+    EDIT,
+    APPROVAL
 }

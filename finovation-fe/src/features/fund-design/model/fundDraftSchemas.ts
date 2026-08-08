@@ -24,6 +24,7 @@ export const fundDesignInitPageSchema = z.enum([
   "ANALYSIS",
   "ALTERNATIVES",
   "EDIT",
+  "APPROVAL",
 ])
 
 export const fundDraftInitLimitsSchema = z.object({
@@ -38,6 +39,17 @@ export const fundDraftInitLimitsSchema = z.object({
   minEquityWeightPct: z.coerce.number().int(),
   maxEquityWeightPct: z.coerce.number().int(),
   sectorMaxPct: z.coerce.number().finite().positive(),
+  aboveThresholdPct: z.coerce.number().finite().positive(),
+  aboveThresholdSumMax: z.coerce.number().finite().positive(),
+  maxAssetPreferences: z.coerce.number().int(),
+})
+
+export const fundDraftSummarySchema = z.object({
+  draftId: z.string().uuid(),
+  name: z.string(),
+  currentStep: z.number().nullable(),
+  status: z.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
+  updatedAt: z.string(),
 })
 
 export const createdFundDraftSchema = z.object({
@@ -72,6 +84,11 @@ export const fundDraftSchema = z.object({
   currentStep: optionalInt,
   excludedAssetCodes: z.array(z.string()).optional().default([]),
   forcedAssetCodes: z.array(z.string()).optional().default([]),
+  unitPrice: z.coerce.number().nullish(),
+  initialPortfolioSize: z.coerce.number().nullish(),
+  liquidityTargetPct: optionalInt,
+  status: z.enum(["IN_PROGRESS", "COMPLETED"]).nullish(),
+  createdAt: z.string().nullish(),
 })
 
 export const fundDraftPortfolioRulesSchema = z.object({
@@ -105,6 +122,8 @@ export const fundDraftStrategyInitSchema = fundDraftInitLimitsSchema.extend({
 
 export const fundDraftAnalysisInitSchema = fundDraftInitLimitsSchema.extend({
   page: z.literal("ANALYSIS"),
+  draft: fundDraftSchema,
+  modelUniverse: z.array(modelUniverseAssetSchema),
 })
 
 export const fundDraftAlternativesInitSchema = fundDraftInitLimitsSchema.extend({
@@ -113,6 +132,13 @@ export const fundDraftAlternativesInitSchema = fundDraftInitLimitsSchema.extend(
 
 export const fundDraftEditInitSchema = fundDraftInitLimitsSchema.extend({
   page: z.literal("EDIT"),
+  draft: fundDraftSchema,
+  modelUniverse: z.array(modelUniverseAssetSchema),
+})
+
+export const fundDraftApprovalInitSchema = fundDraftInitLimitsSchema.extend({
+  page: z.literal("APPROVAL"),
+  draft: fundDraftSchema,
 })
 
 export const fundDraftInitSchema = z.discriminatedUnion("page", [
@@ -121,6 +147,7 @@ export const fundDraftInitSchema = z.discriminatedUnion("page", [
   fundDraftAnalysisInitSchema,
   fundDraftAlternativesInitSchema,
   fundDraftEditInitSchema,
+  fundDraftApprovalInitSchema,
 ])
 
 export type FundCurrencyOption = z.infer<typeof fundCurrencyOptionSchema>
@@ -129,12 +156,14 @@ export type FundDesignInitPage = z.infer<typeof fundDesignInitPageSchema>
 export type FundDraftInit = z.infer<typeof fundDraftInitSchema>
 export type FundDraftStartInit = z.infer<typeof fundDraftStartInitSchema>
 export type FundDraftStrategyInit = z.infer<typeof fundDraftStrategyInitSchema>
+export type FundDraftApprovalInit = z.infer<typeof fundDraftApprovalInitSchema>
 export type CreatedFundDraft = z.infer<typeof createdFundDraftSchema>
 export type FundDraft = z.infer<typeof fundDraftSchema>
 export type FundDraftPortfolioRules = z.infer<
   typeof fundDraftPortfolioRulesSchema
 >
 export type ModelUniverseAsset = z.infer<typeof modelUniverseAssetSchema>
+export type FundDraftSummary = z.infer<typeof fundDraftSummarySchema>
 
 export const FUND_TYPE_LABELS = {
   EQUITY_INTENSIVE: "Hisse Senedi Yoğun Fon",
