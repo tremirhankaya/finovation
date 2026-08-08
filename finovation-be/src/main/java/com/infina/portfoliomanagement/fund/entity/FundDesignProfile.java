@@ -60,6 +60,9 @@ public class FundDesignProfile {
     @Column(name = "max_equity_weight_pct", nullable = false)
     private Short maxEquityWeightPct;
 
+    @Column(name = "max_asset_preferences", nullable = false)
+    private Short maxAssetPreferences;
+
     @Column(name = "sector_max_pct", nullable = false, precision = 9, scale = 4)
     private BigDecimal sectorMaxPct;
 
@@ -68,6 +71,15 @@ public class FundDesignProfile {
 
     @Column(name = "min_stock_count_range", nullable = false)
     private Short minStockCountRange;
+
+    @Column(name = "above_threshold_pct", nullable = false, precision = 9, scale = 4)
+    private BigDecimal aboveThresholdPct;
+
+    @Column(name = "above_threshold_sum_max", nullable = false, precision = 9, scale = 4)
+    private BigDecimal aboveThresholdSumMax;
+
+    @Column(name = "weight_sum_tolerance_pct", nullable = false, precision = 9, scale = 4)
+    private BigDecimal weightSumTolerancePct;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
