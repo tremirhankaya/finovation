@@ -1,14 +1,6 @@
 export type PricePeriod = "1W" | "1M" | "3M" | "6M" | "1Y"
 
-export type ComparisonPeriod =
-  | "1W"
-  | "1M"
-  | "3M"
-  | "6M"
-  | "YTD"
-  | "1Y"
-  | "3Y"
-  | "5Y"
+export type ComparisonPeriod = "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "3Y" | "5Y"
 
 export type FundOption = {
   id: string
@@ -44,7 +36,7 @@ export type BenchmarkDefinition = {
 }
 
 export type PeriodReturn = {
-  period: "1M" | "3M" | "6M"
+  period: "1M" | "3M" | "6M" | "1Y"
   label: string
   value: number | null
 }
