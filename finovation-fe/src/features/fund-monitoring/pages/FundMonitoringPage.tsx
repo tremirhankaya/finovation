@@ -150,7 +150,11 @@ export function FundMonitoringView({
           />
         </div>
 
-        <FundComparisonCard assets={comparisonAssets} />
+        <FundComparisonCard
+          assets={comparisonAssets}
+          benchmark={snapshot?.benchmark}
+          selectedFundId={snapshot?.fund.id}
+        />
       </div>
     </main>
   )
