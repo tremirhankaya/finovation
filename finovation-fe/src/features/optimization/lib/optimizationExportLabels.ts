@@ -1,5 +1,5 @@
 export const RISK_PROFILE_LABELS: Record<string, string> = {
-  AGGRESSIVE: "Atak",
+  AGGRESSIVE: "Agresif",
   BALANCED: "Dengeli",
   CONSERVATIVE: "Korumacı",
 }

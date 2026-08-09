@@ -64,6 +64,24 @@ export const createOptimizationRequestSchema = z.object({
   maxAdditions: z.number(),
 })
 
+export const fundTypeSchema = z.enum(["EQUITY_INTENSIVE"])
+
+export const optimizableFundResponseSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  type: fundTypeSchema,
+  active: z.boolean(),
+  lastOptimizationDate: z.iso.date().nullable(),
+  stockCount: z.number(),
+  sectorCount: z.number(),
+  equityWeightPercent: z.number(),
+  tppWeightPercent: z.number(),
+})
+
+export const optimizableFundListResponseSchema = z.array(
+  optimizableFundResponseSchema,
+)
+
 export const investmentUniverseAssetResponseSchema = z.object({
   assetCode: z.string(),
   name: z.string(),
@@ -81,3 +99,5 @@ export type OptimizationRequestResponse = z.infer<typeof optimizationRequestResp
 export type AssetPreferenceRequest = z.infer<typeof assetPreferenceRequestSchema>
 export type CreateOptimizationRequestPayload = z.infer<typeof createOptimizationRequestSchema>
 export type InvestmentUniverseAssetResponse = z.infer<typeof investmentUniverseAssetResponseSchema>
+export type FundType = z.infer<typeof fundTypeSchema>
+export type OptimizableFundResponse = z.infer<typeof optimizableFundResponseSchema>

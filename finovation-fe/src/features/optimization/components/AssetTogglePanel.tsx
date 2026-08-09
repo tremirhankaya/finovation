@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import type { UniverseAsset } from "@/features/optimization/model/optimizationForm.types"
 import styles from "@/features/optimization/styles/OptimizationFormPage.module.css"
@@ -14,6 +14,8 @@ export type AssetTogglePanelProps = {
   onToggle: (assetCode: string) => void
 }
 
+const ALL_SECTORS_VALUE = ""
+
 export default function AssetTogglePanel({
   title,
   description,
@@ -25,16 +27,29 @@ export default function AssetTogglePanel({
   onToggle,
 }: AssetTogglePanelProps) {
   const [query, setQuery] = useState("")
+  const [sectorFilter, setSectorFilter] = useState(ALL_SECTORS_VALUE)
+
+  const sectorOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          assets
+            .map((asset) => asset.sectorName)
+            .filter((sectorName): sectorName is string => Boolean(sectorName)),
+        ),
+      ).sort((a, b) => a.localeCompare(b, "tr-TR")),
+    [assets],
+  )
 
   const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR")
-  const filteredAssets = normalizedQuery
-    ? assets.filter((asset) =>
-        [asset.symbol, asset.name, asset.sectorName ?? ""]
-          .join(" ")
-          .toLocaleLowerCase("tr-TR")
-          .includes(normalizedQuery),
-      )
-    : assets
+  const filteredAssets = assets.filter((asset) => {
+    if (sectorFilter && asset.sectorName !== sectorFilter) return false
+    if (!normalizedQuery) return true
+    return [asset.symbol, asset.name, asset.sectorName ?? ""]
+      .join(" ")
+      .toLocaleLowerCase("tr-TR")
+      .includes(normalizedQuery)
+  })
 
   return (
     <section className={styles.panel}>
@@ -44,50 +59,70 @@ export default function AssetTogglePanel({
       <input
         type="search"
         className={styles.searchInput}
-        placeholder="Hisse, sektör veya kod ara"
+        placeholder="Hisse veya sektör ara"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         aria-label={`${title} arama`}
       />
+
+      <select
+        className={styles.sectorFilterSelect}
+        value={sectorFilter}
+        onChange={(event) => setSectorFilter(event.target.value)}
+        aria-label={`${title} sektör filtresi`}
+      >
+        <option value={ALL_SECTORS_VALUE}>Tüm sektörler</option>
+        {sectorOptions.map((sectorName) => (
+          <option key={sectorName} value={sectorName}>
+            {sectorName}
+          </option>
+        ))}
+      </select>
 
       {filteredAssets.length === 0 ? (
         <p className={styles.emptyState}>
           Aramanızla eşleşen hisse bulunamadı.
         </p>
       ) : (
-        <table className={styles.assetTable}>
-          <thead>
-            <tr>
-              <th>Hisse</th>
-              <th>Sektör</th>
-              <th>{toggleLabel}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAssets.map((asset) => (
-              <tr key={asset.assetCode}>
-                <td>
-                  {asset.symbol} {asset.name}
-                </td>
-                <td>{asset.sectorName ?? "—"}</td>
-                <td>
-                  <input
-                    type="checkbox"
-                    className={
-                      variant === "exclude"
-                        ? `${styles.assetCheckbox} ${styles.assetCheckboxExclude}`
-                        : styles.assetCheckbox
-                    }
-                    checked={selectedAssetCodes.has(asset.assetCode)}
-                    disabled={disabledAssetCodes.has(asset.assetCode)}
-                    onChange={() => onToggle(asset.assetCode)}
-                    aria-label={`${asset.symbol} hissesi için ${toggleLabel}`}
-                  />
-                </td>
+        <div className={styles.assetTableScroll}>
+          <table className={styles.assetTable}>
+            <thead>
+              <tr>
+                <th>Hisse</th>
+                <th>{toggleLabel}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredAssets.map((asset) => (
+                <tr key={asset.assetCode}>
+                  <td>
+                    <span className={styles.assetRowSymbol}>
+                      {asset.symbol}
+                    </span>{" "}
+                    <span className={styles.assetRowName}>{asset.name}</span>
+                    <div className={styles.fundRowMeta}>
+                      {asset.sectorName ?? "—"}
+                    </div>
+                  </td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className={
+                        variant === "exclude"
+                          ? `${styles.assetToggleBox} ${styles.assetToggleBoxExclude}`
+                          : `${styles.assetToggleBox} ${styles.assetToggleBoxAdd}`
+                      }
+                      checked={selectedAssetCodes.has(asset.assetCode)}
+                      disabled={disabledAssetCodes.has(asset.assetCode)}
+                      onChange={() => onToggle(asset.assetCode)}
+                      aria-label={`${asset.symbol} hissesi için ${toggleLabel}`}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )

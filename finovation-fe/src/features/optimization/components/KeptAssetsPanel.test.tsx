@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -47,9 +47,11 @@ describe("KeptAssetsPanel", () => {
       />,
     )
 
-    expect(screen.getByText(/AKBNK Akbank/)).toBeInTheDocument()
-    expect(screen.getByText("Bankacılık")).toBeInTheDocument()
-    expect(screen.getByText("%8")).toBeInTheDocument()
+    const table = within(screen.getByRole("table"))
+    expect(table.getByText("AKBNK")).toBeInTheDocument()
+    expect(table.getByText("Akbank")).toBeInTheDocument()
+    expect(table.getByText("Bankacılık")).toBeInTheDocument()
+    expect(table.getByText("%8")).toBeInTheDocument()
     expect(
       screen.getByText(/1 hisse sabitlendi · toplam %7\./),
     ).toBeInTheDocument()

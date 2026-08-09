@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.controller;
 import com.infina.portfoliomanagement.optimization.controller.docs.OptimizationRequestControllerDocs;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
 import com.infina.portfoliomanagement.optimization.service.OptimizationRequestService;
@@ -29,6 +30,16 @@ import java.util.UUID;
 public class OptimizationRequestController implements OptimizationRequestControllerDocs {
 
     private final OptimizationRequestService optimizationRequestService;
+
+    @Override
+    @GetMapping("/funds")
+    public ResponseEntity<List<OptimizableFundResponse>> getOptimizableFunds(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ResponseEntity.ok(
+                optimizationRequestService.listOptimizableFunds(userDetails.getUsername())
+        );
+    }
 
     @Override
     @PostMapping

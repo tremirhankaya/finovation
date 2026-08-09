@@ -24,6 +24,7 @@ import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequest
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultAssetResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultMetricResponse;
+import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
 import com.infina.portfoliomanagement.optimization.engine.EngineAlternative;
 import com.infina.portfoliomanagement.optimization.engine.OptimizationEngineClient;
@@ -59,6 +60,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -149,6 +151,88 @@ public class OptimizationRequestService {
         log.debug("Optimization request {} created by actor {}", saved.getId(), actor.getId());
 
         return toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OptimizableFundResponse> listOptimizableFunds(String actorUsername) {
+        User actor = resolveActor(actorUsername);
+
+        List<FundDraft> funds = fundDraftRepository
+                .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+                        FundDraftStatus.COMPLETED,
+                        actor.getId()
+                );
+
+        return funds.stream().map(this::toOptimizableFundResponse).toList();
+    }
+
+    private OptimizableFundResponse toOptimizableFundResponse(FundDraft fund) {
+        List<FundPosition> positions = fundPortfolioRepository
+                .findByFundDraftIdAndSelectedTrue(fund.getId())
+                .map(portfolio -> fundPositionRepository
+                        .findAllByFundPortfolioIdOrderByWeightDesc(portfolio.getId()))
+                .orElse(List.of());
+
+        Map<Long, Asset> assetsById = assetRepository
+                .findAllById(positions.stream().map(FundPosition::getAssetId).toList())
+                .stream()
+                .collect(Collectors.toMap(Asset::getId, asset -> asset));
+
+        List<Long> equityAssetIds = positions.stream()
+                .map(FundPosition::getAssetId)
+                .filter(assetId -> {
+                    Asset asset = assetsById.get(assetId);
+                    return asset != null && asset.getAssetType() == AssetType.EQUITY;
+                })
+                .toList();
+
+        Map<Long, EquityDetail> detailByAssetId = equityDetailRepository
+                .findAllByAssetIdIn(equityAssetIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        EquityDetail::getAssetId,
+                        detail -> detail,
+                        (left, right) -> left
+                ));
+
+        BigDecimal equityWeight = BigDecimal.ZERO;
+        BigDecimal tppWeight = BigDecimal.ZERO;
+        Set<Long> sectorIds = new HashSet<>();
+        int stockCount = 0;
+
+        for (FundPosition position : positions) {
+            Asset asset = assetsById.get(position.getAssetId());
+            if (asset == null) {
+                continue;
+            }
+            if (asset.getAssetType() == AssetType.EQUITY) {
+                equityWeight = equityWeight.add(position.getWeight());
+                stockCount++;
+                EquityDetail detail = detailByAssetId.get(asset.getId());
+                if (detail != null && detail.getSector() != null) {
+                    sectorIds.add(detail.getSector().getId());
+                }
+            } else if (asset.getAssetType() == AssetType.TPP) {
+                tppWeight = tppWeight.add(position.getWeight());
+            }
+        }
+
+        LocalDate lastOptimizationDate = optimizationRequestRepository
+                .findFirstByFundIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(fund.getPublicId())
+                .map(request -> request.getCompletedAt().toLocalDate())
+                .orElse(null);
+
+        return new OptimizableFundResponse(
+                fund.getPublicId(),
+                fund.getName(),
+                fund.getFundType(),
+                true,
+                lastOptimizationDate,
+                stockCount,
+                sectorIds.size(),
+                equityWeight.setScale(0, RoundingMode.HALF_UP),
+                tppWeight.setScale(0, RoundingMode.HALF_UP)
+        );
     }
 
     @Transactional(readOnly = true)

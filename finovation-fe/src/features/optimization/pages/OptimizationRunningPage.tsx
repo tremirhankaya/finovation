@@ -6,7 +6,7 @@ import type { RiskProfile } from "@/features/optimization/model/optimizationSche
 import styles from "@/features/optimization/styles/OptimizationRunningPage.module.css"
 
 const RISK_PROFILE_LABELS: Record<RiskProfile, string> = {
-  AGGRESSIVE: "Atak",
+  AGGRESSIVE: "Agresif",
   BALANCED: "Dengeli",
   CONSERVATIVE: "Korumacı",
 }

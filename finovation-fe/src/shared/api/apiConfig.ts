@@ -129,6 +129,10 @@ export function getOptimizationRequestsUrl(fundId?: string): string {
   return fundId == null ? base : `${base}?fundId=${encodeURIComponent(fundId)}`
 }
 
+export function getOptimizableFundsUrl(): string {
+  return `${buildUrl(API_PATHS.optimizationRequests)}/funds`
+}
+
 export function getOptimizationRequestUrl(requestId: number): string {
   return `${buildUrl(API_PATHS.optimizationRequests)}/${requestId}`
 }

@@ -1,5 +1,6 @@
 import {
   getInvestmentUniverseUrl,
+  getOptimizableFundsUrl,
   getOptimizationRequestApproveUrl,
   getOptimizationRequestRejectUrl,
   getOptimizationRequestResultUrl,
@@ -11,8 +12,10 @@ import { apiFetch } from "@/shared/api/httpClient"
 import {
   type CreateOptimizationRequestPayload,
   type InvestmentUniverseAssetResponse,
+  type OptimizableFundResponse,
   type OptimizationRequestResponse,
   investmentUniverseResponseSchema,
+  optimizableFundListResponseSchema,
   optimizationRequestListResponseSchema,
   optimizationRequestResponseSchema,
 } from "@/features/optimization/model/optimizationSchemas"
@@ -20,6 +23,19 @@ import {
   type OptimizationResult,
   optimizationResultSchema,
 } from "@/features/optimization/model/optimizationResultSchemas"
+
+export async function fetchOptimizableFunds(
+  signal?: AbortSignal,
+): Promise<OptimizableFundResponse[]> {
+  return apiFetch(
+    getOptimizableFundsUrl(),
+    {
+      errorMessage: "Optimize edilebilir fonlar alınamadı",
+      signal,
+    },
+    optimizableFundListResponseSchema.parse,
+  )
+}
 
 export async function createOptimizationRequest(
   payload: CreateOptimizationRequestPayload,

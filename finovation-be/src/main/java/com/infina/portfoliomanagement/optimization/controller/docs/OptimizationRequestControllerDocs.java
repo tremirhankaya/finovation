@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.controller.docs;
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +21,16 @@ import java.util.UUID;
 )
 @SuppressWarnings("unused") // Endpoints are invoked by Spring through their controller implementations.
 public interface OptimizationRequestControllerDocs {
+
+    @Operation(
+            summary = "List optimizable funds",
+            description = "Returns the actor's own COMPLETED funds with an at-a-glance summary for the " +
+                    "optimization fund-selection step: current stock/sector count, equity/TPP weight split " +
+                    "(from the fund's currently selected portfolio) and the date of the fund's most recent " +
+                    "completed optimization run, if any.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<List<OptimizableFundResponse>> getOptimizableFunds(UserDetails userDetails);
 
     @Operation(
             summary = "Create optimization request",

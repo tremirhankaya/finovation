@@ -3,17 +3,30 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 import FundSelectionStep from "@/features/optimization/components/FundSelectionStep"
+import type { OptimizableFund } from "@/features/optimization/model/optimizationForm.types"
 
-const FUNDS = [
+const FUNDS: OptimizableFund[] = [
   {
     id: "11111111-1111-4111-8111-111111111111",
     name: "Finovation Atlas Fonu",
-    type: "Hisse Senedi Yoğun Fon",
+    typeLabel: "Hisse Senedi Yoğun Fon",
+    active: true,
+    lastOptimizationDate: "28.07.2026",
+    stockCount: 18,
+    sectorCount: 12,
+    equityWeightPercent: 90,
+    tppWeightPercent: 10,
   },
   {
     id: "22222222-2222-4222-8222-222222222222",
     name: "Finovation Nova Fonu",
-    type: "Hisse Senedi Yoğun Fon",
+    typeLabel: "Hisse Senedi Yoğun Fon",
+    active: true,
+    lastOptimizationDate: null,
+    stockCount: 14,
+    sectorCount: 9,
+    equityWeightPercent: 82,
+    tppWeightPercent: 10,
   },
 ]
 
@@ -61,6 +74,10 @@ describe("FundSelectionStep", () => {
     )
 
     expect(screen.getByText("Finovation Atlas Fonu")).toBeInTheDocument()
+    expect(screen.getByText("18 hisse · 12 sektör")).toBeInTheDocument()
+    expect(screen.getByText("28.07.2026")).toBeInTheDocument()
+    expect(screen.getByText("Optimizasyon yapılmadı")).toBeInTheDocument()
+    expect(screen.getByText("%90 / %10")).toBeInTheDocument()
     expect(
       screen.getByRole("radio", { name: "Finovation Atlas Fonu fonunu seç" }),
     ).toBeChecked()
