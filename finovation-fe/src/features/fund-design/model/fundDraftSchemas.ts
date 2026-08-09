@@ -9,9 +9,11 @@ export const modelUniverseAssetSchema = z
   .object({
     assetCode: z.string().min(1),
     displayName: z.string().nullish(),
+    sectorName: z.string().nullish(),
   })
   .transform((asset) => ({
     assetCode: asset.assetCode,
+    sectorName: asset.sectorName,
     displayName:
       asset.displayName && asset.displayName.trim()
         ? asset.displayName
