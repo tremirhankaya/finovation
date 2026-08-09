@@ -22,7 +22,7 @@ type UserSearchToolbarProps = {
 }
 
 const ROLE_OPTIONS: UserRole[] = ["USER", "COMPANY_MANAGER", "ADMIN"]
-const STATUS_OPTIONS: UserStatus[] = ["ACTIVE", "INACTIVE", "LOCKED"]
+const STATUS_OPTIONS: UserStatus[] = ["ACTIVE", "INACTIVE"]
 
 function formatShortDate(value: string) {
   if (!value) return ""

@@ -29,14 +29,8 @@ describe("ForgotPasswordPage", () => {
     authServiceMocks.resetPassword.mockReset()
   })
 
-  it("hesap bulunamadığında AUTH_006 mesajını gösterir", async () => {
-    authServiceMocks.requestPasswordReset.mockRejectedValue(
-      toApiRequestError(
-        { code: "AUTH_006", message: "No account was found." },
-        404,
-        "Doğrulama kodu gönderilemedi",
-      ),
-    )
+  it("hesap bulunmasa da e-posta varlığını açıklamadan OTP adımına geçer", async () => {
+    authServiceMocks.requestPasswordReset.mockResolvedValue(undefined)
     const user = userEvent.setup()
 
     renderPage()
@@ -46,9 +40,8 @@ describe("ForgotPasswordPage", () => {
       screen.getByRole("button", { name: "Doğrulama kodu gönder" }),
     )
 
-    expect(
-      await screen.findByText("Bu e-posta adresine ait bir hesap bulunamadı."),
-    ).toBeInTheDocument()
+    expect(await screen.findByLabelText("Doğrulama kodu")).toBeVisible()
+    expect(screen.getByText(/yok@example.com/)).toBeVisible()
   })
 
   it("OTP adımında hatalı kodu AUTH_007 mesajına çevirir", async () => {

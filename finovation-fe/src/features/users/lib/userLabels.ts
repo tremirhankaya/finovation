@@ -17,8 +17,6 @@ export function formatStatusLabel(status: UserStatus): string {
       return "Aktif"
     case "INACTIVE":
       return "Pasif"
-    case "LOCKED":
-      return "Kilitli"
   }
 }
 

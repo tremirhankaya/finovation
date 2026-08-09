@@ -7,12 +7,7 @@ type UserStatusChipProps = {
 }
 
 export default function UserStatusChip({ status }: UserStatusChipProps) {
-  const toneClass =
-    status === "ACTIVE"
-      ? styles.active
-      : status === "LOCKED"
-        ? styles.locked
-        : styles.inactive
+  const toneClass = status === "ACTIVE" ? styles.active : styles.inactive
 
   return (
     <span className={`${styles.chip} ${toneClass}`}>

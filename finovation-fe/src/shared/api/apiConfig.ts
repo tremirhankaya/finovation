@@ -138,6 +138,11 @@ export function getFundsUrl(): string {
   return buildUrl(API_PATHS.funds)
 }
 
+export function getUserFundsUrl(ownerUserId: number): string {
+  const params = new URLSearchParams({ ownerUserId: String(ownerUserId) })
+  return `${getFundsUrl()}?${params.toString()}`
+}
+
 export function getFundMonitoringUrl(fundId: string): string {
   return `${getFundsUrl()}/${encodeURIComponent(fundId)}/monitoring`
 }

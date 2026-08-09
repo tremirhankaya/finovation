@@ -16,6 +16,7 @@ type UserTableProps = {
   onClearFilters: () => void
   onEdit: (userId: number) => void
   onDelete: (userId: number) => void
+  onViewFunds?: (userId: number) => void
 }
 
 function TrashIcon() {
@@ -103,6 +104,7 @@ export default function UserTable({
   onClearFilters,
   onEdit,
   onDelete,
+  onViewFunds,
 }: UserTableProps) {
   if (!isLoading && users.length === 0) {
     return (
@@ -147,6 +149,16 @@ export default function UserTable({
                 <td>{formatCreatedAt(user.createdAt)}</td>
                 <td>
                   <div className={styles.actions}>
+                    {onViewFunds && user.role === "USER" && (
+                      <button
+                        className={styles.fundsButton}
+                        type="button"
+                        aria-label={`${user.username} fonlarını görüntüle`}
+                        onClick={() => onViewFunds(user.id)}
+                      >
+                        Fonlar
+                      </button>
+                    )}
                     {(assignableRoles.includes(user.role) ||
                       user.id === currentUserId) && (
                       <button

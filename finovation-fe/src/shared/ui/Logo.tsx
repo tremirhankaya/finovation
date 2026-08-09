@@ -1,3 +1,4 @@
+import finovationLogo from "@/shared/assets/finovation-logo.png"
 import styles from "@/shared/ui/Logo.module.css"
 
 type LogoProps = {
@@ -14,16 +15,7 @@ export default function Logo({
   return (
     <div className={`${styles.logo} ${styles[variant]} ${styles[size]}`}>
       <span className={styles.mark} aria-hidden="true">
-        <svg viewBox="0 0 20 20" fill="none">
-          <path
-            d="M3 14 7 8l4 3 4-6 2 2"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <circle cx="17" cy="7" r="2" fill="currentColor" />
-        </svg>
+        <img src={finovationLogo} alt="" />
       </span>
       <span className={styles.wordmark}>
         <span className={styles.text}>Finovation</span>

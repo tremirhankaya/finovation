@@ -1,13 +1,12 @@
 package com.infina.portfoliomanagement.fundmonitoring.service;
 
 import com.infina.portfoliomanagement.common.enums.AssetType;
-import com.infina.portfoliomanagement.common.exception.BaseException;
-import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
@@ -52,6 +51,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -132,7 +132,10 @@ class FundMonitoringServiceTest {
                         FundDraftStatus.COMPLETED,
                         7L
                 )).thenReturn(List.of(selectedFund, otherFund));
-        when(fundPortfolioRepository.findByFundDraftIdAndSelectedTrue(anyLong()))
+        when(fundPortfolioRepository.findByFundDraft_IdAndPortfolioType(
+                anyLong(),
+                eq(PortfolioType.WORKING)
+        ))
                 .thenReturn(Optional.of(portfolio));
         when(portfolio.getId()).thenReturn(10L);
         when(fundPositionRepository
@@ -146,14 +149,14 @@ class FundMonitoringServiceTest {
         )).thenReturn(Map.of());
         when(classificationProviderRegistry.loadProfiles(List.of()))
                 .thenReturn(Map.of());
-        when(valuationCalculator.calculate(
+        when(valuationCalculator.calculateBackwardsFromLatest(
                 eq(selectedFund),
                 eq(List.of()),
                 eq(List.of()),
                 eq(Map.of()),
                 any(LocalDate.class)
         )).thenReturn(valuation("100", "110"));
-        when(valuationCalculator.calculate(
+        when(valuationCalculator.calculateBackwardsFromLatest(
                 eq(otherFund),
                 eq(List.of()),
                 eq(List.of()),
@@ -191,6 +194,29 @@ class FundMonitoringServiceTest {
                         tuple("Atlas Fonu", new BigDecimal("10.0000"), true, 8),
                         tuple("Nova Fonu", new BigDecimal("20.0000"), true, 8)
                 );
+    }
+
+    @Test
+    void listFunds_forManagedUser_appliesPolicyAndListsTargetFunds() {
+        User actor = mock(User.class);
+        User owner = mock(User.class);
+        FundDraft fund = fund(3L, "Kullanıcı Fonu");
+
+        when(actor.getId()).thenReturn(7L);
+        when(owner.getId()).thenReturn(9L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
+        when(userRepository.findById(9L)).thenReturn(Optional.of(owner));
+        when(fundDraftRepository
+                .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+                        FundDraftStatus.COMPLETED,
+                        9L
+                )).thenReturn(List.of(fund));
+
+        var response = service.listFunds("manager", 9L);
+
+        assertThat(response).extracting(item -> item.name())
+                .containsExactly("Kullanıcı Fonu");
+        verify(accessPolicy).assertCanViewUserFunds(actor, owner);
     }
 
     @Test
@@ -234,7 +260,7 @@ class FundMonitoringServiceTest {
     }
 
     @Test
-    void getCurrentPositionsSinceInception_valuesFromTheFundsOwnCreationDateNotAFixedOneYearWindow() {
+    void getCurrentPositions_returnsWorkingWeightsWithoutHistoricalValuation() {
         FundDraft fund = fund(1L, "Atlas Fonu");
         User actor = mock(User.class);
         FundPortfolio portfolio = mock(FundPortfolio.class);
@@ -245,42 +271,10 @@ class FundMonitoringServiceTest {
                 fund.getPublicId(),
                 FundDraftStatus.COMPLETED
         )).thenReturn(Optional.of(fund));
-        when(fundPortfolioRepository.findByFundDraftIdAndSelectedTrue(1L))
-                .thenReturn(Optional.of(portfolio));
-        when(portfolio.getId()).thenReturn(10L);
-        when(fundPositionRepository.findAllByFundPortfolioIdOrderByWeightDesc(10L))
-                .thenReturn(List.of());
-        when(assetRepository.findAllById(List.of())).thenReturn(List.of());
-        when(valuationProviderRegistry.loadUnitValues(
-                eq(List.of()),
-                eq(LocalDate.of(2025, Month.JANUARY, 1)),
-                eq(AS_OF_DATE)
-        )).thenReturn(Map.of());
-        when(classificationProviderRegistry.loadProfiles(List.of())).thenReturn(Map.of());
-        when(valuationCalculator.calculate(
-                eq(fund),
-                eq(List.of()),
-                eq(List.of()),
-                eq(Map.of()),
-                eq(LocalDate.of(2025, Month.JANUARY, 1))
-        )).thenReturn(valuation("100", "110"));
-
-        service.getCurrentPositionsSinceInception("manager", fund.getPublicId());
-    }
-
-    @Test
-    void getCurrentPositionsSinceInception_fallsBackToDesignWeightsWhenNoTradingDayHasPassed() {
-        FundDraft fund = fund(1L, "Atlas Fonu");
-        User actor = mock(User.class);
-        FundPortfolio portfolio = mock(FundPortfolio.class);
-
-        when(actor.getId()).thenReturn(7L);
-        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
-        when(fundDraftRepository.findByPublicIdAndStatus(
-                fund.getPublicId(),
-                FundDraftStatus.COMPLETED
-        )).thenReturn(Optional.of(fund));
-        when(fundPortfolioRepository.findByFundDraftIdAndSelectedTrue(1L))
+        when(fundPortfolioRepository.findByFundDraft_IdAndPortfolioType(
+                1L,
+                PortfolioType.WORKING
+        ))
                 .thenReturn(Optional.of(portfolio));
         when(portfolio.getId()).thenReturn(10L);
 
@@ -293,25 +287,13 @@ class FundMonitoringServiceTest {
         when(fundPositionRepository.findAllByFundPortfolioIdOrderByWeightDesc(10L))
                 .thenReturn(List.of(position));
         when(assetRepository.findAllById(List.of(101L))).thenReturn(List.of(akbnk));
-        when(valuationProviderRegistry.loadUnitValues(
-                eq(List.of(akbnk)),
-                eq(LocalDate.of(2025, Month.JANUARY, 1)),
-                eq(AS_OF_DATE)
-        )).thenReturn(Map.of());
-        when(valuationCalculator.calculate(
-                eq(fund),
-                eq(List.of(position)),
-                eq(List.of(akbnk)),
-                eq(Map.of()),
-                eq(LocalDate.of(2025, Month.JANUARY, 1))
-        )).thenThrow(new BaseException(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE));
         when(classificationProviderRegistry.loadProfiles(List.of(akbnk))).thenReturn(Map.of(
                 101L,
                 new AssetMonitoringProfile(101L, "AKBNK.E", "Akbank", "S1", "Bankalar", true)
         ));
 
         List<FundPositionResponse> positions =
-                service.getCurrentPositionsSinceInception("manager", fund.getPublicId());
+                service.getCurrentPositions("manager", fund.getPublicId());
 
         assertThat(positions).hasSize(1);
         assertThat(positions.get(0).symbol()).isEqualTo("AKBNK.E");

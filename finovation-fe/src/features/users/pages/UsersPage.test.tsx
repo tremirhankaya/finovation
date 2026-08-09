@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   deleteUser: vi.fn(),
   createCompany: vi.fn(),
   deleteCompany: vi.fn(),
+  getUserFunds: vi.fn(),
   signOut: vi.fn(),
 }))
 
@@ -32,6 +33,9 @@ vi.mock("@/features/users/api/userService", () => ({
 vi.mock("@/features/users/api/companyService", () => ({
   createCompany: mocks.createCompany,
   deleteCompany: mocks.deleteCompany,
+}))
+vi.mock("@/features/users/api/userFundService", () => ({
+  getUserFunds: mocks.getUserFunds,
 }))
 
 import UsersPage from "@/features/users/pages/UsersPage"
@@ -71,6 +75,7 @@ describe("UsersPage", () => {
     mocks.deleteUser.mockReset().mockResolvedValue(undefined)
     mocks.createCompany.mockReset().mockResolvedValue({ id: 8, name: "Yeni" })
     mocks.deleteCompany.mockReset().mockResolvedValue(undefined)
+    mocks.getUserFunds.mockReset().mockResolvedValue([])
     mocks.signOut.mockReset().mockResolvedValue(undefined)
     mocks.useAuth.mockReturnValue({
       user: {
@@ -147,13 +152,10 @@ describe("UsersPage", () => {
     )
   })
 
-  it("super admin için çıkış aksiyonunu korur", async () => {
-    const user = userEvent.setup()
+  it("admin sayfasında sol menüdeki aksiyonu tekrar eden çıkış butonu göstermez", () => {
     renderUsersPage()
 
-    await user.click(screen.getByRole("button", { name: "Çıkış yap" }))
-
-    expect(mocks.signOut).toHaveBeenCalledOnce()
+    expect(screen.queryByRole("button", { name: "Çıkış yap" })).toBeNull()
   })
 
   it("şirketleri ada göre arar ve sayfada en fazla on kayıt gösterir", async () => {
@@ -217,5 +219,40 @@ describe("UsersPage", () => {
 
     expect(await screen.findByText("Dashboard")).toBeVisible()
     expect(mocks.signOut).not.toHaveBeenCalled()
+  })
+
+  it("company manager kullanıcıya ait fonları dialogda açabilir", async () => {
+    mocks.useAuth.mockReturnValue({
+      user: {
+        id: 3,
+        role: "COMPANY_MANAGER",
+        canCreateUser: true,
+        assignableRoles: ["USER"],
+        deletableRoles: ["USER"],
+      },
+      signOut: mocks.signOut,
+    })
+    mocks.useUsersList.mockReturnValue({
+      users: [{ ...TARGET_USER, role: "USER" }],
+      totalPages: 1,
+      totalElements: 1,
+      hasNext: false,
+      hasPrevious: false,
+      isLoading: false,
+      error: "",
+      reload,
+    })
+
+    const user = userEvent.setup()
+    renderUsersPage()
+
+    await user.click(
+      screen.getByRole("button", { name: "admin fonlarını görüntüle" }),
+    )
+
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
+      "Admin User fonları",
+    )
+    expect(mocks.getUserFunds).toHaveBeenCalledWith(2, expect.any(AbortSignal))
   })
 })

@@ -28,7 +28,7 @@ public interface OptimizationRequestControllerDocs {
             summary = "List optimizable funds",
             description = "Returns the actor's own COMPLETED funds with an at-a-glance summary for the " +
                     "optimization fund-selection step: current stock/sector count, equity/TPP weight split " +
-                    "(from the fund's currently selected portfolio) and the date of the fund's most recent " +
+                    "(from the fund's current WORKING portfolio) and the date of the fund's most recent " +
                     "completed optimization run, if any.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
@@ -67,11 +67,9 @@ public interface OptimizationRequestControllerDocs {
     );
 
     @Operation(
-            summary = "Get a fund's current positions since inception",
-            description = "Returns the fund's currently selected portfolio, valued from the fund's own " +
-                    "creation date (not the fund-monitoring module's fixed 1-year lookback window), so " +
-                    "weights reflect real drift since the fund was actually designed rather than an " +
-                    "arbitrary long window. Used for the optimization preferences screen and to build the " +
+            summary = "Get a fund's current working positions",
+            description = "Returns the fund's current working portfolio weights without historical " +
+                    "revaluation. Used for the optimization preferences screen and to build the " +
                     "current_portfolio sent to the optimization engine.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )

@@ -67,7 +67,9 @@ export default function ForgotPasswordPage() {
     try {
       await requestPasswordReset(normalizedEmail)
       setEmail(normalizedEmail)
-      setNotice("Altı haneli doğrulama kodunu e-posta adresinize gönderdik.")
+      setNotice(
+        "Bu adres sistemde kayıtlıysa altı haneli doğrulama kodu gönderildi.",
+      )
       setStep("otp")
     } catch (error) {
       setFormError(errorMessage(error, "Doğrulama kodu gönderilemedi."))
@@ -104,7 +106,7 @@ export default function ForgotPasswordPage() {
     try {
       await requestPasswordReset(email)
       setCode("")
-      setNotice("Yeni doğrulama kodu e-posta adresinize gönderildi.")
+      setNotice("Bu adres sistemde kayıtlıysa yeni doğrulama kodu gönderildi.")
     } catch (error) {
       setFormError(errorMessage(error, "Yeni doğrulama kodu gönderilemedi."))
     } finally {
@@ -220,8 +222,8 @@ export default function ForgotPasswordPage() {
                 <p className={styles.eyebrow}>E-posta doğrulama</p>
                 <h1 id="reset-title">Kodu girin</h1>
                 <p>
-                  <strong>{email}</strong> adresine gönderilen 6 haneli kodu
-                  girin.
+                  <strong>{email}</strong> adresi sistemde kayıtlıysa gönderilen
+                  6 haneli kodu girin.
                 </p>
               </header>
 
