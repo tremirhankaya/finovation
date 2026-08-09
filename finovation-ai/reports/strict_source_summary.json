@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "strict_source_min_date_requested": "2017-07-01",
+  "physical_equity_min_date": "2017-07-03",
+  "physical_equity_max_date": "2025-05-28",
+  "original_equity_rows": 173326,
+  "strict_equity_rows": 114669,
+  "removed_equity_rows": 58657,
+  "tickers": 58,
+  "strict_feature_rows": 114669,
+  "eligible_feature_rows": 96634,
+  "first_eligible_origin": "2018-06-29",
+  "last_eligible_origin": "2025-05-28",
+  "original_label_rows": 662332,
+  "strict_label_rows": 319067,
+  "pre_2017_07_equity_rows_remaining": 0,
+  "legacy_feature_file_read": false,
+  "equity_predictor_count_recomputed": 49,
+  "feature_file_sha256": "f4c2f8bb75caa5de05dc44111d6f219e2bb6c3ff6642d2befbb5d13e4ed7f2ca",
+  "strict_equity_file_sha256": "0f90c040423e427a96f787d9d8553d5a52169e82a845f1fc56338a232374bdbf",
+  "strict_label_file_sha256": "a15dd2783e2efd1d763aa629bd92e013f53c93fd20a7582226f47bf44fb2a25f",
+  "input_copy_hashes": {
+    "equity_before_strict_filter": "43a6ce05c66dcd658eaa4511eb4f4288ae467aeb32b3f16280c8c68b26b6b82b",
+    "labels_before_strict_filter": "2e65e09a4f5637f3030ca1f4f9005fa83533a061d6701b229d52482dbe5ba52f"
+  },
+  "feature_warmup_rule": "minimum 253 post-2017-07 observations and all 49 equity predictors finite",
+  "economic_adjustment_applied": false,
+  "imputation_applied": false
+}

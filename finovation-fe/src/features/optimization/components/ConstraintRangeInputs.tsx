@@ -11,6 +11,14 @@ export type ConstraintRangeInputsProps = {
   onMinChange: (value: number) => void
   onMaxChange: (value: number) => void
   hint: string
+  inputPrefix?: string
+}
+
+function slugify(value: string): string {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
 }
 
 export default function ConstraintRangeInputs({
@@ -23,6 +31,7 @@ export default function ConstraintRangeInputs({
   onMinChange,
   onMaxChange,
   hint,
+  inputPrefix,
 }: ConstraintRangeInputsProps) {
   return (
     <div className={styles.rangeField}>
@@ -32,35 +41,21 @@ export default function ConstraintRangeInputs({
           Min {floor} — Maks {ceiling}
         </span>
       </div>
-      <div className={styles.rangeInputs}>
-        <input
-          type="number"
-          value={min}
-          min={floor}
-          max={ceiling}
-          onChange={(event) => onMinChange(Number(event.target.value))}
-          aria-label={`${label} minimum`}
-        />
-        <DualRangeSlider
-          label={label}
-          min={min}
-          max={max}
-          floor={floor}
-          ceiling={ceiling}
-          minWidth={minWidth}
-          onMinChange={onMinChange}
-          onMaxChange={onMaxChange}
-        />
-        <input
-          type="number"
-          value={max}
-          min={floor}
-          max={ceiling}
-          onChange={(event) => onMaxChange(Number(event.target.value))}
-          aria-label={`${label} maksimum`}
-        />
-      </div>
-      <p className={styles.rangeHint}>{hint}</p>
+      <DualRangeSlider
+        id={slugify(label)}
+        label={label}
+        min={floor}
+        max={ceiling}
+        valueMin={min}
+        valueMax={max}
+        minGap={minWidth}
+        inputPrefix={inputPrefix}
+        hint={hint}
+        onChange={({ min: nextMin, max: nextMax }) => {
+          onMinChange(nextMin)
+          onMaxChange(nextMax)
+        }}
+      />
     </div>
   )
 }

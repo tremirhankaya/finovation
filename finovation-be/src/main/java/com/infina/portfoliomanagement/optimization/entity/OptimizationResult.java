@@ -25,6 +25,12 @@ public class OptimizationResult {
     @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;
 
+    @Column(name = "approved_by_user_id")
+    private Long approvedByUserId;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import {
   fetchOptimizationRequest,
@@ -16,6 +16,10 @@ export function useOptimizationRun(requestId: number) {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [attempt, setAttempt] = useState(0)
+  const inFlightRunRef = useRef<{
+    key: string
+    promise: Promise<OptimizationRequestResponse>
+  } | null>(null)
 
   useEffect(() => {
     if (!Number.isFinite(requestId)) {
@@ -25,6 +29,7 @@ export function useOptimizationRun(requestId: number) {
     }
 
     let cancelled = false
+    const dispatchKey = `${requestId}:${attempt}`
 
     async function load() {
       setIsLoading(true)
@@ -32,9 +37,16 @@ export function useOptimizationRun(requestId: number) {
 
       try {
         const current = await fetchOptimizationRequest(requestId)
-        const next = RUNNABLE_STATUSES.has(current.status)
-          ? await runOptimizationRequest(requestId)
-          : current
+        let next = current
+        if (RUNNABLE_STATUSES.has(current.status)) {
+          if (inFlightRunRef.current?.key !== dispatchKey) {
+            inFlightRunRef.current = {
+              key: dispatchKey,
+              promise: runOptimizationRequest(requestId),
+            }
+          }
+          next = await inFlightRunRef.current.promise
+        }
 
         if (!cancelled) setRequest(next)
       } catch (error) {

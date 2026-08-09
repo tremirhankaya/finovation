@@ -3,56 +3,72 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   createOptimizationRequest,
   fetchInvestmentUniverse,
+  fetchOptimizableFunds,
+  fetchOptimizationFundPositions,
 } from "@/features/optimization/api/optimizationApi"
 import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimizationError"
 import {
   buildComplianceRows,
   isComplianceReady,
 } from "@/features/optimization/lib/optimizationCompliance"
+import { toOptimizableFund } from "@/features/optimization/lib/optimizableFund"
+import { getSuggestedConstraints } from "@/features/optimization/lib/riskProfileDefaults"
 import type { WizardStep } from "@/features/optimization/components/OptimizationWizardSteps"
 import type {
   AssetSelectionMap,
   AssetSelectionType,
+  OptimizableFund,
   UniverseAsset,
 } from "@/features/optimization/model/optimizationForm.types"
 import type {
   AssetPreferenceRequest,
+  OptimizationFundPositionsResponse,
   RiskProfile,
 } from "@/features/optimization/model/optimizationSchemas"
-import {
-  fetchFundMonitoring,
-  fetchFunds,
-} from "@/features/fund-monitoring/api/fundMonitoringService"
-import { getFundMonitoringErrorMessage } from "@/features/fund-monitoring/lib/fundMonitoringError"
-import type {
-  FundMonitoringSnapshot,
-  FundOption,
-} from "@/features/fund-monitoring/model/fundMonitoring.types"
 
-const DEFAULT_TPP_MIN_WEIGHT = 5
-const DEFAULT_TPP_MAX_WEIGHT = 15
-const DEFAULT_STOCK_COUNT_MIN = 16
-const DEFAULT_STOCK_COUNT_MAX = 30
 const DEFAULT_RISK_PROFILE: RiskProfile = "BALANCED"
+const DEFAULT_CONSTRAINTS = getSuggestedConstraints(DEFAULT_RISK_PROFILE)
+const DEFAULT_MAX_ADDITIONS = 3
+const MAX_ADDITIONS_FLOOR = 0
+const MAX_ADDITIONS_CEILING = 30
+const TPP_ASSET_SYMBOL = "TPP1G"
 
 export function useOptimizationForm() {
   const [step, setStep] = useState<WizardStep>(1)
-  const [funds, setFunds] = useState<FundOption[]>([])
+  const [funds, setFunds] = useState<OptimizableFund[]>([])
   const [selectedFundId, setSelectedFundId] = useState("")
-  const [snapshot, setSnapshot] = useState<FundMonitoringSnapshot | null>(null)
+  const [snapshot, setSnapshot] = useState<OptimizationFundPositionsResponse | null>(null)
   const [isLoadingFunds, setIsLoadingFunds] = useState(true)
   const [isLoadingSnapshot, setIsLoadingSnapshot] = useState(false)
   const [loadErrorMessage, setLoadErrorMessage] = useState("")
   const [universeAssets, setUniverseAssets] = useState<UniverseAsset[]>([])
   const [isLoadingUniverse, setIsLoadingUniverse] = useState(true)
 
-  const [riskProfile, setRiskProfile] =
+  const [riskProfile, setRiskProfileState] =
     useState<RiskProfile>(DEFAULT_RISK_PROFILE)
   const [selection, setSelection] = useState<AssetSelectionMap>({})
-  const [tppMinWeight, setTppMinWeight] = useState(DEFAULT_TPP_MIN_WEIGHT)
-  const [tppMaxWeight, setTppMaxWeight] = useState(DEFAULT_TPP_MAX_WEIGHT)
-  const [stockCountMin, setStockCountMin] = useState(DEFAULT_STOCK_COUNT_MIN)
-  const [stockCountMax, setStockCountMax] = useState(DEFAULT_STOCK_COUNT_MAX)
+  const [tppMinWeight, setTppMinWeight] = useState(
+    DEFAULT_CONSTRAINTS.tppMinWeight,
+  )
+  const [tppMaxWeight, setTppMaxWeight] = useState(
+    DEFAULT_CONSTRAINTS.tppMaxWeight,
+  )
+  const [stockCountMin, setStockCountMin] = useState(
+    DEFAULT_CONSTRAINTS.stockCountMin,
+  )
+  const [stockCountMax, setStockCountMax] = useState(
+    DEFAULT_CONSTRAINTS.stockCountMax,
+  )
+  const [maxAdditions, setMaxAdditions] = useState(DEFAULT_MAX_ADDITIONS)
+
+  const setRiskProfile = useCallback((nextRiskProfile: RiskProfile) => {
+    setRiskProfileState(nextRiskProfile)
+    const suggested = getSuggestedConstraints(nextRiskProfile)
+    setTppMinWeight(suggested.tppMinWeight)
+    setTppMaxWeight(suggested.tppMaxWeight)
+    setStockCountMin(suggested.stockCountMin)
+    setStockCountMax(suggested.stockCountMax)
+  }, [])
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitErrorMessage, setSubmitErrorMessage] = useState("")
@@ -65,13 +81,14 @@ export function useOptimizationForm() {
       setLoadErrorMessage("")
 
       try {
-        const response = await fetchFunds(controller.signal)
-        setFunds(response)
-        setSelectedFundId((current) => current || response[0]?.id || "")
+        const response = await fetchOptimizableFunds(controller.signal)
+        const mapped = response.map(toOptimizableFund)
+        setFunds(mapped)
+        setSelectedFundId((current) => current || mapped[0]?.id || "")
       } catch (error) {
         if (!controller.signal.aborted) {
           setFunds([])
-          setLoadErrorMessage(getFundMonitoringErrorMessage(error))
+          setLoadErrorMessage(getOptimizationErrorMessage(error))
         }
       } finally {
         if (!controller.signal.aborted) setIsLoadingFunds(false)
@@ -127,12 +144,12 @@ export function useOptimizationForm() {
 
       try {
         setSnapshot(
-          await fetchFundMonitoring(selectedFundId, controller.signal),
+          await fetchOptimizationFundPositions(selectedFundId, controller.signal),
         )
       } catch (error) {
         if (!controller.signal.aborted) {
           setSnapshot(null)
-          setLoadErrorMessage(getFundMonitoringErrorMessage(error))
+          setLoadErrorMessage(getOptimizationErrorMessage(error))
         }
       } finally {
         if (!controller.signal.aborted) setIsLoadingSnapshot(false)
@@ -187,6 +204,49 @@ export function useOptimizationForm() {
     [keptAssets],
   )
 
+  const selectedFundSummary = useMemo(
+    () => funds.find((fund) => fund.id === selectedFundId) ?? null,
+    [funds, selectedFundId],
+  )
+
+  const keptEquityPositions = useMemo(
+    () =>
+      keptAssets.filter((position) => position.symbol !== TPP_ASSET_SYMBOL),
+    [keptAssets],
+  )
+
+  const maxSingleStockWeightPct = useMemo(
+    () =>
+      keptEquityPositions.reduce(
+        (max, asset) => Math.max(max, asset.weightPercentage),
+        0,
+      ),
+    [keptEquityPositions],
+  )
+
+  const minSingleStockWeightPct = useMemo(
+    () =>
+      keptEquityPositions.length === 0
+        ? 0
+        : keptEquityPositions.reduce(
+            (min, asset) => Math.min(min, asset.weightPercentage),
+            Infinity,
+          ),
+    [keptEquityPositions],
+  )
+
+  const maxSectorWeightPct = useMemo(() => {
+    const weightBySector = new Map<string, number>()
+    for (const asset of keptEquityPositions) {
+      const sectorName = asset.sectorName ?? "Bilinmeyen sektör"
+      weightBySector.set(
+        sectorName,
+        (weightBySector.get(sectorName) ?? 0) + asset.weightPercentage,
+      )
+    }
+    return Math.max(0, ...weightBySector.values())
+  }, [keptEquityPositions])
+
   const complianceRows = useMemo(
     () =>
       buildComplianceRows({
@@ -198,6 +258,12 @@ export function useOptimizationForm() {
         keptWeightSum,
         forceAddedAssetCount: forceAddedAssetCodes.length,
         excludedAssetCount: excludedAssetCodes.length,
+        currentEquityWeightPct: selectedFundSummary?.equityWeightPercent ?? null,
+        maxSingleStockWeightPct,
+        minSingleStockWeightPct,
+        maxSectorWeightPct,
+        currentStockCount: selectedFundSummary?.stockCount ?? null,
+        maxAdditions,
       }),
     [
       tppMinWeight,
@@ -208,6 +274,11 @@ export function useOptimizationForm() {
       keptWeightSum,
       forceAddedAssetCodes.length,
       excludedAssetCodes.length,
+      selectedFundSummary,
+      maxSingleStockWeightPct,
+      minSingleStockWeightPct,
+      maxSectorWeightPct,
+      maxAdditions,
     ],
   )
 
@@ -223,7 +294,7 @@ export function useOptimizationForm() {
 
       const assetPreferences: AssetPreferenceRequest[] = [
         ...keptAssets.map((asset) => ({
-          assetCode: asset.assetId,
+          assetCode: asset.symbol,
           preferenceType: "KEEP" as const,
           currentWeight: asset.weightPercentage,
         })),
@@ -248,6 +319,7 @@ export function useOptimizationForm() {
           tppMaxWeight,
           stockCountMin,
           stockCountMax,
+          maxAdditions,
         })
         onSubmitted(created.id)
       } catch (error) {
@@ -267,6 +339,7 @@ export function useOptimizationForm() {
       tppMaxWeight,
       stockCountMin,
       stockCountMax,
+      maxAdditions,
     ],
   )
 
@@ -276,6 +349,7 @@ export function useOptimizationForm() {
     goToFundSelection: () => setStep(1),
     funds,
     selectedFundId,
+    selectedFundSummary,
     selectFund: setSelectedFundId,
     snapshot,
     isLoadingFunds,
@@ -295,6 +369,10 @@ export function useOptimizationForm() {
     setStockCountMin,
     stockCountMax,
     setStockCountMax,
+    maxAdditions,
+    setMaxAdditions,
+    maxAdditionsFloor: MAX_ADDITIONS_FLOOR,
+    maxAdditionsCeiling: MAX_ADDITIONS_CEILING,
     complianceRows,
     canSubmit,
     isSubmitting,

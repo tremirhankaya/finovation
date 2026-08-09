@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -34,8 +34,10 @@ describe("AssetTogglePanel", () => {
       />,
     )
 
-    expect(screen.getByText(/MGROS Migros/)).toBeInTheDocument()
-    expect(screen.getByText("Telekomünikasyon")).toBeInTheDocument()
+    const table = within(screen.getByRole("table"))
+    expect(table.getByText("MGROS")).toBeInTheDocument()
+    expect(table.getByText("Migros")).toBeInTheDocument()
+    expect(table.getByText("Telekomünikasyon")).toBeInTheDocument()
   })
 
   it("arama sektör ve hisse adına göre filtreler", async () => {
@@ -141,7 +143,7 @@ describe("AssetTogglePanel", () => {
 
     expect(
       screen.getByRole("checkbox", { name: "MGROS hissesi için Hariç Tut" }),
-    ).toHaveClass(styles.assetCheckboxExclude)
+    ).toHaveClass(styles.assetToggleBoxExclude)
   })
 
   it("forceAdd variant'ında (varsayılan) hariç tutma vurgu sınıfını eklemez", () => {
@@ -159,6 +161,6 @@ describe("AssetTogglePanel", () => {
 
     expect(
       screen.getByRole("checkbox", { name: "MGROS hissesi için Ekle" }),
-    ).not.toHaveClass(styles.assetCheckboxExclude)
+    ).not.toHaveClass(styles.assetToggleBoxExclude)
   })
 })

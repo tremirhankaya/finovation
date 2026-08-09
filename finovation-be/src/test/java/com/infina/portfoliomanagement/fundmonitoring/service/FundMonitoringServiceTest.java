@@ -1,7 +1,11 @@
 package com.infina.portfoliomanagement.fundmonitoring.service;
 
+import com.infina.portfoliomanagement.common.enums.AssetType;
+import com.infina.portfoliomanagement.common.exception.BaseException;
+import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
+import com.infina.portfoliomanagement.fund.entity.FundPosition;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
@@ -11,11 +15,15 @@ import com.infina.portfoliomanagement.fundmonitoring.classification.AssetClassif
 import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.BenchmarkDefinitionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
+import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundPositionResponse;
+import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.TechnicalIndicatorResponse;
+import com.infina.portfoliomanagement.fundmonitoring.model.AssetMonitoringProfile;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
 import com.infina.portfoliomanagement.fundmonitoring.service.FundBenchmarkService.BenchmarkSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.policy.FundMonitoringAccessPolicy;
 import com.infina.portfoliomanagement.fundmonitoring.valuation.AssetValuationProviderRegistry;
+import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
@@ -183,6 +191,131 @@ class FundMonitoringServiceTest {
                         tuple("Atlas Fonu", new BigDecimal("10.0000"), true, 8),
                         tuple("Nova Fonu", new BigDecimal("20.0000"), true, 8)
                 );
+    }
+
+    @Test
+    void computeMetricsForWeights_valuesProposedWeightsThroughRealMetricCalculator() {
+        FundDraft fund = fund(1L, "Atlas Fonu");
+        User actor = mock(User.class);
+
+        when(actor.getId()).thenReturn(7L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicIdAndStatus(
+                fund.getPublicId(),
+                FundDraftStatus.COMPLETED
+        )).thenReturn(Optional.of(fund));
+
+        Asset akbnk = Asset.builder().id(101L).assetCode("AKBNK.E").assetType(AssetType.EQUITY).build();
+        Asset tpp = Asset.builder().id(102L).assetCode("TPP1G").assetType(AssetType.TPP).build();
+        when(assetRepository.findAllByAssetCodeIn(any())).thenReturn(List.of(akbnk, tpp));
+
+        when(valuationProviderRegistry.loadUnitValues(any(), any(LocalDate.class), eq(AS_OF_DATE)))
+                .thenReturn(Map.of());
+        when(valuationCalculator.calculate(eq(fund), any(), any(), eq(Map.of()), any(LocalDate.class)))
+                .thenReturn(valuation("100", "110"));
+        when(benchmarkService.load(AS_OF_DATE)).thenReturn(
+                new BenchmarkSnapshot(
+                        List.of(),
+                        new TreeMap<>(),
+                        new BenchmarkDefinitionResponse("Fon Karşılaştırma Ölçütü", List.of())
+                )
+        );
+        when(riskFreeRateProvider.annualRate(AS_OF_DATE)).thenReturn(new BigDecimal("37"));
+
+        List<TechnicalIndicatorResponse> indicators = service.computeMetricsForWeights(
+                "manager",
+                fund.getPublicId(),
+                Map.of("AKBNK.E", new BigDecimal("0.60"), "TPP1G", new BigDecimal("0.40"))
+        );
+
+        assertThat(indicators)
+                .extracting(TechnicalIndicatorResponse::code)
+                .contains("BETA", "VOLATILITY", "SHARPE", "MAX_DRAWDOWN", "CALMAR", "ALPHA");
+    }
+
+    @Test
+    void getCurrentPositionsSinceInception_valuesFromTheFundsOwnCreationDateNotAFixedOneYearWindow() {
+        FundDraft fund = fund(1L, "Atlas Fonu");
+        User actor = mock(User.class);
+        FundPortfolio portfolio = mock(FundPortfolio.class);
+
+        when(actor.getId()).thenReturn(7L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicIdAndStatus(
+                fund.getPublicId(),
+                FundDraftStatus.COMPLETED
+        )).thenReturn(Optional.of(fund));
+        when(fundPortfolioRepository.findByFundDraftIdAndSelectedTrue(1L))
+                .thenReturn(Optional.of(portfolio));
+        when(portfolio.getId()).thenReturn(10L);
+        when(fundPositionRepository.findAllByFundPortfolioIdOrderByWeightDesc(10L))
+                .thenReturn(List.of());
+        when(assetRepository.findAllById(List.of())).thenReturn(List.of());
+        when(valuationProviderRegistry.loadUnitValues(
+                eq(List.of()),
+                eq(LocalDate.of(2025, Month.JANUARY, 1)),
+                eq(AS_OF_DATE)
+        )).thenReturn(Map.of());
+        when(classificationProviderRegistry.loadProfiles(List.of())).thenReturn(Map.of());
+        when(valuationCalculator.calculate(
+                eq(fund),
+                eq(List.of()),
+                eq(List.of()),
+                eq(Map.of()),
+                eq(LocalDate.of(2025, Month.JANUARY, 1))
+        )).thenReturn(valuation("100", "110"));
+
+        service.getCurrentPositionsSinceInception("manager", fund.getPublicId());
+    }
+
+    @Test
+    void getCurrentPositionsSinceInception_fallsBackToDesignWeightsWhenNoTradingDayHasPassed() {
+        FundDraft fund = fund(1L, "Atlas Fonu");
+        User actor = mock(User.class);
+        FundPortfolio portfolio = mock(FundPortfolio.class);
+
+        when(actor.getId()).thenReturn(7L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicIdAndStatus(
+                fund.getPublicId(),
+                FundDraftStatus.COMPLETED
+        )).thenReturn(Optional.of(fund));
+        when(fundPortfolioRepository.findByFundDraftIdAndSelectedTrue(1L))
+                .thenReturn(Optional.of(portfolio));
+        when(portfolio.getId()).thenReturn(10L);
+
+        Asset akbnk = Asset.builder().id(101L).assetCode("AKBNK.E").assetType(AssetType.EQUITY).build();
+        FundPosition position = FundPosition.builder()
+                .assetId(101L)
+                .weight(new BigDecimal("10.000000"))
+                .build();
+
+        when(fundPositionRepository.findAllByFundPortfolioIdOrderByWeightDesc(10L))
+                .thenReturn(List.of(position));
+        when(assetRepository.findAllById(List.of(101L))).thenReturn(List.of(akbnk));
+        when(valuationProviderRegistry.loadUnitValues(
+                eq(List.of(akbnk)),
+                eq(LocalDate.of(2025, Month.JANUARY, 1)),
+                eq(AS_OF_DATE)
+        )).thenReturn(Map.of());
+        when(valuationCalculator.calculate(
+                eq(fund),
+                eq(List.of(position)),
+                eq(List.of(akbnk)),
+                eq(Map.of()),
+                eq(LocalDate.of(2025, Month.JANUARY, 1))
+        )).thenThrow(new BaseException(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE));
+        when(classificationProviderRegistry.loadProfiles(List.of(akbnk))).thenReturn(Map.of(
+                101L,
+                new AssetMonitoringProfile(101L, "AKBNK.E", "Akbank", "S1", "Bankalar", true)
+        ));
+
+        List<FundPositionResponse> positions =
+                service.getCurrentPositionsSinceInception("manager", fund.getPublicId());
+
+        assertThat(positions).hasSize(1);
+        assertThat(positions.get(0).symbol()).isEqualTo("AKBNK.E");
+        assertThat(positions.get(0).weightPercentage()).isEqualByComparingTo("10.000000");
     }
 
     private FundDraft fund(Long id, String name) {

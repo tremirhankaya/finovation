@@ -1,0 +1,259 @@
+.page {
+  min-height: 100vh;
+  padding: 32px 24px 64px;
+  background: #f8fafc;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.headerRow h1 {
+  margin: 0 0 4px;
+  color: var(--color-navy-950);
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--color-slate-500);
+  font-size: 0.86rem;
+}
+
+.exportButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 10px 16px;
+  color: var(--color-navy-950);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.exportButton:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: var(--color-teal-600);
+}
+
+.exportButton:disabled {
+  color: #b6c0cc;
+  cursor: not-allowed;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 22px;
+  background: #fff;
+  border: 1px solid #e9edf2;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 24px -18px rgba(15, 23, 42, 0.18);
+}
+
+.panelEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-teal-700);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.panelEyebrowDot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-teal-600);
+  border-radius: 999px;
+}
+
+.filtersRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.filterField label {
+  color: var(--color-slate-500);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.filterField select,
+.filterField input {
+  padding: 9px 12px;
+  color: var(--color-navy-950);
+  font-size: 0.85rem;
+  background: #fff;
+  border: 1px solid #dbe2ea;
+  border-radius: 9px;
+}
+
+.filterField select:focus-visible,
+.filterField input:focus-visible {
+  outline: 2px solid var(--color-teal-400);
+  outline-offset: 1px;
+}
+
+.resultCount {
+  margin-left: auto;
+  color: var(--color-slate-500);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.logsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.logsTable th {
+  padding: 10px 12px;
+  color: var(--color-slate-500);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: left;
+  text-transform: uppercase;
+  border-bottom: 1px solid #eef1f5;
+  white-space: nowrap;
+}
+
+.logsTable td {
+  padding: 12px;
+  color: var(--color-navy-950);
+  border-bottom: 1px solid #f3f5f8;
+  white-space: nowrap;
+}
+
+.logsTable tr:last-child td {
+  border-bottom: none;
+}
+
+.logsTable tr:hover td {
+  background: #fafbfd;
+}
+
+.fundCell {
+  font-weight: 600;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.statusBadgeCOMPLETED,
+.statusBadgeAPPROVED {
+  color: #0f766e;
+  background: #f0fdfa;
+}
+
+.statusBadgeFAILED {
+  color: var(--color-red-800);
+  background: #fef2f2;
+}
+
+.statusBadgeREJECTED {
+  color: var(--color-slate-500);
+  background: #f1f5f9;
+}
+
+.statusBadgePREPARING,
+.statusBadgeRUNNING {
+  color: #92400e;
+  background: #fffbeb;
+}
+
+.pdfButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  color: var(--color-navy-950);
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.pdfButton:hover:not(:disabled) {
+  border-color: var(--color-teal-600);
+}
+
+.pdfButton:disabled {
+  color: #c4cbd4;
+  cursor: not-allowed;
+}
+
+.emptyState {
+  padding: 28px 0;
+  color: var(--color-slate-500);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.errorBanner,
+.loadingBanner {
+  padding: 16px 18px;
+  font-size: 0.85rem;
+  border-radius: 12px;
+}
+
+.errorBanner {
+  color: var(--color-red-800);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.loadingBanner {
+  color: var(--color-slate-500);
+  background: #fff;
+  border: 1px solid #e9edf2;
+}

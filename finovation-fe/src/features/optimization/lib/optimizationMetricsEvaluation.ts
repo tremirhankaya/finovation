@@ -166,7 +166,7 @@ function evaluateRiskLevelMetric(
     return sharpeImproved
       ? {
           status: "GREEN",
-          detail: "Risk arttı; Atak profilde olağan, Sharpe korunuyor",
+          detail: "Risk arttı; Agresif profilde olağan, Sharpe korunuyor",
         }
       : { status: "AMBER", detail: "Risk arttı ve Sharpe da düştü" }
   }

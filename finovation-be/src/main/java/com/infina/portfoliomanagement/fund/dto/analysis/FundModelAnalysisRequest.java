@@ -10,40 +10,33 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record FundModelAnalysisRequest(
-        @NotNull
-        @JsonProperty("excluded_assets")
-        List<String> excludedAssets,
 
         @NotNull
         @JsonProperty("horizon")
         InvestmentHorizon horizon,
 
         @NotNull
-        @JsonProperty("mandatory_assets")
-        List<String> mandatoryAssets,
+        @JsonProperty("min_stock_count")
+        Integer minStockCount,
 
         @NotNull
         @JsonProperty("max_stock_count")
         Integer maxStockCount,
 
         @NotNull
-        @JsonProperty("min_stock_count")
-        Integer minStockCount,
+        @JsonProperty("tpp_min_weight")
+        BigDecimal tppMinWeight,
 
         @NotNull
         @JsonProperty("tpp_max_weight")
         BigDecimal tppMaxWeight,
 
         @NotNull
-        @JsonProperty("tpp_min_weight")
-        BigDecimal tppMinWeight,
+        @JsonProperty("mandatory_assets")
+        List<String> mandatoryAssets,
 
         @NotNull
-        @JsonProperty("single_stock_max_weight")
-        BigDecimal singleStockMaxWeight,
-
-        @NotNull
-        @JsonProperty("sector_max_weight")
-        BigDecimal sectorMaxWeight
+        @JsonProperty("excluded_assets")
+        List<String> excludedAssets
 ) {
 }

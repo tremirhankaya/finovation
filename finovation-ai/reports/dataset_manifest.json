@@ -1,0 +1,49 @@
+{
+  "schema_version": "CUTOFF_SAFE_DATASET_V2",
+  "system_date": "2025-05-29",
+  "forecast_origin": "2025-05-28",
+  "label_maturity_cutoff": "2025-05-28",
+  "training_start_date": "2017-07-01",
+  "target": "absolute_source_log_return",
+  "target_semantics": "SOURCE_PRICE_RETURN",
+  "weekly_origins": true,
+  "random_split": false,
+  "purge_rule": "as_of_date < validation_start AND label_target_date < validation_start",
+  "predictor_count_source_contract": 64,
+  "feature_sets": [
+    "EQUITY_ONLY",
+    "RATE_ONLY"
+  ],
+  "inference_rows": 58,
+  "inference_instruments": 58,
+  "tpp_duplicate_rows_reported": 6,
+  "horizons": [
+    {
+      "horizon_months": 3,
+      "rows": 19364,
+      "origins": 349,
+      "instruments": 58,
+      "origin_start": "2018-06-29",
+      "origin_end": "2025-02-28",
+      "label_target_max": "2025-05-28"
+    },
+    {
+      "horizon_months": 6,
+      "rows": 18478,
+      "origins": 336,
+      "instruments": 58,
+      "origin_start": "2018-06-29",
+      "origin_end": "2024-11-28",
+      "label_target_max": "2025-05-28"
+    },
+    {
+      "horizon_months": 12,
+      "rows": 16805,
+      "origins": 310,
+      "instruments": 58,
+      "origin_start": "2018-06-29",
+      "origin_end": "2024-05-28",
+      "label_target_max": "2025-05-28"
+    }
+  ]
+}

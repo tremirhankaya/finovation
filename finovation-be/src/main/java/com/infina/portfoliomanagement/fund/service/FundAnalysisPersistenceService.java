@@ -5,6 +5,9 @@ import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
+import com.infina.portfoliomanagement.fund.enums.AIAssetCodeMapping;
+import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineAlternativeDto;
+import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineCreateResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAssetDto;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelProposalDto;
@@ -106,38 +109,60 @@ public class FundAnalysisPersistenceService {
     public void completeRun(
             ModelRun run,
             FundDraft draft,
-            FundModelAnalysisResponse response,
+            FundEngineCreateResponse response,
             String rulesFingerprint
     ) {
         LocalDateTime now = LocalDateTime.now(clock);
-        List<FundModelProposalDto> proposals =
-                response.proposals() == null ? List.of() : response.proposals();
+        List<FundEngineAlternativeDto> alternatives =
+                response.alternatives() == null ? List.of() : response.alternatives();
 
         Map<String, Asset> assetsByCode = resolveAssets(
-                proposals.stream()
-                        .flatMap(proposal -> proposal.assets().stream())
-                        .map(FundModelAssetDto::assetCode)
+                alternatives.stream()
+                        .flatMap(alt -> alt.weights().keySet().stream())
                         .toList()
         );
 
-        for (FundModelProposalDto proposal : proposals) {
+        short rank = 1;
+        for (FundEngineAlternativeDto alt : alternatives) {
             FundPortfolio portfolio = FundPortfolio.builder()
                     .publicId(UUID.randomUUID())
                     .version(0)
                     .fundDraft(draft)
                     .modelRunId(run.getId())
                     .portfolioType(PortfolioType.PROPOSAL)
-                    .proposalRank(proposal.rank().shortValue())
+                    .proposalRank(rank)
                     .selected(false)
-                    .label(proposal.label())
+                    .label("Alternatif " + rank)
                     .createdAt(now)
                     .updatedAt(now)
                     .build();
             FundPortfolio saved = fundPortfolioRepository.save(portfolio);
-            savePositions(saved, proposal.assets(), assetsByCode, now);
+            
+            List<FundModelAssetDto> assets = alt.weights().entrySet().stream()
+                    .map(entry -> {
+                        String note = null;
+                        if (alt.reasonTexts() != null && alt.reasonTexts().containsKey(entry.getKey())) {
+                            List<String> reasons = alt.reasonTexts().get(entry.getKey());
+                            if (reasons != null && !reasons.isEmpty()) {
+                                note = String.join(", ", reasons);
+                            }
+                        }
+                        return new FundModelAssetDto(
+                                entry.getKey(),
+                                BigDecimal.valueOf(entry.getValue()).multiply(BigDecimal.valueOf(100)), // Map decimal back to % for DB
+                                note
+                        );
+                    })
+                    .toList();
+                    
+            savePositions(saved, assets, assetsByCode, now);
+            rank++;
         }
 
         run.setStatus(ModelRunStatus.COMPLETED);
+        if (response.snapshotId() != null) {
+            run.setModelVersion(response.snapshotId());
+        }
         run.setRulesFingerprint(rulesFingerprint);
         run.setCompletedAt(now);
         run.setUpdatedAt(now);
@@ -476,6 +501,7 @@ public class FundAnalysisPersistenceService {
     }
 
     private static String normalizeCode(String code) {
-        return code.trim().toUpperCase(Locale.ROOT);
+        String normalized = code.trim().toUpperCase(Locale.ROOT);
+        return AIAssetCodeMapping.resolveInternalCode(normalized).orElse(normalized);
     }
 }
