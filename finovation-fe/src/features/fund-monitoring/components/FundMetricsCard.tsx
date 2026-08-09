@@ -81,7 +81,6 @@ export default function FundMetricsCard({
           return (
             <div className={styles.indicatorRow} key={indicator.code}>
               <dt className={styles.indicatorLabel}>
-                <span>{indicator.label}</span>
                 {indicator.description && (
                   <span className={styles.indicatorHelp}>
                     <button
@@ -96,6 +95,7 @@ export default function FundMetricsCard({
                     </span>
                   </span>
                 )}
+                <span>{indicator.label}</span>
               </dt>
               <dd className={styles[indicatorToneClass(indicator)]}>
                 {formatIndicatorValue(indicator.value, indicator.unit)}

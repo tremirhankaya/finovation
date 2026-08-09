@@ -124,8 +124,7 @@
   box-shadow: 0 1px 3px rgba(13, 148, 136, 0.12);
 }
 
-.statusInactive,
-.statusLocked {
+.statusInactive {
   color: var(--color-navy-900);
 }
 

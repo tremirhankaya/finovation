@@ -6,19 +6,25 @@
 }
 
 .mark {
+  position: relative;
   display: flex;
   width: 36px;
   height: 36px;
+  flex: 0 0 36px;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  color: #fff;
-  background: linear-gradient(135deg, var(--color-teal-600), var(--color-teal-400));
+  overflow: hidden;
 }
 
-.mark svg {
-  width: 20px;
-  height: 20px;
+.mark img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90px;
+  max-width: none;
+  height: 50px;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
 }
 
 .text {
@@ -53,12 +59,12 @@
 .small .mark {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  flex-basis: 30px;
 }
 
-.small .mark svg {
-  width: 16px;
-  height: 16px;
+.small .mark img {
+  width: 75px;
+  height: 42px;
 }
 
 .small .text {

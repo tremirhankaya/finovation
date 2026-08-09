@@ -268,17 +268,6 @@ class SecurityMockMvcIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void refreshToken_lockedUser_returnsInvalidToken()
-            throws Exception {
-
-        LoginResponse loginResponse = loginAndExtractTokenPair();
-
-        changeUserStatus(UserStatus.LOCKED);
-
-        assertRefreshRejected(loginResponse.refreshToken());
-    }
-
-    @Test
     void refreshToken_unknownUser_returnsInvalidToken()
             throws Exception {
 

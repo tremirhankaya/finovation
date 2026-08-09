@@ -24,7 +24,8 @@ public interface AuthControllerDocs {
 
     @Operation(
             summary = "Log in",
-            description = "Authenticates a user and returns access and refresh tokens."
+            description = "Authenticates an active user and returns access and refresh tokens. "
+                    + "Inactive accounts receive the dedicated AUTH_020 error."
     )
     ResponseEntity<LoginResponse> login(LoginRequest request);
 
@@ -50,7 +51,9 @@ public interface AuthControllerDocs {
 
     @Operation(
             summary = "Request a password reset code",
-            description = "Sends a single-use verification code to the account email address."
+            description = "Returns the same successful response whether or not the email is "
+                    + "registered. A single-use verification code is sent only for an existing "
+                    + "account."
     )
     void requestPasswordReset(PasswordResetStartRequest request);
 

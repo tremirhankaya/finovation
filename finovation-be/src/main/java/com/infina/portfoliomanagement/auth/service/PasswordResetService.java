@@ -59,15 +59,15 @@ public class PasswordResetService {
         }
 
         String email = normalizeEmail(request.email());
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> {
-                    log.info("Password reset requested for an unknown account");
-                    return new BaseException(ErrorCode.PASSWORD_RESET_ACCOUNT_NOT_FOUND);
-                });
-
         String identity = tokenCodec.encode("email:" + email);
         if (!passwordResetStore.reserveRequest(identity)) {
             throw new BaseException(ErrorCode.PASSWORD_RESET_REQUEST_TOO_SOON);
+        }
+
+        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+        if (user == null) {
+            log.warn("Password reset requested for an unknown account");
+            return;
         }
 
         String otp = generateOtp();
@@ -94,7 +94,9 @@ public class PasswordResetService {
 
         String email = normalizeEmail(request.email());
         User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new BaseException(ErrorCode.PASSWORD_RESET_ACCOUNT_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(
+                        ErrorCode.PASSWORD_RESET_OTP_INVALID
+                ));
 
         String identity = tokenCodec.encode("email:" + email);
         String submittedOtpHash = tokenCodec.encode(

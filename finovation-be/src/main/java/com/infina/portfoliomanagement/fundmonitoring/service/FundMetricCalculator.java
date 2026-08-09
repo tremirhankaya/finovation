@@ -47,7 +47,8 @@ public class FundMetricCalculator {
         return List.of(
                 periodReturn("1M", "1 Aylık Getiri", points, asOfDate.minusMonths(1)),
                 periodReturn("3M", "3 Aylık Getiri", points, asOfDate.minusMonths(3)),
-                periodReturn("6M", "6 Aylık Getiri", points, asOfDate.minusMonths(6))
+                periodReturn("6M", "6 Aylık Getiri", points, asOfDate.minusMonths(6)),
+                periodReturn("1Y", "1 Yıllık Getiri", points, asOfDate.minusYears(1))
         );
     }
 

@@ -74,6 +74,38 @@ class FundValuationCalculatorTest {
     }
 
     @Test
+    void latestWeights_areAnchoredTodayAndHistoricallyValuedBackwards() {
+        List<FundPosition> positions = List.of(
+                position(firstAsset.getId(), "50"),
+                position(secondAsset.getId(), "50")
+        );
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValues = Map.of(
+                firstAsset.getId(), values("10", "20"),
+                secondAsset.getId(), values("20", "20")
+        );
+
+        var result = calculator.calculateBackwardsFromLatest(
+                fund,
+                positions,
+                List.of(firstAsset, secondAsset),
+                unitValues,
+                INCEPTION_DATE
+        );
+
+        assertThat(result.points()).hasSize(2);
+        assertThat(result.points().getFirst().nav()).isEqualByComparingTo("750");
+        assertThat(result.points().getFirst().sharePrice()).isEqualByComparingTo("7.5");
+        assertThat(result.latestPoint().nav()).isEqualByComparingTo("1000");
+        assertThat(result.latestPoint().sharePrice()).isEqualByComparingTo("10");
+        assertThat(result.positions())
+                .extracting(position -> position.currentWeightPercentage())
+                .containsExactly(
+                        new BigDecimal("50.000000"),
+                        new BigDecimal("50.000000")
+                );
+    }
+
+    @Test
     void datesWithoutAllAssetPrices_areExcludedFromFundSeries() {
         List<FundPosition> positions = List.of(
                 position(firstAsset.getId(), "50"),

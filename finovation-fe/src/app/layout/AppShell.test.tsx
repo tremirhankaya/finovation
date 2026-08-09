@@ -44,13 +44,29 @@ function renderShell(initialEntry = "/dashboard") {
           <Route path="/dashboard" element={<LocationProbe />} />
           <Route path="/fund-design" element={<LocationProbe />} />
           <Route path="/fund-monitoring" element={<LocationProbe />} />
-          <Route path="/optimization-requests/new" element={<LocationProbe />} />
+          <Route
+            path="/optimization-requests/new"
+            element={<LocationProbe />}
+          />
           <Route path="/stress-test" element={<LocationProbe />} />
           <Route
             path="/optimization-requests/new"
             element={<LocationProbe />}
           />
           <Route path="/users" element={<LocationProbe />} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
+function renderSystemShell(initialEntry = "/users") {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <Routes>
+        <Route element={<AppShell mode="system" />}>
+          <Route path="/users" element={<LocationProbe />} />
+          <Route path="/system-logs" element={<LocationProbe />} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -71,10 +87,9 @@ describe("AppShell", () => {
       "href",
       "/dashboard",
     )
-    expect(screen.getByRole("link", { name: "Fon Tasarımı" })).toHaveAttribute(
-      "href",
-      "/fund-design",
-    )
+    expect(
+      screen.getByRole("button", { name: "Fon Tasarımı" }),
+    ).toHaveAttribute("aria-expanded", "false")
     expect(
       screen.getByRole("link", { name: "Fon İzleme ve Performans" }),
     ).toHaveAttribute("href", "/fund-monitoring")
@@ -147,5 +162,28 @@ describe("AppShell", () => {
     )
 
     expect(screen.getByTestId("location")).toHaveTextContent("/fund-monitoring")
+  })
+
+  it("sistem modunda yönetim ve log izleme bağlantılarını gösterir", () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        ...COMPANY_MANAGER,
+        role: "ADMIN",
+        companyId: null,
+        companyName: null,
+      },
+      signOut: signOutMock,
+    })
+
+    renderSystemShell()
+
+    expect(
+      screen.getByRole("link", { name: "Kullanıcı ve Şirket Yönetimi" }),
+    ).toHaveAttribute("href", "/users")
+    expect(screen.getByRole("link", { name: "Log İzleme" })).toHaveAttribute(
+      "href",
+      "/system-logs",
+    )
+    expect(screen.queryByRole("link", { name: "Ana Sayfa" })).toBeNull()
   })
 })

@@ -7,6 +7,7 @@ import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
@@ -177,7 +178,7 @@ public class OptimizationRequestService {
 
     private OptimizableFundResponse toOptimizableFundResponse(FundDraft fund) {
         List<FundPosition> positions = fundPortfolioRepository
-                .findByFundDraftIdAndSelectedTrue(fund.getId())
+                .findByFundDraft_IdAndPortfolioType(fund.getId(), PortfolioType.WORKING)
                 .map(portfolio -> fundPositionRepository
                         .findAllByFundPortfolioIdOrderByWeightDesc(portfolio.getId()))
                 .orElse(List.of());
@@ -347,7 +348,7 @@ public class OptimizationRequestService {
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
 
         List<FundPositionResponse> positions = fundMonitoringService
-                .getCurrentPositionsSinceInception(actorUsername, fundId);
+                .getCurrentPositions(actorUsername, fundId);
 
         return new OptimizationFundPositionsResponse(fund.getName(), positions);
     }
@@ -503,7 +504,10 @@ public class OptimizationRequestService {
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
 
         FundPortfolio portfolio = fundPortfolioRepository
-                .findByFundDraftIdAndSelectedTrue(fundDraft.getId())
+                .findByFundDraft_IdAndPortfolioType(
+                        fundDraft.getId(),
+                        PortfolioType.WORKING
+                )
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
 
         fundPositionRepository.deleteAllByFundPortfolioId(portfolio.getId());
@@ -776,7 +780,7 @@ public class OptimizationRequestService {
 
     private Map<String, BigDecimal> resolveCurrentPortfolio(OptimizationRequest request, String actorUsername) {
         List<FundPositionResponse> currentPositions = fundMonitoringService
-                .getCurrentPositionsSinceInception(actorUsername, request.getFundId());
+                .getCurrentPositions(actorUsername, request.getFundId());
         String tppAssetCode = resolveTppAssetCode();
 
         Map<Long, Asset> assetsById = assetRepository

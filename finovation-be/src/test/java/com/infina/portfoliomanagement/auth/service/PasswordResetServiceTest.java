@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -114,23 +115,42 @@ class PasswordResetServiceTest {
     }
 
     @Test
-    void requestOtp_unknownEmail_throwsAccountNotFound() {
+    void requestOtp_unknownEmail_returnsWithoutCreatingOrSendingOtp() {
+        when(tokenCodec.encode("email:missing@example.com"))
+                .thenReturn("missing-identity");
+        when(passwordResetStore.reserveRequest("missing-identity"))
+                .thenReturn(true);
+        when(userRepository.findByEmailIgnoreCase("missing@example.com"))
+                .thenReturn(Optional.empty());
+
+        passwordResetService.requestOtp(
+                new PasswordResetStartRequest("missing@example.com")
+        );
+
+        verify(passwordResetStore).reserveRequest("missing-identity");
+        verify(passwordResetStore, never()).saveOtp(anyString(), anyString());
+        verifyNoInteractions(mailService);
+    }
+
+    @Test
+    void verifyOtp_unknownEmail_returnsInvalidCodeWithoutRevealingAccount() {
         when(userRepository.findByEmailIgnoreCase("missing@example.com"))
                 .thenReturn(Optional.empty());
 
         assertError(
-                () -> passwordResetService.requestOtp(
-                        new PasswordResetStartRequest("missing@example.com")
+                () -> passwordResetService.verifyOtp(
+                        new PasswordResetVerifyRequest("missing@example.com", "123456")
                 ),
-                ErrorCode.PASSWORD_RESET_ACCOUNT_NOT_FOUND
+                ErrorCode.PASSWORD_RESET_OTP_INVALID
         );
 
-        verifyNoInteractions(passwordResetStore, mailService);
+        verifyNoInteractions(passwordResetStore);
     }
 
     @Test
     void requestOtp_duringCooldown_isRejected() {
-        stubUserAndIdentity();
+        when(tokenCodec.encode("email:user@example.com"))
+                .thenReturn("email-identity");
         when(passwordResetStore.reserveRequest("email-identity")).thenReturn(false);
 
         assertError(

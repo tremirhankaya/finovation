@@ -126,6 +126,12 @@ public enum ErrorCode {
             "You must change your password before accessing this resource."
     ),
 
+    ACCOUNT_INACTIVE(
+            "AUTH_020",
+            HttpStatus.UNAUTHORIZED,
+            "This account is not active."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,

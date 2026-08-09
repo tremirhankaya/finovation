@@ -6,6 +6,7 @@ import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
@@ -72,13 +73,24 @@ public class FundMonitoringService {
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public List<FundSummaryResponse> listFunds(String actorUsername) {
+    public List<FundSummaryResponse> listFunds(
+            String actorUsername,
+            Long ownerUserId
+    ) {
         User actor = requireActor(actorUsername);
+        Long effectiveOwnerUserId = actor.getId();
+
+        if (ownerUserId != null && !ownerUserId.equals(actor.getId())) {
+            User owner = userRepository.findById(ownerUserId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+            accessPolicy.assertCanViewUserFunds(actor, owner);
+            effectiveOwnerUserId = owner.getId();
+        }
 
         return fundDraftRepository
                 .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
                         FundDraftStatus.COMPLETED,
-                        actor.getId()
+                        effectiveOwnerUserId
                 ).stream()
                 .map(FundSummaryResponse::from)
                 .toList();
@@ -223,49 +235,35 @@ public class FundMonitoringService {
             FundDraft fund,
             LocalDate today
     ) {
-        return calculateFund(
-                fund,
-                today,
-                today.minusYears(1).minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS)
-        );
-    }
-
-    private FundMonitoringCalculation calculateFund(
-            FundDraft fund,
-            LocalDate today,
-            LocalDate startDate
-    ) {
-        FundPortfolio selectedPortfolio = fundPortfolioRepository
-                .findByFundDraftIdAndSelectedTrue(fund.getId())
-                .orElseThrow(() -> new BaseException(
-                        ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE
-                ));
+        FundPortfolio workingPortfolio = requireWorkingPortfolio(fund);
         List<FundPosition> portfolioPositions = fundPositionRepository
-                .findAllByFundPortfolioIdOrderByWeightDesc(selectedPortfolio.getId());
+                .findAllByFundPortfolioIdOrderByWeightDesc(workingPortfolio.getId());
         List<Long> assetIds = portfolioPositions.stream()
                 .map(FundPosition::getAssetId)
                 .toList();
         List<Asset> assets = assetRepository.findAllById(assetIds);
         assertAllAssetsFound(assets, new HashSet<>(assetIds).size());
 
+        LocalDate historyStart = today.minusYears(1)
+                .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS);
         Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
                 valuationProviderRegistry.loadUnitValues(
                         assets,
-                        startDate,
+                        historyStart,
                         today
                 );
-        FundValuationResult valuation = valuationCalculator.calculate(
+        FundValuationResult valuation = valuationCalculator.calculateBackwardsFromLatest(
                 fund,
                 portfolioPositions,
                 assets,
                 unitValuesByAsset,
-                startDate
+                historyStart
         );
         return new FundMonitoringCalculation(valuation, assets);
     }
 
     @Transactional(readOnly = true)
-    public List<FundPositionResponse> getCurrentPositionsSinceInception(
+    public List<FundPositionResponse> getCurrentPositions(
             String actorUsername,
             UUID fundPublicId
     ) {
@@ -275,30 +273,13 @@ public class FundMonitoringService {
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
         accessPolicy.assertCanView(fund, actor.getId());
 
-        LocalDate today = LocalDate.now(clock);
-        LocalDate inceptionDate = fund.getCreatedAt().toLocalDate();
-        LocalDate startDate = inceptionDate.isAfter(today) ? today : inceptionDate;
-
-        try {
-            FundMonitoringCalculation calculation = calculateFund(fund, today, startDate);
-            Map<Long, AssetMonitoringProfile> profilesByAssetId =
-                    classificationProviderRegistry.loadProfiles(calculation.assets());
-
-            return positions(calculation.valuation(), profilesByAssetId);
-        } catch (BaseException e) {
-            if (e.getErrorCode() != ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE) {
-                throw e;
-            }
-            return designPositions(fund);
-        }
+        return workingPositions(fund);
     }
 
-    private List<FundPositionResponse> designPositions(FundDraft fund) {
-        FundPortfolio selectedPortfolio = fundPortfolioRepository
-                .findByFundDraftIdAndSelectedTrue(fund.getId())
-                .orElseThrow(() -> new BaseException(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE));
+    private List<FundPositionResponse> workingPositions(FundDraft fund) {
+        FundPortfolio workingPortfolio = requireWorkingPortfolio(fund);
         List<FundPosition> portfolioPositions = fundPositionRepository
-                .findAllByFundPortfolioIdOrderByWeightDesc(selectedPortfolio.getId());
+                .findAllByFundPortfolioIdOrderByWeightDesc(workingPortfolio.getId());
         List<Long> assetIds = portfolioPositions.stream()
                 .map(FundPosition::getAssetId)
                 .toList();
@@ -321,6 +302,17 @@ public class FundMonitoringService {
                     );
                 })
                 .toList();
+    }
+
+    private FundPortfolio requireWorkingPortfolio(FundDraft fund) {
+        return fundPortfolioRepository
+                .findByFundDraft_IdAndPortfolioType(
+                        fund.getId(),
+                        PortfolioType.WORKING
+                )
+                .orElseThrow(() -> new BaseException(
+                        ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE
+                ));
     }
 
     private List<FundComparisonAssetResponse> comparisonAssets(
@@ -508,4 +500,5 @@ public class FundMonitoringService {
             List<Asset> assets
     ) {
     }
+
 }
