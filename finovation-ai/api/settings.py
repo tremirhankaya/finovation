@@ -14,10 +14,13 @@ EXPECTED_POLICY_CONFIG = "PORTFOLIO_OBJECTIVES_V3_NEW_PROSPECTUS"
 class ServiceSettings:
     root: Path
     api_version: str = API_VERSION
+    api_key: str | None = None
 
     @classmethod
     def from_environment(cls) -> "ServiceSettings":
         default_root = Path(__file__).resolve().parents[1]
         configured = os.environ.get("FUND_ML_ROOT")
         root = Path(configured) if configured else default_root
-        return cls(root=root.resolve())
+        
+        api_key = os.environ.get("FUND_ML_API_KEY")
+        return cls(root=root.resolve(), api_key=api_key)

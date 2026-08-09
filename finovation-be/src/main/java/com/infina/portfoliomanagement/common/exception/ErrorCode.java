@@ -402,23 +402,22 @@ public enum ErrorCode {
             "Stress test not found."
     ),
 
-
-    FUND_ENGINE_UNAVAILABLE(
-            "ENGINE_001",
+    AI_ENGINE_UNAVAILABLE(
+            "AI_ENGINE_001",
             HttpStatus.SERVICE_UNAVAILABLE,
-            "The portfolio engine is temporarily unavailable. Please try again later."
+            "AI Engine service is temporarily unavailable."
     ),
 
-    FUND_ENGINE_ERROR(
-            "ENGINE_002",
+    AI_ENGINE_ERROR(
+            "AI_ENGINE_002",
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "The portfolio engine returned an unexpected error."
+            "AI Engine service encountered an error."
     ),
 
-    FUND_ENGINE_INVALID_REQUEST(
-            "ENGINE_003",
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            "The portfolio engine rejected the request due to invalid parameters."
+    AI_ENGINE_INVALID_REQUEST(
+            "AI_ENGINE_003",
+            HttpStatus.BAD_REQUEST,
+            "Invalid request to AI Engine."
     ),
     ;
 

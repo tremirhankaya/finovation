@@ -1,27 +1,25 @@
 package com.infina.portfoliomanagement.fund.client;
 
+import com.infina.portfoliomanagement.ai.client.AiHttpClient;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineCreateResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisRequest;
 import com.infina.portfoliomanagement.fund.service.analysis.FundModelClient;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.infina.portfoliomanagement.ai.enums.AiEndpoint;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
 
 @Component
 @Primary
-public class HttpFundModelClient extends FundEngineHttpTemplate implements FundModelClient {
+public class HttpFundModelClient implements FundModelClient {
 
-    private static final String CREATE_PATH   = "/api/v1/portfolios/create";
+    private final AiHttpClient aiHttpClient;
 
-    public HttpFundModelClient(@Qualifier("fundEngineRestClient") RestClient restClient) {
-        super(restClient);
+    public HttpFundModelClient(AiHttpClient aiHttpClient) {
+        this.aiHttpClient = aiHttpClient;
     }
-
 
     @Override
     public FundEngineCreateResponse analyze(FundModelAnalysisRequest request) {
-        return post(CREATE_PATH, request, FundEngineCreateResponse.class);
+        return aiHttpClient.post(AiEndpoint.CREATE_PORTFOLIO, request, FundEngineCreateResponse.class);
     }
-
 }

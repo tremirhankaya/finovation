@@ -14,6 +14,7 @@ def lifespan_for(settings: ServiceSettings):
         runtime = RuntimeState(settings)
         runtime.initialize()
         app.state.runtime = runtime
+        app.state.settings = settings
         yield
 
     return lifespan

@@ -52,6 +52,11 @@ infina:
   connect-timeout: 5s
   read-timeout: 15s
 
+ai:
+  engine:
+    base-url: ${AI_ENGINE_BASE_URL:http://localhost:8000}
+    api-key: ${AI_ENGINE_API_KEY:test-token}
+
 fund:
   monitoring:
     fixed-outstanding-shares: ${FUND_MONITORING_FIXED_OUTSTANDING_SHARES:1000000}

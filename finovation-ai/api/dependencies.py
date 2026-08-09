@@ -4,6 +4,25 @@ from fastapi import Header, Request
 
 from api.errors import ApiError
 from api.runtime import RuntimeState
+from api.settings import ServiceSettings
+
+def verify_api_key(
+    request: Request,
+    authorization: str | None = Header(default=None),
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+):
+    settings: ServiceSettings = request.app.state.settings
+    if not settings.api_key:
+        return
+
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+    elif x_api_key:
+        token = x_api_key
+
+    if token != settings.api_key:
+        raise ApiError(401, "UNAUTHORIZED", "Invalid API Key")
 
 
 def require_runtime(

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from time import perf_counter
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.exceptions import RequestValidationError
 
 from fund_ml.portfolio import PortfolioError
@@ -19,6 +19,7 @@ from api.lifecycle import lifespan_for
 from api.routes import forecasts, health, metadata, portfolios
 from api.responses import Utf8JSONResponse
 from api.settings import ServiceSettings
+from api.dependencies import verify_api_key
 
 
 def create_app(settings: ServiceSettings | None = None) -> FastAPI:
@@ -68,8 +69,8 @@ def create_app(settings: ServiceSettings | None = None) -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(metadata.router)
-    app.include_router(forecasts.router)
-    app.include_router(portfolios.router)
+    app.include_router(forecasts.router, dependencies=[Depends(verify_api_key)])
+    app.include_router(portfolios.router, dependencies=[Depends(verify_api_key)])
     return app
 
 
