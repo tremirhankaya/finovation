@@ -155,6 +155,10 @@ export function getOptimizationLogsUrl(): string {
   return `${buildUrl(API_PATHS.optimizationRequests)}/logs`
 }
 
+export function getOptimizationFundPositionsUrl(fundId: string): string {
+  return `${buildUrl(API_PATHS.optimizationRequests)}/funds/${encodeURIComponent(fundId)}/current-positions`
+}
+
 export function getOptimizationRequestUrl(requestId: number): string {
   return `${buildUrl(API_PATHS.optimizationRequests)}/${requestId}`
 }

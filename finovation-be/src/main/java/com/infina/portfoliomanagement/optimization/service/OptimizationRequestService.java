@@ -21,6 +21,7 @@ import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationReques
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest.AssetWeightOverride;
 import com.infina.portfoliomanagement.optimization.dto.AssetPreferenceRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationFundPositionsResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultAssetResponse;
@@ -337,6 +338,18 @@ public class OptimizationRequestService {
             return null;
         }
         return detail.getSector().getName();
+    }
+
+    @Transactional(readOnly = true)
+    public OptimizationFundPositionsResponse getCurrentPositions(String actorUsername, UUID fundId) {
+        FundDraft fund = fundDraftRepository
+                .findByPublicIdAndStatus(fundId, FundDraftStatus.COMPLETED)
+                .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
+
+        List<FundPositionResponse> positions = fundMonitoringService
+                .getCurrentPositionsSinceInception(actorUsername, fundId);
+
+        return new OptimizationFundPositionsResponse(fund.getName(), positions);
     }
 
     @Transactional(readOnly = true)
@@ -762,21 +775,19 @@ public class OptimizationRequestService {
     }
 
     private Map<String, BigDecimal> resolveCurrentPortfolio(OptimizationRequest request, String actorUsername) {
-        FundMonitoringResponse snapshot = fundMonitoringService.getMonitoringSnapshot(
-                actorUsername,
-                request.getFundId()
-        );
+        List<FundPositionResponse> currentPositions = fundMonitoringService
+                .getCurrentPositionsSinceInception(actorUsername, request.getFundId());
         String tppAssetCode = resolveTppAssetCode();
 
         Map<Long, Asset> assetsById = assetRepository
-                .findAllById(snapshot.positions().stream()
+                .findAllById(currentPositions.stream()
                         .map(position -> Long.valueOf(position.assetId()))
                         .toList())
                 .stream()
                 .collect(Collectors.toMap(Asset::getId, asset -> asset));
 
         Map<String, BigDecimal> currentPortfolio = new LinkedHashMap<>();
-        for (FundPositionResponse position : snapshot.positions()) {
+        for (FundPositionResponse position : currentPositions) {
             Asset asset = assetsById.get(Long.valueOf(position.assetId()));
             String canonicalAssetCode = asset == null ? position.symbol() : asset.getAssetCode();
             String assetCode = canonicalAssetCode.equals(tppAssetCode) ? CASH_TPP_CODE : canonicalAssetCode;

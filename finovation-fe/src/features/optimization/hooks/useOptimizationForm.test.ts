@@ -1,19 +1,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const fundMonitoringMocks = vi.hoisted(() => ({
-  fetchFundMonitoring: vi.fn(),
-}))
 const optimizationApiMocks = vi.hoisted(() => ({
   createOptimizationRequest: vi.fn(),
   fetchInvestmentUniverse: vi.fn(),
   fetchOptimizableFunds: vi.fn(),
+  fetchOptimizationFundPositions: vi.fn(),
 }))
 
-vi.mock(
-  "@/features/fund-monitoring/api/fundMonitoringService",
-  () => fundMonitoringMocks,
-)
 vi.mock("@/features/optimization/api/optimizationApi", () => ({
   ...optimizationApiMocks,
 }))
@@ -35,14 +29,7 @@ const FUND = {
 
 function snapshot() {
   return {
-    fund: { id: FUND.id, name: FUND.name, type: "Hisse Senedi Yoğun Fon" },
-    asOfDate: "2026-08-04",
-    currency: "TRY",
-    currentSharePrice: 100,
-    dailyChangePercentage: 0,
-    priceHistory: {},
-    technicalIndicators: [],
-    periodReturns: [],
+    fundName: FUND.name,
     positions: [
       {
         assetId: "101",
@@ -59,14 +46,13 @@ function snapshot() {
         weightPercentage: 7,
       },
     ],
-    sectorAllocations: [],
   }
 }
 
 describe("useOptimizationForm", () => {
   beforeEach(() => {
     optimizationApiMocks.fetchOptimizableFunds.mockReset().mockResolvedValue([FUND])
-    fundMonitoringMocks.fetchFundMonitoring
+    optimizationApiMocks.fetchOptimizationFundPositions
       .mockReset()
       .mockResolvedValue(snapshot())
     optimizationApiMocks.createOptimizationRequest.mockReset()
@@ -156,6 +142,46 @@ describe("useOptimizationForm", () => {
       (row) => row.key === "kept-assets",
     )
     expect(keptRow?.detail).toContain("toplam %8")
+  })
+
+  it("korunmayan bir hisse %10'u aşsa da gönderimi engellemez, korunan hisse aşarsa engeller", async () => {
+    optimizationApiMocks.fetchOptimizationFundPositions.mockReset().mockResolvedValue({
+      ...snapshot(),
+      positions: [
+        {
+          assetId: "101",
+          symbol: "AKBNK.E",
+          name: "Akbank",
+          sectorName: "Bankacılık",
+          weightPercentage: 13,
+        },
+        {
+          assetId: "102",
+          symbol: "ASELS.E",
+          name: "Aselsan",
+          sectorName: "Savunma",
+          weightPercentage: 7,
+        },
+      ],
+    })
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.canSubmit).toBe(true)
+    const singleStockRowBefore = result.current.complianceRows.find(
+      (row) => row.key === "single-stock-weight",
+    )
+    expect(singleStockRowBefore?.status).toBe("UYUMLU")
+
+    act(() => result.current.toggleSelection("101", "KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
+
+    const singleStockRowAfter = result.current.complianceRows.find(
+      (row) => row.key === "single-stock-weight",
+    )
+    expect(singleStockRowAfter?.status).toBe("UYUMSUZ")
+    expect(result.current.canSubmit).toBe(false)
   })
 
   it("aynı hisseye tekrar tıklanınca seçimi kaldırır", async () => {
