@@ -1,0 +1,17 @@
+# Keep the Docker build context focused on the API source and its frozen runtime bundle.
+.git/
+.venv/
+.idea/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# These are useful locally but are not required to run the API container.
+docs/
+reports/
+outputs/
+tests/

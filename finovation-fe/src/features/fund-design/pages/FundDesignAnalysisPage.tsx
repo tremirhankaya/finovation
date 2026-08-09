@@ -178,6 +178,13 @@ export default function FundDesignAnalysisPage() {
   const [isReady, setIsReady] = useState(false)
   const finishedRef = useRef(false)
 
+  function handleRetry() {
+    finishedRef.current = false
+    setFormError("")
+    setActiveStageIndex(0)
+    setAnalysisComplete(false)
+  }
+
   const rulesFingerprint = useMemo(
     () =>
       buildRulesFingerprint({
@@ -308,7 +315,14 @@ export default function FundDesignAnalysisPage() {
           </p>
         </header>
 
-        {formError ? <FormAlert>{formError}</FormAlert> : null}
+        {formError ? (
+          <FormAlert>
+            {formError}
+            <button className={styles.retry} type="button" onClick={handleRetry}>
+              Tekrar dene
+            </button>
+          </FormAlert>
+        ) : null}
         {initError ? (
           <FormAlert>
             {initError}

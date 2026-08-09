@@ -1,0 +1,13 @@
+{
+  "request_id": "optimize-invalid-001",
+  "status": "ERROR",
+  "error": {
+    "code": "PORTFOLIO_SUM_INVALID",
+    "message": "Current portfolio weights must sum to 1.0.",
+    "details": {
+      "received_sum": 0.97,
+      "expected_sum": 1.0
+    }
+  },
+  "snapshot_id": "FROZEN_2025-05-29_V3"
+}

@@ -1,0 +1,37 @@
+{
+  "request_id": "optimize-example-001",
+  "horizon": "6M",
+  "current_portfolio": {
+    "AEFES.E": 0.065,
+    "AKBNK.E": 0.065,
+    "ASELS.E": 0.065,
+    "BIMAS.E": 0.065,
+    "EREGL.E": 0.065,
+    "FROTO.E": 0.065,
+    "MGROS.E": 0.04636363636363636,
+    "TCELL.E": 0.04636363636363636,
+    "THYAO.E": 0.04636363636363636,
+    "TUPRS.E": 0.04636363636363636,
+    "AKSA.E": 0.04636363636363636,
+    "ENKAI.E": 0.04636363636363636,
+    "KCHOL.E": 0.04636363636363636,
+    "SISE.E": 0.04636363636363636,
+    "TAVHL.E": 0.04636363636363636,
+    "TTRAK.E": 0.04636363636363636,
+    "ULKER.E": 0.04636363636363636,
+    "CASH_TPP": 0.1
+  },
+  "locked_assets": {
+    "ASELS.E": 0.065
+  },
+  "mandatory_assets": [],
+  "excluded_assets": [],
+  "min_stock_count": 16,
+  "max_stock_count": 20,
+  "tpp_min_weight": 0.07,
+  "tpp_max_weight": 0.13,
+  "max_weight_change_per_asset": 0.03,
+  "max_additions": 3,
+  "max_removals": 2,
+  "max_universe58_beta": 1.1
+}

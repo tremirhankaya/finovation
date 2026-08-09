@@ -401,6 +401,24 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "Stress test not found."
     ),
+
+    AI_ENGINE_UNAVAILABLE(
+            "AI_ENGINE_001",
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "AI Engine service is temporarily unavailable."
+    ),
+
+    AI_ENGINE_ERROR(
+            "AI_ENGINE_002",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "AI Engine service encountered an error."
+    ),
+
+    AI_ENGINE_INVALID_REQUEST(
+            "AI_ENGINE_003",
+            HttpStatus.BAD_REQUEST,
+            "Invalid request to AI Engine."
+    ),
     ;
 
     private final String code;

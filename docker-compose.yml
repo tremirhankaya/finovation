@@ -86,6 +86,35 @@ services:
       retries: 10
 
 
+  fund-engine:
+    build:
+      context: ./finovation-ai
+      dockerfile: Dockerfile
+
+    container_name: finovation-fund-engine
+
+    expose:
+      - "8000"
+
+    restart: unless-stopped
+
+    environment:
+      - FUND_ML_API_KEY=${AI_ENGINE_API_KEY:-}
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health/ready', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+
   backend:
     build:
       context: ./finovation-be
@@ -100,6 +129,9 @@ services:
 
       REDIS_HOST: redis
       REDIS_PORT: 6379
+
+      AI_ENGINE_BASE_URL: http://fund-engine:8000
+      AI_ENGINE_API_KEY: ${AI_ENGINE_API_KEY:-}
 
       INFINA_BASE_URL: ${INFINA_BASE_URL:?INFINA_BASE_URL must be set in .env}
       INFINA_API_KEY: ${INFINA_API_KEY:?INFINA_API_KEY must be set in .env}
@@ -157,6 +189,8 @@ services:
       mssql-init:
         condition: service_completed_successfully
       redis:
+        condition: service_healthy
+      fund-engine:
         condition: service_healthy
 
     restart: unless-stopped

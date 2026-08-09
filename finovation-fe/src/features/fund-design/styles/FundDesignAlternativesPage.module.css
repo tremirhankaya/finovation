@@ -85,7 +85,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.75fr);
   gap: 1rem;
   align-items: start;
 }
@@ -408,8 +408,28 @@
   font-weight: 600;
 }
 
+.holdingsTable th:nth-child(1) {
+  width: 20%;
+}
+
+.holdingsTable th:nth-child(2) {
+  width: 20%;
+}
+
+.holdingsTable th:nth-child(3) {
+  width: 60%;
+}
+
 .holdingsTable td {
   color: #0f1f3c;
+  line-height: 1.35;
+}
+
+.holdingsTable td:nth-child(3) {
+  color: #5b6b7a;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  font-weight: 400;
 }
 
 .holdingsTable tr:last-child td {
