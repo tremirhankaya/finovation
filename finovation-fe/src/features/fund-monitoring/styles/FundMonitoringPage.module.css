@@ -867,6 +867,12 @@
   cursor: pointer;
 }
 
+.comparisonChecklistItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .comparisonChecklist input {
   position: absolute;
   width: 1px;
@@ -897,6 +903,68 @@
 .comparisonChecklist .fundChecklistItem {
   color: #0f172a;
   font-weight: 700;
+}
+
+.benchmarkHelp {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.benchmarkHelp button {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  place-items: center;
+  color: #0d9488;
+  background: #ecfdf5;
+  border: 1px solid #99f6e4;
+  border-radius: 50%;
+  font-size: 0.67rem;
+  font-weight: 900;
+  cursor: help;
+}
+
+.benchmarkHelp [role="tooltip"] {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  display: grid;
+  width: min(320px, 78vw);
+  gap: 8px;
+  padding: 11px 13px;
+  visibility: hidden;
+  color: #f8fafc;
+  background: #0f2d52;
+  border-radius: 9px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 18%);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.benchmarkHelp:hover [role="tooltip"],
+.benchmarkHelp:focus-within [role="tooltip"] {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.benchmarkComponent {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.benchmarkComponent b {
+  flex: 0 0 auto;
+  color: #5eead4;
 }
 
 .comparisonHint,
@@ -986,7 +1054,23 @@
   text-align: center;
 }
 
-.pickerList button {
+.pickerGroup + .pickerGroup {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pickerGroup h3 {
+  margin: 0;
+  padding: 6px 12px;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pickerGroup button {
   display: grid;
   width: 100%;
   grid-template-columns: 10px 1fr auto;
@@ -1001,21 +1085,21 @@
   cursor: pointer;
 }
 
-.pickerList button:hover {
+.pickerGroup button:hover {
   background: #f1f5f9;
 }
 
-.pickerList button > span {
+.pickerGroup button > span {
   width: 10px;
   height: 10px;
   border-radius: 3px;
 }
 
-.pickerList button strong {
+.pickerGroup button strong {
   font-size: 0.8rem;
 }
 
-.pickerList button small {
+.pickerGroup button small {
   color: #94a3b8;
   font-size: 0.68rem;
 }

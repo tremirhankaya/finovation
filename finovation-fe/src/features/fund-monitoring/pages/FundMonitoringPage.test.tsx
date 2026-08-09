@@ -100,18 +100,26 @@ const READY_PROPS: FundMonitoringViewProps = {
         returns: { "1M": 4.2, "3M": 11.8, "1Y": 28.4 },
       },
       {
-        id: "gold",
+        id: "gold-try",
         code: "ALTIN",
         name: "Altın",
         color: "#eda100",
         returns: { "1M": 2.1, "3M": 8.3, "1Y": 34.6 },
       },
       {
-        id: "bist-100",
+        id: "bist-100-return",
         code: "BIST100",
         name: "BIST 100",
         color: "#378add",
         returns: { "1M": -1.2, "3M": 5.4, "1Y": 19.7 },
+      },
+      {
+        id: "similar-fund-mac",
+        code: "MAC",
+        name: "Marmara Capital Portföy Hisse Senedi Fonu",
+        color: "#7c3aed",
+        isFund: true,
+        returns: { "1M": 3.1, "3M": 9.4, "1Y": 31.2 },
       },
     ],
   },
@@ -134,6 +142,9 @@ describe("FundMonitoringView", () => {
     expect(
       screen.getByRole("heading", { name: "Fon Getiri Karşılaştır" }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Kopyala" }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByText(
         "Karşılaştırma verileri aktif bir fon oluşturulduğunda burada gösterilecek.",
@@ -248,16 +259,52 @@ describe("FundMonitoringView", () => {
     expect(screen.getByText("+%11,80", { selector: "td" })).toBeInTheDocument()
   })
 
+  it("benchmark bilgi ikonunda karşılaştırma ölçütü değerlerini gösterir", async () => {
+    const user = userEvent.setup()
+    const props = {
+      ...READY_PROPS,
+      snapshot: {
+        ...READY_PROPS.snapshot!,
+        comparisonAssets: [
+          ...(READY_PROPS.snapshot!.comparisonAssets ?? []),
+          {
+            id: "official-equity-benchmark",
+            code: "BENCHMARK",
+            name: "BENCHMARK",
+            color: "#dc2626",
+            returns: { "1Y": 24.1 },
+          },
+        ],
+      },
+    }
+
+    render(<FundMonitoringView {...props} />)
+
+    const infoButton = screen.getByRole("button", {
+      name: "Benchmark karşılaştırma ölçütü değerleri",
+    })
+    await user.hover(infoButton)
+
+    const tooltipId = infoButton.getAttribute("aria-describedby")
+    const tooltip = document.getElementById(tooltipId!)
+    expect(tooltip).toHaveAttribute("role", "tooltip")
+    expect(tooltip).toHaveTextContent("Fon Karşılaştırma Ölçütü")
+    expect(tooltip).toHaveTextContent("BIST 100 Getiri Endeksi%90")
+    expect(tooltip).toHaveTextContent("BIST-KYD Repo (Brüt) Endeksi%10")
+  })
+
   it("karşılaştırma varlıklarını listeden çıkarıp arama penceresinden ekler", async () => {
     const user = userEvent.setup()
     render(<FundMonitoringView {...READY_PROPS} />)
 
     await user.click(screen.getByRole("checkbox", { name: "Altın" }))
-    expect(screen.getByRole("checkbox", { name: "Altın" })).not.toBeChecked()
+    expect(
+      screen.queryByRole("checkbox", { name: "Altın" }),
+    ).not.toBeInTheDocument()
 
     await user.click(
       screen.getByRole("button", {
-        name: "Aradığınız fonun kodunu veya adını yazınız",
+        name: /Karşılaştırmaya varlık ekle/,
       }),
     )
     await user.type(
@@ -267,5 +314,117 @@ describe("FundMonitoringView", () => {
     await user.click(screen.getByRole("button", { name: /Altın\s*ALTIN/ }))
 
     expect(screen.getByRole("checkbox", { name: "Altın" })).toBeChecked()
+  })
+
+  it("istenen dokuz karşılaştırma varlığını varsayılan seçer", () => {
+    const defaultAssets = [
+      ...(READY_PROPS.snapshot!.comparisonAssets ?? []),
+      {
+        id: "official-equity-benchmark",
+        code: "BENCHMARK",
+        name: "Karşılaştırma Ölçütü",
+        color: "#dc2626",
+        returns: { "1Y": 24.1 },
+      },
+      {
+        id: "bist-30",
+        code: "BIST30",
+        name: "BIST 30",
+        color: "#2563eb",
+        returns: { "1Y": 18.2 },
+      },
+      {
+        id: "deposit-try",
+        code: "MEVDUAT",
+        name: "Mevduat Getirisi",
+        color: "#0f766e",
+        returns: { "1Y": 50.6 },
+      },
+      {
+        id: "inflation",
+        code: "TUFE",
+        name: "TÜFE",
+        color: "#ea580c",
+        returns: { "1Y": 32.8 },
+      },
+      {
+        id: "usd-try",
+        code: "USD/TRY",
+        name: "USD/TRY",
+        color: "#16a34a",
+        returns: { "1Y": 21.3 },
+      },
+      {
+        id: "eur-try",
+        code: "EUR/TRY",
+        name: "EUR/TRY",
+        color: "#0284c7",
+        returns: { "1Y": 36.9 },
+      },
+      {
+        id: "repo-gross",
+        code: "REPBR",
+        name: "Repo Endeksi",
+        color: "#0891b2",
+        returns: { "1Y": 54.2 },
+      },
+    ]
+    const props = {
+      ...READY_PROPS,
+      snapshot: {
+        ...READY_PROPS.snapshot!,
+        comparisonAssets: defaultAssets,
+      },
+    }
+
+    render(<FundMonitoringView {...props} />)
+
+    expect(screen.getAllByRole("checkbox")).toHaveLength(9)
+    expect(screen.getByRole("checkbox", { name: "Büyüme Fonu" })).toBeChecked()
+    expect(
+      screen.getByRole("checkbox", { name: "Karşılaştırma Ölçütü" }),
+    ).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "BIST 100" })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "BIST 30" })).toBeChecked()
+    expect(
+      screen.getByRole("checkbox", { name: "Mevduat Getirisi" }),
+    ).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "TÜFE" })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "Altın" })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "USD/TRY" })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "EUR/TRY" })).toBeChecked()
+    expect(
+      screen.queryByRole("checkbox", { name: "Repo Endeksi" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("benzer fonları varsayılan seçmez ve varlık ekleme penceresinde ayrı gruplar", async () => {
+    const user = userEvent.setup()
+    render(<FundMonitoringView {...READY_PROPS} />)
+
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Marmara Capital Portföy Hisse Senedi Fonu",
+      }),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", { name: /Karşılaştırmaya varlık ekle/ }),
+    )
+
+    expect(
+      screen.getByRole("heading", { name: "Benzer Fonlar" }),
+    ).toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", {
+        name: /Marmara Capital Portföy Hisse Senedi Fonu\s*MAC/,
+      }),
+    )
+
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Marmara Capital Portföy Hisse Senedi Fonu",
+      }),
+    ).toBeChecked()
   })
 })

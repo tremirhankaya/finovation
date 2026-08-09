@@ -4,6 +4,7 @@ import ComparisonBarChart from "@/features/fund-monitoring/components/Comparison
 import { formatPercentage } from "@/features/fund-monitoring/lib/fundMonitoringFormatters"
 import {
   COMPARISON_PERIODS,
+  type BenchmarkDefinition,
   type ComparisonPeriod,
   type FundComparisonAsset,
 } from "@/features/fund-monitoring/model/fundMonitoring.types"
@@ -11,12 +12,42 @@ import styles from "@/features/fund-monitoring/styles/FundMonitoringPage.module.
 
 type FundComparisonCardProps = {
   assets: FundComparisonAsset[]
+  benchmark?: BenchmarkDefinition
+  selectedFundId?: string
 }
 
 type ComparisonView = "chart" | "table"
-type ExportKind = "copy" | "print" | "excel" | "csv" | "pdf"
+type ExportKind = "print" | "excel" | "csv" | "pdf"
 
 const MAX_SELECTED_ASSETS = 10
+const DEFAULT_COMPARISON_ASSET_IDS = new Set([
+  "official-equity-benchmark",
+  "bist-100-return",
+  "bist-30",
+  "deposit-try",
+  "inflation",
+  "gold-try",
+  "usd-try",
+  "eur-try",
+])
+
+function defaultSelectedIds(
+  assets: FundComparisonAsset[],
+  selectedFundId?: string,
+): string[] {
+  return assets
+    .filter(
+      (asset) =>
+        asset.id === selectedFundId ||
+        DEFAULT_COMPARISON_ASSET_IDS.has(asset.id),
+    )
+    .slice(0, MAX_SELECTED_ASSETS)
+    .map((asset) => asset.id)
+}
+
+function isSimilarFund(asset: FundComparisonAsset): boolean {
+  return asset.id.startsWith("similar-fund-")
+}
 
 function sortAssets(
   assets: FundComparisonAsset[],
@@ -42,23 +73,24 @@ function downloadFile(content: string, fileName: string, type: string) {
 
 export default function FundComparisonCard({
   assets,
+  benchmark,
+  selectedFundId,
 }: FundComparisonCardProps) {
   const [period, setPeriod] = useState<ComparisonPeriod>("1Y")
   const [view, setView] = useState<ComparisonView>("chart")
   const [selectedIds, setSelectedIds] = useState(() =>
-    assets.slice(0, MAX_SELECTED_ASSETS).map((asset) => asset.id),
+    defaultSelectedIds(assets, selectedFundId),
   )
   const [isPickerOpen, setPickerOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [statusMessage, setStatusMessage] = useState("")
   const dialogTitleId = useId()
+  const benchmarkTooltipId = useId()
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setSelectedIds(
-      assets.slice(0, MAX_SELECTED_ASSETS).map((asset) => asset.id),
-    )
-  }, [assets])
+    setSelectedIds(defaultSelectedIds(assets, selectedFundId))
+  }, [assets, selectedFundId])
 
   useEffect(() => {
     if (!isPickerOpen) return
@@ -89,6 +121,26 @@ export default function FundComparisonCard({
       asset.code.toLocaleLowerCase("tr-TR").includes(normalizedQuery)
     )
   })
+
+  const pickerGroups = [
+    {
+      id: "market",
+      label: "Piyasa ve Ekonomik Göstergeler",
+      assets: availableAssets.filter((asset) => !asset.isFund),
+    },
+    {
+      id: "user-funds",
+      label: "Fonlarım",
+      assets: availableAssets.filter(
+        (asset) => asset.isFund && !isSimilarFund(asset),
+      ),
+    },
+    {
+      id: "similar-funds",
+      label: "Benzer Fonlar",
+      assets: availableAssets.filter(isSimilarFund),
+    },
+  ].filter((group) => group.assets.length > 0)
 
   const toggleAsset = (assetId: string) => {
     setSelectedIds((current) => {
@@ -126,16 +178,6 @@ export default function FundComparisonCard({
       return
     }
 
-    if (kind === "copy") {
-      try {
-        await navigator.clipboard.writeText(tabSeparated)
-        setStatusMessage("Karşılaştırma panoya kopyalandı.")
-      } catch {
-        setStatusMessage("Kopyalama izni verilemedi.")
-      }
-      return
-    }
-
     if (kind === "csv") {
       const csv = rows
         .map((row) =>
@@ -170,7 +212,7 @@ export default function FundComparisonCard({
           disabled={assets.length === 0}
           onClick={() => setPickerOpen(true)}
         >
-          <span>Aradığınız fonun kodunu veya adını yazınız</span>
+          <span>Karşılaştırmaya varlık ekle</span>
           <span className={styles.searchIcon} aria-hidden="true">
             ⌕
           </span>
@@ -213,9 +255,6 @@ export default function FundComparisonCard({
       </div>
 
       <div className={styles.comparisonExport}>
-        <button type="button" onClick={() => void handleExport("copy")}>
-          Kopyala
-        </button>
         <button type="button" onClick={() => void handleExport("print")}>
           Yazdır
         </button>
@@ -275,28 +314,53 @@ export default function FundComparisonCard({
       )}
 
       <div className={styles.comparisonChecklist}>
-        {assets.map((asset) => {
-          const isSelected = selectedIds.includes(asset.id)
+        {selectedAssets.map((asset) => {
+          const showsBenchmarkHelp =
+            asset.id === "official-equity-benchmark" &&
+            Boolean(benchmark?.components.length)
+
           return (
-            <label
-              key={asset.id}
-              className={asset.isFund ? styles.fundChecklistItem : ""}
-            >
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => toggleAsset(asset.id)}
-              />
-              <span
-                style={
-                  isSelected ? { backgroundColor: asset.color } : undefined
-                }
-                aria-hidden="true"
-              >
-                {isSelected ? "✓" : ""}
-              </span>
-              {asset.name}
-            </label>
+            <div className={styles.comparisonChecklistItem} key={asset.id}>
+              <label className={asset.isFund ? styles.fundChecklistItem : ""}>
+                <input
+                  type="checkbox"
+                  checked
+                  onChange={() => toggleAsset(asset.id)}
+                />
+                <span
+                  style={{ backgroundColor: asset.color }}
+                  aria-hidden="true"
+                >
+                  ✓
+                </span>
+                {asset.name}
+              </label>
+              {showsBenchmarkHelp && (
+                <span className={styles.benchmarkHelp}>
+                  <button
+                    type="button"
+                    aria-label="Benchmark karşılaştırma ölçütü değerleri"
+                    aria-describedby={benchmarkTooltipId}
+                  >
+                    i
+                  </button>
+                  <span id={benchmarkTooltipId} role="tooltip">
+                    <strong>{benchmark?.name}</strong>
+                    {benchmark?.components.map((component) => (
+                      <span
+                        className={styles.benchmarkComponent}
+                        key={component.code}
+                      >
+                        <span>{component.name}</span>
+                        <b>
+                          %{component.weightPercentage.toLocaleString("tr-TR")}
+                        </b>
+                      </span>
+                    ))}
+                  </span>
+                </span>
+              )}
+            </div>
           )
         })}
       </div>
@@ -304,7 +368,7 @@ export default function FundComparisonCard({
       <p className={styles.comparisonHint}>
         {assets.length === 0
           ? "Karşılaştırma verileri aktif bir fon oluşturulduğunda burada gösterilecek."
-          : "En fazla 10 varlık karşılaştırılabilir. Kaldırmak için yukarıdaki listeden tikini kaldırın."}
+          : "En fazla 10 varlık karşılaştırılabilir. Eklemek için varlık seçiciyi, kaldırmak için listedeki tiki kullanın."}
       </p>
       <p className={styles.comparisonStatus} aria-live="polite">
         {statusMessage}
@@ -333,26 +397,31 @@ export default function FundComparisonCard({
               </button>
             </div>
             <div className={styles.pickerList}>
-              {availableAssets.length === 0 ? (
+              {pickerGroups.length === 0 ? (
                 <p>Eklenebilecek eşleşen varlık bulunmuyor.</p>
               ) : (
-                availableAssets.map((asset) => (
-                  <button
-                    type="button"
-                    key={asset.id}
-                    onClick={() => {
-                      toggleAsset(asset.id)
-                      setPickerOpen(false)
-                      setQuery("")
-                    }}
-                  >
-                    <span
-                      style={{ backgroundColor: asset.color }}
-                      aria-hidden="true"
-                    />
-                    <strong>{asset.name}</strong>
-                    <small>{asset.code}</small>
-                  </button>
+                pickerGroups.map((group) => (
+                  <section className={styles.pickerGroup} key={group.id}>
+                    <h3>{group.label}</h3>
+                    {group.assets.map((asset) => (
+                      <button
+                        type="button"
+                        key={asset.id}
+                        onClick={() => {
+                          toggleAsset(asset.id)
+                          setPickerOpen(false)
+                          setQuery("")
+                        }}
+                      >
+                        <span
+                          style={{ backgroundColor: asset.color }}
+                          aria-hidden="true"
+                        />
+                        <strong>{asset.name}</strong>
+                        <small>{asset.code}</small>
+                      </button>
+                    ))}
+                  </section>
                 ))
               )}
             </div>
