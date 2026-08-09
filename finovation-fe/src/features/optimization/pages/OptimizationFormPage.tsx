@@ -45,7 +45,7 @@ export default function OptimizationFormPage() {
       ? "Optimize etmek istediğiniz fonu seçin"
       : form.step === 2 && form.selectedFundSummary
         ? `${form.selectedFundSummary.name} · ${form.selectedFundSummary.stockCount} hisse · Hisse %${form.selectedFundSummary.equityWeightPercent} / TPP %${form.selectedFundSummary.tppWeightPercent} · Sistem önerir, son söz sizindir`
-        : (form.snapshot?.fund.name ??
+        : (form.snapshot?.fundName ??
           "Optimizasyon tercihlerinizi belirleyin")
 
   return (
@@ -182,7 +182,7 @@ export default function OptimizationFormPage() {
                   navigate(
                     `/optimization-requests/${createdRequestId}/running`,
                     {
-                      state: { fundName: form.snapshot?.fund.name },
+                      state: { fundName: form.snapshot?.fundName },
                     },
                   ),
                 )

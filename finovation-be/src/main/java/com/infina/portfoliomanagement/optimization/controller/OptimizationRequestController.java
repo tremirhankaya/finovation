@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.controller;
 import com.infina.portfoliomanagement.optimization.controller.docs.OptimizationRequestControllerDocs;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationFundPositionsResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
@@ -72,6 +73,17 @@ public class OptimizationRequestController implements OptimizationRequestControl
     ) {
         return ResponseEntity.ok(
                 optimizationRequestService.listByFund(userDetails.getUsername(), fundId)
+        );
+    }
+
+    @Override
+    @GetMapping("/funds/{fundId}/current-positions")
+    public ResponseEntity<OptimizationFundPositionsResponse> getCurrentPositions(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID fundId
+    ) {
+        return ResponseEntity.ok(
+                optimizationRequestService.getCurrentPositions(userDetails.getUsername(), fundId)
         );
     }
 

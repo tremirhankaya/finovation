@@ -155,11 +155,13 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
       label: "Tek hisse ağırlığı",
       status: singleStockStatus,
       detail:
-        singleStockStatus === "UYUMLU"
-          ? `Fondaki hisseler %${input.minSingleStockWeightPct.toFixed(1)}–%${input.maxSingleStockWeightPct.toFixed(1)} arasında — izahname %3–%10 aralığında`
-          : input.maxSingleStockWeightPct > SINGLE_STOCK_MAX
-            ? `Fondaki bir hissenin ağırlığı %${input.maxSingleStockWeightPct.toFixed(1)} — üst limit %10 aşılıyor`
-            : `Fondaki bir hissenin ağırlığı %${input.minSingleStockWeightPct.toFixed(1)} — alt limit %3'ün altında`,
+        input.keptAssetCount === 0
+          ? "Korunacak hisse seçilmedi"
+          : singleStockStatus === "UYUMLU"
+            ? `Korunacak hisseleriniz %${input.minSingleStockWeightPct.toFixed(1)}–%${input.maxSingleStockWeightPct.toFixed(1)} arasında — izahname %3–%10 aralığında`
+            : input.maxSingleStockWeightPct > SINGLE_STOCK_MAX
+              ? `Korumak istediğiniz bir hissenin ağırlığı %${input.maxSingleStockWeightPct.toFixed(1)} — üst limit %10 aşılıyor`
+              : `Korumak istediğiniz bir hissenin ağırlığı %${input.minSingleStockWeightPct.toFixed(1)} — alt limit %3'ün altında`,
     },
     {
       key: "forced-excluded-assets",
@@ -172,9 +174,11 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
       label: "Sektör yoğunlaşması",
       status: sectorStatus,
       detail:
-        sectorStatus === "UYUMLU"
-          ? `Fonda en yüksek sektör payı %${input.maxSectorWeightPct.toFixed(1)} — üst limit %30`
-          : `Fonda bir sektörün toplam ağırlığı %${input.maxSectorWeightPct.toFixed(1)} — üst limit %30 aşılıyor`,
+        input.keptAssetCount === 0
+          ? "Korunacak hisse seçilmedi"
+          : sectorStatus === "UYUMLU"
+            ? `Korunacak hisselerde en yüksek sektör payı %${input.maxSectorWeightPct.toFixed(1)} — üst limit %30`
+            : `Korunacak hisselerde bir sektörün toplam ağırlığı %${input.maxSectorWeightPct.toFixed(1)} — üst limit %30 aşılıyor`,
     },
   ]
 

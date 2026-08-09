@@ -3,19 +3,13 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const fundMonitoringMocks = vi.hoisted(() => ({
-  fetchFundMonitoring: vi.fn(),
-}))
 const optimizationApiMocks = vi.hoisted(() => ({
   createOptimizationRequest: vi.fn(),
   fetchInvestmentUniverse: vi.fn(),
   fetchOptimizableFunds: vi.fn(),
+  fetchOptimizationFundPositions: vi.fn(),
 }))
 
-vi.mock(
-  "@/features/fund-monitoring/api/fundMonitoringService",
-  () => fundMonitoringMocks,
-)
 vi.mock("@/features/optimization/api/optimizationApi", () => ({
   ...optimizationApiMocks,
 }))
@@ -36,14 +30,7 @@ const FUND = {
 
 function snapshot() {
   return {
-    fund: { id: FUND.id, name: FUND.name, type: "Hisse Senedi Yoğun Fon" },
-    asOfDate: "2026-08-04",
-    currency: "TRY",
-    currentSharePrice: 100,
-    dailyChangePercentage: 0,
-    priceHistory: {},
-    technicalIndicators: [],
-    periodReturns: [],
+    fundName: FUND.name,
     positions: [
       {
         assetId: "AKBNK",
@@ -53,7 +40,6 @@ function snapshot() {
         weightPercentage: 8,
       },
     ],
-    sectorAllocations: [],
   }
 }
 
@@ -93,7 +79,7 @@ async function continueToPreferencesStep(
 describe("OptimizationFormPage", () => {
   beforeEach(() => {
     optimizationApiMocks.fetchOptimizableFunds.mockReset().mockResolvedValue([FUND])
-    fundMonitoringMocks.fetchFundMonitoring
+    optimizationApiMocks.fetchOptimizationFundPositions
       .mockReset()
       .mockResolvedValue(snapshot())
     optimizationApiMocks.createOptimizationRequest.mockReset()

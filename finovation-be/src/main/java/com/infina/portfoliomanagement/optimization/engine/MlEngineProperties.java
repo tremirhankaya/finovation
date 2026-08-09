@@ -7,6 +7,7 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "fund-engine")
 public record MlEngineProperties(
         String baseUrl,
+        String apiKey,
         String expectedModelSnapshot,
         Duration connectTimeout,
         Duration readTimeout

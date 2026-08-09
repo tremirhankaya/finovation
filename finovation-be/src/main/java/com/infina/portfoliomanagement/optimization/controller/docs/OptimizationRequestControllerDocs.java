@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.controller.docs;
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationFundPositionsResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
@@ -27,7 +28,7 @@ public interface OptimizationRequestControllerDocs {
             summary = "List optimizable funds",
             description = "Returns the actor's own COMPLETED funds with an at-a-glance summary for the " +
                     "optimization fund-selection step: current stock/sector count, equity/TPP weight split " +
-                    "(from the fund's currently selected portfolio) and the date of the fund's most recent " +
+                    "(from the fund's current WORKING portfolio) and the date of the fund's most recent " +
                     "completed optimization run, if any.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
@@ -61,6 +62,18 @@ public interface OptimizationRequestControllerDocs {
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<List<OptimizationRequestResponse>> getOptimizationRequests(
+            UserDetails userDetails,
+            UUID fundId
+    );
+
+    @Operation(
+            summary = "Get a fund's current working positions",
+            description = "Returns the fund's current working portfolio weights without historical " +
+                    "revaluation. Used for the optimization preferences screen and to build the " +
+                    "current_portfolio sent to the optimization engine.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<OptimizationFundPositionsResponse> getCurrentPositions(
             UserDetails userDetails,
             UUID fundId
     );

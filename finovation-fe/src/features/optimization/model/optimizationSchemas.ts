@@ -108,6 +108,19 @@ export const optimizationLogListResponseSchema = z.array(
   optimizationLogEntryResponseSchema,
 )
 
+export const optimizationFundPositionSchema = z.object({
+  assetId: z.string(),
+  symbol: z.string(),
+  name: z.string(),
+  sectorName: z.string().nullable(),
+  weightPercentage: z.number(),
+})
+
+export const optimizationFundPositionsResponseSchema = z.object({
+  fundName: z.string(),
+  positions: z.array(optimizationFundPositionSchema),
+})
+
 export type RiskProfile = z.infer<typeof riskProfileSchema>
 export type RequestStatus = z.infer<typeof requestStatusSchema>
 export type AssetPreferenceType = z.infer<typeof assetPreferenceTypeSchema>
@@ -118,3 +131,5 @@ export type InvestmentUniverseAssetResponse = z.infer<typeof investmentUniverseA
 export type FundType = z.infer<typeof fundTypeSchema>
 export type OptimizableFundResponse = z.infer<typeof optimizableFundResponseSchema>
 export type OptimizationLogEntry = z.infer<typeof optimizationLogEntryResponseSchema>
+export type OptimizationFundPosition = z.infer<typeof optimizationFundPositionSchema>
+export type OptimizationFundPositionsResponse = z.infer<typeof optimizationFundPositionsResponseSchema>

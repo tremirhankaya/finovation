@@ -7,6 +7,8 @@ import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
+import com.infina.portfoliomanagement.fund.enums.FundType;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
@@ -25,6 +27,7 @@ import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryRespo
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultAssetResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
+import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.engine.EngineAlternative;
 import com.infina.portfoliomanagement.optimization.engine.OptimizationEngineClient;
 import com.infina.portfoliomanagement.optimization.engine.OptimizationEngineResult;
@@ -140,6 +143,58 @@ class OptimizationRequestServiceTest {
     }
 
     @Test
+    void listOptimizableFunds_buildsSummaryFromWorkingPortfolio() {
+        User actor = User.builder()
+                .id(7L)
+                .username(ACTOR_USERNAME)
+                .build();
+        FundDraft fund = FundDraft.builder()
+                .id(10L)
+                .publicId(FUND_ID)
+                .name("Güncel Fon")
+                .fundType(FundType.EQUITY_INTENSIVE)
+                .build();
+        FundPortfolio working = FundPortfolio.builder()
+                .id(20L)
+                .portfolioType(PortfolioType.WORKING)
+                .build();
+        FundPosition tppPosition = FundPosition.builder()
+                .fundPortfolio(working)
+                .assetId(101L)
+                .weight(new BigDecimal("10"))
+                .build();
+        Asset tppAsset = Asset.builder()
+                .id(101L)
+                .assetCode("TPP1G")
+                .assetType(AssetType.TPP)
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+                FundDraftStatus.COMPLETED,
+                actor.getId()
+        )).thenReturn(List.of(fund));
+        when(fundPortfolioRepository.findByFundDraft_IdAndPortfolioType(
+                fund.getId(),
+                PortfolioType.WORKING
+        )).thenReturn(Optional.of(working));
+        when(fundPositionRepository.findAllByFundPortfolioIdOrderByWeightDesc(working.getId()))
+                .thenReturn(List.of(tppPosition));
+        when(assetRepository.findAllById(List.of(101L))).thenReturn(List.of(tppAsset));
+
+        List<OptimizableFundResponse> response = service.listOptimizableFunds(ACTOR_USERNAME);
+
+        assertThat(response).singleElement().satisfies(summary -> {
+            assertThat(summary.id()).isEqualTo(FUND_ID);
+            assertThat(summary.tppWeightPercent()).isEqualByComparingTo("10");
+        });
+        verify(fundPortfolioRepository).findByFundDraft_IdAndPortfolioType(
+                fund.getId(),
+                PortfolioType.WORKING
+        );
+    }
+
+    @Test
     void run_withSuccessfulEngineResponse_persistsBalancedUtilityAlternativeAssets() {
         User actor = User.builder()
                 .id(7L)
@@ -174,6 +229,8 @@ class OptimizationRequestServiceTest {
 
         when(fundMonitoringService.getMonitoringSnapshot(ACTOR_USERNAME, FUND_ID))
                 .thenReturn(fundMonitoringResponse());
+        when(fundMonitoringService.getCurrentPositions(ACTOR_USERNAME, FUND_ID))
+                .thenReturn(fundMonitoringResponse().positions());
 
         Asset tppAsset = Asset.builder()
                 .id(99L)
@@ -289,6 +346,8 @@ class OptimizationRequestServiceTest {
         );
         when(fundMonitoringService.getMonitoringSnapshot(ACTOR_USERNAME, FUND_ID))
                 .thenReturn(currentSnapshot);
+        when(fundMonitoringService.getCurrentPositions(ACTOR_USERNAME, FUND_ID))
+                .thenReturn(currentSnapshot.positions());
 
         Asset tppAsset = Asset.builder()
                 .id(99L)
@@ -428,8 +487,14 @@ class OptimizationRequestServiceTest {
         when(fundDraftRepository.findByPublicIdAndStatus(FUND_ID, FundDraftStatus.COMPLETED))
                 .thenReturn(Optional.of(fundDraft));
 
-        FundPortfolio portfolio = FundPortfolio.builder().id(20L).build();
-        when(fundPortfolioRepository.findByFundDraftIdAndSelectedTrue(10L))
+        FundPortfolio portfolio = FundPortfolio.builder()
+                .id(20L)
+                .portfolioType(PortfolioType.WORKING)
+                .build();
+        when(fundPortfolioRepository.findByFundDraft_IdAndPortfolioType(
+                10L,
+                PortfolioType.WORKING
+        ))
                 .thenReturn(Optional.of(portfolio));
 
         Asset akbnkAsset = Asset.builder().id(101L).assetCode("AKBNK.E").assetType(AssetType.EQUITY).build();

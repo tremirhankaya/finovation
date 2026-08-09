@@ -235,14 +235,7 @@ public class FundMonitoringService {
             FundDraft fund,
             LocalDate today
     ) {
-        FundPortfolio workingPortfolio = fundPortfolioRepository
-                .findByFundDraft_IdAndPortfolioType(
-                        fund.getId(),
-                        PortfolioType.WORKING
-                )
-                .orElseThrow(() -> new BaseException(
-                        ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE
-                ));
+        FundPortfolio workingPortfolio = requireWorkingPortfolio(fund);
         List<FundPosition> portfolioPositions = fundPositionRepository
                 .findAllByFundPortfolioIdOrderByWeightDesc(workingPortfolio.getId());
         List<Long> assetIds = portfolioPositions.stream()
@@ -251,22 +244,75 @@ public class FundMonitoringService {
         List<Asset> assets = assetRepository.findAllById(assetIds);
         assertAllAssetsFound(assets, new HashSet<>(assetIds).size());
 
+        LocalDate historyStart = today.minusYears(1)
+                .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS);
         Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
                 valuationProviderRegistry.loadUnitValues(
                         assets,
-                        today.minusYears(1)
-                                .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS),
+                        historyStart,
                         today
                 );
-        FundValuationResult valuation = valuationCalculator.calculate(
+        FundValuationResult valuation = valuationCalculator.calculateBackwardsFromLatest(
                 fund,
                 portfolioPositions,
                 assets,
                 unitValuesByAsset,
-                today.minusYears(1)
-                        .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS)
+                historyStart
         );
         return new FundMonitoringCalculation(valuation, assets);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FundPositionResponse> getCurrentPositions(
+            String actorUsername,
+            UUID fundPublicId
+    ) {
+        User actor = requireActor(actorUsername);
+        FundDraft fund = fundDraftRepository
+                .findByPublicIdAndStatus(fundPublicId, FundDraftStatus.COMPLETED)
+                .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
+        accessPolicy.assertCanView(fund, actor.getId());
+
+        return workingPositions(fund);
+    }
+
+    private List<FundPositionResponse> workingPositions(FundDraft fund) {
+        FundPortfolio workingPortfolio = requireWorkingPortfolio(fund);
+        List<FundPosition> portfolioPositions = fundPositionRepository
+                .findAllByFundPortfolioIdOrderByWeightDesc(workingPortfolio.getId());
+        List<Long> assetIds = portfolioPositions.stream()
+                .map(FundPosition::getAssetId)
+                .toList();
+        List<Asset> assets = assetRepository.findAllById(assetIds);
+        Map<Long, AssetMonitoringProfile> profilesByAssetId =
+                classificationProviderRegistry.loadProfiles(assets);
+
+        return portfolioPositions.stream()
+                .map(position -> {
+                    AssetMonitoringProfile profile = requireProfile(
+                            profilesByAssetId,
+                            position.getAssetId()
+                    );
+                    return new FundPositionResponse(
+                            profile.assetId().toString(),
+                            profile.symbol(),
+                            profile.displayName(),
+                            profile.allocationGroupName(),
+                            position.getWeight()
+                    );
+                })
+                .toList();
+    }
+
+    private FundPortfolio requireWorkingPortfolio(FundDraft fund) {
+        return fundPortfolioRepository
+                .findByFundDraft_IdAndPortfolioType(
+                        fund.getId(),
+                        PortfolioType.WORKING
+                )
+                .orElseThrow(() -> new BaseException(
+                        ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE
+                ));
     }
 
     private List<FundComparisonAssetResponse> comparisonAssets(
@@ -454,4 +500,5 @@ public class FundMonitoringService {
             List<Asset> assets
     ) {
     }
+
 }
