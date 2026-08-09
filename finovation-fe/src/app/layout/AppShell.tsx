@@ -237,7 +237,7 @@ export default function AppShell() {
 
         <nav className={styles.navigation} aria-label="Ürün menüsü">
           {PRODUCT_NAVIGATION.map((item) => (
-            <NavigationLink key={item.path} item={item} />
+            <NavigationLink key={item.label} item={item} />
           ))}
         </nav>
 
