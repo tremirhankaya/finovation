@@ -311,20 +311,24 @@ public class FundDraftService {
             return List.of();
         }
 
-        Map<Long, String> companyNameByAssetId = equityDetailRepository
+        Map<Long, EquityDetail> equityDetailByAssetId = equityDetailRepository
                 .findAllByAssetIdIn(assets.stream().map(Asset::getId).toList())
                 .stream()
                 .collect(Collectors.toMap(
                         EquityDetail::getAssetId,
-                        EquityDetail::getCompanyName,
+                        detail -> detail,
                         (left, right) -> left
                 ));
 
         cachedModelUniverse = assets.stream()
-                .map(asset -> new ModelUniverseAssetResponse(
-                        asset.getAssetCode(),
-                        resolveDisplayName(asset, companyNameByAssetId.get(asset.getId()))
-                ))
+                .map(asset -> {
+                    EquityDetail detail = equityDetailByAssetId.get(asset.getId());
+                    return new ModelUniverseAssetResponse(
+                            asset.getAssetCode(),
+                            resolveDisplayName(asset, detail != null ? detail.getCompanyName() : null),
+                            detail != null && detail.getSector() != null ? detail.getSector().getName() : null
+                    );
+                })
                 .toList();
         return cachedModelUniverse;
     }
