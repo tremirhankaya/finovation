@@ -109,7 +109,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("5"),
                 new BigDecimal("15"),
                 16,
-                35
+                30,
+                3
         );
     }
 
@@ -158,7 +159,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("2"),
                 new BigDecimal("15"),
                 16,
-                35
+                30,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
@@ -176,7 +178,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("5"),
                 new BigDecimal("15"),
                 16,
-                35
+                30,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
@@ -197,7 +200,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("5"),
                 new BigDecimal("15"),
                 16,
-                35
+                30,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
@@ -219,7 +223,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("5"),
                 new BigDecimal("15"),
                 16,
-                21
+                21,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
@@ -240,7 +245,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("5"),
                 new BigDecimal("15"),
                 16,
-                35
+                30,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
@@ -258,7 +264,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("10"),
                 new BigDecimal("12"),
                 16,
-                35
+                30,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
@@ -276,7 +283,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("5"),
                 new BigDecimal("15"),
                 16,
-                19
+                19,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))
@@ -294,7 +302,8 @@ class OptimizationRequestServiceIntegrationTest extends AbstractIntegrationTest 
                 new BigDecimal("5"),
                 new BigDecimal("15"),
                 10,
-                30
+                30,
+                3
         );
 
         assertThatThrownBy(() -> optimizationRequestService.create(FUND_MANAGER_USERNAME, invalid))

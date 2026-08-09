@@ -3,8 +3,13 @@ package com.infina.portfoliomanagement.optimization.engine;
 import java.util.List;
 
 public record OptimizationEngineResult(
-        List<EngineProposedAsset> proposedAssets,
-        List<EngineConstraintEvaluation> constraintEvaluations,
-        String modelVersion
+        String requestId,
+        String snapshotId,
+        String systemDate,
+        String forecastOrigin,
+        String modelBundleId,
+        String policyConfigId,
+        double processingTimeMs,
+        List<EngineAlternative> alternatives
 ) {
 }

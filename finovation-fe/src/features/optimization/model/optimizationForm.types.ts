@@ -5,6 +5,18 @@ export type UniverseAsset = {
   sectorName: string | null
 }
 
+export type OptimizableFund = {
+  id: string
+  name: string
+  typeLabel: string
+  active: boolean
+  lastOptimizationDate: string | null
+  stockCount: number
+  sectorCount: number
+  equityWeightPercent: number
+  tppWeightPercent: number
+}
+
 export type AssetSelectionType = "KEEP" | "EXCLUDE" | "FORCE_ADD"
 
 export type AssetSelectionMap = Partial<Record<string, AssetSelectionType>>

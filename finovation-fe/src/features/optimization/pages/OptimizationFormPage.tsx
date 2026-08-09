@@ -38,17 +38,33 @@ export default function OptimizationFormPage() {
   const hasNoFunds =
     !form.isLoadingFunds && !form.loadErrorMessage && form.funds.length === 0
 
+  const headerTitle = form.step === 2 ? "Optimizasyon Tercihleri" : "Fon Optimizasyonu"
+
+  const headerSubtitle =
+    form.step === 1
+      ? "Optimize etmek istediğiniz fonu seçin"
+      : form.step === 2 && form.selectedFundSummary
+        ? `${form.selectedFundSummary.name} · ${form.selectedFundSummary.stockCount} hisse · Hisse %${form.selectedFundSummary.equityWeightPercent} / TPP %${form.selectedFundSummary.tppWeightPercent} · Sistem önerir, son söz sizindir`
+        : (form.snapshot?.fund.name ??
+          "Optimizasyon tercihlerinizi belirleyin")
+
   return (
     <main className={styles.page}>
       <div className={styles.wizardShell}>
         <header className={styles.header}>
-          <h1>Fon Optimizasyonu</h1>
-          <p className={styles.subtitle}>
-            {form.step === 1
-              ? "Optimize etmek istediğiniz fonu seçin"
-              : (form.snapshot?.fund.name ??
-                "Optimizasyon tercihlerinizi belirleyin")}
-          </p>
+          <div>
+            <h1>{headerTitle}</h1>
+            <p className={styles.subtitle}>{headerSubtitle}</p>
+          </div>
+          {form.step === 2 && (
+            <button
+              type="button"
+              className={styles.changeFundButton}
+              onClick={form.goToFundSelection}
+            >
+              Fon Değiştir
+            </button>
+          )}
         </header>
 
         <OptimizationWizardSteps currentStep={form.step} />
@@ -69,14 +85,6 @@ export default function OptimizationFormPage() {
         ) : (
           <div className={styles.layout}>
             <div className={styles.main}>
-              <button
-                type="button"
-                className={styles.backLink}
-                onClick={form.goToFundSelection}
-              >
-                ← Fon seçimine dön
-              </button>
-
               {form.isLoading && (
                 <div className={styles.loadingBanner} role="status">
                   Fon verileri yükleniyor…
@@ -125,7 +133,7 @@ export default function OptimizationFormPage() {
 
                 <AssetTogglePanel
                   title="D · Zorunlu Eklenecek Hisseler"
-                  description="İşaretlenen hisse portföye mutlaka girer; sistem her biri için en az %1 ağırlık ayırır."
+                  description="İşaretlenen hisse portföye mutlaka girer; sistem her biri için en az %3 ağırlık ayırır."
                   assets={form.universeAssets}
                   selectedAssetCodes={forceAddedAssetCodes}
                   disabledAssetCodes={excludedAssetCodes}
@@ -146,6 +154,7 @@ export default function OptimizationFormPage() {
                   floor={5}
                   ceiling={15}
                   minWidth={3}
+                  inputPrefix="%"
                   onMinChange={form.setTppMinWeight}
                   onMaxChange={form.setTppMaxWeight}
                   hint="İzahname: TPP ağırlığı %5 ile %15 arasında · aralık genişliği en az 3 puan"

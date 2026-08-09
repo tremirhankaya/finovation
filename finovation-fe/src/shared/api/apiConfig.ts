@@ -147,12 +147,24 @@ export function getOptimizationRequestsUrl(fundId?: string): string {
   return fundId == null ? base : `${base}?fundId=${encodeURIComponent(fundId)}`
 }
 
+export function getOptimizableFundsUrl(): string {
+  return `${buildUrl(API_PATHS.optimizationRequests)}/funds`
+}
+
+export function getOptimizationLogsUrl(): string {
+  return `${buildUrl(API_PATHS.optimizationRequests)}/logs`
+}
+
 export function getOptimizationRequestUrl(requestId: number): string {
   return `${buildUrl(API_PATHS.optimizationRequests)}/${requestId}`
 }
 
 export function getOptimizationRequestRunUrl(requestId: number): string {
   return `${getOptimizationRequestUrl(requestId)}/run`
+}
+
+export function getOptimizationRequestResultUrl(requestId: number): string {
+  return `${getOptimizationRequestUrl(requestId)}/result`
 }
 
 export function getOptimizationRequestApproveUrl(requestId: number): string {

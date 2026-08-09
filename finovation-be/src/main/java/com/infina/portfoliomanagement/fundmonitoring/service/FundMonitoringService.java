@@ -38,6 +38,7 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -156,6 +157,65 @@ public class FundMonitoringService {
                         ),
                         benchmarks.comparisonAssets()
                 )
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<FundMonitoringResponse.TechnicalIndicatorResponse> computeMetricsForWeights(
+            String actorUsername,
+            UUID fundPublicId,
+            Map<String, BigDecimal> weightsByAssetCode
+    ) {
+        User actor = requireActor(actorUsername);
+        FundDraft fund = fundDraftRepository
+                .findByPublicIdAndStatus(fundPublicId, FundDraftStatus.COMPLETED)
+                .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
+        accessPolicy.assertCanView(fund, actor.getId());
+
+        List<Asset> assets = assetRepository.findAllByAssetCodeIn(
+                new ArrayList<>(weightsByAssetCode.keySet())
+        );
+        assertAllAssetsFound(assets, weightsByAssetCode.size());
+
+        Map<String, Asset> assetsByCode = assets.stream()
+                .collect(Collectors.toMap(Asset::getAssetCode, asset -> asset));
+
+        BigDecimal totalWeight = weightsByAssetCode.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        LocalDate now = LocalDate.now(clock);
+        LocalDate historyStart = now.minusYears(1).minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS);
+
+        List<FundPosition> syntheticPositions = weightsByAssetCode.entrySet().stream()
+                .map(entry -> FundPosition.builder()
+                        .assetId(assetsByCode.get(entry.getKey()).getId())
+                        .weight(
+                                entry.getValue()
+                                        .multiply(new BigDecimal("100"))
+                                        .divide(totalWeight, 6, RoundingMode.HALF_UP)
+                        )
+                        .build())
+                .toList();
+
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
+                valuationProviderRegistry.loadUnitValues(assets, historyStart, now);
+        FundValuationResult valuation = valuationCalculator.calculate(
+                fund,
+                syntheticPositions,
+                assets,
+                unitValuesByAsset,
+                historyStart
+        );
+
+        FundValuationPoint latest = valuation.latestPoint();
+        BenchmarkSnapshot benchmarks = benchmarkService.load(latest.date());
+        BigDecimal annualRiskFreeRate = riskFreeRateProvider.annualRate(latest.date());
+
+        return metricCalculator.technicalIndicators(
+                valuation.points(),
+                benchmarks.benchmarkValues(),
+                annualRiskFreeRate,
+                BigDecimal.ZERO
         );
     }
 

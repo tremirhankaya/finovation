@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
+import { StrictMode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const apiMocks = vi.hoisted(() => ({
@@ -99,5 +100,23 @@ describe("useOptimizationRun", () => {
       expect(result.current.request?.status).toBe("COMPLETED"),
     )
     expect(apiMocks.runOptimizationRequest).toHaveBeenCalledTimes(2)
+  })
+
+  it("StrictMode çift-invoke ile aynı isteği iki kere çalıştırmaz", async () => {
+    apiMocks.fetchOptimizationRequest.mockResolvedValue(PREPARING_REQUEST)
+    apiMocks.runOptimizationRequest.mockResolvedValue({
+      ...PREPARING_REQUEST,
+      status: "COMPLETED",
+    })
+
+    const { result } = renderHook(() => useOptimizationRun(1), {
+      wrapper: StrictMode,
+    })
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(apiMocks.runOptimizationRequest).toHaveBeenCalledTimes(1)
+    expect(result.current.request?.status).toBe("COMPLETED")
+    expect(result.current.errorMessage).toBe("")
   })
 })

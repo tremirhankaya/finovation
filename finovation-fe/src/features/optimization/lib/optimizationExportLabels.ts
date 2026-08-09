@@ -1,5 +1,5 @@
 export const RISK_PROFILE_LABELS: Record<string, string> = {
-  AGGRESSIVE: "Atak",
+  AGGRESSIVE: "Agresif",
   BALANCED: "Dengeli",
   CONSERVATIVE: "Korumacı",
 }
@@ -21,6 +21,15 @@ export const ACTION_TYPE_LABELS: Record<string, string> = {
   INCREASE: "Artırıldı",
   DECREASE: "Azaltıldı",
   KEEP: "Korundu",
+}
+
+export const REQUEST_STATUS_LABELS: Record<string, string> = {
+  PREPARING: "Hazırlanıyor",
+  RUNNING: "Çalışıyor",
+  COMPLETED: "Tamamlandı",
+  FAILED: "Başarısız",
+  APPROVED: "Onaylandı",
+  REJECTED: "Reddedildi",
 }
 
 export function formatDateTime(value: string | null): string {

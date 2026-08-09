@@ -4,113 +4,180 @@ import { describe, expect, it, vi } from "vitest"
 import DualRangeSlider from "@/features/optimization/components/DualRangeSlider"
 
 describe("DualRangeSlider", () => {
-  it("uç noktalardaki değer baloncuklarını gösterir", () => {
+  it("min ve maks değerlerini metin alanlarında gösterir", () => {
     render(
       <DualRangeSlider
-        label="Hisse Sayısı Aralığı"
+        id="stock-count"
         min={16}
-        max={35}
-        floor={16}
-        ceiling={35}
-        onMinChange={vi.fn()}
-        onMaxChange={vi.fn()}
+        max={30}
+        valueMin={16}
+        valueMax={30}
+        onChange={vi.fn()}
       />,
     )
 
-    expect(screen.getAllByText("16")).toHaveLength(2)
-    expect(screen.getAllByText("35")).toHaveLength(2)
+    expect(screen.getByRole("textbox", { name: "Minimum" })).toHaveValue("16")
+    expect(screen.getByRole("textbox", { name: "Maksimum" })).toHaveValue("30")
   })
 
-  it("ara tik değerlerini eşit aralıklarla hesaplayıp gösterir", () => {
+  it("alt sınırları gösterir", () => {
     render(
       <DualRangeSlider
-        label="TPP Ağırlık Aralığı (%)"
+        id="tpp"
         min={5}
         max={15}
-        floor={5}
-        ceiling={15}
-        onMinChange={vi.fn()}
-        onMaxChange={vi.fn()}
+        valueMin={5}
+        valueMax={15}
+        inputPrefix="%"
+        formatBound={(value) => `%${value}`}
+        onChange={vi.fn()}
       />,
     )
 
-    expect(screen.getByText("7.5")).toBeInTheDocument()
-    expect(screen.getByText("10")).toBeInTheDocument()
-    expect(screen.getByText("12.5")).toBeInTheDocument()
+    expect(screen.getByText("%5")).toBeInTheDocument()
+    expect(screen.getByText("%15")).toBeInTheDocument()
   })
 
-  it("minimum kaydırıcı maksimumu geçemez", () => {
-    const onMinChange = vi.fn()
+  it("minimum kaydırıcı sürüklenince onChange'i yeni min ile çağırır", () => {
+    const onChange = vi.fn()
 
     render(
       <DualRangeSlider
-        label="Hisse Sayısı Aralığı"
+        id="stock-count"
         min={16}
-        max={20}
-        floor={16}
-        ceiling={35}
-        onMinChange={onMinChange}
-        onMaxChange={vi.fn()}
+        max={30}
+        valueMin={16}
+        valueMax={30}
+        minGap={5}
+        onChange={onChange}
       />,
     )
 
-    const minSlider = screen.getByRole("slider", {
-      name: "Hisse Sayısı Aralığı minimum kaydırıcı",
+    fireEvent.change(screen.getByRole("slider", { name: "Minimum kaydırıcı" }), {
+      target: { value: "20" },
     })
-    fireEvent.change(minSlider, { target: { value: "34" } })
 
-    expect(onMinChange).toHaveBeenCalledWith(19)
+    expect(onChange).toHaveBeenCalledWith({ min: 20, max: 30 })
   })
 
-  it("maksimum kaydırıcı minimumun altına inemez", () => {
-    const onMaxChange = vi.fn()
+  it("maksimum kaydırıcı minimum boşluğun altına inince minimumu da öteler", () => {
+    const onChange = vi.fn()
 
     render(
       <DualRangeSlider
-        label="Hisse Sayısı Aralığı"
-        min={30}
-        max={35}
-        floor={16}
-        ceiling={35}
-        onMinChange={vi.fn()}
-        onMaxChange={onMaxChange}
+        id="stock-count"
+        min={16}
+        max={30}
+        valueMin={20}
+        valueMax={25}
+        minGap={5}
+        onChange={onChange}
       />,
     )
 
-    const maxSlider = screen.getByRole("slider", {
-      name: "Hisse Sayısı Aralığı maksimum kaydırıcı",
+    fireEvent.change(screen.getByRole("slider", { name: "Maksimum kaydırıcı" }), {
+      target: { value: "22" },
     })
-    fireEvent.change(maxSlider, { target: { value: "17" } })
 
-    expect(onMaxChange).toHaveBeenCalledWith(31)
+    expect(onChange).toHaveBeenCalledWith({ min: 17, max: 22 })
   })
 
-  it("tutamaçlar yakınlaştığında az önce basılan tutamacı öne getirir", () => {
+  it("maksimum tutamaç varsayılan olarak minimumun önündedir", () => {
     render(
       <DualRangeSlider
-        label="TPP Ağırlık Aralığı (%)"
-        min={6}
-        max={9}
-        floor={5}
-        ceiling={15}
-        onMinChange={vi.fn()}
-        onMaxChange={vi.fn()}
+        id="tpp"
+        min={5}
+        max={15}
+        valueMin={6}
+        valueMax={9}
+        onChange={vi.fn()}
       />,
     )
 
-    const minSlider = screen.getByRole("slider", {
-      name: "TPP Ağırlık Aralığı (%) minimum kaydırıcı",
-    })
-    const maxSlider = screen.getByRole("slider", {
-      name: "TPP Ağırlık Aralığı (%) maksimum kaydırıcı",
-    })
+    const minSlider = screen.getByRole("slider", { name: "Minimum kaydırıcı" })
+    const maxSlider = screen.getByRole("slider", { name: "Maksimum kaydırıcı" })
 
-    fireEvent.pointerDown(minSlider)
+    expect(maxSlider).toHaveStyle({ zIndex: "4" })
     expect(minSlider).toHaveStyle({ zIndex: "3" })
-    expect(maxSlider).toHaveStyle({ zIndex: "1" })
+  })
 
-    fireEvent.pointerDown(maxSlider)
-    expect(maxSlider).toHaveStyle({ zIndex: "3" })
-    expect(minSlider).toHaveStyle({ zIndex: "2" })
+  it("minimum tavana yaklaşınca minimum öne geçer", () => {
+    render(
+      <DualRangeSlider
+        id="tpp"
+        min={5}
+        max={15}
+        valueMin={14.5}
+        valueMax={15}
+        onChange={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByRole("slider", { name: "Minimum kaydırıcı" }),
+    ).toHaveStyle({ zIndex: "5" })
+  })
+
+  it("verilen özel ipucu metnini gösterir", () => {
+    render(
+      <DualRangeSlider
+        id="tpp"
+        min={5}
+        max={15}
+        valueMin={5}
+        valueMax={15}
+        hint="İzahname: TPP ağırlığı %5 ile %15 arasında"
+        onChange={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByText("İzahname: TPP ağırlığı %5 ile %15 arasında"),
+    ).toBeInTheDocument()
+  })
+
+  it("minimum alanına yazıp onaylayınca (blur) onChange'i çağırır", () => {
+    const onChange = vi.fn()
+
+    render(
+      <DualRangeSlider
+        id="stock-count"
+        min={16}
+        max={30}
+        valueMin={16}
+        valueMax={30}
+        minGap={5}
+        onChange={onChange}
+      />,
+    )
+
+    const minInput = screen.getByRole("textbox", { name: "Minimum" })
+    fireEvent.change(minInput, { target: { value: "18" } })
+    fireEvent.blur(minInput)
+
+    expect(onChange).toHaveBeenCalledWith({ min: 18, max: 30 })
+  })
+
+  it("geçersiz minimum değeri onaylanınca eski değere döner", () => {
+    const onChange = vi.fn()
+
+    render(
+      <DualRangeSlider
+        id="stock-count"
+        min={16}
+        max={30}
+        valueMin={16}
+        valueMax={30}
+        minGap={5}
+        onChange={onChange}
+      />,
+    )
+
+    const minInput = screen.getByRole("textbox", { name: "Minimum" })
+    fireEvent.change(minInput, { target: { value: "100" } })
+    fireEvent.blur(minInput)
+
+    expect(onChange).not.toHaveBeenCalled()
+    expect(minInput).toHaveValue("16")
   })
 })

@@ -4,21 +4,25 @@ import styles from "@/features/optimization/styles/OptimizationFormPage.module.c
 const RISK_PROFILE_OPTIONS: Array<{
   value: RiskProfile
   label: string
+  emoji: string
   description: string
 }> = [
   {
     value: "AGGRESSIVE",
-    label: "Atak",
+    label: "Agresif",
+    emoji: "😤",
     description: "Kısa dönem hareketlerine daha hızlı tepki verir",
   },
   {
     value: "BALANCED",
     label: "Dengeli",
+    emoji: "⚖️",
     description: "Güncel fırsatlarla kalıcı eğilimleri birlikte değerlendirir",
   },
   {
     value: "CONSERVATIVE",
     label: "Korumacı",
+    emoji: "😇",
     description: "Kısa dalgalanmalar yerine kalıcı eğilimlere ağırlık verir",
   },
 ]
@@ -51,7 +55,9 @@ export default function RiskProfilePanel({
             }`}
             onClick={() => onChange(option.value)}
           >
-            <span className={styles.riskOptionLabel}>{option.label}</span>
+            <span className={styles.riskOptionLabel}>
+              <span aria-hidden="true">{option.emoji}</span> {option.label}
+            </span>
             <span className={styles.riskOptionDescription}>
               {option.description}
             </span>
