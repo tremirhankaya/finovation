@@ -1,6 +1,7 @@
 import {
   getInvestmentUniverseUrl,
   getOptimizableFundsUrl,
+  getOptimizationLogsUrl,
   getOptimizationRequestApproveUrl,
   getOptimizationRequestRejectUrl,
   getOptimizationRequestResultUrl,
@@ -13,9 +14,11 @@ import {
   type CreateOptimizationRequestPayload,
   type InvestmentUniverseAssetResponse,
   type OptimizableFundResponse,
+  type OptimizationLogEntry,
   type OptimizationRequestResponse,
   investmentUniverseResponseSchema,
   optimizableFundListResponseSchema,
+  optimizationLogListResponseSchema,
   optimizationRequestListResponseSchema,
   optimizationRequestResponseSchema,
 } from "@/features/optimization/model/optimizationSchemas"
@@ -139,6 +142,19 @@ export async function rejectOptimizationRequest(
       errorMessage: "Optimizasyon sonucu reddedilemedi",
     },
     optimizationRequestResponseSchema.parse,
+  )
+}
+
+export async function fetchOptimizationLogs(
+  signal?: AbortSignal,
+): Promise<OptimizationLogEntry[]> {
+  return apiFetch(
+    getOptimizationLogsUrl(),
+    {
+      errorMessage: "İşlem logları alınamadı",
+      signal,
+    },
+    optimizationLogListResponseSchema.parse,
   )
 }
 

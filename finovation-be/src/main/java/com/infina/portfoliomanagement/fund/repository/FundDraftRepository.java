@@ -23,4 +23,6 @@ public interface FundDraftRepository extends JpaRepository<FundDraft, Long> {
             UUID publicId,
             FundDraftStatus status
     );
+
+    List<FundDraft> findAllByPublicIdIn(List<UUID> publicIds);
 }

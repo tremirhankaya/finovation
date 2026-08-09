@@ -5,6 +5,7 @@ import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -25,8 +26,8 @@ public class HttpOptimizationEngineClient implements OptimizationEngineClient {
     private final MlEngineProperties properties;
 
     public HttpOptimizationEngineClient(
-            RestClient mlEngineHttpClient,
-            ObjectMapper mlEngineObjectMapper,
+            @Qualifier("mlEngineHttpClient") RestClient mlEngineHttpClient,
+            @Qualifier("mlEngineObjectMapper") ObjectMapper mlEngineObjectMapper,
             MlEngineProperties properties
     ) {
         this.mlEngineHttpClient = mlEngineHttpClient;
@@ -111,8 +112,8 @@ public class HttpOptimizationEngineClient implements OptimizationEngineClient {
         }
 
         log.error(
-                "Fund engine optimize failed: status={}, code={}, requestId={}",
-                e.getStatusCode(), engineErrorCode, requestId
+                "Fund engine optimize failed: status={}, code={}, message={}, requestId={}, body={}",
+                e.getStatusCode(), engineErrorCode, engineErrorMessage, requestId, responseBodyText
         );
 
         if (engineErrorCode == null) {

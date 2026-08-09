@@ -30,6 +30,12 @@ vi.mock("@/features/optimization/lib/optimizationExcelExport", () => ({
   ...excelExportMocks,
 }))
 
+const useAuthMock = vi.hoisted(() => vi.fn())
+
+vi.mock("@/features/auth/context/AuthContext", () => ({
+  useAuth: useAuthMock,
+}))
+
 import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
 
 const COMPLETED_REQUEST = {
@@ -143,8 +149,20 @@ function renderPage(fundName?: string) {
           path="/optimization-requests/:requestId/running"
           element={<div>Çalıştırma ekranı</div>}
         />
+        <Route path="/fund-monitoring" element={<div>Fon izleme</div>} />
       </Routes>
     </MemoryRouter>,
+  )
+}
+
+async function goToCriteriaScreen(user: ReturnType<typeof userEvent.setup>) {
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Portföy Kriterlerini Gör" }),
+    ).toBeInTheDocument(),
+  )
+  await user.click(
+    screen.getByRole("button", { name: "Portföy Kriterlerini Gör" }),
   )
 }
 
@@ -160,6 +178,10 @@ describe("OptimizationResultPage", () => {
     optimizationApiMocks.rejectOptimizationRequest.mockReset()
     pdfExportMocks.downloadOptimizationResultPdf.mockReset()
     excelExportMocks.downloadOptimizationResultExcel.mockReset()
+    useAuthMock.mockReset().mockReturnValue({
+      user: { username: "fon-yoneticisi", firstName: "Sefa", lastName: "Ecir" },
+      signOut: vi.fn(),
+    })
   })
 
   it("yüklenirken durum bandını gösterir", () => {
@@ -184,49 +206,63 @@ describe("OptimizationResultPage", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("RUNNING")
   })
 
-  it("3. adımda karşılaştırma tablosunu ve gerekçe panelini gösterir", async () => {
+  it("3. adımda karşılaştırma tablosunu ve aksiyon butonlarını gösterir", async () => {
     renderPage()
 
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /Varlık Bazlı Karşılaştırma/ }),
+        screen.getByRole("heading", { name: /Mevcut vs\. Optimize Edilmiş/ }),
       ).toBeInTheDocument(),
     )
     expect(
-      screen.getByRole("heading", {
-        name: /Portföy Kriterleri ve Gerekçeler/,
-      }),
+      screen.getByRole("button", { name: "Portföy Kriterlerini Gör" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Tercihleri Değiştir" }),
     ).toBeInTheDocument()
   })
 
   it("fundName state'te yoksa ham fon ID'sini gösterir", async () => {
     renderPage()
 
-    await waitFor(() => expect(screen.getByText(/Fon #42/)).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getAllByText(/Fon #42/).length).toBeGreaterThan(0),
+    )
   })
 
   it("fundName state'ten geldiğinde ham fon ID'si yerine onu gösterir", async () => {
     renderPage("Deneme Hisse Fonu")
 
     await waitFor(() =>
-      expect(screen.getByText(/Deneme Hisse Fonu/)).toBeInTheDocument(),
+      expect(screen.getAllByText(/Deneme Hisse Fonu/).length).toBeGreaterThan(0),
     )
     expect(screen.queryByText(/Fon #42/)).not.toBeInTheDocument()
   })
 
-  it("onaya ilerle ile 4. adıma geçer", async () => {
+  it("tercihleri değiştir butonu forma geri döner", async () => {
     const user = userEvent.setup()
     renderPage()
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
+        screen.getByRole("button", { name: "Tercihleri Değiştir" }),
       ).toBeInTheDocument(),
     )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
+    await user.click(screen.getByRole("button", { name: "Tercihleri Değiştir" }))
+
+    expect(screen.getByText("Yeni optimizasyon")).toBeInTheDocument()
+  })
+
+  it("portföy kriterlerini gör ile kriter ekranına geçer", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await goToCriteriaScreen(user)
 
     expect(
-      screen.getByRole("heading", { name: "Onay Özeti" }),
+      screen.getByRole("heading", {
+        name: /Portföy Kriterleri ve Model Gerekçeleri/,
+      }),
     ).toBeInTheDocument()
   })
 
@@ -235,41 +271,27 @@ describe("OptimizationResultPage", () => {
     optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({})
     renderPage()
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
-      ).toBeInTheDocument(),
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Portföyü Onayla ve Güncelle" }),
     )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
-    await user.click(screen.getByRole("button", { name: "Onayla" }))
 
     await waitFor(() =>
-      expect(screen.getByText("Optimizasyon Onaylandı")).toBeInTheDocument(),
+      expect(screen.getByText("Optimizasyon Tamamlandı")).toBeInTheDocument(),
     )
     expect(
       optimizationApiMocks.approveOptimizationRequest,
     ).toHaveBeenCalledWith(1, [])
   })
 
-  it("onaylayınca PDF İndir butonunu gösterir ve tıklanınca export'u tetikler", async () => {
+  it("kriter ekranında PDF olarak indir butonuna tıklanınca export'u tetikler", async () => {
     const user = userEvent.setup()
-    optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({})
     renderPage("Finovation Atlas Fonu")
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
-      ).toBeInTheDocument(),
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "↓ Analizi PDF Olarak İndir" }),
     )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
-    await user.click(screen.getByRole("button", { name: "Onayla" }))
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "PDF İndir" }),
-      ).toBeInTheDocument(),
-    )
-    await user.click(screen.getByRole("button", { name: "PDF İndir" }))
 
     await waitFor(() =>
       expect(pdfExportMocks.downloadOptimizationResultPdf).toHaveBeenCalledWith(
@@ -281,25 +303,14 @@ describe("OptimizationResultPage", () => {
     )
   })
 
-  it("onaylayınca Excel İndir butonunu gösterir ve tıklanınca export'u tetikler", async () => {
+  it("kriter ekranında Excel olarak indir butonuna tıklanınca export'u tetikler", async () => {
     const user = userEvent.setup()
-    optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({})
     renderPage("Finovation Atlas Fonu")
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
-      ).toBeInTheDocument(),
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "↓ Excel Olarak İndir" }),
     )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
-    await user.click(screen.getByRole("button", { name: "Onayla" }))
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Excel İndir" }),
-      ).toBeInTheDocument(),
-    )
-    await user.click(screen.getByRole("button", { name: "Excel İndir" }))
 
     await waitFor(() =>
       expect(
@@ -313,28 +324,24 @@ describe("OptimizationResultPage", () => {
     )
   })
 
-  it("reddedince başarı ekranını farklı metinle gösterir ve PDF/Excel İndir butonlarını göstermez", async () => {
+  it("iptal edince başarı ekranını farklı metinle gösterir", async () => {
     const user = userEvent.setup()
     optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
     renderPage()
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
-      ).toBeInTheDocument(),
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
     )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
-    await user.click(screen.getByRole("button", { name: "Reddet" }))
+    await user.click(
+      screen.getByRole("button", {
+        name: "Emin misiniz? · İptal Etmek İçin Tıklayın",
+      }),
+    )
 
     await waitFor(() =>
       expect(screen.getByText("Optimizasyon Reddedildi")).toBeInTheDocument(),
     )
-    expect(
-      screen.queryByRole("button", { name: "PDF İndir" }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole("button", { name: "Excel İndir" }),
-    ).not.toBeInTheDocument()
   })
 
   it("onay hata verdiğinde hata bandını gösterir", async () => {
@@ -344,32 +351,25 @@ describe("OptimizationResultPage", () => {
     )
     renderPage()
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
-      ).toBeInTheDocument(),
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Portföyü Onayla ve Güncelle" }),
     )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
-    await user.click(screen.getByRole("button", { name: "Onayla" }))
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument())
   })
 
-  it("sonuca dön butonu 3. adıma geri döner", async () => {
+  it("ağırlıkları düzenle karşılaştırma ekranına düzenlenebilir modda döner", async () => {
     const user = userEvent.setup()
     renderPage()
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
-      ).toBeInTheDocument(),
-    )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
-    await user.click(screen.getByRole("button", { name: "← Sonuca Dön" }))
+    await goToCriteriaScreen(user)
+    await user.click(screen.getByRole("button", { name: "Ağırlıkları Düzenle" }))
 
     expect(
-      screen.getByRole("heading", { name: /Varlık Bazlı Karşılaştırma/ }),
+      screen.getByRole("heading", { name: /Mevcut vs\. Optimize Edilmiş/ }),
     ).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/final ağırlığı/).length).toBeGreaterThan(0)
   })
 
   it("istek zaten APPROVED ise doğrudan başarı ekranını gösterir", async () => {
@@ -380,25 +380,22 @@ describe("OptimizationResultPage", () => {
     renderPage()
 
     await waitFor(() =>
-      expect(screen.getByText("Optimizasyon Onaylandı")).toBeInTheDocument(),
+      expect(screen.getByText("Optimizasyon Tamamlandı")).toBeInTheDocument(),
     )
   })
 
-  it("kısıt metriği kırmızıysa Onayla butonunu devre dışı bırakır", async () => {
+  it("kısıt metriği kırmızıysa Portföyü Onayla ve Güncelle butonunu devre dışı bırakır", async () => {
     const user = userEvent.setup()
     optimizationApiMocks.fetchOptimizationResult.mockResolvedValue(
       RED_SECTOR_RESULT,
     )
     renderPage()
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Onaya İlerle →" }),
-      ).toBeInTheDocument(),
-    )
-    await user.click(screen.getByRole("button", { name: "Onaya İlerle →" }))
+    await goToCriteriaScreen(user)
 
-    expect(screen.getByRole("button", { name: "Onayla" })).toBeDisabled()
+    expect(
+      screen.getByRole("button", { name: "Portföyü Onayla ve Güncelle" }),
+    ).toBeDisabled()
     expect(
       screen.getByText(/Kısıt metriklerinden en az biri kırmızı durumda/),
     ).toBeInTheDocument()

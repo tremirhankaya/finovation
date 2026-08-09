@@ -111,17 +111,17 @@ describe("useOptimizationForm", () => {
 
     act(() => result.current.setRiskProfile("AGGRESSIVE"))
 
-    expect(result.current.tppMinWeight).toBe(10)
-    expect(result.current.tppMaxWeight).toBe(14)
-    expect(result.current.stockCountMin).toBe(16)
-    expect(result.current.stockCountMax).toBe(21)
-
-    act(() => result.current.setRiskProfile("CONSERVATIVE"))
-
     expect(result.current.tppMinWeight).toBe(5)
     expect(result.current.tppMaxWeight).toBe(10)
     expect(result.current.stockCountMin).toBe(25)
     expect(result.current.stockCountMax).toBe(30)
+
+    act(() => result.current.setRiskProfile("CONSERVATIVE"))
+
+    expect(result.current.tppMinWeight).toBe(10)
+    expect(result.current.tppMaxWeight).toBe(15)
+    expect(result.current.stockCountMin).toBe(16)
+    expect(result.current.stockCountMax).toBe(21)
   })
 
   it("varsayılan aralıklarla uyumluluk durumu geçerlidir ve gönderime izin verir", async () => {

@@ -32,6 +32,7 @@ const DEFAULT_CONSTRAINTS = getSuggestedConstraints(DEFAULT_RISK_PROFILE)
 const DEFAULT_MAX_ADDITIONS = 3
 const MAX_ADDITIONS_FLOOR = 0
 const MAX_ADDITIONS_CEILING = 30
+const TPP_ASSET_SYMBOL = "TPP1G"
 
 export function useOptimizationForm() {
   const [step, setStep] = useState<WizardStep>(1)
@@ -209,18 +210,41 @@ export function useOptimizationForm() {
     [funds, selectedFundId],
   )
 
-  const maxKeptSingleStockWeightPct = useMemo(
+  // The engine validates current_portfolio in full — every position the fund
+  // currently holds, regardless of Koru/Zorunlu/Hariç selection — against the
+  // fixed %3-10 single-stock and %30 sector rules. The panel mirrors that same
+  // full scope so it catches violations before the engine does.
+  const currentEquityPositions = useMemo(
     () =>
-      keptAssets.reduce(
+      (snapshot?.positions ?? []).filter(
+        (position) => position.symbol !== TPP_ASSET_SYMBOL,
+      ),
+    [snapshot],
+  )
+
+  const maxSingleStockWeightPct = useMemo(
+    () =>
+      currentEquityPositions.reduce(
         (max, asset) => Math.max(max, asset.weightPercentage),
         0,
       ),
-    [keptAssets],
+    [currentEquityPositions],
   )
 
-  const maxKeptSectorWeightPct = useMemo(() => {
+  const minSingleStockWeightPct = useMemo(
+    () =>
+      currentEquityPositions.length === 0
+        ? 0
+        : currentEquityPositions.reduce(
+            (min, asset) => Math.min(min, asset.weightPercentage),
+            Infinity,
+          ),
+    [currentEquityPositions],
+  )
+
+  const maxSectorWeightPct = useMemo(() => {
     const weightBySector = new Map<string, number>()
-    for (const asset of keptAssets) {
+    for (const asset of currentEquityPositions) {
       const sectorName = asset.sectorName ?? "Bilinmeyen sektör"
       weightBySector.set(
         sectorName,
@@ -228,7 +252,7 @@ export function useOptimizationForm() {
       )
     }
     return Math.max(0, ...weightBySector.values())
-  }, [keptAssets])
+  }, [currentEquityPositions])
 
   const complianceRows = useMemo(
     () =>
@@ -242,8 +266,11 @@ export function useOptimizationForm() {
         forceAddedAssetCount: forceAddedAssetCodes.length,
         excludedAssetCount: excludedAssetCodes.length,
         currentEquityWeightPct: selectedFundSummary?.equityWeightPercent ?? null,
-        maxKeptSingleStockWeightPct,
-        maxKeptSectorWeightPct,
+        maxSingleStockWeightPct,
+        minSingleStockWeightPct,
+        maxSectorWeightPct,
+        currentStockCount: selectedFundSummary?.stockCount ?? null,
+        maxAdditions,
       }),
     [
       tppMinWeight,
@@ -255,8 +282,10 @@ export function useOptimizationForm() {
       forceAddedAssetCodes.length,
       excludedAssetCodes.length,
       selectedFundSummary,
-      maxKeptSingleStockWeightPct,
-      maxKeptSectorWeightPct,
+      maxSingleStockWeightPct,
+      minSingleStockWeightPct,
+      maxSectorWeightPct,
+      maxAdditions,
     ],
   )
 

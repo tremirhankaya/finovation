@@ -28,7 +28,7 @@ const FUND = {
   type: "EQUITY_INTENSIVE" as const,
   active: true,
   lastOptimizationDate: "2026-07-28",
-  stockCount: 18,
+  stockCount: 25,
   sectorCount: 12,
   equityWeightPercent: 90,
   tppWeightPercent: 10,

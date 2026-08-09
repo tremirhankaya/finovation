@@ -1,14 +1,4 @@
-import {
-  getManagementApproach,
-  type ManagementApproachCode,
-} from "@/features/fund-design/model/managementApproach"
 import type { RiskProfile } from "@/features/optimization/model/optimizationSchemas"
-
-const RISK_PROFILE_APPROACH_CODES: Record<RiskProfile, ManagementApproachCode> = {
-  AGGRESSIVE: "ATTACK",
-  BALANCED: "BALANCED",
-  CONSERVATIVE: "PROTECTIVE",
-}
 
 export type SuggestedConstraints = {
   tppMinWeight: number
@@ -18,18 +8,32 @@ export type SuggestedConstraints = {
   stockCountMax: number
 }
 
+const RISK_PROFILE_SUGGESTED_CONSTRAINTS: Record<RiskProfile, SuggestedConstraints> = {
+  AGGRESSIVE: {
+    tppMinWeight: 5,
+    tppMaxWeight: 10,
+    preferredTppWeight: 7,
+    stockCountMin: 25,
+    stockCountMax: 30,
+  },
+  BALANCED: {
+    tppMinWeight: 8,
+    tppMaxWeight: 12,
+    preferredTppWeight: 10,
+    stockCountMin: 21,
+    stockCountMax: 26,
+  },
+  CONSERVATIVE: {
+    tppMinWeight: 10,
+    tppMaxWeight: 15,
+    preferredTppWeight: 12,
+    stockCountMin: 16,
+    stockCountMax: 21,
+  },
+}
+
 export function getSuggestedConstraints(
   riskProfile: RiskProfile,
 ): SuggestedConstraints {
-  const approach = getManagementApproach(
-    RISK_PROFILE_APPROACH_CODES[riskProfile],
-  )
-
-  return {
-    tppMinWeight: approach.defaultLiquidityMinPct,
-    tppMaxWeight: approach.defaultLiquidityMaxPct,
-    preferredTppWeight: approach.defaultPreferredLiquidityPct,
-    stockCountMin: approach.defaultMinStockCount,
-    stockCountMax: approach.defaultMaxStockCount,
-  }
+  return RISK_PROFILE_SUGGESTED_CONSTRAINTS[riskProfile]
 }

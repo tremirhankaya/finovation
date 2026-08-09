@@ -85,7 +85,10 @@ export function OptimizationRunningView({
           </div>
         )}
 
-        <OptimizationRunningSteps />
+        <OptimizationRunningSteps
+          isRunning={isRunning}
+          isCompleted={isCompleted}
+        />
 
         {onBack && (
           <button className={styles.backButton} type="button" onClick={onBack}>

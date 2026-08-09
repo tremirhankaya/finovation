@@ -41,6 +41,11 @@ export default function AssetTogglePanel({
     [assets],
   )
 
+  const forceAddOrder = useMemo(
+    () => [...selectedAssetCodes],
+    [selectedAssetCodes],
+  )
+
   const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR")
   const filteredAssets = assets.filter((asset) => {
     if (sectorFilter && asset.sectorName !== sectorFilter) return false
@@ -89,6 +94,7 @@ export default function AssetTogglePanel({
             <thead>
               <tr>
                 <th>Hisse</th>
+                {variant === "forceAdd" && <th>Ayrılan Ağırlık</th>}
                 <th>{toggleLabel}</th>
               </tr>
             </thead>
@@ -104,6 +110,13 @@ export default function AssetTogglePanel({
                       {asset.sectorName ?? "—"}
                     </div>
                   </td>
+                  {variant === "forceAdd" && (
+                    <td className={styles.forceAddWeightCell}>
+                      {selectedAssetCodes.has(asset.assetCode)
+                        ? `en az %${(forceAddOrder.indexOf(asset.assetCode) + 1) * 3}`
+                        : "—"}
+                    </td>
+                  )}
                   <td>
                     <input
                       type="checkbox"
@@ -123,6 +136,15 @@ export default function AssetTogglePanel({
             </tbody>
           </table>
         </div>
+      )}
+
+      {variant === "forceAdd" && (
+        <p className={styles.forceAddHint}>
+          Her seçilen hisse için portföyde en az <strong>%3</strong> ağırlık
+          ayrılır; seçim sırasına göre toplam ayrılan ağırlık artar (1. hisse
+          %3, 2. hisse %6, …) ve bu, kilitli hisselerle birlikte kullanılabilir
+          alanı (izahname üst limiti %95) tüketir.
+        </p>
       )}
     </section>
   )

@@ -12,6 +12,7 @@ import {
   isApprovalBlockedByConstraints,
 } from "@/features/optimization/lib/optimizationMetricsEvaluation"
 import { buildConstraintMetricInput } from "@/features/optimization/lib/optimizationConstraintMetricInput"
+import { buildCriteriaRows } from "@/features/optimization/lib/optimizationCriteriaRows"
 import { buildRiskMetricsSnapshots } from "@/features/optimization/lib/optimizationRiskMetricsInput"
 import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimizationError"
 import type {
@@ -152,6 +153,20 @@ export function useOptimizationResultReview(requestId: number) {
     [constraintMetrics],
   )
 
+  const criteriaRows = useMemo(
+    () =>
+      buildCriteriaRows(
+        assets,
+        constraintMetrics,
+        infoMetrics,
+        request?.tppMinWeight ?? null,
+        request?.tppMaxWeight ?? null,
+        request?.stockCountMin ?? null,
+        request?.stockCountMax ?? null,
+      ),
+    [assets, constraintMetrics, infoMetrics, request],
+  )
+
   const goToApproval = useCallback(() => setReviewStep(4), [])
   const goToResult = useCallback(() => setReviewStep(3), [])
 
@@ -189,6 +204,7 @@ export function useOptimizationResultReview(requestId: number) {
   return {
     constraintMetrics,
     infoMetrics,
+    criteriaRows,
     isApprovalBlocked,
     request,
     isLoadingRequest,

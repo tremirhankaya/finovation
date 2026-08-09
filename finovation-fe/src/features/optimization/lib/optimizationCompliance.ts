@@ -13,6 +13,7 @@ const USABLE_EQUITY_WEIGHT_CEILING = 95
 const FORCE_ADD_MINIMUM_WEIGHT = 3
 const EQUITY_WEIGHT_FLOOR = 85
 const EQUITY_WEIGHT_CEILING = 95
+const SINGLE_STOCK_MIN = 3
 const SINGLE_STOCK_MAX = 10
 const SECTOR_MAX = 30
 
@@ -26,8 +27,11 @@ export type ComplianceInput = {
   forceAddedAssetCount: number
   excludedAssetCount: number
   currentEquityWeightPct: number | null
-  maxKeptSingleStockWeightPct: number
-  maxKeptSectorWeightPct: number
+  maxSingleStockWeightPct: number
+  minSingleStockWeightPct: number
+  maxSectorWeightPct: number
+  currentStockCount: number | null
+  maxAdditions: number
 }
 
 function rangeStatus(
@@ -68,8 +72,16 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     STOCK_COUNT_MIN_RANGE_WIDTH,
   )
   const stockCountExceedsGuaranteed = guaranteedStockCount > input.stockCountMax
+  const maxReachableStockCount =
+    input.currentStockCount == null
+      ? null
+      : input.currentStockCount + input.maxAdditions
+  const stockCountUnreachable =
+    maxReachableStockCount != null && input.stockCountMin > maxReachableStockCount
   const stockCountStatus: ComplianceRowStatus =
-    stockCountRangeStatus === "UYUMSUZ" || stockCountExceedsGuaranteed
+    stockCountRangeStatus === "UYUMSUZ" ||
+    stockCountExceedsGuaranteed ||
+    stockCountUnreachable
       ? "UYUMSUZ"
       : "UYUMLU"
 
@@ -86,10 +98,14 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
       : "UYUMSUZ"
 
   const singleStockStatus: ComplianceRowStatus =
-    input.maxKeptSingleStockWeightPct > SINGLE_STOCK_MAX ? "UYUMSUZ" : "UYUMLU"
+    input.maxSingleStockWeightPct > SINGLE_STOCK_MAX ||
+    (input.minSingleStockWeightPct > 0 &&
+      input.minSingleStockWeightPct < SINGLE_STOCK_MIN)
+      ? "UYUMSUZ"
+      : "UYUMLU"
 
   const sectorStatus: ComplianceRowStatus =
-    input.maxKeptSectorWeightPct > SECTOR_MAX ? "UYUMSUZ" : "UYUMLU"
+    input.maxSectorWeightPct > SECTOR_MAX ? "UYUMSUZ" : "UYUMLU"
 
   const rows: ComplianceRow[] = [
     {
@@ -121,7 +137,9 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
           ? "Sistem sınırı 16–30 arasında, aralık genişliği en az 5 hisse olmalı"
           : stockCountExceedsGuaranteed
             ? `${guaranteedStockCount} hisse (sabit + zorunlu) seçilen ${input.stockCountMax} üst sınırını aşıyor`
-            : `${input.stockCountMin}–${input.stockCountMax} arasında`,
+            : stockCountUnreachable
+              ? `Fonda şu an ${input.currentStockCount} hisse var, en fazla ${input.maxAdditions} yeni hisse eklenebiliyor (ulaşılabilir üst sınır ${maxReachableStockCount}) — hedef alt sınır ${input.stockCountMin}'e ulaşılamaz. Hisse sayısı alt sınırını ${maxReachableStockCount} veya altına düşürün.`
+              : `${input.stockCountMin}–${input.stockCountMax} arasında`,
     },
     {
       key: "kept-assets",
@@ -138,8 +156,10 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
       status: singleStockStatus,
       detail:
         singleStockStatus === "UYUMLU"
-          ? `Sabit hisselerde üst değer %${input.maxKeptSingleStockWeightPct.toFixed(1)} — izahname %3–%10 aralığında`
-          : `Sabit bir hissenin ağırlığı %${input.maxKeptSingleStockWeightPct.toFixed(1)} — üst limit %10 aşılıyor`,
+          ? `Fondaki hisseler %${input.minSingleStockWeightPct.toFixed(1)}–%${input.maxSingleStockWeightPct.toFixed(1)} arasında — izahname %3–%10 aralığında`
+          : input.maxSingleStockWeightPct > SINGLE_STOCK_MAX
+            ? `Fondaki bir hissenin ağırlığı %${input.maxSingleStockWeightPct.toFixed(1)} — üst limit %10 aşılıyor`
+            : `Fondaki bir hissenin ağırlığı %${input.minSingleStockWeightPct.toFixed(1)} — alt limit %3'ün altında`,
     },
     {
       key: "forced-excluded-assets",
@@ -153,8 +173,8 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
       status: sectorStatus,
       detail:
         sectorStatus === "UYUMLU"
-          ? `Sabit hisselerde en yüksek sektör payı %${input.maxKeptSectorWeightPct.toFixed(1)} — üst limit %30`
-          : `Sabit hisselerde bir sektörün toplam ağırlığı %${input.maxKeptSectorWeightPct.toFixed(1)} — üst limit %30 aşılıyor`,
+          ? `Fonda en yüksek sektör payı %${input.maxSectorWeightPct.toFixed(1)} — üst limit %30`
+          : `Fonda bir sektörün toplam ağırlığı %${input.maxSectorWeightPct.toFixed(1)} — üst limit %30 aşılıyor`,
     },
   ]
 

@@ -21,6 +21,7 @@ import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
 import com.infina.portfoliomanagement.marketdata.repository.EquityDetailRepository;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest.AssetWeightOverride;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultAssetResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
@@ -734,6 +735,105 @@ class OptimizationRequestServiceTest {
         assertThat(response.tppMaxWeight()).isEqualByComparingTo("15");
         assertThat(response.stockCountMin()).isEqualTo(16);
         assertThat(response.stockCountMax()).isEqualTo(30);
+    }
+
+    @Test
+    void listLogs_forNonAdminActor_returnsOnlyTheirOwnRequestsWithFundNamesAndResultAvailability() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.USER)
+                .username(ACTOR_USERNAME)
+                .build();
+
+        UUID otherFundId = UUID.fromString("22222222-2222-4222-8222-222222222222");
+
+        OptimizationRequest completedRequest = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.COMPLETED)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        OptimizationRequest failedRequest = OptimizationRequest.builder()
+                .id(43L)
+                .fundId(otherFundId)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.FAILED)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findAllByRequestedByIdOrderByCreatedAtDesc(7L))
+                .thenReturn(List.of(completedRequest, failedRequest));
+        when(fundDraftRepository.findAllByPublicIdIn(List.of(FUND_ID, otherFundId)))
+                .thenReturn(List.of(
+                        FundDraft.builder().id(10L).publicId(FUND_ID).name("Optimizasyon Stabil Fon").build(),
+                        FundDraft.builder().id(11L).publicId(otherFundId).name("Aktif Hisse Fonu").build()
+                ));
+
+        List<OptimizationLogEntryResponse> logs = service.listLogs(ACTOR_USERNAME);
+
+        assertThat(logs).hasSize(2);
+
+        OptimizationLogEntryResponse completedEntry = logs.stream()
+                .filter(entry -> entry.requestId().equals(REQUEST_ID))
+                .findFirst()
+                .orElseThrow();
+        assertThat(completedEntry.fundName()).isEqualTo("Optimizasyon Stabil Fon");
+        assertThat(completedEntry.status()).isEqualTo(RequestStatus.COMPLETED);
+        assertThat(completedEntry.resultAvailable()).isTrue();
+
+        OptimizationLogEntryResponse failedEntry = logs.stream()
+                .filter(entry -> entry.requestId().equals(43L))
+                .findFirst()
+                .orElseThrow();
+        assertThat(failedEntry.fundName()).isEqualTo("Aktif Hisse Fonu");
+        assertThat(failedEntry.status()).isEqualTo(RequestStatus.FAILED);
+        assertThat(failedEntry.resultAvailable()).isFalse();
+
+        verify(optimizationRequestRepository, org.mockito.Mockito.never()).findAllByOrderByCreatedAtDesc();
+    }
+
+    @Test
+    void listLogs_forAdminActor_returnsRequestsAcrossAllUsers() {
+        User admin = User.builder()
+                .id(9L)
+                .role(Role.ADMIN)
+                .username(ACTOR_USERNAME)
+                .build();
+
+        OptimizationRequest request = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(admin)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.APPROVED)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(admin));
+        when(optimizationRequestRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(request));
+        when(fundDraftRepository.findAllByPublicIdIn(List.of(FUND_ID)))
+                .thenReturn(List.of(FundDraft.builder().id(10L).publicId(FUND_ID).name("Optimizasyon Stabil Fon").build()));
+
+        List<OptimizationLogEntryResponse> logs = service.listLogs(ACTOR_USERNAME);
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.get(0).resultAvailable()).isTrue();
+        verify(optimizationRequestRepository, org.mockito.Mockito.never())
+                .findAllByRequestedByIdOrderByCreatedAtDesc(org.mockito.ArgumentMatchers.anyLong());
     }
 
     private RequestConstraintTarget constraintTarget(

@@ -32,58 +32,63 @@ const ASSETS: OptimizationResultAsset[] = [
     manuallyOverridden: true,
     rationale: "Sektör yoğunlaşma limiti.",
   },
+  {
+    assetCode: "THYAO",
+    name: "Türk Hava Yolları",
+    sectorName: "Ulaştırma",
+    assetType: "EQUITY",
+    currentWeight: 6,
+    proposedWeight: 6,
+    finalWeight: null,
+    changeAmount: 0,
+    actionType: "KEEP",
+    manuallyOverridden: false,
+    rationale: null,
+  },
 ]
 
 describe("AssetComparisonPanel", () => {
   it("mevcut, önerilen ve değişim değerlerini gösterir", () => {
-    render(
-      <AssetComparisonPanel
-        assets={ASSETS}
-        onFinalWeightChange={vi.fn()}
-        onResetFinalWeight={vi.fn()}
-      />,
-    )
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
 
-    expect(screen.getByText(/AKBNK Akbank/)).toBeInTheDocument()
-    expect(screen.getByText("%8")).toBeInTheDocument()
-    expect(screen.getByText("%9.5")).toBeInTheDocument()
-    expect(screen.getByText("+%1.5")).toBeInTheDocument()
-    expect(screen.getByText("-%2")).toBeInTheDocument()
+    expect(screen.getByText("AKBNK")).toBeInTheDocument()
+    expect(screen.getAllByText("%8")[0]).toBeInTheDocument()
+    expect(screen.getByText("+%2")).toBeInTheDocument()
+    expect(screen.getByText("-%3")).toBeInTheDocument()
   })
 
-  it("aksiyon rozetlerini doğru etiketle gösterir", () => {
-    render(
-      <AssetComparisonPanel
-        assets={ASSETS}
-        onFinalWeightChange={vi.fn()}
-        onResetFinalWeight={vi.fn()}
-      />,
-    )
+  it("sabit tutulan hissede SABİT rozetini gösterir", () => {
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
 
-    expect(screen.getByText("Artır")).toBeInTheDocument()
-    expect(screen.getByText("Azalt")).toBeInTheDocument()
+    expect(screen.getByText("SABİT")).toBeInTheDocument()
   })
 
-  it("manuel değiştirilmiş satırda sıfırla butonunu gösterir, diğerinde göstermez", () => {
-    render(
-      <AssetComparisonPanel
-        assets={ASSETS}
-        onFinalWeightChange={vi.fn()}
-        onResetFinalWeight={vi.fn()}
-      />,
+  it("filtre çipleri ile listeyi daraltır", async () => {
+    const user = userEvent.setup()
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    await user.click(
+      screen.getByRole("tab", { name: /Artırılanlar/ }),
     )
 
-    expect(
-      screen.getByRole("button", { name: "Manuel · Sıfırla" }),
-    ).toBeInTheDocument()
+    expect(screen.getByText("AKBNK")).toBeInTheDocument()
+    expect(screen.queryByText("ASELS")).not.toBeInTheDocument()
   })
 
-  it("final ağırlık kutusu değiştiğinde onFinalWeightChange'i çağırır", () => {
+  it("toplam satırını gösterir", () => {
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    expect(screen.getByText("TOPLAM")).toBeInTheDocument()
+  })
+
+  it("düzenlenebilir modda final ağırlık kutusu değiştiğinde onFinalWeightChange'i çağırır", () => {
     const onFinalWeightChange = vi.fn()
 
     render(
       <AssetComparisonPanel
         assets={ASSETS}
+        fundName="Test Fonu"
+        editable
         onFinalWeightChange={onFinalWeightChange}
         onResetFinalWeight={vi.fn()}
       />,
@@ -97,13 +102,15 @@ describe("AssetComparisonPanel", () => {
     expect(onFinalWeightChange).toHaveBeenCalledWith("AKBNK", 11)
   })
 
-  it("sıfırla butonuna tıklanınca onResetFinalWeight'i doğru kodla çağırır", async () => {
+  it("düzenlenebilir modda sıfırla butonuna tıklanınca onResetFinalWeight'i doğru kodla çağırır", async () => {
     const user = userEvent.setup()
     const onResetFinalWeight = vi.fn()
 
     render(
       <AssetComparisonPanel
         assets={ASSETS}
+        fundName="Test Fonu"
+        editable
         onFinalWeightChange={vi.fn()}
         onResetFinalWeight={onResetFinalWeight}
       />,
@@ -112,5 +119,21 @@ describe("AssetComparisonPanel", () => {
     await user.click(screen.getByRole("button", { name: "Manuel · Sıfırla" }))
 
     expect(onResetFinalWeight).toHaveBeenCalledWith("ASELS")
+  })
+
+  it("düzenlenebilir değilken final ağırlık salt metin olarak görünür", () => {
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument()
+  })
+
+  it("grafik görünümüne geçince sektör tablosunu gösterir", async () => {
+    const user = userEvent.setup()
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    await user.click(screen.getByRole("button", { name: "Grafik" }))
+
+    expect(screen.getByText("Mevcut Portföy")).toBeInTheDocument()
+    expect(screen.getByText("Optimize Edilmiş Portföy")).toBeInTheDocument()
   })
 })

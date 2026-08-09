@@ -16,8 +16,11 @@ const VALID_INPUT: ComplianceInput = {
   forceAddedAssetCount: 1,
   excludedAssetCount: 1,
   currentEquityWeightPct: 90,
-  maxKeptSingleStockWeightPct: 8,
-  maxKeptSectorWeightPct: 16,
+  maxSingleStockWeightPct: 8,
+  minSingleStockWeightPct: 4,
+  maxSectorWeightPct: 16,
+  currentStockCount: 21,
+  maxAdditions: 3,
 }
 
 describe("buildComplianceRows", () => {
@@ -87,6 +90,34 @@ describe("buildComplianceRows", () => {
     expect(stockCountRow?.detail).toContain("25 hisse")
   })
 
+  it("hedef alt sınıra mevcut hisse + eklenebilecek hisseyle ulaşılamıyorsa UYUMSUZ verir", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      stockCountMin: 25,
+      stockCountMax: 30,
+      currentStockCount: 21,
+      maxAdditions: 3,
+    })
+
+    const stockCountRow = rows.find((row) => row.key === "stock-count")
+    expect(stockCountRow?.status).toBe("UYUMSUZ")
+    expect(stockCountRow?.detail).toContain("ulaşılamaz")
+    expect(isComplianceReady(rows)).toBe(false)
+  })
+
+  it("hedef alt sınıra mevcut hisse + eklenebilecek hisseyle ulaşılabiliyorsa UYUMLU verir", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      stockCountMin: 24,
+      stockCountMax: 30,
+      currentStockCount: 21,
+      maxAdditions: 3,
+    })
+
+    const stockCountRow = rows.find((row) => row.key === "stock-count")
+    expect(stockCountRow?.status).toBe("UYUMLU")
+  })
+
   it("sabit + zorunlu ağırlık toplamı %95'i aşarsa UYUMSUZ verir", () => {
     const rows = buildComplianceRows({
       ...VALID_INPUT,
@@ -118,20 +149,31 @@ describe("buildComplianceRows", () => {
     expect(equityRow?.status).toBe("UYUMLU")
   })
 
-  it("sabit hisselerden biri %10'u aşan ağırlığa sahipse UYUMSUZ verir", () => {
+  it("fondaki bir hisse %10'u aşan ağırlığa sahipse UYUMSUZ verir", () => {
     const rows = buildComplianceRows({
       ...VALID_INPUT,
-      maxKeptSingleStockWeightPct: 12,
+      maxSingleStockWeightPct: 12,
     })
 
     const singleStockRow = rows.find((row) => row.key === "single-stock-weight")
     expect(singleStockRow?.status).toBe("UYUMSUZ")
   })
 
-  it("sabit hisselerin bir sektördeki toplamı %30'u aşarsa UYUMSUZ verir", () => {
+  it("fondaki bir hisse %3'ün altında ağırlığa sahipse UYUMSUZ verir", () => {
     const rows = buildComplianceRows({
       ...VALID_INPUT,
-      maxKeptSectorWeightPct: 35,
+      minSingleStockWeightPct: 2.4,
+    })
+
+    const singleStockRow = rows.find((row) => row.key === "single-stock-weight")
+    expect(singleStockRow?.status).toBe("UYUMSUZ")
+    expect(singleStockRow?.detail).toContain("alt limit")
+  })
+
+  it("fondaki bir sektörün toplamı %30'u aşarsa UYUMSUZ verir", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      maxSectorWeightPct: 35,
     })
 
     const sectorRow = rows.find((row) => row.key === "sector-concentration")

@@ -14,4 +14,8 @@ public interface OptimizationRequestRepository extends JpaRepository<Optimizatio
     List<OptimizationRequest> findAllByFundIdAndRequestedById(UUID fundId, Long requestedById);
 
     Optional<OptimizationRequest> findFirstByFundIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(UUID fundId);
+
+    List<OptimizationRequest> findAllByRequestedByIdOrderByCreatedAtDesc(Long requestedById);
+
+    List<OptimizationRequest> findAllByOrderByCreatedAtDesc();
 }

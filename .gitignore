@@ -17,3 +17,4 @@ docs/PROJECT_CONTEXT.md
 monitoring/alertmanager/secrets/*
 !monitoring/alertmanager/secrets/.gitkeep
 !monitoring/alertmanager/secrets/slack_webhook_url.example
+**/.claude/

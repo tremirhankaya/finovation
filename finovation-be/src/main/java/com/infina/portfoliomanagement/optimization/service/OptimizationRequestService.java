@@ -21,6 +21,7 @@ import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationReques
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest.AssetWeightOverride;
 import com.infina.portfoliomanagement.optimization.dto.AssetPreferenceRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultAssetResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultMetricResponse;
@@ -62,7 +63,9 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,6 +93,11 @@ public class OptimizationRequestService {
     private static final int MAX_REMOVALS_DEFAULT = 2;
     private static final BigDecimal PORTFOLIO_SUM_TOLERANCE = new BigDecimal("0.000001");
     private static final String CASH_TPP_CODE = "CASH_TPP";
+    private static final Set<RequestStatus> RESULT_AVAILABLE_STATUSES = Set.of(
+            RequestStatus.COMPLETED,
+            RequestStatus.APPROVED,
+            RequestStatus.REJECTED
+    );
     private static final String OBJECTIVE_RETURN_FOCUSED = "RETURN_FOCUSED";
     private static final String OBJECTIVE_BALANCED_UTILITY = "BALANCED_UTILITY";
     private static final String OBJECTIVE_ROBUST_RISK_CONTROLLED = "ROBUST_RISK_CONTROLLED";
@@ -342,6 +350,42 @@ public class OptimizationRequestService {
         return requests.stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OptimizationLogEntryResponse> listLogs(String actorUsername) {
+        User actor = resolveActor(actorUsername);
+
+        List<OptimizationRequest> requests = actor.getRole() == Role.ADMIN
+                ? optimizationRequestRepository.findAllByOrderByCreatedAtDesc()
+                : optimizationRequestRepository.findAllByRequestedByIdOrderByCreatedAtDesc(actor.getId());
+
+        Map<UUID, String> fundNamesById = fundDraftRepository
+                .findAllByPublicIdIn(requests.stream().map(OptimizationRequest::getFundId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(FundDraft::getPublicId, FundDraft::getName, (left, right) -> left));
+
+        return requests.stream()
+                .map(request -> toLogEntryResponse(request, fundNamesById))
+                .toList();
+    }
+
+    private OptimizationLogEntryResponse toLogEntryResponse(
+            OptimizationRequest request,
+            Map<UUID, String> fundNamesById
+    ) {
+        User requestedBy = request.getRequestedBy();
+        return new OptimizationLogEntryResponse(
+                request.getId(),
+                request.getFundId(),
+                fundNamesById.getOrDefault(request.getFundId(), "—"),
+                requestedBy != null ? requestedBy.getUsername() : null,
+                request.getStatus(),
+                request.getCreatedAt(),
+                request.getCompletedAt(),
+                request.getUpdatedAt(),
+                RESULT_AVAILABLE_STATUSES.contains(request.getStatus())
+        );
     }
 
     @Transactional
@@ -668,8 +712,8 @@ public class OptimizationRequestService {
     ) {
         return indicators.stream()
                 .filter(indicator -> indicator.code().equals(indicatorCode))
-                .map(FundMonitoringResponse.TechnicalIndicatorResponse::value)
                 .findFirst()
+                .map(FundMonitoringResponse.TechnicalIndicatorResponse::value)
                 .orElse(null);
     }
 
@@ -683,10 +727,10 @@ public class OptimizationRequestService {
     ) {
         BigDecimal currentWeight = engineRequest.currentPortfolio().getOrDefault(assetCode, BigDecimal.ZERO);
         BigDecimal proposedWeight = alternative.weights().getOrDefault(assetCode, BigDecimal.ZERO);
-        BigDecimal changeAmount = alternative.deltas().getOrDefault(
-                assetCode,
-                proposedWeight.subtract(currentWeight)
-        );
+        // Derived from the same two (already-rounded) weights shown to the user, rather than
+        // the engine's separate deltas map — otherwise a sub-precision engine delta can flag
+        // an asset as INCREASE/DECREASE while its displayed weights look identical.
+        BigDecimal changeAmount = proposedWeight.subtract(currentWeight);
 
         boolean isCashTpp = assetCode.equals(CASH_TPP_CODE);
         String storedAssetCode = isCashTpp ? tppAssetCode : assetCode;
@@ -727,13 +771,43 @@ public class OptimizationRequestService {
         );
         String tppAssetCode = resolveTppAssetCode();
 
-        return snapshot.positions().stream()
-                .collect(Collectors.toMap(
-                        position -> position.symbol().equals(tppAssetCode)
-                                ? CASH_TPP_CODE
-                                : position.symbol(),
-                        position -> toFraction(position.weightPercentage())
-                ));
+        Map<Long, Asset> assetsById = assetRepository
+                .findAllById(snapshot.positions().stream()
+                        .map(position -> Long.valueOf(position.assetId()))
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(Asset::getId, asset -> asset));
+
+        Map<String, BigDecimal> currentPortfolio = new LinkedHashMap<>();
+        for (FundPositionResponse position : snapshot.positions()) {
+            Asset asset = assetsById.get(Long.valueOf(position.assetId()));
+            String canonicalAssetCode = asset == null ? position.symbol() : asset.getAssetCode();
+            String assetCode = canonicalAssetCode.equals(tppAssetCode) ? CASH_TPP_CODE : canonicalAssetCode;
+            currentPortfolio.put(assetCode, toFraction(position.weightPercentage()));
+        }
+        return normalizeSumToOne(currentPortfolio);
+    }
+
+    // Per-asset rounding in toFraction() can drift the summed fractions a few
+    // millionths away from exactly 1.0. The engine validates the sum with strict
+    // equality, so the rounding remainder is absorbed into the largest position.
+    private Map<String, BigDecimal> normalizeSumToOne(Map<String, BigDecimal> fractions) {
+        if (fractions.isEmpty()) {
+            return fractions;
+        }
+
+        BigDecimal sum = fractions.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal remainder = BigDecimal.ONE.subtract(sum);
+        if (remainder.compareTo(BigDecimal.ZERO) == 0) {
+            return fractions;
+        }
+
+        String largestAssetCode = fractions.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElseThrow();
+        fractions.put(largestAssetCode, fractions.get(largestAssetCode).add(remainder));
+        return fractions;
     }
 
     private String resolveTppAssetCode() {
@@ -761,25 +835,79 @@ public class OptimizationRequestService {
             OptimizationRequest request,
             AssetPreferenceType preferenceType
     ) {
-        return assetPreferenceRepository
+        List<AssetPreference> preferences = assetPreferenceRepository
                 .findAllByRequestId(request.getId())
                 .stream()
                 .filter(AssetPreference::isActive)
                 .filter(preference -> preference.getPreferenceType() == preferenceType)
-                .map(AssetPreference::getAssetCode)
+                .toList();
+
+        Map<String, String> canonicalByRaw = resolveCanonicalAssetCodes(
+                preferences.stream().map(AssetPreference::getAssetCode).toList()
+        );
+        String tppAssetCode = resolveTppAssetCode();
+
+        return preferences.stream()
+                .map(preference -> aliasTppCode(
+                        canonicalByRaw.getOrDefault(preference.getAssetCode(), preference.getAssetCode()),
+                        tppAssetCode
+                ))
                 .toList();
     }
 
     private Map<String, BigDecimal> resolveLockedAssets(OptimizationRequest request) {
-        return assetPreferenceRepository
+        List<AssetPreference> preferences = assetPreferenceRepository
                 .findAllByRequestId(request.getId())
                 .stream()
                 .filter(AssetPreference::isActive)
                 .filter(preference -> preference.getPreferenceType() == AssetPreferenceType.KEEP)
+                .toList();
+
+        Map<String, String> canonicalByRaw = resolveCanonicalAssetCodes(
+                preferences.stream().map(AssetPreference::getAssetCode).toList()
+        );
+        String tppAssetCode = resolveTppAssetCode();
+
+        return preferences.stream()
                 .collect(Collectors.toMap(
-                        AssetPreference::getAssetCode,
+                        preference -> aliasTppCode(
+                                canonicalByRaw.getOrDefault(preference.getAssetCode(), preference.getAssetCode()),
+                                tppAssetCode
+                        ),
                         preference -> toFraction(preference.getCurrentWeight())
                 ));
+    }
+
+    // current_portfolio keys the TPP position as CASH_TPP (see resolveCurrentPortfolio);
+    // locked/mandatory/excluded asset codes must use the same alias so the engine can match
+    // a locked/excluded TPP preference against the current portfolio entry.
+    private String aliasTppCode(String canonicalAssetCode, String tppAssetCode) {
+        return canonicalAssetCode.equals(tppAssetCode) ? CASH_TPP_CODE : canonicalAssetCode;
+    }
+
+    // AssetPreference.assetCode is stored using whatever code the frontend selection sent
+    // (historically the bare market-data query code, e.g. "EKGYO"), while the engine's
+    // current_portfolio uses the canonical asset code (e.g. "EKGYO.E"). Resolve both to the
+    // same canonical code so locked/mandatory/excluded asset codes match current_portfolio's keys.
+    private Map<String, String> resolveCanonicalAssetCodes(List<String> rawCodes) {
+        List<String> distinctRawCodes = rawCodes.stream().distinct().toList();
+        if (distinctRawCodes.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, String> canonicalByRaw = new HashMap<>();
+        assetRepository.findAllByAssetCodeIn(distinctRawCodes)
+                .forEach(asset -> canonicalByRaw.put(asset.getAssetCode(), asset.getAssetCode()));
+
+        List<String> unresolved = distinctRawCodes.stream()
+                .filter(code -> !canonicalByRaw.containsKey(code))
+                .toList();
+        if (!unresolved.isEmpty()) {
+            assetRepository.findAllByQueryCodeIn(unresolved)
+                    .forEach(asset -> canonicalByRaw.put(asset.getQueryCode(), asset.getAssetCode()));
+        }
+
+        return canonicalByRaw;
     }
 
     private String resolveHorizon(RiskProfile riskProfile) {

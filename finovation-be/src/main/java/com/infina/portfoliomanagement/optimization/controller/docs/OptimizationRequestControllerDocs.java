@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.controller.docs;
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
@@ -63,6 +64,15 @@ public interface OptimizationRequestControllerDocs {
             UserDetails userDetails,
             UUID fundId
     );
+
+    @Operation(
+            summary = "List the actor's optimization audit log",
+            description = "Returns every optimization request the actor has made, across all funds, " +
+                    "newest first, for the 'İşlem Logları' audit screen. ADMIN receives every request " +
+                    "from every user; other actors receive only their own.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<List<OptimizationLogEntryResponse>> getOptimizationLogs(UserDetails userDetails);
 
     @Operation(
             summary = "Run optimization request",

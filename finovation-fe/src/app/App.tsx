@@ -13,6 +13,7 @@ import FundDesignAnalysisPage from "@/features/fund-design/pages/FundDesignAnaly
 import FundDesignAlternativesPage from "@/features/fund-design/pages/FundDesignAlternativesPage"
 import FundMonitoringPage from "@/features/fund-monitoring/pages/FundMonitoringPage"
 import OptimizationFormPage from "@/features/optimization/pages/OptimizationFormPage"
+import OptimizationLogsPage from "@/features/optimization/pages/OptimizationLogsPage"
 import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
 import OptimizationRunningPage from "@/features/optimization/pages/OptimizationRunningPage"
 import UsersPage from "@/features/users/pages/UsersPage"
@@ -84,6 +85,10 @@ export default function App() {
             <Route
               path="/optimization-requests/new"
               element={<OptimizationFormPage />}
+            />
+            <Route
+              path="/optimization-requests/logs"
+              element={<OptimizationLogsPage />}
             />
             <Route
               path="/optimization-requests/:requestId/running"
