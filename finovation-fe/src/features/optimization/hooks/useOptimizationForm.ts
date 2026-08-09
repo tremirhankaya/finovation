@@ -210,10 +210,6 @@ export function useOptimizationForm() {
     [funds, selectedFundId],
   )
 
-  // The engine validates current_portfolio in full — every position the fund
-  // currently holds, regardless of Koru/Zorunlu/Hariç selection — against the
-  // fixed %3-10 single-stock and %30 sector rules. The panel mirrors that same
-  // full scope so it catches violations before the engine does.
   const currentEquityPositions = useMemo(
     () =>
       (snapshot?.positions ?? []).filter(

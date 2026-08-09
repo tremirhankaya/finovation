@@ -1,0 +1,1581 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ML Fund Engine Frozen Snapshot API",
+    "summary": "CREATE, OPTIMIZE and forecast access for the frozen V3 bundle",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health/live": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Live",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Ready",
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Runtime bundle is not ready",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metadata": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Metadata",
+        "operationId": "metadata_api_v1_metadata_get",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "X-Expected-Model-Snapshot",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-Model-Snapshot"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON request",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Snapshot or request conflict",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation or business rule failure",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected internal error",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Runtime bundle is not ready",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/forecasts": {
+      "get": {
+        "tags": [
+          "forecasts"
+        ],
+        "summary": "Forecasts",
+        "operationId": "forecasts_api_v1_forecasts_get",
+        "parameters": [
+          {
+            "name": "horizon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "3M",
+                "6M",
+                "12M"
+              ],
+              "type": "string",
+              "description": "Forecast horizon",
+              "title": "Horizon"
+            },
+            "description": "Forecast horizon"
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "X-Expected-Model-Snapshot",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-Model-Snapshot"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON request",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Snapshot or request conflict",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation or business rule failure",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected internal error",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Runtime bundle is not ready",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portfolios/create": {
+      "post": {
+        "tags": [
+          "portfolios"
+        ],
+        "summary": "Create two frozen-snapshot portfolio alternatives",
+        "operationId": "create_portfolio_api_v1_portfolios_create_post",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "X-Expected-Model-Snapshot",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-Model-Snapshot"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON request",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Snapshot or request conflict",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation or business rule failure",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected internal error",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Runtime bundle is not ready",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portfolios/optimize": {
+      "post": {
+        "tags": [
+          "portfolios"
+        ],
+        "summary": "Optimize a compliant current portfolio into three alternatives",
+        "operationId": "optimize_portfolio_api_v1_portfolios_optimize_post",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "X-Expected-Model-Snapshot",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-Model-Snapshot"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptimizeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptimizeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON request",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Snapshot or request conflict",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation or business rule failure",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected internal error",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Runtime bundle is not ready",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlternativeBase": {
+        "properties": {
+          "objective_id": {
+            "type": "string",
+            "title": "Objective Id"
+          },
+          "horizon": {
+            "type": "string",
+            "enum": [
+              "3M",
+              "6M",
+              "12M"
+            ],
+            "title": "Horizon"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights"
+          },
+          "stock_count": {
+            "type": "integer",
+            "title": "Stock Count"
+          },
+          "equity_weight": {
+            "type": "number",
+            "title": "Equity Weight"
+          },
+          "tpp_weight": {
+            "type": "number",
+            "title": "Tpp Weight"
+          },
+          "expected_model_utility_log": {
+            "type": "number",
+            "title": "Expected Model Utility Log"
+          },
+          "horizon_volatility": {
+            "type": "number",
+            "title": "Horizon Volatility"
+          },
+          "universe58_beta": {
+            "type": "number",
+            "title": "Universe58 Beta"
+          },
+          "sector_exposures": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Sector Exposures"
+          },
+          "large_position_threshold": {
+            "type": "number",
+            "title": "Large Position Threshold"
+          },
+          "large_position_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Large Position Assets"
+          },
+          "large_position_total_weight": {
+            "type": "number",
+            "title": "Large Position Total Weight"
+          },
+          "weight_semantics": {
+            "type": "string",
+            "const": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
+            "title": "Weight Semantics"
+          },
+          "objective_value": {
+            "type": "number",
+            "title": "Objective Value"
+          },
+          "reason_codes": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Reason Codes"
+          },
+          "reason_texts": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Reason Texts"
+          },
+          "solution_class": {
+            "type": "string",
+            "const": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM",
+            "title": "Solution Class"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "objective_id",
+          "horizon",
+          "weights",
+          "stock_count",
+          "equity_weight",
+          "tpp_weight",
+          "expected_model_utility_log",
+          "horizon_volatility",
+          "universe58_beta",
+          "sector_exposures",
+          "large_position_threshold",
+          "large_position_assets",
+          "large_position_total_weight",
+          "weight_semantics",
+          "objective_value",
+          "reason_codes",
+          "reason_texts",
+          "solution_class"
+        ],
+        "title": "AlternativeBase"
+      },
+      "CreateRequest": {
+        "properties": {
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id",
+            "description": "Java tarafından üretilen benzersiz iş isteği kimliği / client request identifier."
+          },
+          "horizon": {
+            "type": "string",
+            "enum": [
+              "3M",
+              "6M",
+              "12M"
+            ],
+            "title": "Horizon",
+            "description": "Tahmin vadesi / forecast horizon: 3M, 6M or 12M."
+          },
+          "min_stock_count": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 16.0,
+            "title": "Min Stock Count",
+            "description": "En düşük seçili hisse sayısı / minimum selected equities."
+          },
+          "max_stock_count": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 16.0,
+            "title": "Max Stock Count",
+            "description": "En yüksek seçili hisse sayısı / maximum selected equities."
+          },
+          "tpp_min_weight": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Tpp Min Weight",
+            "description": "CASH_TPP alt sınırı, 0–1 decimal / lower bound."
+          },
+          "tpp_max_weight": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Tpp Max Weight",
+            "description": "CASH_TPP üst sınırı, 0–1 decimal / upper bound."
+          },
+          "mandatory_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mandatory Assets",
+            "description": "Portföyde zorunlu hisseler / equities that must be selected."
+          },
+          "excluded_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Assets",
+            "description": "Aday havuzundan çıkarılan hisseler / excluded equities."
+          },
+          "max_universe58_beta": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Universe58 Beta",
+            "description": "Opsiyonel Universe58 portföy beta hard cap / optional beta cap."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "horizon",
+          "min_stock_count",
+          "max_stock_count",
+          "tpp_min_weight",
+          "tpp_max_weight"
+        ],
+        "title": "CreateRequest",
+        "examples": [
+          {
+            "excluded_assets": [
+              "FENER.E",
+              "GSRAY.E"
+            ],
+            "horizon": "6M",
+            "mandatory_assets": [
+              "ASELS.E"
+            ],
+            "max_stock_count": 20,
+            "max_universe58_beta": 1.1,
+            "min_stock_count": 16,
+            "request_id": "create-example-001",
+            "tpp_max_weight": 0.14,
+            "tpp_min_weight": 0.07
+          }
+        ]
+      },
+      "CreateResponse": {
+        "properties": {
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "api_version": {
+            "type": "string",
+            "const": "v1",
+            "title": "Api Version"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "system_date": {
+            "type": "string",
+            "title": "System Date"
+          },
+          "forecast_origin": {
+            "type": "string",
+            "title": "Forecast Origin"
+          },
+          "model_bundle_id": {
+            "type": "string",
+            "title": "Model Bundle Id"
+          },
+          "policy_config_id": {
+            "type": "string",
+            "title": "Policy Config Id"
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Processing Time Ms"
+          },
+          "mode": {
+            "type": "string",
+            "const": "CREATE",
+            "title": "Mode",
+            "default": "CREATE"
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/AlternativeBase"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Alternatives"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "api_version",
+          "snapshot_id",
+          "system_date",
+          "forecast_origin",
+          "model_bundle_id",
+          "policy_config_id",
+          "processing_time_ms",
+          "alternatives"
+        ],
+        "title": "CreateResponse"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "status": {
+            "type": "string",
+            "const": "ERROR",
+            "title": "Status",
+            "default": "ERROR"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse"
+      },
+      "ForecastResponse": {
+        "properties": {
+          "api_version": {
+            "type": "string",
+            "const": "v1",
+            "title": "Api Version"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "system_date": {
+            "type": "string",
+            "title": "System Date"
+          },
+          "forecast_origin": {
+            "type": "string",
+            "title": "Forecast Origin"
+          },
+          "model_bundle_id": {
+            "type": "string",
+            "title": "Model Bundle Id"
+          },
+          "target_semantics": {
+            "type": "string",
+            "const": "SOURCE_PRICE_RETURN",
+            "title": "Target Semantics"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastRow"
+            },
+            "type": "array",
+            "maxItems": 58,
+            "minItems": 58,
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "api_version",
+          "snapshot_id",
+          "system_date",
+          "forecast_origin",
+          "model_bundle_id",
+          "target_semantics",
+          "rows"
+        ],
+        "title": "ForecastResponse"
+      },
+      "ForecastRow": {
+        "properties": {
+          "instrument_id": {
+            "type": "string",
+            "title": "Instrument Id"
+          },
+          "horizon_months": {
+            "type": "integer",
+            "title": "Horizon Months"
+          },
+          "simple_q10": {
+            "type": "number",
+            "title": "Simple Q10"
+          },
+          "simple_q50": {
+            "type": "number",
+            "title": "Simple Q50"
+          },
+          "simple_q90": {
+            "type": "number",
+            "title": "Simple Q90"
+          },
+          "rank_position": {
+            "type": "integer",
+            "title": "Rank Position"
+          },
+          "rank_percentile": {
+            "type": "number",
+            "title": "Rank Percentile"
+          },
+          "model_artifact_id": {
+            "type": "string",
+            "title": "Model Artifact Id"
+          },
+          "ranker_artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ranker Artifact Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "instrument_id",
+          "horizon_months",
+          "simple_q10",
+          "simple_q50",
+          "simple_q90",
+          "rank_position",
+          "rank_percentile",
+          "model_artifact_id"
+        ],
+        "title": "ForecastRow"
+      },
+      "LiveResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "LIVE",
+            "title": "Status"
+          },
+          "api_version": {
+            "type": "string",
+            "const": "v1",
+            "title": "Api Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "api_version"
+        ],
+        "title": "LiveResponse"
+      },
+      "MetadataResponse": {
+        "properties": {
+          "api_version": {
+            "type": "string",
+            "const": "v1",
+            "title": "Api Version"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "system_date": {
+            "type": "string",
+            "title": "System Date"
+          },
+          "forecast_origin": {
+            "type": "string",
+            "title": "Forecast Origin"
+          },
+          "model_bundle_id": {
+            "type": "string",
+            "title": "Model Bundle Id"
+          },
+          "policy_config_id": {
+            "type": "string",
+            "title": "Policy Config Id"
+          },
+          "supported_horizons": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "3M",
+                "6M",
+                "12M"
+              ]
+            },
+            "type": "array",
+            "title": "Supported Horizons"
+          },
+          "universe": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 58,
+            "minItems": 58,
+            "title": "Universe"
+          },
+          "cash_asset_id": {
+            "type": "string",
+            "const": "CASH_TPP",
+            "title": "Cash Asset Id"
+          },
+          "policy": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Policy"
+          },
+          "create_objectives": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Create Objectives"
+          },
+          "optimize_objectives": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Optimize Objectives"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "api_version",
+          "snapshot_id",
+          "system_date",
+          "forecast_origin",
+          "model_bundle_id",
+          "policy_config_id",
+          "supported_horizons",
+          "universe",
+          "cash_asset_id",
+          "policy",
+          "create_objectives",
+          "optimize_objectives"
+        ],
+        "title": "MetadataResponse"
+      },
+      "OptimizeAlternative": {
+        "properties": {
+          "objective_id": {
+            "type": "string",
+            "title": "Objective Id"
+          },
+          "horizon": {
+            "type": "string",
+            "enum": [
+              "3M",
+              "6M",
+              "12M"
+            ],
+            "title": "Horizon"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights"
+          },
+          "stock_count": {
+            "type": "integer",
+            "title": "Stock Count"
+          },
+          "equity_weight": {
+            "type": "number",
+            "title": "Equity Weight"
+          },
+          "tpp_weight": {
+            "type": "number",
+            "title": "Tpp Weight"
+          },
+          "expected_model_utility_log": {
+            "type": "number",
+            "title": "Expected Model Utility Log"
+          },
+          "horizon_volatility": {
+            "type": "number",
+            "title": "Horizon Volatility"
+          },
+          "universe58_beta": {
+            "type": "number",
+            "title": "Universe58 Beta"
+          },
+          "sector_exposures": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Sector Exposures"
+          },
+          "large_position_threshold": {
+            "type": "number",
+            "title": "Large Position Threshold"
+          },
+          "large_position_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Large Position Assets"
+          },
+          "large_position_total_weight": {
+            "type": "number",
+            "title": "Large Position Total Weight"
+          },
+          "weight_semantics": {
+            "type": "string",
+            "const": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
+            "title": "Weight Semantics"
+          },
+          "objective_value": {
+            "type": "number",
+            "title": "Objective Value"
+          },
+          "reason_codes": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Reason Codes"
+          },
+          "reason_texts": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Reason Texts"
+          },
+          "solution_class": {
+            "type": "string",
+            "const": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM",
+            "title": "Solution Class"
+          },
+          "deltas": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Deltas"
+          },
+          "added_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Added Assets"
+          },
+          "removed_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Removed Assets"
+          },
+          "locked_assets": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Locked Assets"
+          },
+          "realized_turnover_diagnostic": {
+            "type": "number",
+            "title": "Realized Turnover Diagnostic"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "objective_id",
+          "horizon",
+          "weights",
+          "stock_count",
+          "equity_weight",
+          "tpp_weight",
+          "expected_model_utility_log",
+          "horizon_volatility",
+          "universe58_beta",
+          "sector_exposures",
+          "large_position_threshold",
+          "large_position_assets",
+          "large_position_total_weight",
+          "weight_semantics",
+          "objective_value",
+          "reason_codes",
+          "reason_texts",
+          "solution_class",
+          "deltas",
+          "added_assets",
+          "removed_assets",
+          "locked_assets",
+          "realized_turnover_diagnostic"
+        ],
+        "title": "OptimizeAlternative"
+      },
+      "OptimizeRequest": {
+        "properties": {
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id",
+            "description": "Java tarafından üretilen benzersiz iş isteği kimliği / client request identifier."
+          },
+          "horizon": {
+            "type": "string",
+            "enum": [
+              "3M",
+              "6M",
+              "12M"
+            ],
+            "title": "Horizon",
+            "description": "Tahmin vadesi / forecast horizon: 3M, 6M or 12M."
+          },
+          "current_portfolio": {
+            "additionalProperties": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0
+            },
+            "type": "object",
+            "title": "Current Portfolio",
+            "description": "CASH_TPP dahil, toplamı 1.0 olan mevcut portföy / current portfolio."
+          },
+          "locked_assets": {
+            "additionalProperties": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0
+            },
+            "type": "object",
+            "title": "Locked Assets",
+            "description": "Tam ağırlığı korunacak varlıklar / exact-weight locked assets."
+          },
+          "mandatory_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mandatory Assets",
+            "description": "Son portföyde bulunması zorunlu hisseler; mevcutsa ağırlığı değişebilir, yeni ise max_additions limitini tüketir / required final holdings."
+          },
+          "excluded_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Assets",
+            "description": "Son portföyde bulunması yasak hisseler; mevcutsa çıkarılması max_removals ve per-asset delta limitlerine tabidir / forbidden final holdings."
+          },
+          "min_stock_count": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 16.0,
+            "title": "Min Stock Count",
+            "description": "En düşük seçili hisse sayısı / minimum selected equities."
+          },
+          "max_stock_count": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 16.0,
+            "title": "Max Stock Count",
+            "description": "En yüksek seçili hisse sayısı / maximum selected equities."
+          },
+          "tpp_min_weight": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Tpp Min Weight",
+            "description": "CASH_TPP alt sınırı, 0–1 decimal / lower bound."
+          },
+          "tpp_max_weight": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Tpp Max Weight",
+            "description": "CASH_TPP üst sınırı, 0–1 decimal / upper bound."
+          },
+          "max_weight_change_per_asset": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Max Weight Change Per Asset",
+            "description": "Tek varlık için en yüksek mutlak değişim / maximum absolute weight delta."
+          },
+          "max_additions": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 0.0,
+            "title": "Max Additions",
+            "description": "Eklenebilecek en fazla yeni hisse / maximum additions."
+          },
+          "max_removals": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 0.0,
+            "title": "Max Removals",
+            "description": "Çıkarılabilecek en fazla mevcut hisse / maximum removals."
+          },
+          "max_universe58_beta": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Universe58 Beta",
+            "description": "Opsiyonel Universe58 portföy beta hard cap / optional beta cap."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "horizon",
+          "current_portfolio",
+          "locked_assets",
+          "min_stock_count",
+          "max_stock_count",
+          "tpp_min_weight",
+          "tpp_max_weight",
+          "max_weight_change_per_asset",
+          "max_additions",
+          "max_removals"
+        ],
+        "title": "OptimizeRequest",
+        "examples": [
+          {
+            "current_portfolio": {
+              "AEFES.E": 0.065,
+              "AKBNK.E": 0.065,
+              "AKSA.E": 0.04636363636363636,
+              "ASELS.E": 0.065,
+              "BIMAS.E": 0.065,
+              "CASH_TPP": 0.1,
+              "ENKAI.E": 0.04636363636363636,
+              "EREGL.E": 0.065,
+              "FROTO.E": 0.065,
+              "KCHOL.E": 0.04636363636363636,
+              "MGROS.E": 0.04636363636363636,
+              "SISE.E": 0.04636363636363636,
+              "TAVHL.E": 0.04636363636363636,
+              "TCELL.E": 0.04636363636363636,
+              "THYAO.E": 0.04636363636363636,
+              "TTRAK.E": 0.04636363636363636,
+              "TUPRS.E": 0.04636363636363636,
+              "ULKER.E": 0.04636363636363636
+            },
+            "excluded_assets": [],
+            "horizon": "6M",
+            "locked_assets": {
+              "ASELS.E": 0.065
+            },
+            "mandatory_assets": [],
+            "max_additions": 3,
+            "max_removals": 2,
+            "max_stock_count": 20,
+            "max_universe58_beta": 1.1,
+            "max_weight_change_per_asset": 0.03,
+            "min_stock_count": 16,
+            "request_id": "optimize-example-001",
+            "tpp_max_weight": 0.13,
+            "tpp_min_weight": 0.07
+          }
+        ]
+      },
+      "OptimizeResponse": {
+        "properties": {
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "api_version": {
+            "type": "string",
+            "const": "v1",
+            "title": "Api Version"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "system_date": {
+            "type": "string",
+            "title": "System Date"
+          },
+          "forecast_origin": {
+            "type": "string",
+            "title": "Forecast Origin"
+          },
+          "model_bundle_id": {
+            "type": "string",
+            "title": "Model Bundle Id"
+          },
+          "policy_config_id": {
+            "type": "string",
+            "title": "Policy Config Id"
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Processing Time Ms"
+          },
+          "mode": {
+            "type": "string",
+            "const": "OPTIMIZE",
+            "title": "Mode",
+            "default": "OPTIMIZE"
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/OptimizeAlternative"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Alternatives"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "api_version",
+          "snapshot_id",
+          "system_date",
+          "forecast_origin",
+          "model_bundle_id",
+          "policy_config_id",
+          "processing_time_ms",
+          "alternatives"
+        ],
+        "title": "OptimizeResponse"
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "READY",
+            "title": "Status"
+          },
+          "api_version": {
+            "type": "string",
+            "const": "v1",
+            "title": "Api Version"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "model_bundle_id": {
+            "type": "string",
+            "title": "Model Bundle Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "api_version",
+          "snapshot_id",
+          "model_bundle_id"
+        ],
+        "title": "ReadyResponse"
+      }
+    }
+  }
+}

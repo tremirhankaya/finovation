@@ -1,0 +1,398 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 0.25rem;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #0f1f3c;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pageIntro {
+  margin: 0.35rem 0 0;
+  color: #55687d;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* ── Card ── */
+.card {
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(15, 32, 64, 0.04);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+  color: #0f1f3c;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.titleIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Horizontal Summary Grid ── */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f4f6;
+}
+
+.summaryItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.summaryIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+.summaryTextBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.summaryLabel {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.summaryValue {
+  color: #0f1f3c;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.createdAt {
+  margin: 0.75rem 0 0;
+  color: #94a3b8;
+  font-size: 0.8125rem;
+}
+
+/* ── Rule Table ── */
+.ruleTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.thLeft {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  color: #94a3b8;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.thRight {
+  composes: thLeft;
+  text-align: right;
+}
+
+.ruleTable tbody tr {
+  border-bottom: 1px solid #f7fafc;
+}
+
+.ruleTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.tdLabel {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0.75rem 0.75rem 0;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.tdRange {
+  padding: 0.75rem 0.75rem 0.75rem 0;
+  color: #64748b;
+  font-size: 0.8125rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.tdValue {
+  padding: 0.75rem 0.75rem 0.75rem 0;
+  vertical-align: middle;
+  min-width: 120px;
+}
+
+.valueText {
+  display: block;
+  color: #0f1f3c;
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.bar {
+  height: 6px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.barOk {
+  background: #2ec4a7;
+}
+
+.barBad {
+  background: #ef4444;
+}
+
+.barWarn {
+  background: #f59e0b;
+}
+
+.tdStatus {
+  padding: 0.75rem 0;
+  text-align: right;
+  vertical-align: middle;
+}
+
+/* ── Status elements ── */
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.dotOk { background: #2ec4a7; }
+.dotBad { background: #ef4444; }
+.dotWarn { background: #f59e0b; }
+.dotGrey { background: #94a3b8; }
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeOk {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.badgeBad {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.badgeWarn {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+/* ── Asset Cards (Forced / Excluded) ── */
+.assetCardsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .assetCardsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.assetCard {
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.assetCardOk {
+  border-color: #d1fae5;
+  background: #f0fdf4;
+}
+
+.assetCardWarn {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.assetCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.assetCardHeader strong {
+  color: #0f1f3c;
+  font-size: 0.875rem;
+}
+
+.assetRatio {
+  color: #0f1f3c;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.assetSub {
+  margin: 0 0 0.5rem;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.chipOk {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.chipBad {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.chipWarn {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.assetNote {
+  margin: 0;
+  color: #b45309;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ── Confirm Card ── */
+.confirmCard {
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.confirmContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.confirmTitle {
+  margin: 0;
+  color: #0f1f3c;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.confirmSub {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8125rem;
+}
+
+.confirmCheckRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: #334155;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.confirmCheckbox {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: #2ec4a7;
+  cursor: pointer;
+}
+
+/* ── Footer ── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.blockedNote {
+  margin: 0;
+  color: #dc2626;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.loadingBox {
+  padding: 2.5rem 1rem;
+  color: #55687d;
+  font-size: 0.9375rem;
+  text-align: center;
+}

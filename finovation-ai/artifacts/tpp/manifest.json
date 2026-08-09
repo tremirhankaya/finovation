@@ -1,0 +1,10 @@
+{
+  "schema_version": "TPP_CARRY_BUNDLE_V2",
+  "source_tenor_day": 1,
+  "latest_observation_data_date": "2025-05-29",
+  "latest_issue_date": "2025-05-29",
+  "latest_weighted_average_percent": 49.41,
+  "information_cutoff": "2025-05-29",
+  "holiday_weekend_behavior": "CALENDAR_DAY_CARRY; ZERO_VOLUME_ROWS_NOT_NEW_RATE_OBSERVATIONS",
+  "row_count": 3
+}

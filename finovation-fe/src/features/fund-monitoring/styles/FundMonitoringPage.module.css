@@ -180,7 +180,7 @@
 .bottomGrid {
   display: grid;
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .topGrid {
@@ -194,7 +194,9 @@
 }
 
 .card {
+  height: 100%;
   min-width: 0;
+  box-sizing: border-box;
   padding: 20px 22px;
   background: #fff;
   border: 1px solid #dfe7ef;
@@ -426,45 +428,6 @@
   color: #dc2626;
 }
 
-.benchmarkDefinition {
-  padding: 12px;
-  margin-top: 16px;
-  background: #f8fafc;
-  border: 1px solid #dfe7ef;
-  border-radius: 10px;
-}
-
-.benchmarkDefinition h3 {
-  margin: 0 0 8px;
-  color: #0f2d52;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.035em;
-  text-transform: uppercase;
-}
-
-.benchmarkDefinition ul {
-  display: grid;
-  gap: 7px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.benchmarkDefinition li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #64748b;
-  font-size: 0.72rem;
-}
-
-.benchmarkDefinition strong {
-  color: #0f172a;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
 .returnsTitle {
   margin: 18px 0 9px;
   color: #94a3b8;
@@ -476,7 +439,7 @@
 
 .returnsGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
@@ -605,6 +568,49 @@
 .donutWrap svg {
   display: block;
   width: 100%;
+}
+
+.donutChart {
+  position: relative;
+}
+
+.donutChart circle[tabindex] {
+  cursor: pointer;
+  transition: stroke-width 120ms ease, opacity 120ms ease;
+}
+
+.donutChart circle[tabindex]:focus-visible {
+  outline: none;
+  filter: drop-shadow(0 0 3px rgb(13 148 136 / 50%));
+}
+
+.sectorHoverDetail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 92px;
+  color: #64748b;
+  font-size: 0.67rem;
+  line-height: 1.25;
+  text-align: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.sectorHoverDetail strong {
+  overflow: hidden;
+  color: #0f2d52;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+}
+
+.sectorHoverDetail span {
+  margin-top: 3px;
+  color: #0d9488;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .sectorLegend {
@@ -1125,4 +1131,3 @@
     transition: none;
   }
 }
-

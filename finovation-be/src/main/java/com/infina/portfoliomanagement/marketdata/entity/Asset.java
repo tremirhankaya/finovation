@@ -49,4 +49,7 @@ public class Asset {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "asset", fetch = FetchType.LAZY)
+    private EquityDetail equityDetail;
 }

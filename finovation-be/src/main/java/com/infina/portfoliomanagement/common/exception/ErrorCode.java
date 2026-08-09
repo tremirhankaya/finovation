@@ -336,6 +336,78 @@ public enum ErrorCode {
             "The working portfolio payload is invalid."
     ),
 
+    FUND_RULE_TOTAL_WEIGHT(
+            "FUND_016",
+            HttpStatus.BAD_REQUEST,
+            "Portfolio weights must total 100%."
+    ),
+
+    FUND_RULE_EQUITY_MIN(
+            "FUND_017",
+            HttpStatus.BAD_REQUEST,
+            "Total equity weight is below the required minimum."
+    ),
+
+    FUND_RULE_EQUITY_MAX(
+            "FUND_018",
+            HttpStatus.BAD_REQUEST,
+            "Total equity weight exceeds the allowed maximum."
+    ),
+
+    FUND_RULE_TPP_MIN(
+            "FUND_019",
+            HttpStatus.BAD_REQUEST,
+            "Total TPP weight is below the required minimum."
+    ),
+
+    FUND_RULE_TPP_MAX(
+            "FUND_020",
+            HttpStatus.BAD_REQUEST,
+            "Total TPP weight exceeds the allowed maximum."
+    ),
+
+    FUND_RULE_SINGLE_STOCK_MAX(
+            "FUND_021",
+            HttpStatus.BAD_REQUEST,
+            "A single stock exceeds the allowed maximum weight."
+    ),
+
+    FUND_RULE_ABOVE_THRESHOLD_SUM_MAX(
+            "FUND_022",
+            HttpStatus.BAD_REQUEST,
+            "The combined weight of large positions exceeds the allowed maximum."
+    ),
+
+    FUND_RULE_SECTOR_MAX(
+            "FUND_023",
+            HttpStatus.BAD_REQUEST,
+            "A sector exceeds the allowed maximum weight."
+    ),
+
+    FUND_RULE_MIN_STOCK_COUNT(
+            "FUND_024",
+            HttpStatus.BAD_REQUEST,
+            "The portfolio holds fewer stocks than required."
+    ),
+
+    FUND_RULE_MAX_STOCK_COUNT(
+            "FUND_025",
+            HttpStatus.BAD_REQUEST,
+            "The portfolio holds more stocks than allowed."
+    ),
+
+    FUND_DRAFT_ALREADY_COMPLETED(
+            "FUND_026",
+            HttpStatus.CONFLICT,
+            "This fund draft has already been completed."
+    ),
+
+    FUND_DRAFT_LOCKED(
+            "FUND_027",
+            HttpStatus.CONFLICT,
+            "A completed fund draft can no longer be changed."
+    ),
+
     STRESS_PORTFOLIO_NOT_AVAILABLE(
             "STRESS_001",
             HttpStatus.UNPROCESSABLE_CONTENT,
@@ -352,6 +424,24 @@ public enum ErrorCode {
             "STRESS_003",
             HttpStatus.NOT_FOUND,
             "Stress test not found."
+    ),
+
+    AI_ENGINE_UNAVAILABLE(
+            "AI_ENGINE_001",
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "AI Engine service is temporarily unavailable."
+    ),
+
+    AI_ENGINE_ERROR(
+            "AI_ENGINE_002",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "AI Engine service encountered an error."
+    ),
+
+    AI_ENGINE_INVALID_REQUEST(
+            "AI_ENGINE_003",
+            HttpStatus.BAD_REQUEST,
+            "Invalid request to AI Engine."
     ),
     ;
 

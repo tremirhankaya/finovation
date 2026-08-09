@@ -26,6 +26,7 @@ class FundMetricCalculatorTest {
     void periodReturns_useHistoricalSharePriceSeries() {
         LocalDate asOf = LocalDate.of(2026, Month.AUGUST, 4);
         List<FundValuationPoint> points = List.of(
+                point(asOf.minusYears(1), "80"),
                 point(asOf.minusMonths(6), "100"),
                 point(asOf.minusMonths(3), "120"),
                 point(asOf.minusMonths(1), "90"),
@@ -37,7 +38,8 @@ class FundMetricCalculatorTest {
                 .containsExactly(
                         new BigDecimal("22.2222"),
                         new BigDecimal("-8.3333"),
-                        new BigDecimal("10.0000")
+                        new BigDecimal("10.0000"),
+                        new BigDecimal("37.5000")
                 );
     }
 

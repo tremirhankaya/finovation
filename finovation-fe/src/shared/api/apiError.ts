@@ -66,6 +66,12 @@ const ERROR_MESSAGES: Record<string, string> = {
   OPT_007:
     "Bu istek başka bir işlemle güncellendi. Lütfen sayfayı yenileyip tekrar deneyin.",
   OPT_008: "Bu optimizasyon isteği şu anki durumundan istenen duruma geçemez.",
+  STRESS_001:
+      "Stres testi çalıştırılabilecek seçili bir portföy bulunamadı.",
+  STRESS_002:
+      "Seçilen stres senaryosu bulunamadı veya artık kullanılamıyor.",
+  STRESS_003:
+      "Stres testi sonucu bulunamadı.",
 }
 
 function fallbackMessage(fallback: string): string {

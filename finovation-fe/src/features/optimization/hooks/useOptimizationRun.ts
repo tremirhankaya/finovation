@@ -16,13 +16,6 @@ export function useOptimizationRun(requestId: number) {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [attempt, setAttempt] = useState(0)
-  // Effects can run twice for the same requestId/attempt (React StrictMode in
-  // dev, or a fast double-mount). Both invocations must observe the *same*
-  // run() outcome instead of each firing its own POST — otherwise the second
-  // POST races the first and gets rejected with "cannot transition from
-  // RUNNING", or an invocation that skips its own POST ends up displaying a
-  // stale pre-run snapshot forever because the real result landed on the
-  // other (cancelled) invocation.
   const inFlightRunRef = useRef<{
     key: string
     promise: Promise<OptimizationRequestResponse>

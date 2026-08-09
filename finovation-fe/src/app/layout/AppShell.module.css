@@ -15,7 +15,7 @@
   flex: 0 0 248px;
   flex-direction: column;
   padding: 22px 14px 18px;
-  overflow: hidden;
+  overflow: visible;
   background: #fff;
   border-right: 1px solid #e2e8f0;
   transition:
@@ -31,7 +31,8 @@
   flex-basis: 0;
   padding-right: 0;
   padding-left: 0;
-  border-color: transparent;
+  border-right-color: transparent;
+  overflow: hidden;
   transform: translateX(-100%);
   visibility: hidden;
 }
@@ -48,6 +49,10 @@
   gap: 4px;
 }
 
+.navGroup {
+  position: relative;
+}
+
 .navigationLink {
   position: relative;
   display: flex;
@@ -56,6 +61,9 @@
   gap: 10px;
   padding: 8px 11px;
   color: #64748b;
+  border: none;
+  background: transparent;
+  cursor: pointer;
   border-radius: 10px;
   font-size: 0.78rem;
   font-weight: 600;
@@ -76,18 +84,23 @@
   background: #e7f8f5;
 }
 
+.navigationLinkExpanded {
+  color: var(--color-teal-700);
+}
+
 .navigationLinkActive::before {
   content: "";
   position: absolute;
   top: 8px;
   bottom: 8px;
-  left: -14px;
+  left: -15px;
   width: 3px;
   border-radius: 0 4px 4px 0;
   background: var(--color-teal-600);
 }
 
 .navigationLink:focus-visible,
+.subNavLink:focus-visible,
 .signOutButton:focus-visible,
 .userSummary:focus-visible,
 .sidebarToggle:focus-visible {
@@ -111,6 +124,99 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
+}
+
+.navigationLinkChevron {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+}
+
+.navigationLinkChevronExpanded {
+  transform: rotate(180deg);
+}
+
+.subNav {
+  position: absolute;
+  top: -4px;
+  left: calc(100% + 16px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 8px;
+  min-width: 200px;
+  animation: flyoutEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: left center;
+}
+
+.subNav::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-left: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  transform: rotate(45deg);
+  border-radius: 2px 0 0 0;
+}
+
+.subNav::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -16px;
+  width: 16px;
+  background: transparent;
+}
+
+@keyframes flyoutEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.subNavLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 8px 12px;
+  color: #64748b;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.subNavLink:hover {
+  color: var(--color-teal-700);
+  background: #f8fafc;
+}
+
+.subNavLinkActive {
+  color: var(--color-teal-700);
+  background: #e7f8f5;
+  font-weight: 600;
 }
 
 .sidebarFooter {

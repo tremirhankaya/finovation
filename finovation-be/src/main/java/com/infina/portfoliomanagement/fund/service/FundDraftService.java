@@ -12,6 +12,7 @@ import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.dto.ModelUniverseAssetResponse;
 import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPortfolioRulesRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
+import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineCreateResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAssetDto;
@@ -43,7 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -84,7 +84,10 @@ public class FundDraftService {
         return switch (page) {
             case START -> startInit(limits);
             case STRATEGY -> strategyInit(actorUsername, draftId, limits);
-            case ANALYSIS, ALTERNATIVES, EDIT -> boundsInit(page, limits);
+            case EDIT -> editInit(actorUsername, draftId, limits);
+            case ANALYSIS -> analysisInit(actorUsername, draftId, limits);
+            case ALTERNATIVES -> boundsInit(page, limits);
+            case APPROVAL -> approvalInit(actorUsername, draftId, limits);
         };
     }
 
@@ -113,6 +116,9 @@ public class FundDraftService {
                 limits.minEquityWeightPct(),
                 limits.maxEquityWeightPct(),
                 limits.sectorMaxPct(),
+                limits.aboveThresholdPct(),
+                limits.aboveThresholdSumMax(),
+                limits.maxAssetPreferences(),
                 null,
                 null
         );
@@ -146,6 +152,117 @@ public class FundDraftService {
                 limits.minEquityWeightPct(),
                 limits.maxEquityWeightPct(),
                 limits.sectorMaxPct(),
+                limits.aboveThresholdPct(),
+                limits.aboveThresholdSumMax(),
+                limits.maxAssetPreferences(),
+                draft,
+                loadModelUniverse()
+        );
+    }
+
+    private FundDraftInitResponse editInit(
+            String actorUsername,
+            UUID draftId,
+            FundProperties limits
+    ) {
+        if (draftId == null) {
+            throw new BaseException(ErrorCode.FUND_INIT_PAGE_INVALID);
+        }
+        FundDraftResponse draft = toResponse(requireOwnedDraft(actorUsername, draftId));
+        return new FundDraftInitResponse(
+                FundDesignInitPage.EDIT,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                limits.minLiquidityTargetPct(),
+                limits.maxLiquidityTargetPct(),
+                limits.minTppRangePct(),
+                limits.minStockCount(),
+                limits.maxStockCount(),
+                limits.minStockCountRange(),
+                limits.minSingleStockMaxPct(),
+                limits.maxSingleStockMaxPct(),
+                limits.minEquityWeightPct(),
+                limits.maxEquityWeightPct(),
+                limits.sectorMaxPct(),
+                limits.aboveThresholdPct(),
+                limits.aboveThresholdSumMax(),
+                limits.maxAssetPreferences(),
+                draft,
+                loadModelUniverse()
+        );
+    }
+
+    private FundDraftInitResponse approvalInit(
+            String actorUsername,
+            UUID draftId,
+            FundProperties limits
+    ) {
+        if (draftId == null) {
+            throw new BaseException(ErrorCode.FUND_INIT_PAGE_INVALID);
+        }
+        FundDraftResponse draft = toResponse(requireOwnedDraft(actorUsername, draftId));
+        return new FundDraftInitResponse(
+                FundDesignInitPage.APPROVAL,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                limits.minLiquidityTargetPct(),
+                limits.maxLiquidityTargetPct(),
+                limits.minTppRangePct(),
+                limits.minStockCount(),
+                limits.maxStockCount(),
+                limits.minStockCountRange(),
+                limits.minSingleStockMaxPct(),
+                limits.maxSingleStockMaxPct(),
+                limits.minEquityWeightPct(),
+                limits.maxEquityWeightPct(),
+                limits.sectorMaxPct(),
+                limits.aboveThresholdPct(),
+                limits.aboveThresholdSumMax(),
+                limits.maxAssetPreferences(),
+                draft,
+                null
+        );
+    }
+
+    private FundDraftInitResponse analysisInit(
+            String actorUsername,
+            UUID draftId,
+            FundProperties limits
+    ) {
+        if (draftId == null) {
+            throw new BaseException(ErrorCode.FUND_INIT_PAGE_INVALID);
+        }
+        FundDraftResponse draft = toResponse(requireOwnedDraft(actorUsername, draftId));
+        return new FundDraftInitResponse(
+                FundDesignInitPage.ANALYSIS,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                limits.minLiquidityTargetPct(),
+                limits.maxLiquidityTargetPct(),
+                limits.minTppRangePct(),
+                limits.minStockCount(),
+                limits.maxStockCount(),
+                limits.minStockCountRange(),
+                limits.minSingleStockMaxPct(),
+                limits.maxSingleStockMaxPct(),
+                limits.minEquityWeightPct(),
+                limits.maxEquityWeightPct(),
+                limits.sectorMaxPct(),
+                limits.aboveThresholdPct(),
+                limits.aboveThresholdSumMax(),
+                limits.maxAssetPreferences(),
                 draft,
                 loadModelUniverse()
         );
@@ -171,12 +288,21 @@ public class FundDraftService {
                 limits.minEquityWeightPct(),
                 limits.maxEquityWeightPct(),
                 limits.sectorMaxPct(),
+                limits.aboveThresholdPct(),
+                limits.aboveThresholdSumMax(),
+                limits.maxAssetPreferences(),
                 null,
                 null
         );
     }
 
-    private List<ModelUniverseAssetResponse> loadModelUniverse() {
+    private List<ModelUniverseAssetResponse> cachedModelUniverse = null;
+
+    private synchronized List<ModelUniverseAssetResponse> loadModelUniverse() {
+        if (cachedModelUniverse != null) {
+            return cachedModelUniverse;
+        }
+
         List<Asset> assets = assetRepository
                 .findAllByAssetTypeAndInModelUniverseTrueAndActiveTrueOrderByAssetCodeAsc(
                         AssetType.EQUITY
@@ -194,12 +320,13 @@ public class FundDraftService {
                         (left, right) -> left
                 ));
 
-        return assets.stream()
+        cachedModelUniverse = assets.stream()
                 .map(asset -> new ModelUniverseAssetResponse(
                         asset.getAssetCode(),
                         resolveDisplayName(asset, companyNameByAssetId.get(asset.getId()))
                 ))
                 .toList();
+        return cachedModelUniverse;
     }
 
     @Transactional
@@ -249,13 +376,27 @@ public class FundDraftService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<FundDraftSummaryResponse> listCompletedDrafts(String actorUsername) {
+        User actor = userRepository.findByUsername(actorUsername)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        return fundDraftRepository
+                .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+                        FundDraftStatus.COMPLETED,
+                        actor.getId()
+                )
+                .stream()
+                .map(FundDraftSummaryResponse::from)
+                .toList();
+    }
+
     @Transactional
     public FundDraftResponse updatePortfolioRules(
             String actorUsername,
             UUID draftId,
             UpdateFundDraftPortfolioRulesRequest request
     ) {
-        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
+        FundDraft draft = requireEditableDraft(actorUsername, draftId);
         FundProperties limits = fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE);
         fundDraftValidator.assertPortfolioRulesAreValid(request, limits);
 
@@ -265,7 +406,8 @@ public class FundDraftService {
         fundDraftValidator.assertAssetPreferencesValid(
                 excludedCodes,
                 forcedCodes,
-                request.minStockCount()
+                request.minStockCount(),
+                limits.maxAssetPreferences()
         );
 
         LocalDateTime now = LocalDateTime.now(clock);
@@ -309,7 +451,7 @@ public class FundDraftService {
     }
 
     public FundModelAnalysisResponse runAnalysis(String actorUsername, UUID draftId) {
-        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
+        FundDraft draft = requireEditableDraft(actorUsername, draftId);
         fundDraftValidator.assertStrategyReadyForAnalysis(draft);
 
         String fingerprint = currentFingerprint(draft);
@@ -322,15 +464,17 @@ public class FundDraftService {
         FundModelAnalysisRequest request = toAnalysisRequest(draft);
         ModelRun run = fundAnalysisPersistenceService.startRun(draft, fingerprint);
         try {
-            FundModelAnalysisResponse response = fundModelClient.analyze(request);
+            FundEngineCreateResponse response = fundModelClient.analyze(request);
             fundAnalysisPersistenceService.completeRun(run, draft, response, fingerprint);
             log.info(
                     "Fund draft {} analysis completed by user {} with {} proposals",
                     draft.getPublicId(),
                     draft.getCreatedByUserId(),
-                    response.proposals() == null ? 0 : response.proposals().size()
+                    response.alternatives() == null ? 0 : response.alternatives().size()
             );
-            return response;
+            
+            FundDraftAnalysisStateResponse newState = fundAnalysisPersistenceService.loadState(draft, fingerprint);
+            return new FundModelAnalysisResponse(newState.proposals());
         } catch (RuntimeException ex) {
             fundAnalysisPersistenceService.failRun(
                     run,
@@ -347,7 +491,7 @@ public class FundDraftService {
             UUID draftId,
             int rank
     ) {
-        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
+        FundDraft draft = requireEditableDraft(actorUsername, draftId);
         String fingerprint = currentFingerprint(draft);
         FundDraftAnalysisStateResponse state =
                 fundAnalysisPersistenceService.selectProposal(draft, fingerprint, rank);
@@ -369,9 +513,14 @@ public class FundDraftService {
             UUID draftId,
             List<FundModelAssetDto> assets
     ) {
-        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
-        WorkingPortfolioResponse response =
-                fundAnalysisPersistenceService.replaceWorking(draft, assets);
+        FundDraft draft = requireEditableDraft(actorUsername, draftId);
+        FundProperties limits = fundDesignProfileService.getLimits(draft.getFundType());
+        WorkingPortfolioResponse response = fundAnalysisPersistenceService.replaceWorking(
+                draft,
+                assets,
+                limits
+        );
+        advanceCurrentStep(draft, FundDesignSteps.EDIT);
         draft.setUpdatedAt(LocalDateTime.now(clock));
         fundDraftRepository.save(draft);
         return response;
@@ -527,20 +676,48 @@ public class FundDraftService {
         InvestmentHorizon horizon =
                 draft.getHorizon() != null ? draft.getHorizon() : InvestmentHorizon.M12;
         return new FundModelAnalysisRequest(
-                loadExcludedCodes(draft.getId()),
                 horizon,
-                loadForcedCodes(draft.getId()),
-                draft.getMaxStockCount().intValue(),
                 draft.getMinStockCount().intValue(),
-                toWeightFraction(draft.getTppMaxPct()),
-                toWeightFraction(draft.getTppMinPct())
+                draft.getMaxStockCount().intValue(),
+                toWeightPct(draft.getTppMinPct()),
+                toWeightPct(draft.getTppMaxPct()),
+                loadForcedCodes(draft.getId()),
+                loadExcludedCodes(draft.getId())
         );
     }
 
-    private static BigDecimal toWeightFraction(Short percent) {
-        int value = percent == null ? 0 : percent.intValue();
-        return BigDecimal.valueOf(value)
-                .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+    private static BigDecimal toWeightPct(Short percent) {
+        if (percent == null) return BigDecimal.ZERO;
+        return BigDecimal.valueOf(percent.intValue())
+                .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+    }
+
+    @Transactional
+    public FundDraftResponse completeDraft(String actorUsername, UUID draftId) {
+        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
+        if (draft.getStatus() == FundDraftStatus.COMPLETED) {
+            throw new BaseException(ErrorCode.FUND_DRAFT_ALREADY_COMPLETED);
+        }
+
+        FundProperties limits = fundDesignProfileService.getLimits(draft.getFundType());
+        fundAnalysisPersistenceService.assertWorkingPortfolioIsCompliant(draft, limits);
+
+        draft.setStatus(FundDraftStatus.COMPLETED);
+        advanceCurrentStep(draft, FundDesignSteps.APPROVAL);
+        draft.setUpdatedAt(LocalDateTime.now(clock));
+
+        FundDraft saved = fundDraftRepository.save(draft);
+        log.info("Fund draft {} completed by {}", saved.getPublicId(), actorUsername);
+
+        return toResponse(saved);
+    }
+
+    private FundDraft requireEditableDraft(String actorUsername, UUID draftId) {
+        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
+        if (draft.getStatus() == FundDraftStatus.COMPLETED) {
+            throw new BaseException(ErrorCode.FUND_DRAFT_LOCKED);
+        }
+        return draft;
     }
 
     private FundDraft requireOwnedDraft(String actorUsername, UUID draftId) {

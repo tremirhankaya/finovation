@@ -2,9 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { useNavigate, useParams } from "react-router"
 
 import DualRangeSlider from "@/features/fund-design/components/DualRangeSlider"
-import AssetPreferencePicker, {
-  MAX_ASSET_PREFERENCES,
-} from "@/features/fund-design/components/AssetPreferencePicker"
+import AssetPreferencePicker from "@/features/fund-design/components/AssetPreferencePicker"
 import FundDesignLayout from "@/features/fund-design/components/FundDesignLayout"
 import ParamInfoTip from "@/features/fund-design/components/ParamInfoTip"
 import ProspectusRulesPanel from "@/features/fund-design/components/ProspectusRulesPanel"
@@ -325,7 +323,7 @@ export default function FundDesignStrategyPage() {
       excludedAssetCodes,
       forcedAssetCodes: forcedAssetCodes.slice(
         0,
-        Math.min(MAX_ASSET_PREFERENCES, stocks.min),
+        Math.min(init.maxAssetPreferences, stocks.min),
       ),
     })
   }
@@ -693,7 +691,7 @@ export default function FundDesignStrategyPage() {
                       setMinStockCount(min)
                       setMaxStockCount(max)
                       setForcedAssetCodes((current) =>
-                        current.slice(0, Math.min(MAX_ASSET_PREFERENCES, min)),
+                        current.slice(0, Math.min(init?.maxAssetPreferences ?? 3, min)),
                       )
                     }}
                   />
@@ -727,6 +725,7 @@ export default function FundDesignStrategyPage() {
                 forcedCodes={forcedAssetCodes}
                 excludedCodes={excludedAssetCodes}
                 minStockCount={minStockCount}
+                maxAssetPreferences={init?.maxAssetPreferences ?? 3}
                 universe={
                   init?.page === "STRATEGY" ? init.modelUniverse : []
                 }

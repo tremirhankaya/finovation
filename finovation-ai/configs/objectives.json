@@ -1,0 +1,40 @@
+{
+  "config_id": "PORTFOLIO_OBJECTIVES_V3_NEW_PROSPECTUS",
+  "create_objectives": ["RETURN_FOCUSED", "ROBUST_RISK_CONTROLLED"],
+  "optimize_objectives": ["RETURN_FOCUSED", "BALANCED_UTILITY", "ROBUST_RISK_CONTROLLED"],
+  "definitions": {
+    "RETURN_FOCUSED": {
+      "downside_penalty": 0.15,
+      "uncertainty_penalty": 0.05,
+      "rank_weight": 0.06,
+      "variance_penalty": 0.25
+    },
+    "BALANCED_UTILITY": {
+      "downside_penalty": 0.40,
+      "uncertainty_penalty": 0.10,
+      "rank_weight": 0.04,
+      "variance_penalty": 1.00
+    },
+    "ROBUST_RISK_CONTROLLED": {
+      "downside_penalty": 0.75,
+      "uncertainty_penalty": 0.20,
+      "rank_weight": 0.02,
+      "variance_penalty": 2.50
+    }
+  },
+  "horizon_trading_sessions": {"3": 63, "6": 126, "12": 252},
+  "policy": {
+    "equity_min": 0.85,
+    "equity_max": 0.95,
+    "tpp_min": 0.05,
+    "tpp_max": 0.15,
+    "stock_min": 0.03,
+    "stock_max": 0.10,
+    "stock_count_min": 16,
+    "stock_count_max": 30,
+    "sector_max": 0.30,
+    "large_position_threshold": 0.05,
+    "large_position_total_max_exclusive": 0.40,
+    "strict_constraint_margin": 0.000001
+  }
+}

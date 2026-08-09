@@ -49,7 +49,9 @@ public interface FundDraftControllerDocs {
                     + "page=START: currencies + create bounds + prospectus frames. "
                     + "page=STRATEGY&draftId=: portfolio-rule bounds + owned draft + model universe "
                     + "(single response for screen 2). "
-                    + "page=ANALYSIS|ALTERNATIVES|EDIT: prospectus / rule frames only. "
+                    + "page=ANALYSIS&draftId=: portfolio-rule bounds + owned draft + model universe "
+                    + "(single response for screen 3). "
+                    + "page=ALTERNATIVES|EDIT: prospectus / rule frames only. "
                     + "Save endpoints still enforce the same bounds.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
@@ -62,6 +64,13 @@ public interface FundDraftControllerDocs {
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     List<FundDraftSummaryResponse> listInProgressDrafts(UserDetails userDetails);
+
+    @Operation(
+            summary = "List completed fund drafts",
+            description = "Returns the authenticated user's COMPLETED drafts.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    List<FundDraftSummaryResponse> listCompletedDrafts(UserDetails userDetails);
 
     @Operation(
             summary = "List model universe equities",
@@ -140,4 +149,12 @@ public interface FundDraftControllerDocs {
             UUID draftId,
             UpdateWorkingPortfolioRequest request
     );
+
+    @Operation(
+            summary = "Complete the fund draft (screen 6)",
+            description = "Revalidates the working portfolio against the fund rules, then marks "
+                    + "the draft COMPLETED. A completed draft can no longer be changed.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    FundDraftResponse completeDraft(UserDetails userDetails, UUID draftId);
 }

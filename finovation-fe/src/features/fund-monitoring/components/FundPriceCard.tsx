@@ -7,6 +7,7 @@ import {
 import {
   PRICE_PERIODS,
   type FundMonitoringSnapshot,
+  type PeriodReturn,
   type PricePeriod,
 } from "@/features/fund-monitoring/model/fundMonitoring.types"
 import styles from "@/features/fund-monitoring/styles/FundMonitoringPage.module.css"
@@ -17,6 +18,13 @@ type FundPriceCardProps = {
   onPeriodChange: (period: PricePeriod) => void
 }
 
+const EMPTY_RETURNS: PeriodReturn[] = [
+  { period: "1M", label: "1 Aylık Getiri", value: null },
+  { period: "3M", label: "3 Aylık Getiri", value: null },
+  { period: "6M", label: "6 Aylık Getiri", value: null },
+  { period: "1Y", label: "1 Yıllık Getiri", value: null },
+]
+
 export default function FundPriceCard({
   snapshot,
   period,
@@ -26,6 +34,7 @@ export default function FundPriceCard({
   const isNegative = dailyChange < 0
   const isPositive = dailyChange > 0
   const points = snapshot?.priceHistory[period] ?? []
+  const periodReturns = snapshot?.periodReturns ?? EMPTY_RETURNS
 
   return (
     <section className={`${styles.card} ${styles.priceCard}`}>
@@ -73,7 +82,29 @@ export default function FundPriceCard({
       </div>
 
       <div className={styles.priceChart}>
-        <PriceTrendChart points={points} fundName={snapshot?.fund.name} />
+        <PriceTrendChart
+          points={points}
+          fundName={snapshot?.fund.name}
+          currency={snapshot?.currency ?? "TRY"}
+        />
+      </div>
+
+      <h3 className={styles.returnsTitle}>Getiri Özeti</h3>
+      <div className={styles.returnsGrid}>
+        {periodReturns.map((item) => (
+          <div className={styles.returnTile} key={item.period}>
+            <span>{item.label}</span>
+            <strong
+              className={
+                item.value !== null && item.value < 0
+                  ? styles.negative
+                  : styles.positive
+              }
+            >
+              {formatPercentage(item.value)}
+            </strong>
+          </div>
+        ))}
       </div>
     </section>
   )

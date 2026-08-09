@@ -13,12 +13,12 @@ export type ManagementApproachOption = {
 
 export const MANAGEMENT_APPROACHES: ManagementApproachOption[] = [
   {
-    code: "ATTACK",
-    label: "Agresif",
+    code: "PROTECTIVE",
+    label: "Korumacı",
     description:
-      "Yüksek risk ve getiri potansiyeli ile piyasa fırsatlarına odaklanır.",
+      "Düşük risk profili ile sermaye korumasına öncelik verir.",
     defaultLiquidityMinPct: 10,
-    defaultLiquidityMaxPct: 14,
+    defaultLiquidityMaxPct: 15,
     defaultPreferredLiquidityPct: 12,
     defaultMinStockCount: 16,
     defaultMaxStockCount: 21,
@@ -35,10 +35,10 @@ export const MANAGEMENT_APPROACHES: ManagementApproachOption[] = [
     defaultMaxStockCount: 26,
   },
   {
-    code: "PROTECTIVE",
-    label: "Korumacı",
+    code: "ATTACK",
+    label: "Agresif",
     description:
-      "Düşük risk profili ile sermaye korumasına öncelik verir.",
+      "Yüksek risk ve getiri potansiyeli ile piyasa fırsatlarına odaklanır.",
     defaultLiquidityMinPct: 5,
     defaultLiquidityMaxPct: 10,
     defaultPreferredLiquidityPct: 8,

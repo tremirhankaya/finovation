@@ -727,9 +727,6 @@ public class OptimizationRequestService {
     ) {
         BigDecimal currentWeight = engineRequest.currentPortfolio().getOrDefault(assetCode, BigDecimal.ZERO);
         BigDecimal proposedWeight = alternative.weights().getOrDefault(assetCode, BigDecimal.ZERO);
-        // Derived from the same two (already-rounded) weights shown to the user, rather than
-        // the engine's separate deltas map — otherwise a sub-precision engine delta can flag
-        // an asset as INCREASE/DECREASE while its displayed weights look identical.
         BigDecimal changeAmount = proposedWeight.subtract(currentWeight);
 
         boolean isCashTpp = assetCode.equals(CASH_TPP_CODE);
@@ -788,9 +785,6 @@ public class OptimizationRequestService {
         return normalizeSumToOne(currentPortfolio);
     }
 
-    // Per-asset rounding in toFraction() can drift the summed fractions a few
-    // millionths away from exactly 1.0. The engine validates the sum with strict
-    // equality, so the rounding remainder is absorbed into the largest position.
     private Map<String, BigDecimal> normalizeSumToOne(Map<String, BigDecimal> fractions) {
         if (fractions.isEmpty()) {
             return fractions;
@@ -878,17 +872,10 @@ public class OptimizationRequestService {
                 ));
     }
 
-    // current_portfolio keys the TPP position as CASH_TPP (see resolveCurrentPortfolio);
-    // locked/mandatory/excluded asset codes must use the same alias so the engine can match
-    // a locked/excluded TPP preference against the current portfolio entry.
     private String aliasTppCode(String canonicalAssetCode, String tppAssetCode) {
         return canonicalAssetCode.equals(tppAssetCode) ? CASH_TPP_CODE : canonicalAssetCode;
     }
 
-    // AssetPreference.assetCode is stored using whatever code the frontend selection sent
-    // (historically the bare market-data query code, e.g. "EKGYO"), while the engine's
-    // current_portfolio uses the canonical asset code (e.g. "EKGYO.E"). Resolve both to the
-    // same canonical code so locked/mandatory/excluded asset codes match current_portfolio's keys.
     private Map<String, String> resolveCanonicalAssetCodes(List<String> rawCodes) {
         List<String> distinctRawCodes = rawCodes.stream().distinct().toList();
         if (distinctRawCodes.isEmpty()) {

@@ -15,8 +15,6 @@ import java.util.Set;
 @Component
 public class FundDraftValidator {
 
-    public static final int MAX_ASSET_PREFERENCES_PER_LIST = 5;
-
     public void assertCreateRequest(
             String name,
             BigDecimal initialPortfolioSize,
@@ -58,7 +56,8 @@ public class FundDraftValidator {
     public void assertAssetPreferencesValid(
             List<String> excludedCodes,
             List<String> forcedCodes,
-            int minStockCount
+            int minStockCount,
+            int maxAssetPreferences
     ) {
         Set<String> excluded = new HashSet<>(excludedCodes);
         for (String forced : forcedCodes) {
@@ -66,8 +65,8 @@ public class FundDraftValidator {
                 throw new BaseException(ErrorCode.FUND_ASSET_PREFERENCE_INVALID);
             }
         }
-        if (forcedCodes.size() > MAX_ASSET_PREFERENCES_PER_LIST
-                || excludedCodes.size() > MAX_ASSET_PREFERENCES_PER_LIST
+        if (forcedCodes.size() > maxAssetPreferences
+                || excludedCodes.size() > maxAssetPreferences
                 || forcedCodes.size() > minStockCount) {
             throw new BaseException(ErrorCode.FUND_ASSET_PREFERENCE_INVALID);
         }

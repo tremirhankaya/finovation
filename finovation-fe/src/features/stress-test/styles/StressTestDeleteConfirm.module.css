@@ -1,0 +1,52 @@
+.dialog {
+    width: min(400px, calc(100vw - 32px));
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgb(10 22 40 / 18%);
+}
+
+.dialog h2 {
+    margin: 0;
+    color: #0f2d52;
+    font-size: 1.1rem;
+}
+
+.dialog p {
+    margin: 9px 0 0;
+    color: #64748b;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.error {
+    margin-top: 12px;
+    color: #b91c1c;
+    font-size: 0.78rem;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid #edf1f6;
+}
+
+.actions button {
+    height: 38px;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.deleteButton {
+    color: #fff;
+    background: #b91c1c !important;
+    border-color: #b91c1c !important;
+}

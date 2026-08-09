@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.fund.entity;
 
+import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +26,10 @@ public class FundPosition {
 
     @Column(name = "asset_id", nullable = false)
     private Long assetId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "asset_id", insertable = false, updatable = false)
+    private Asset asset;
 
     @Column(name = "weight", nullable = false, precision = 9, scale = 6)
     private BigDecimal weight;

@@ -26,6 +26,9 @@ public record FundDraftInitResponse(
         int minEquityWeightPct,
         int maxEquityWeightPct,
         BigDecimal sectorMaxPct,
+        BigDecimal aboveThresholdPct,
+        BigDecimal aboveThresholdSumMax,
+        int maxAssetPreferences,
         FundDraftResponse draft,
         List<ModelUniverseAssetResponse> modelUniverse
 ) {
