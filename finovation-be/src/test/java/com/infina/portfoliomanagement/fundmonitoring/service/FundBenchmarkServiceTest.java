@@ -70,13 +70,45 @@ class FundBenchmarkServiceTest {
                 indexPrice("REPBR", AS_OF_DATE.minusMonths(1), "1000"),
                 indexPrice("REPBR", AS_OF_DATE, "1100")
         ));
+        when(benchmarkPriceApi.fetchIndexRange(
+                "MEVTL",
+                FROM_DATE,
+                AS_OF_DATE
+        )).thenReturn(List.of(
+                indexPrice("MEVTL", AS_OF_DATE.minusMonths(1), "100"),
+                indexPrice("MEVTL", AS_OF_DATE, "104")
+        ));
         when(benchmarkPriceApi.fetchEconomicRange(
                 "TUCPIM",
                 FROM_DATE,
                 AS_OF_DATE
         )).thenReturn(List.of(
-                economicPrice(AS_OF_DATE.minusMonths(1), "400"),
-                economicPrice(AS_OF_DATE, "420")
+                economicPrice(AS_OF_DATE.minusMonths(1), "2"),
+                economicPrice(AS_OF_DATE, "3")
+        ));
+        when(benchmarkPriceApi.fetchIndexRange(
+                "XGLD",
+                FROM_DATE,
+                AS_OF_DATE
+        )).thenReturn(List.of(
+                indexPrice("XGLD", AS_OF_DATE.minusMonths(1), "100"),
+                indexPrice("XGLD", AS_OF_DATE, "130")
+        ));
+        when(benchmarkPriceApi.fetchIndexRange(
+                "USD/TRY",
+                FROM_DATE,
+                AS_OF_DATE
+        )).thenReturn(List.of(
+                indexPrice("USD/TRY", AS_OF_DATE.minusMonths(1), "40"),
+                indexPrice("USD/TRY", AS_OF_DATE, "44")
+        ));
+        when(benchmarkPriceApi.fetchIndexRange(
+                "EUR/TRY",
+                FROM_DATE,
+                AS_OF_DATE
+        )).thenReturn(List.of(
+                indexPrice("EUR/TRY", AS_OF_DATE.minusMonths(1), "50"),
+                indexPrice("EUR/TRY", AS_OF_DATE, "55")
         ));
 
         BenchmarkSnapshot snapshot = service.load(AS_OF_DATE);
@@ -92,24 +124,48 @@ class FundBenchmarkServiceTest {
                 .containsExactly(
                         tuple(
                                 "BENCHMARK",
-                                "Fon Karşılaştırma Ölçütü",
+                                "BENCHMARK",
                                 false,
                                 new BigDecimal("19.0000")
                         ),
-                        tuple("BIST30", "BIST 30", false, new BigDecimal("10.0000")),
                         tuple(
                                 "BIST100G",
                                 "BIST 100 Getiri Endeksi",
                                 false,
                                 new BigDecimal("20.0000")
                         ),
+                        tuple("BIST30", "BIST 30", false, new BigDecimal("10.0000")),
+                        tuple(
+                                "MEVDUAT",
+                                "Mevduat Getirisi",
+                                false,
+                                new BigDecimal("4.0000")
+                        ),
+                        tuple("TUFE", "TÜFE", false, new BigDecimal("3.0000")),
+                        tuple(
+                                "ALTIN",
+                                "Gram Altın",
+                                false,
+                                new BigDecimal("30.0000")
+                        ),
+                        tuple(
+                                "USD/TRY",
+                                "USD",
+                                false,
+                                new BigDecimal("10.0000")
+                        ),
+                        tuple(
+                                "EUR/TRY",
+                                "Euro",
+                                false,
+                                new BigDecimal("10.0000")
+                        ),
                         tuple(
                                 "REPBR",
                                 "BIST-KYD Repo (Brüt) Endeksi",
                                 false,
                                 new BigDecimal("10.0000")
-                        ),
-                        tuple("TUFE", "TÜFE", false, new BigDecimal("5.0000"))
+                        )
                 );
         assertThat(snapshot.benchmarkValues())
                 .containsEntry(AS_OF_DATE, new BigDecimal("119.000000000000"));
