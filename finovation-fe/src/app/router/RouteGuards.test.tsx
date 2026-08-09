@@ -217,6 +217,28 @@ describe("route guards", () => {
     expect(await screen.findByText("/users")).toBeInTheDocument()
   })
 
+  it("company managerı yalnız admine açık sistem route'undan ana sayfaya yönlendirir", async () => {
+    useAuthMock.mockReturnValue(authValue({ user: COMPANY_MANAGER }))
+
+    render(
+      <MemoryRouter initialEntries={["/system-logs"]}>
+        <Routes>
+          <Route
+            path="/system-logs"
+            element={
+              <ProtectedRoute requireAdmin>
+                <div>Log İzleme</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/dashboard" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText("/dashboard")).toBeInTheDocument()
+  })
+
   it("zorunlu parola değişikliği olan kullanıcıyı modül yerine güvenlik route'una gönderir", async () => {
     useAuthMock.mockReturnValue(
       authValue({

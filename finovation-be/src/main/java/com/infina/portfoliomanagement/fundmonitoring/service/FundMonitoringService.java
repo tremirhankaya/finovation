@@ -6,6 +6,7 @@ import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
@@ -72,13 +73,24 @@ public class FundMonitoringService {
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public List<FundSummaryResponse> listFunds(String actorUsername) {
+    public List<FundSummaryResponse> listFunds(
+            String actorUsername,
+            Long ownerUserId
+    ) {
         User actor = requireActor(actorUsername);
+        Long effectiveOwnerUserId = actor.getId();
+
+        if (ownerUserId != null && !ownerUserId.equals(actor.getId())) {
+            User owner = userRepository.findById(ownerUserId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+            accessPolicy.assertCanViewUserFunds(actor, owner);
+            effectiveOwnerUserId = owner.getId();
+        }
 
         return fundDraftRepository
                 .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
                         FundDraftStatus.COMPLETED,
-                        actor.getId()
+                        effectiveOwnerUserId
                 ).stream()
                 .map(FundSummaryResponse::from)
                 .toList();
@@ -223,13 +235,16 @@ public class FundMonitoringService {
             FundDraft fund,
             LocalDate today
     ) {
-        FundPortfolio selectedPortfolio = fundPortfolioRepository
-                .findByFundDraftIdAndSelectedTrue(fund.getId())
+        FundPortfolio workingPortfolio = fundPortfolioRepository
+                .findByFundDraft_IdAndPortfolioType(
+                        fund.getId(),
+                        PortfolioType.WORKING
+                )
                 .orElseThrow(() -> new BaseException(
                         ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE
                 ));
         List<FundPosition> portfolioPositions = fundPositionRepository
-                .findAllByFundPortfolioIdOrderByWeightDesc(selectedPortfolio.getId());
+                .findAllByFundPortfolioIdOrderByWeightDesc(workingPortfolio.getId());
         List<Long> assetIds = portfolioPositions.stream()
                 .map(FundPosition::getAssetId)
                 .toList();

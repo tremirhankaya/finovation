@@ -16,6 +16,7 @@ import com.infina.portfoliomanagement.user.policy.RolePolicy;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -79,6 +80,8 @@ public class AuthService {
 
             return createTokenResponse(userDetails);
 
+        } catch (DisabledException exception) {
+            throw new BaseException(ErrorCode.ACCOUNT_INACTIVE);
         } catch (AuthenticationException exception) {
             throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }

@@ -115,9 +115,7 @@ export default function UserEditModal({
     if (!user) return []
     if (isSelf) return [user.status]
 
-    return user.status === "LOCKED"
-      ? ["ACTIVE", "INACTIVE", "LOCKED"]
-      : ["ACTIVE", "INACTIVE"]
+    return ["ACTIVE", "INACTIVE"]
   }, [isSelf, user])
 
   if (!user) return null
@@ -300,9 +298,7 @@ export default function UserEditModal({
                     key={status}
                     className={`${styles.statusOption} ${
                       selected ? styles.statusOptionSelected : ""
-                    } ${status === "INACTIVE" ? styles.statusInactive : ""} ${
-                      status === "LOCKED" ? styles.statusLocked : ""
-                    }`}
+                    } ${status === "INACTIVE" ? styles.statusInactive : ""}`}
                     type="button"
                     role="radio"
                     aria-checked={selected}

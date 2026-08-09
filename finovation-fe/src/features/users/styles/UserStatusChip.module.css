@@ -27,9 +27,3 @@
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
 }
-
-.locked {
-  border: 1px solid rgba(153, 27, 27, 0.2);
-  color: var(--color-red-800);
-  background: rgba(239, 68, 68, 0.1);
-}

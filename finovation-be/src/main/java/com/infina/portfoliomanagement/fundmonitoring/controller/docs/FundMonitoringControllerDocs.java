@@ -19,10 +19,11 @@ public interface FundMonitoringControllerDocs {
 
     @Operation(
             summary = "List visible completed funds",
-            description = "Returns completed funds owned by the authenticated user.",
+            description = "Returns completed funds owned by the authenticated user. A company "
+                    + "manager may provide ownerUserId to list a user in the same company.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
-    List<FundSummaryResponse> listFunds(UserDetails userDetails);
+    List<FundSummaryResponse> listFunds(UserDetails userDetails, Long ownerUserId);
 
     @Operation(
             summary = "Get a fund monitoring snapshot",

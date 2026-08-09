@@ -5,6 +5,7 @@ import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
@@ -47,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,7 +129,10 @@ class FundMonitoringServiceTest {
                         FundDraftStatus.COMPLETED,
                         7L
                 )).thenReturn(List.of(selectedFund, otherFund));
-        when(fundPortfolioRepository.findByFundDraftIdAndSelectedTrue(anyLong()))
+        when(fundPortfolioRepository.findByFundDraft_IdAndPortfolioType(
+                anyLong(),
+                eq(PortfolioType.WORKING)
+        ))
                 .thenReturn(Optional.of(portfolio));
         when(portfolio.getId()).thenReturn(10L);
         when(fundPositionRepository
@@ -186,6 +191,29 @@ class FundMonitoringServiceTest {
                         tuple("Atlas Fonu", new BigDecimal("10.0000"), true, 8),
                         tuple("Nova Fonu", new BigDecimal("20.0000"), true, 8)
                 );
+    }
+
+    @Test
+    void listFunds_forManagedUser_appliesPolicyAndListsTargetFunds() {
+        User actor = mock(User.class);
+        User owner = mock(User.class);
+        FundDraft fund = fund(3L, "Kullanıcı Fonu");
+
+        when(actor.getId()).thenReturn(7L);
+        when(owner.getId()).thenReturn(9L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
+        when(userRepository.findById(9L)).thenReturn(Optional.of(owner));
+        when(fundDraftRepository
+                .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+                        FundDraftStatus.COMPLETED,
+                        9L
+                )).thenReturn(List.of(fund));
+
+        var response = service.listFunds("manager", 9L);
+
+        assertThat(response).extracting(item -> item.name())
+                .containsExactly("Kullanıcı Fonu");
+        verify(accessPolicy).assertCanViewUserFunds(actor, owner);
     }
 
     @Test
