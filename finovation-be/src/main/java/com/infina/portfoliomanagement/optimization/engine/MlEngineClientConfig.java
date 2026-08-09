@@ -30,6 +30,12 @@ public class MlEngineClientConfig {
                 .defaultHeader("Content-Type", "application/json")
                 .defaultHeader("Accept", "application/json")
                 .requestFactory(mlEngineRequestFactory(properties))
+                .requestInterceptor((request, body, execution) -> {
+                    if (properties.apiKey() != null && !properties.apiKey().isBlank()) {
+                        request.getHeaders().setBearerAuth(properties.apiKey());
+                    }
+                    return execution.execute(request, body);
+                })
                 .build();
     }
 

@@ -4,6 +4,7 @@ import {
   createOptimizationRequest,
   fetchInvestmentUniverse,
   fetchOptimizableFunds,
+  fetchOptimizationFundPositions,
 } from "@/features/optimization/api/optimizationApi"
 import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimizationError"
 import {
@@ -21,11 +22,9 @@ import type {
 } from "@/features/optimization/model/optimizationForm.types"
 import type {
   AssetPreferenceRequest,
+  OptimizationFundPositionsResponse,
   RiskProfile,
 } from "@/features/optimization/model/optimizationSchemas"
-import { fetchFundMonitoring } from "@/features/fund-monitoring/api/fundMonitoringService"
-import { getFundMonitoringErrorMessage } from "@/features/fund-monitoring/lib/fundMonitoringError"
-import type { FundMonitoringSnapshot } from "@/features/fund-monitoring/model/fundMonitoring.types"
 
 const DEFAULT_RISK_PROFILE: RiskProfile = "BALANCED"
 const DEFAULT_CONSTRAINTS = getSuggestedConstraints(DEFAULT_RISK_PROFILE)
@@ -38,7 +37,7 @@ export function useOptimizationForm() {
   const [step, setStep] = useState<WizardStep>(1)
   const [funds, setFunds] = useState<OptimizableFund[]>([])
   const [selectedFundId, setSelectedFundId] = useState("")
-  const [snapshot, setSnapshot] = useState<FundMonitoringSnapshot | null>(null)
+  const [snapshot, setSnapshot] = useState<OptimizationFundPositionsResponse | null>(null)
   const [isLoadingFunds, setIsLoadingFunds] = useState(true)
   const [isLoadingSnapshot, setIsLoadingSnapshot] = useState(false)
   const [loadErrorMessage, setLoadErrorMessage] = useState("")
@@ -145,12 +144,12 @@ export function useOptimizationForm() {
 
       try {
         setSnapshot(
-          await fetchFundMonitoring(selectedFundId, controller.signal),
+          await fetchOptimizationFundPositions(selectedFundId, controller.signal),
         )
       } catch (error) {
         if (!controller.signal.aborted) {
           setSnapshot(null)
-          setLoadErrorMessage(getFundMonitoringErrorMessage(error))
+          setLoadErrorMessage(getOptimizationErrorMessage(error))
         }
       } finally {
         if (!controller.signal.aborted) setIsLoadingSnapshot(false)
@@ -210,37 +209,35 @@ export function useOptimizationForm() {
     [funds, selectedFundId],
   )
 
-  const currentEquityPositions = useMemo(
+  const keptEquityPositions = useMemo(
     () =>
-      (snapshot?.positions ?? []).filter(
-        (position) => position.symbol !== TPP_ASSET_SYMBOL,
-      ),
-    [snapshot],
+      keptAssets.filter((position) => position.symbol !== TPP_ASSET_SYMBOL),
+    [keptAssets],
   )
 
   const maxSingleStockWeightPct = useMemo(
     () =>
-      currentEquityPositions.reduce(
+      keptEquityPositions.reduce(
         (max, asset) => Math.max(max, asset.weightPercentage),
         0,
       ),
-    [currentEquityPositions],
+    [keptEquityPositions],
   )
 
   const minSingleStockWeightPct = useMemo(
     () =>
-      currentEquityPositions.length === 0
+      keptEquityPositions.length === 0
         ? 0
-        : currentEquityPositions.reduce(
+        : keptEquityPositions.reduce(
             (min, asset) => Math.min(min, asset.weightPercentage),
             Infinity,
           ),
-    [currentEquityPositions],
+    [keptEquityPositions],
   )
 
   const maxSectorWeightPct = useMemo(() => {
     const weightBySector = new Map<string, number>()
-    for (const asset of currentEquityPositions) {
+    for (const asset of keptEquityPositions) {
       const sectorName = asset.sectorName ?? "Bilinmeyen sektör"
       weightBySector.set(
         sectorName,
@@ -248,7 +245,7 @@ export function useOptimizationForm() {
       )
     }
     return Math.max(0, ...weightBySector.values())
-  }, [currentEquityPositions])
+  }, [keptEquityPositions])
 
   const complianceRows = useMemo(
     () =>

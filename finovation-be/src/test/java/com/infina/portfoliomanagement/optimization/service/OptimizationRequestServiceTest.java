@@ -174,6 +174,8 @@ class OptimizationRequestServiceTest {
 
         when(fundMonitoringService.getMonitoringSnapshot(ACTOR_USERNAME, FUND_ID))
                 .thenReturn(fundMonitoringResponse());
+        when(fundMonitoringService.getCurrentPositionsSinceInception(ACTOR_USERNAME, FUND_ID))
+                .thenReturn(fundMonitoringResponse().positions());
 
         Asset tppAsset = Asset.builder()
                 .id(99L)
@@ -289,6 +291,8 @@ class OptimizationRequestServiceTest {
         );
         when(fundMonitoringService.getMonitoringSnapshot(ACTOR_USERNAME, FUND_ID))
                 .thenReturn(currentSnapshot);
+        when(fundMonitoringService.getCurrentPositionsSinceInception(ACTOR_USERNAME, FUND_ID))
+                .thenReturn(currentSnapshot.positions());
 
         Asset tppAsset = Asset.builder()
                 .id(99L)

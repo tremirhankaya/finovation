@@ -1,6 +1,7 @@
 import {
   getInvestmentUniverseUrl,
   getOptimizableFundsUrl,
+  getOptimizationFundPositionsUrl,
   getOptimizationLogsUrl,
   getOptimizationRequestApproveUrl,
   getOptimizationRequestRejectUrl,
@@ -14,10 +15,12 @@ import {
   type CreateOptimizationRequestPayload,
   type InvestmentUniverseAssetResponse,
   type OptimizableFundResponse,
+  type OptimizationFundPositionsResponse,
   type OptimizationLogEntry,
   type OptimizationRequestResponse,
   investmentUniverseResponseSchema,
   optimizableFundListResponseSchema,
+  optimizationFundPositionsResponseSchema,
   optimizationLogListResponseSchema,
   optimizationRequestListResponseSchema,
   optimizationRequestResponseSchema,
@@ -155,6 +158,20 @@ export async function fetchOptimizationLogs(
       signal,
     },
     optimizationLogListResponseSchema.parse,
+  )
+}
+
+export async function fetchOptimizationFundPositions(
+  fundId: string,
+  signal?: AbortSignal,
+): Promise<OptimizationFundPositionsResponse> {
+  return apiFetch(
+    getOptimizationFundPositionsUrl(fundId),
+    {
+      errorMessage: "Fonun mevcut pozisyonları alınamadı",
+      signal,
+    },
+    optimizationFundPositionsResponseSchema.parse,
   )
 }
 

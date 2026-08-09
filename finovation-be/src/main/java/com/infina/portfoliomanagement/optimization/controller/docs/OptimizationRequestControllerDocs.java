@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.controller.docs;
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
 import com.infina.portfoliomanagement.optimization.dto.ApproveOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.dto.CreateOptimizationRequestRequest;
+import com.infina.portfoliomanagement.optimization.dto.OptimizationFundPositionsResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
@@ -61,6 +62,20 @@ public interface OptimizationRequestControllerDocs {
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     ResponseEntity<List<OptimizationRequestResponse>> getOptimizationRequests(
+            UserDetails userDetails,
+            UUID fundId
+    );
+
+    @Operation(
+            summary = "Get a fund's current positions since inception",
+            description = "Returns the fund's currently selected portfolio, valued from the fund's own " +
+                    "creation date (not the fund-monitoring module's fixed 1-year lookback window), so " +
+                    "weights reflect real drift since the fund was actually designed rather than an " +
+                    "arbitrary long window. Used for the optimization preferences screen and to build the " +
+                    "current_portfolio sent to the optimization engine.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    ResponseEntity<OptimizationFundPositionsResponse> getCurrentPositions(
             UserDetails userDetails,
             UUID fundId
     );
