@@ -203,24 +203,69 @@
     border: 1px solid #dfe7ef;
     border-radius: 14px;
     box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+    min-width: 0;
+    overflow: hidden;
 }
 
 .donutContent {
     display: grid;
-    grid-template-columns: 190px minmax(0, 1fr);
+    grid-template-columns: 220px 190px;
     align-items: center;
-    gap: 28px;
+    justify-content: center;
+    gap: 12px;
+    min-width: 0;
 }
 
-.donut {
-    position: relative;
+.donutVisual {
     display: grid;
-    width: 180px;
-    height: 180px;
     place-items: center;
-    border-radius: 50%;
+    width: 220px;
+    height: 220px;
 }
 
+.donutSvg {
+    display: block;
+    width: 220px;
+    height: 220px;
+    overflow: visible;
+    filter: drop-shadow(0 10px 20px rgb(15 45 82 / 10%));
+}
+
+.donutSlice {
+    cursor: pointer;
+    transform-box: fill-box;
+    transform-origin: center;
+    transition:
+            opacity 0.18s ease,
+            filter 0.18s ease;
+}
+
+.donutSliceActive {
+    filter: brightness(1.05) drop-shadow(0 3px 5px rgb(15 45 82 / 16%));
+}
+
+.donutSliceDimmed {
+    opacity: 0.34;
+}
+
+.donutCenterCircle {
+    fill: #fff;
+    pointer-events: none;
+}
+
+.donutCenterLabel {
+    fill: #0f2d52;
+    font-size: 12px;
+    font-weight: 800;
+    pointer-events: none;
+}
+
+.donutCenterValue {
+    fill: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    pointer-events: none;
+}
 .donutCenter {
     display: grid;
     width: 108px;
@@ -248,16 +293,28 @@
 }
 
 .donutLegend {
-    display: grid;
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 190px;
+    min-width: 190px;
+    transform: none;
 }
 
 .donutLegendItem {
     display: grid;
-    grid-template-columns: 10px minmax(0, 1fr) auto;
+    grid-template-columns: 10px 90px 60px;
     align-items: center;
-    gap: 9px;
-    min-width: 0;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 
 .donutLegendColor {
@@ -274,12 +331,59 @@
     white-space: nowrap;
 }
 
-.donutLegendItem > span:last-child {
-    color: #64748b;
-    font-size: 0.75rem;
-    font-variant-numeric: tabular-nums;
+.donutLegendItem {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) 64px;
+    align-items: center;
+    width: 100%;
+    gap: 9px;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: 9px;
+    color: inherit;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+            background 0.16s ease,
+            opacity 0.16s ease,
+            transform 0.16s ease;
+}
+.donutLegendItem > strong {
+    display: block;
+    width: 90px;
+    overflow: hidden;
+    color: #17365d;
+    font-size: 0.82rem;
+    font-weight: 750;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.donutLegendItem:hover,
+.donutLegendItem:focus-visible,
+.donutLegendItemActive {
+    background: #f1f7f7;
+    outline: none;
 }
 
+.donutLegendItemActive {
+    transform: translateX(2px);
+}
+
+.donutLegendItemDimmed {
+    opacity: 0.42;
+}
+
+.donutLegendItem > span:last-child {
+    width: 60px;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
 @media (max-width: 760px) {
     .donutContent {
         grid-template-columns: 1fr;
@@ -289,4 +393,509 @@
     .donutLegend {
         width: 100%;
     }
+}
+.riskOverview {
+    display: grid;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.riskMetricGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.riskMetricCard {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+    transition:
+            transform 160ms ease,
+            box-shadow 160ms ease,
+            border-color 160ms ease;
+}
+
+.riskMetricCard:hover {
+    transform: translateY(-3px);
+    border-color: rgb(13 148 136 / 30%);
+    box-shadow: 0 12px 28px rgb(15 45 82 / 8%);
+}
+
+.riskMetricCard > span {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.riskMetricCard > strong {
+    font-size: 1.65rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.riskMetricCard > small {
+    color: #94a3b8;
+    font-size: 0.73rem;
+}
+
+.portfolioPathCard {
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+}
+
+.portfolioPathChart {
+    overflow: hidden;
+    padding-top: 4px;
+}
+
+.portfolioPathChart svg {
+    display: block;
+    width: 100%;
+    height: 240px;
+    overflow: visible;
+}
+
+.pathGridLine {
+    stroke: #e2e8f0;
+    stroke-width: 1;
+    stroke-dasharray: 5 5;
+}
+
+.portfolioPathLine {
+    fill: none;
+    stroke: #0d9488;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 4px 7px rgb(13 148 136 / 16%));
+}
+
+.pathDates {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 650;
+}
+
+.analyticsLoading,
+.analyticsError {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.analyticsLoading {
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.analyticsError {
+    color: #991b1b;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+}
+
+@media (max-width: 760px) {
+    .riskMetricGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .portfolioPathChart svg {
+        height: 190px;
+    }
+}
+.sectorAnalysis {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.sectorImpactCard,
+.sectorPathCard {
+    min-width: 0;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+    transition:
+            transform 160ms ease,
+            box-shadow 160ms ease,
+            border-color 160ms ease;
+}
+
+.sectorImpactCard:hover,
+.sectorPathCard:hover {
+    transform: translateY(-2px);
+    border-color: rgb(13 148 136 / 24%);
+    box-shadow: 0 12px 30px rgb(15 45 82 / 7%);
+}
+
+.sectorImpactList {
+    display: grid;
+    gap: 16px;
+}
+
+.sectorImpactRow {
+    display: grid;
+    grid-template-columns: minmax(130px, 0.9fr) minmax(120px, 1.4fr) 72px;
+    align-items: center;
+    gap: 14px;
+}
+
+.sectorImpactLabel {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.sectorImpactLabel strong {
+    overflow: hidden;
+    color: #17365d;
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sectorImpactLabel span {
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 0.65rem;
+}
+
+.sectorImpactTrack {
+    height: 12px;
+    overflow: hidden;
+    background: #f1f5f9;
+    border-radius: 999px;
+}
+
+.sectorImpactBar {
+    height: 100%;
+    min-width: 2px;
+    border-radius: inherit;
+    transition:
+            width 220ms ease,
+            filter 160ms ease;
+}
+
+.sectorImpactRow:hover .sectorImpactBar {
+    filter: brightness(1.08);
+}
+
+.sectorImpactRow > strong {
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.sectorPathLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.sectorLegendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 190px;
+    padding: 6px 9px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    color: #64748b;
+    background: #fff;
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+            color 150ms ease,
+            background 150ms ease,
+            border-color 150ms ease,
+            transform 150ms ease;
+}
+
+.sectorLegendItem > span {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+}
+
+.sectorLegendItem:hover,
+.sectorLegendItemActive {
+    color: #0f2d52;
+    background: #f8fafc;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+.sectorPathChart {
+    min-width: 0;
+}
+
+.sectorPathChart svg {
+    display: block;
+    width: 100%;
+    height: 245px;
+    overflow: visible;
+}
+
+.sectorPathLine,
+.sectorPathDimmed {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition:
+            opacity 160ms ease,
+            stroke-width 160ms ease;
+}
+
+.sectorPathLine {
+    opacity: 1;
+}
+
+.sectorPathDimmed {
+    opacity: 0.14;
+}
+
+@media (max-width: 1000px) {
+    .sectorAnalysis {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .sectorImpactRow {
+        grid-template-columns: minmax(95px, 1fr) minmax(90px, 1fr) 62px;
+        gap: 8px;
+    }
+
+    .sectorPathChart svg {
+        height: 190px;
+    }
+}
+.assetPathCard {
+    margin-top: 18px;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
+    transition:
+            transform 160ms ease,
+            box-shadow 160ms ease,
+            border-color 160ms ease;
+}
+
+.assetPathCard:hover {
+    transform: translateY(-2px);
+    border-color: rgb(13 148 136 / 24%);
+    box-shadow: 0 12px 30px rgb(15 45 82 / 7%);
+}
+
+.assetPathSelect {
+    min-width: 210px;
+    padding: 9px 34px 9px 12px;
+    border: 1px solid #dbe4ed;
+    border-radius: 10px;
+    color: #17365d;
+    background: #fff;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    outline: none;
+    cursor: pointer;
+}
+
+.assetPathSelect:focus {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgb(13 148 136 / 10%);
+}
+
+.assetPathMeta {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.assetPathMeta > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 9px 12px;
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 9px;
+}
+
+.assetPathMeta span {
+    color: #94a3b8;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.assetPathMeta strong {
+    color: #17365d;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.assetPathChart svg {
+    display: block;
+    width: 100%;
+    height: 240px;
+    overflow: visible;
+}
+
+.assetPathLine {
+    fill: none;
+    stroke: #2563eb;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 4px 7px rgb(37 99 235 / 15%));
+}
+
+@media (max-width: 760px) {
+    .assetPathSelect {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .assetPathMeta {
+        flex-direction: column;
+    }
+
+    .assetPathChart svg {
+        height: 190px;
+    }
+}
+.portfolioPathChart {
+    position: relative;
+}
+
+.portfolioPathArea {
+    fill: rgb(13 148 136 / 10%);
+    pointer-events: none;
+}
+
+.pathHitPoint {
+    fill: transparent;
+    cursor: crosshair;
+}
+
+.pathWorstPoint {
+    fill: #dc2626;
+    stroke: #fff;
+    stroke-width: 2.5;
+    cursor: crosshair;
+}
+
+.pathTooltip {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 9px 12px;
+    border: 1px solid #dbe4ed;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(15 45 82 / 10%);
+    pointer-events: none;
+}
+
+.pathTooltip span {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.pathTooltip strong {
+    color: #0f2d52;
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.sectorPathChart {
+    position: relative;
+}
+
+.sectorPathTooltip {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    gap: 6px;
+    min-width: 220px;
+    padding: 10px 12px;
+    border: 1px solid #dbe4ed;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(15 45 82 / 10%);
+    pointer-events: none;
+}
+
+.sectorPathTooltip > div {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.sectorPathTooltip > div > span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.sectorPathTooltip strong {
+    overflow: hidden;
+    color: #17365d;
+    font-size: 0.7rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sectorPathTooltip em {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+}
+.axisGridLine {
+    stroke: #e2e8f0;
+    stroke-width: 1;
+    stroke-dasharray: 4 5;
+}
+
+.axisLabel {
+    fill: #94a3b8;
+    font-size: 10px;
+    font-weight: 650;
+    pointer-events: none;
 }

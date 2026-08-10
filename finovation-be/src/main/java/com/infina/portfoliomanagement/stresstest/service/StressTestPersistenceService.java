@@ -3,10 +3,10 @@ package com.infina.portfoliomanagement.stresstest.service;
 import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
+import com.infina.portfoliomanagement.stresstest.dto.StressAssetImpact;
 import com.infina.portfoliomanagement.stresstest.dto.StressPortfolioPosition;
 import com.infina.portfoliomanagement.stresstest.dto.StressPortfolioSnapshot;
-import com.infina.portfoliomanagement.stresstest.dto.ai.AiStressAssetResult;
-import com.infina.portfoliomanagement.stresstest.dto.ai.AiStressTestResponse;
+import com.infina.portfoliomanagement.stresstest.dto.StressTestComputationResult;
 import com.infina.portfoliomanagement.stresstest.entity.StressScenario;
 import com.infina.portfoliomanagement.stresstest.entity.StressTest;
 import com.infina.portfoliomanagement.stresstest.entity.StressTestPositionSnapshot;
@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +30,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class StressTestPersistenceService {
-
-    private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
 
     private final StressTestRepository stressTestRepository;
     private final StressTestPositionSnapshotRepository snapshotRepository;
@@ -51,8 +47,10 @@ public class StressTestPersistenceService {
             LocalDate asOfDate
     ) {
         User user = userRepository.getReferenceById(userId);
-        StressScenario scenario = stressScenarioRepository.getReferenceById(scenarioId);
-        FundPortfolio portfolio = fundPortfolioRepository.getReferenceById(portfolioId);
+        StressScenario scenario =
+                stressScenarioRepository.getReferenceById(scenarioId);
+        FundPortfolio portfolio =
+                fundPortfolioRepository.getReferenceById(portfolioId);
 
         StressTest stressTest = StressTest.builder()
                 .publicId(UUID.randomUUID())
@@ -73,37 +71,40 @@ public class StressTestPersistenceService {
     public void completeTest(
             Long stressTestId,
             StressPortfolioSnapshot portfolio,
-            AiStressTestResponse response
+            StressTestComputationResult result
     ) {
-        StressTest stressTest = stressTestRepository.getReferenceById(stressTestId);
+        StressTest stressTest =
+                stressTestRepository.getReferenceById(stressTestId);
 
-        Map<String, AiStressAssetResult> resultsByAssetCode =
-                response.assetResults()
+        Map<Long, StressAssetImpact> impactsByAssetId =
+                result.assetImpacts()
                         .stream()
                         .collect(Collectors.toMap(
-                                AiStressAssetResult::assetCode,
+                                StressAssetImpact::assetId,
                                 Function.identity()
                         ));
 
-        List<StressTestPositionSnapshot> snapshots = portfolio.positions()
-                .stream()
-                .map(position -> createSnapshot(
-                        stressTest,
-                        position,
-                        resultsByAssetCode
-                ))
-                .toList();
+        List<StressTestPositionSnapshot> snapshots =
+                portfolio.positions()
+                        .stream()
+                        .map(position -> createSnapshot(
+                                stressTest,
+                                position,
+                                impactsByAssetId.get(position.assetId())
+                        ))
+                        .toList();
 
         snapshotRepository.saveAll(snapshots);
 
-        stressTest.setPortfolioImpact(response.portfolioImpact());
+        stressTest.setPortfolioImpact(result.portfolioImpact());
         stressTest.setStatus(StressTestStatus.COMPLETED);
         stressTest.setCompletedAt(financialTime.now());
     }
 
     @Transactional
     public void markFailed(Long stressTestId) {
-        StressTest stressTest = stressTestRepository.getReferenceById(stressTestId);
+        StressTest stressTest =
+                stressTestRepository.getReferenceById(stressTestId);
 
         stressTest.setStatus(StressTestStatus.FAILED);
         stressTest.setCompletedAt(financialTime.now());
@@ -112,25 +113,18 @@ public class StressTestPersistenceService {
     private StressTestPositionSnapshot createSnapshot(
             StressTest stressTest,
             StressPortfolioPosition position,
-            Map<String, AiStressAssetResult> resultsByAssetCode
+            StressAssetImpact impact
     ) {
-        AiStressAssetResult result =
-                resultsByAssetCode.get(position.assetCode());
-
-        BigDecimal normalizedWeight = position.weight()
-                .divide(ONE_HUNDRED, 8, RoundingMode.HALF_UP);
-
-        BigDecimal contribution =
-                normalizedWeight.multiply(result.impact());
-
         return StressTestPositionSnapshot.builder()
                 .stressTest(stressTest)
                 .assetId(position.assetId())
                 .assetCode(position.assetCode())
                 .assetType(position.assetType())
                 .weight(position.weight())
-                .impact(result.impact())
-                .portfolioContribution(contribution)
+                .impact(impact.impact())
+                .portfolioContribution(
+                        impact.portfolioContribution()
+                )
                 .build();
     }
 }

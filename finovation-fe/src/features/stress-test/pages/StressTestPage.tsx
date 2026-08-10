@@ -141,21 +141,7 @@ export default function StressTestPage() {
                     </label>
                 </header>
 
-                <section className={styles.intro}>
-                    <div>
-                        <span className={styles.eyebrow}>Senaryo Analizi</span>
 
-                        <h2>
-                            Portföyünüzün farklı piyasa koşullarındaki olası davranışını
-                            analiz edin.
-                        </h2>
-
-                        <p>
-                            Hazır stres senaryolarını kullanarak seçili portföyünüzün
-                            varlık ve portföy bazındaki olası etkilerini inceleyin.
-                        </p>
-                    </div>
-                </section>
 
                 {isLoading && (
                     <div className={styles.loadingBanner} role="status">

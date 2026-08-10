@@ -58,21 +58,9 @@
     text-transform: uppercase;
 }
 
-.intro {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 26px 28px;
-    background: #fff;
-    border: 1px solid #dfe7ef;
-    border-radius: 14px;
-    box-shadow: 0 5px 20px rgb(15 45 82 / 4%);
-}
 
-.intro > div {
-    max-width: 760px;
-}
+
+
 
 .eyebrow {
     display: inline-block;
@@ -84,22 +72,9 @@
     text-transform: uppercase;
 }
 
-.intro h2 {
-    max-width: 720px;
-    margin: 0;
-    color: #0f2d52;
-    font-size: clamp(1.35rem, 2vw, 1.75rem);
-    line-height: 1.25;
-    letter-spacing: -0.025em;
-}
 
-.intro p {
-    max-width: 700px;
-    margin: 10px 0 0;
-    color: #64748b;
-    font-size: 0.88rem;
-    line-height: 1.65;
-}
+
+
 
 @media (max-width: 768px) {
     .shell {
@@ -118,9 +93,6 @@
         padding-left: 14px;
     }
 
-    .intro {
-        padding: 22px;
-    }
 }
 .fundSelect {
     display: flex;
@@ -600,11 +572,10 @@
 
 .chartTopRow {
     display: grid;
-    grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.7fr);
+    grid-template-columns: minmax(440px, 1fr) minmax(0, 1.8fr);
     gap: 18px;
     align-items: stretch;
 }
-
 @media (max-width: 1100px) {
     .chartTopRow {
         grid-template-columns: 1fr;
@@ -701,4 +672,31 @@
 
 .pdfButton:active {
     transform: translateY(0);
+}
+.assetTableToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px 16px;
+    border: 1px solid #dbe4ed;
+    border-radius: 10px;
+    color: #17365d;
+    background: #f8fafc;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+            color 150ms ease,
+            background 150ms ease,
+            border-color 150ms ease;
+}
+
+.assetTableToggle:hover {
+    color: #0f766e;
+    background: #f0fdfa;
+    border-color: #99d5cf;
 }

@@ -432,6 +432,12 @@ public enum ErrorCode {
             "Stress test not found."
     ),
 
+    STRESS_SCENARIO_COVERAGE_INCOMPLETE(
+            "STRESS_004",
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "Stress scenario data does not cover the complete portfolio."
+    ),
+
     AI_ENGINE_UNAVAILABLE(
             "AI_ENGINE_001",
             HttpStatus.SERVICE_UNAVAILABLE,

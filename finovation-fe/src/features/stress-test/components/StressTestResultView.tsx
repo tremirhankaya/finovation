@@ -6,6 +6,9 @@ import StressTestResultSummary from "@/features/stress-test/components/StressTes
 import { downloadStressTestPdf } from "@/features/stress-test/lib/stressTestPdf"
 import type { RunStressTestResponse } from "@/features/stress-test/model/stressTestSchemas"
 import styles from "@/features/stress-test/styles/StressTestPage.module.css"
+import StressTestRiskOverview from "@/features/stress-test/components/StressTestRiskOverview"
+import StressTestSectorAnalysis from "@/features/stress-test/components/StressTestSectorAnalysis"
+import StressTestAssetPathChart from "@/features/stress-test/components/StressTestAssetPathChart"
 
 type StressTestResultViewProps = {
     result: RunStressTestResponse
@@ -27,6 +30,14 @@ export default function StressTestResultView({
             </div>
 
             <StressTestResultSummary result={result} />
+            <StressTestRiskOverview testId={result.testId} />
+            <StressTestSectorAnalysis testId={result.testId} />
+            <StressTestAssetPathChart
+                testId={result.testId}
+                assets={result.assets}
+            />
+
+
 
             <section
                 className={styles.analysisSection}
