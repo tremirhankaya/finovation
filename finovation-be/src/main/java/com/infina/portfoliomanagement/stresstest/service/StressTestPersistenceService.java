@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.stresstest.service;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.stresstest.dto.StressPortfolioPosition;
@@ -21,9 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,7 +40,7 @@ public class StressTestPersistenceService {
     private final FundPortfolioRepository fundPortfolioRepository;
     private final StressScenarioRepository stressScenarioRepository;
     private final UserRepository userRepository;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
 
     @Transactional
     public StressTest createRunningTest(
@@ -64,7 +63,7 @@ public class StressTestPersistenceService {
                 .asOfDate(asOfDate)
                 .status(StressTestStatus.RUNNING)
                 .deleted(false)
-                .createdAt(LocalDateTime.now(clock))
+                .createdAt(financialTime.now())
                 .build();
 
         return stressTestRepository.save(stressTest);
@@ -99,7 +98,7 @@ public class StressTestPersistenceService {
 
         stressTest.setPortfolioImpact(response.portfolioImpact());
         stressTest.setStatus(StressTestStatus.COMPLETED);
-        stressTest.setCompletedAt(LocalDateTime.now(clock));
+        stressTest.setCompletedAt(financialTime.now());
     }
 
     @Transactional
@@ -107,7 +106,7 @@ public class StressTestPersistenceService {
         StressTest stressTest = stressTestRepository.getReferenceById(stressTestId);
 
         stressTest.setStatus(StressTestStatus.FAILED);
-        stressTest.setCompletedAt(LocalDateTime.now(clock));
+        stressTest.setCompletedAt(financialTime.now());
     }
 
     private StressTestPositionSnapshot createSnapshot(

@@ -1,5 +1,7 @@
 package com.infina.portfoliomanagement.fundmonitoring.service;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProperties;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
@@ -11,7 +13,6 @@ import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
 import com.infina.portfoliomanagement.fundmonitoring.classification.AssetClassificationProviderRegistry;
-import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.BenchmarkDefinitionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundPositionResponse;
@@ -106,11 +107,10 @@ class FundMonitoringServiceTest {
                 benchmarkService,
                 similarFundService,
                 riskFreeRateProvider,
-                new FundMonitoringProperties(
-                        new BigDecimal("1000000"),
-                        new BigDecimal("37")
-                ),
-                CLOCK
+                new FinancialTimeProvider(
+                        CLOCK,
+                        new FinancialTimeProperties(false, null, null, ZoneOffset.UTC)
+                )
         );
     }
 
@@ -149,14 +149,14 @@ class FundMonitoringServiceTest {
         )).thenReturn(Map.of());
         when(classificationProviderRegistry.loadProfiles(List.of()))
                 .thenReturn(Map.of());
-        when(valuationCalculator.calculateBackwardsFromLatest(
+        when(valuationCalculator.calculateAroundInception(
                 eq(selectedFund),
                 eq(List.of()),
                 eq(List.of()),
                 eq(Map.of()),
                 any(LocalDate.class)
         )).thenReturn(valuation("100", "110"));
-        when(valuationCalculator.calculateBackwardsFromLatest(
+        when(valuationCalculator.calculateAroundInception(
                 eq(otherFund),
                 eq(List.of()),
                 eq(List.of()),
@@ -309,6 +309,7 @@ class FundMonitoringServiceTest {
                 .fundType(FundType.EQUITY_INTENSIVE)
                 .currencyCode("TRY")
                 .initialPortfolioSize(new BigDecimal("10000000"))
+                .unitPrice(new BigDecimal("10"))
                 .status(FundDraftStatus.COMPLETED)
                 .createdByUserId(7L)
                 .createdAt(LocalDateTime.of(2025, Month.JANUARY, 1, 10, 0))
@@ -318,6 +319,7 @@ class FundMonitoringServiceTest {
 
     private FundValuationResult valuation(String start, String end) {
         return new FundValuationResult(
+                new BigDecimal("1000000"),
                 List.of(
                         point(AS_OF_DATE.minusMonths(1), start),
                         point(AS_OF_DATE, end)

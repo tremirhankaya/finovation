@@ -47,7 +47,6 @@ export default function OptimizationResultPage() {
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [subView, setSubView] = useState<ResultSubView>("comparison")
   const [isEditingWeights, setIsEditingWeights] = useState(false)
-  const [decidedAt] = useState(() => new Date())
 
   const exportPdf = async () => {
     if (!review.request) return
@@ -140,6 +139,7 @@ export default function OptimizationResultPage() {
   }
 
   if (review.decidedAs === "approve") {
+    const decidedAt = new Date(review.request?.updatedAt ?? "")
     const before = equitySnapshot(review.assets, (asset) => asset.currentWeight)
     const proposed = equitySnapshot(
       review.assets,

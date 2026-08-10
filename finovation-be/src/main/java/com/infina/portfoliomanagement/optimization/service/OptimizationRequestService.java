@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.optimization.service;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
@@ -62,7 +63,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -130,7 +130,7 @@ public class OptimizationRequestService {
     private final FundDraftRepository fundDraftRepository;
     private final FundPortfolioRepository fundPortfolioRepository;
     private final FundPositionRepository fundPositionRepository;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
 
     @Transactional
     public OptimizationRequestResponse create(String actorUsername, CreateOptimizationRequestRequest requestBody) {
@@ -140,7 +140,7 @@ public class OptimizationRequestService {
         assertStockCountWithinRange(requestBody.stockCountMin(), requestBody.stockCountMax());
         assertPreferencesValid(requestBody.assetPreferences(), requestBody.stockCountMax());
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
 
         OptimizationRequest request = OptimizationRequest.builder()
                 .fundId(requestBody.fundId())
@@ -414,7 +414,7 @@ public class OptimizationRequestService {
         optimizationRequestPolicy.assertCanAccess(actor, request);
         assertStatusIn(request, RequestStatus.COMPLETED);
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
 
         OptimizationResult result = optimizationResultRepository
                 .findFirstByRequestIdOrderByIdDesc(requestId)
@@ -546,7 +546,7 @@ public class OptimizationRequestService {
         assertStatusIn(request, RequestStatus.COMPLETED);
 
         request.setStatus(RequestStatus.REJECTED);
-        request.setUpdatedAt(LocalDateTime.now(clock));
+        request.setUpdatedAt(financialTime.now());
         OptimizationRequest saved = saveRequest(request);
 
         log.debug("Optimization request {} rejected by actor {}", requestId, actor.getId());
@@ -563,9 +563,9 @@ public class OptimizationRequestService {
         assertStatusIn(request, RequestStatus.PREPARING, RequestStatus.FAILED);
 
         request.setStatus(RequestStatus.RUNNING);
-        request.setStartedAt(LocalDateTime.now(clock));
+        request.setStartedAt(financialTime.now());
         request.setErrorMessage(null);
-        request.setUpdatedAt(LocalDateTime.now(clock));
+        request.setUpdatedAt(financialTime.now());
         saveRequest(request);
 
         try {
@@ -574,12 +574,12 @@ public class OptimizationRequestService {
             EngineAlternative alternative = selectAlternative(engineResult, request.getRiskProfile());
 
             OptimizationResult result = persistResult(request, engineRequest, alternative);
-            persistMetrics(request, actorUsername, alternative, result, LocalDateTime.now(clock));
+            persistMetrics(request, actorUsername, alternative, result, financialTime.now());
 
             request.setStatus(RequestStatus.COMPLETED);
             request.setModelVersion(engineResult.snapshotId());
-            request.setCompletedAt(LocalDateTime.now(clock));
-            request.setUpdatedAt(LocalDateTime.now(clock));
+            request.setCompletedAt(financialTime.now());
+            request.setUpdatedAt(financialTime.now());
             OptimizationRequest saved = saveRequest(request);
 
             log.debug(
@@ -593,8 +593,8 @@ public class OptimizationRequestService {
         } catch (BaseException e) {
             request.setStatus(RequestStatus.FAILED);
             request.setErrorMessage(e.getMessage());
-            request.setCompletedAt(LocalDateTime.now(clock));
-            request.setUpdatedAt(LocalDateTime.now(clock));
+            request.setCompletedAt(financialTime.now());
+            request.setUpdatedAt(financialTime.now());
             saveRequest(request);
 
             log.debug("Optimization request {} failed: {}", requestId, e.getMessage());
@@ -666,7 +666,7 @@ public class OptimizationRequestService {
             OptimizationEngineRequest engineRequest,
             EngineAlternative alternative
     ) {
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
 
         OptimizationResult result = optimizationResultRepository.saveAndFlush(
                 OptimizationResult.builder()
@@ -929,7 +929,7 @@ public class OptimizationRequestService {
     }
 
     private void saveConstraintTargets(OptimizationRequest request, CreateOptimizationRequestRequest requestBody) {
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
 
         List<RequestConstraintTarget> targets = List.of(
                 buildTarget(request, OptimizationConstraintCode.EQUITY_WEIGHT_MIN, EQUITY_WEIGHT_MIN_VALUE, null, now),
@@ -967,7 +967,7 @@ public class OptimizationRequestService {
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
 
         List<AssetPreference> entities = preferences.stream()
                 .map(preference -> AssetPreference.builder()

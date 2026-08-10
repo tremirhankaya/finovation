@@ -84,18 +84,12 @@ export default function StressTestPage() {
             })
 
             setResult(response)
-
-            setHistory((current) => [
-                {
-                    testId: response.testId,
-                    scenarioCode: response.scenarioCode,
-                    scenarioName: response.scenarioName,
-                    asOfDate: response.asOfDate,
-                    portfolioImpact: response.portfolioImpact,
-                    createdAt: new Date().toISOString().slice(0, 19),
-                },
-                ...current,
-            ])
+            try {
+                setHistory(await fetchStressTestHistory())
+                setHistoryError("")
+            } catch {
+                setHistoryError("Stres testi geçmişi yenilenemedi.")
+            }
         } catch (error) {
             setResult(null)
 

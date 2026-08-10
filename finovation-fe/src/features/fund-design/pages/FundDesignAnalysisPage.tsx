@@ -172,7 +172,6 @@ export default function FundDesignAnalysisPage() {
 
   const [formError, setFormError] = useState("")
   const [prefs, setPrefs] = useState<StrategyPrefs>(EMPTY_PREFS)
-  const [analysisDate] = useState(() => new Date())
   const [activeStageIndex, setActiveStageIndex] = useState(0)
   const [analysisComplete, setAnalysisComplete] = useState(false)
   const [isReady, setIsReady] = useState(false)
@@ -302,6 +301,9 @@ export default function FundDesignAnalysisPage() {
       : undefined
 
   const progress = progressPercent(activeStageIndex, analysisComplete)
+  const analysisDate = analysisDraft?.updatedAt
+    ? new Date(analysisDraft.updatedAt)
+    : null
 
   return (
     <FundDesignLayout step={3}>
@@ -380,11 +382,13 @@ export default function FundDesignAnalysisPage() {
                         <span className={styles.metaDot} aria-hidden="true">
                           ·
                         </span>
-                        <span>{formatAnalysisDate(analysisDate)}</span>
+                        <span>
+                          {analysisDate ? formatAnalysisDate(analysisDate) : "—"}
+                        </span>
                       </p>
                     ) : (
                       <p className={styles.fundMeta}>
-                        {formatAnalysisDate(analysisDate)}
+                        {analysisDate ? formatAnalysisDate(analysisDate) : "—"}
                       </p>
                     )}
                   </div>

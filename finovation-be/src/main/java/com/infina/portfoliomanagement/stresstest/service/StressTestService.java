@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.stresstest.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.stresstest.client.StressTestAiClient;
 import com.infina.portfoliomanagement.stresstest.dto.StressPortfolioSnapshot;
 import com.infina.portfoliomanagement.stresstest.dto.ai.AiStressAssetResult;
@@ -26,7 +27,6 @@ import com.infina.portfoliomanagement.stresstest.dto.response.StressTestDetailRe
 import com.infina.portfoliomanagement.stresstest.dto.response.StressTestAssetResponse;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +45,7 @@ public class StressTestService {
     private final StressTestAiClient stressTestAiClient;
     private final StressTestPersistenceService persistenceService;
     private final StressTestResponseMapper responseMapper;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
     private final StressTestRepository stressTestRepository;
     private final StressTestPositionSnapshotRepository snapshotRepository;
 
@@ -71,7 +71,7 @@ public class StressTestService {
                 );
 
         String requestId = "stress-" + UUID.randomUUID();
-        LocalDate asOfDate = resolveAsOfDate(LocalDate.now(clock));
+        LocalDate asOfDate = resolveAsOfDate(financialTime.currentDate());
         StressTest stressTest = persistenceService.createRunningTest(
                 actor.getId(),
                 scenario.getId(),

@@ -91,6 +91,7 @@ export const fundDraftSchema = z.object({
   liquidityTargetPct: optionalInt,
   status: z.enum(["IN_PROGRESS", "COMPLETED"]).nullish(),
   createdAt: z.string().nullish(),
+  updatedAt: z.string().nullish(),
 })
 
 export const fundDraftPortfolioRulesSchema = z.object({

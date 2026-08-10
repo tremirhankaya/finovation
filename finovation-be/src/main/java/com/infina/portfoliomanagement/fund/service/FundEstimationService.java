@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.fund.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.dto.FundEstimatesResponse;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
@@ -28,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +51,7 @@ public class FundEstimationService {
     private final FundBenchmarkService benchmarkService;
     private final RiskFreeRateProvider riskFreeRateProvider;
     private final FundMetricCalculator metricCalculator;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
 
     @Transactional(readOnly = true)
     public FundEstimatesResponse estimateDraft(String actorUsername, UUID draftId) {
@@ -78,7 +78,7 @@ public class FundEstimationService {
         List<Long> assetIds = positions.stream().map(FundPosition::getAssetId).toList();
         List<Asset> assets = assetRepository.findAllById(assetIds);
         
-        LocalDate today = LocalDate.now(clock);
+        LocalDate today = financialTime.currentDate();
         LocalDate startDate = today.minusYears(1).minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS);
 
         Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
