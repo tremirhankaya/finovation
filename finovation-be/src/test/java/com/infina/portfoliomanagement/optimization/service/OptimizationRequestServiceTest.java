@@ -290,6 +290,67 @@ class OptimizationRequestServiceTest {
     }
 
     @Test
+    void run_withUnparseableEngineSystemDate_stillCompletesWithoutDataTimestamp() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.ADMIN)
+                .username(ACTOR_USERNAME)
+                .build();
+
+        OptimizationRequest request = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.PREPARING)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+        when(optimizationRequestRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(requestConstraintTargetRepository.findAllByRequestId(REQUEST_ID)).thenReturn(List.of(
+                constraintTarget(OptimizationConstraintCode.STOCK_COUNT_MIN, BigDecimal.valueOf(16), null),
+                constraintTarget(OptimizationConstraintCode.STOCK_COUNT_MAX, null, BigDecimal.valueOf(30)),
+                constraintTarget(OptimizationConstraintCode.TPP_MIN, BigDecimal.valueOf(5), null),
+                constraintTarget(OptimizationConstraintCode.TPP_MAX, null, BigDecimal.valueOf(15))
+        ));
+        when(assetPreferenceRepository.findAllByRequestId(REQUEST_ID)).thenReturn(List.of());
+
+        when(fundMonitoringService.getMonitoringSnapshot(ACTOR_USERNAME, FUND_ID))
+                .thenReturn(fundMonitoringResponse());
+        when(fundMonitoringService.getCurrentPositions(ACTOR_USERNAME, FUND_ID))
+                .thenReturn(fundMonitoringResponse().positions());
+
+        Asset tppAsset = Asset.builder()
+                .id(99L)
+                .assetCode("TPP1G")
+                .assetType(AssetType.TPP)
+                .active(true)
+                .build();
+        when(assetRepository.findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType.TPP))
+                .thenReturn(List.of(tppAsset));
+
+        when(optimizationEngineClient.run(any())).thenReturn(engineResult("not-a-real-date"));
+
+        when(optimizationResultRepository.saveAndFlush(any())).thenAnswer(invocation -> {
+            OptimizationResult result = invocation.getArgument(0);
+            result.setId(555L);
+            return result;
+        });
+
+        service.run(ACTOR_USERNAME, REQUEST_ID);
+
+        assertThat(request.getStatus()).isEqualTo(RequestStatus.COMPLETED);
+        assertThat(request.getDataTimestamp()).isNull();
+    }
+
+    @Test
     void run_computesAndPersistsInfoMetricsForCurrentAndProposedPortfolio() {
         User actor = User.builder()
                 .id(7L)
@@ -660,6 +721,39 @@ class OptimizationRequestServiceTest {
         assertThat(response.requestedByDisplayName()).isEqualTo("Sefa Ecir");
         assertThat(request.getRejectionReason()).isEqualTo("Sektör dağılımı hedeflere uymuyor");
         assertThat(response.rejectionReason()).isEqualTo("Sektör dağılımı hedeflere uymuyor");
+    }
+
+    @Test
+    void reject_withActorMissingLastName_omitsNullFromDisplayName() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.ADMIN)
+                .username(ACTOR_USERNAME)
+                .firstName("Sefa")
+                .lastName(null)
+                .build();
+
+        OptimizationRequest request = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.COMPLETED)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+        when(optimizationRequestRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OptimizationRequestResponse response = service.reject(ACTOR_USERNAME, REQUEST_ID, null);
+
+        assertThat(response.decidedByDisplayName()).isEqualTo("Sefa");
+        assertThat(response.requestedByDisplayName()).isEqualTo("Sefa");
     }
 
     @Test
@@ -1101,10 +1195,14 @@ class OptimizationRequestServiceTest {
     }
 
     private OptimizationEngineResult engineResult() {
+        return engineResult("2025-05-29");
+    }
+
+    private OptimizationEngineResult engineResult(String systemDate) {
         return new OptimizationEngineResult(
                 REQUEST_ID.toString(),
                 "FROZEN_2025-05-29_V3",
-                "2025-05-29",
+                systemDate,
                 "2025-05-28",
                 "EQUITY_FORECAST_BUNDLE_V3",
                 "PORTFOLIO_OBJECTIVES_V3_NEW_PROSPECTUS",

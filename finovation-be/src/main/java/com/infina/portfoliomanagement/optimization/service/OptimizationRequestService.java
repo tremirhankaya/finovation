@@ -65,6 +65,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -73,6 +74,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -390,6 +392,14 @@ public class OptimizationRequestService {
                 .toList();
     }
 
+    private static String displayName(User user) {
+        if (user == null) return null;
+        String combined = Stream.of(user.getFirstName(), user.getLastName())
+                .filter(part -> part != null && !part.isBlank())
+                .collect(Collectors.joining(" "));
+        return combined.isBlank() ? null : combined;
+    }
+
     private OptimizationLogEntryResponse toLogEntryResponse(
             OptimizationRequest request,
             Map<UUID, String> fundNamesById
@@ -401,14 +411,10 @@ public class OptimizationRequestService {
                 request.getFundId(),
                 fundNamesById.getOrDefault(request.getFundId(), "—"),
                 requestedBy != null ? requestedBy.getUsername() : null,
-                requestedBy != null
-                        ? (requestedBy.getFirstName() + " " + requestedBy.getLastName())
-                        : null,
+                displayName(requestedBy),
                 decidedBy != null ? decidedBy.getId() : null,
                 decidedBy != null ? decidedBy.getUsername() : null,
-                decidedBy != null
-                        ? (decidedBy.getFirstName() + " " + decidedBy.getLastName())
-                        : null,
+                displayName(decidedBy),
                 request.getStatus(),
                 request.getErrorMessage(),
                 request.getRejectionReason(),
@@ -599,7 +605,15 @@ public class OptimizationRequestService {
             request.setStatus(RequestStatus.COMPLETED);
             request.setModelVersion(engineResult.snapshotId());
             if (engineResult.systemDate() != null) {
-                request.setDataTimestamp(LocalDate.parse(engineResult.systemDate()).atStartOfDay());
+                try {
+                    request.setDataTimestamp(LocalDate.parse(engineResult.systemDate()).atStartOfDay());
+                } catch (DateTimeParseException e) {
+                    log.warn(
+                            "Optimization request {} received an unparseable engine systemDate '{}'",
+                            requestId,
+                            engineResult.systemDate()
+                    );
+                }
             }
             request.setCompletedAt(financialTime.now());
             request.setUpdatedAt(financialTime.now());
@@ -1143,14 +1157,10 @@ public class OptimizationRequestService {
                 request.getModelVersion(),
                 requestedBy != null ? requestedBy.getId() : null,
                 requestedBy != null ? requestedBy.getUsername() : null,
-                requestedBy != null
-                        ? (requestedBy.getFirstName() + " " + requestedBy.getLastName())
-                        : null,
+                displayName(requestedBy),
                 decidedBy != null ? decidedBy.getId() : null,
                 decidedBy != null ? decidedBy.getUsername() : null,
-                decidedBy != null
-                        ? (decidedBy.getFirstName() + " " + decidedBy.getLastName())
-                        : null,
+                displayName(decidedBy),
                 request.getRiskProfile(),
                 request.getStatus(),
                 request.getMaxAdditions(),
