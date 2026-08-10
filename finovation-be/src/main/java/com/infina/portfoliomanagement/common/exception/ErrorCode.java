@@ -227,7 +227,6 @@ public enum ErrorCode {
             HttpStatus.CONFLICT,
             "This optimization request cannot change to the requested status from its current status."
     ),
-
     OPT_MAX_ADDITIONS_EXCEEDED(
             "OPT_009",
             HttpStatus.BAD_REQUEST,
@@ -431,11 +430,10 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "Stress test not found."
     ),
-
     STRESS_SCENARIO_COVERAGE_INCOMPLETE(
             "STRESS_004",
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            "Stress scenario data does not cover the complete portfolio."
+            HttpStatus.UNPROCESSABLE_CONTENT,
+            "Stress scenario does not cover all assets in the selected portfolio."
     ),
 
     AI_ENGINE_UNAVAILABLE(
