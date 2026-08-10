@@ -15,7 +15,7 @@ const FUND_TYPE_LABELS: Record<FundSummaryResponse["type"], string> = {
   EQUITY_INTENSIVE: "Hisse Senedi Yoğun Fon",
 }
 
-function toFundOption(response: FundSummaryResponse): FundOption {
+export function toFundOption(response: FundSummaryResponse): FundOption {
   return {
     id: response.id,
     name: response.name,
