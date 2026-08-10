@@ -34,7 +34,13 @@ class SimilarFundServiceTest {
             "MAC",
             "IIH",
             "TI2",
-            "YAS"
+            "YAS",
+            "AK3",
+            "GHS",
+            "GMR",
+            "HVS",
+            "TKF",
+            "TZD"
     );
 
     @Mock
@@ -98,6 +104,30 @@ class SimilarFundServiceTest {
                                 8
                         )
                 );
+    }
+
+    @Test
+    void comparisonAssets_returnsTenConfiguredFundsWithDistinctColors() {
+        FundProfileRecord profile = new FundProfileRecord(
+                List.of("P1Y"),
+                PEER_CODES.stream()
+                        .map(code -> benchmark(code, code + " Fund", "1"))
+                        .toList()
+        );
+        when(similarFundApi.fetchComparisons(PEER_CODES, AS_OF_DATE))
+                .thenReturn(Optional.of(profile));
+
+        List<FundComparisonAssetResponse> assets = service.comparisonAssets(
+                FundType.EQUITY_INTENSIVE,
+                AS_OF_DATE
+        );
+
+        assertThat(assets)
+                .extracting(FundComparisonAssetResponse::code)
+                .containsExactlyElementsOf(PEER_CODES);
+        assertThat(assets)
+                .extracting(FundComparisonAssetResponse::color)
+                .doesNotHaveDuplicates();
     }
 
     private FundBenchmarkRecord benchmark(

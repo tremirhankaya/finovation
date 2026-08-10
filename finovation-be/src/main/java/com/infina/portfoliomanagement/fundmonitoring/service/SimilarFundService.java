@@ -46,7 +46,13 @@ public class SimilarFundService {
             "#0f766e",
             "#1d4ed8",
             "#6d28d9",
-            "#c2410c"
+            "#c2410c",
+            "#be123c",
+            "#0369a1",
+            "#4d7c0f",
+            "#a21caf",
+            "#b45309",
+            "#475569"
     );
 
     private final SimilarFundApi similarFundApi;
@@ -148,7 +154,18 @@ public class SimilarFundService {
         Map<FundType, List<String>> codes = new EnumMap<>(FundType.class);
         codes.put(
                 FundType.EQUITY_INTENSIVE,
-                List.of("MAC", "IIH", "TI2", "YAS")
+                List.of(
+                        "MAC",
+                        "IIH",
+                        "TI2",
+                        "YAS",
+                        "AK3",
+                        "GHS",
+                        "GMR",
+                        "HVS",
+                        "TKF",
+                        "TZD"
+                )
         );
         return Map.copyOf(codes);
     }
