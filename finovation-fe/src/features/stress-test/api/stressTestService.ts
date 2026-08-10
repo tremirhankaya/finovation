@@ -1,18 +1,40 @@
-import {getFundsUrl, getStressScenariosUrl, getStressTestsUrl, getStressTestUrl,
+import {
+    getFundsUrl,
+    getStressScenariosUrl,
+    getStressTestAssetPathUrl,
+    getStressTestPortfolioPathUrl,
+    getStressTestRiskMetricsUrl,
+    getStressTestSectorPathsUrl,
+    getStressTestSectorsUrl,
+    getStressTestsUrl,
+    getStressTestUrl,
 } from "@/shared/api/apiConfig"
+
 import { apiFetch, apiSend } from "@/shared/api/httpClient"
+
 import type { RunStressTestRequest } from "@/features/stress-test/model/stressTest.types"
+
 import {
     type RunStressTestResponse,
     type StressScenarioResponse,
+    type StressTestAssetPathResponse,
     type StressTestDetailResponse,
-    type StressTestHistoryResponse,
     type StressTestFundResponse,
+    type StressTestHistoryResponse,
+    type StressTestPortfolioPathResponse,
+    type StressTestRiskMetricsResponse,
+    type StressTestSectorImpactResponse,
+    type StressTestSectorPathResponse,
     runStressTestResponseSchema,
     stressScenarioListResponseSchema,
+    stressTestAssetPathResponseSchema,
     stressTestDetailResponseSchema,
-    stressTestHistoryListResponseSchema,
     stressTestFundListResponseSchema,
+    stressTestHistoryListResponseSchema,
+    stressTestPortfolioPathResponseSchema,
+    stressTestRiskMetricsResponseSchema,
+    stressTestSectorImpactListResponseSchema,
+    stressTestSectorPathListResponseSchema,
 } from "@/features/stress-test/model/stressTestSchemas"
 
 export async function fetchStressTestFunds(
@@ -89,4 +111,75 @@ export async function deleteStressTest(
         method: "DELETE",
         errorMessage: "Stres testi silinemedi",
     })
+}
+
+export async function fetchStressTestAssetPath(
+    testId: string,
+    assetCode: string,
+    signal?: AbortSignal,
+): Promise<StressTestAssetPathResponse> {
+    return apiFetch(
+        getStressTestAssetPathUrl(testId, assetCode),
+        {
+            errorMessage: "Varlık stres yolu yüklenemedi",
+            signal,
+        },
+        stressTestAssetPathResponseSchema.parse,
+    )
+}
+
+export async function fetchStressTestSectors(
+    testId: string,
+    signal?: AbortSignal,
+): Promise<StressTestSectorImpactResponse[]> {
+    return apiFetch(
+        getStressTestSectorsUrl(testId),
+        {
+            errorMessage: "Sektörel stres sonuçları yüklenemedi",
+            signal,
+        },
+        stressTestSectorImpactListResponseSchema.parse,
+    )
+}
+
+export async function fetchStressTestPortfolioPath(
+    testId: string,
+    signal?: AbortSignal,
+): Promise<StressTestPortfolioPathResponse> {
+    return apiFetch(
+        getStressTestPortfolioPathUrl(testId),
+        {
+            errorMessage: "Portföy stres yolu yüklenemedi",
+            signal,
+        },
+        stressTestPortfolioPathResponseSchema.parse,
+    )
+}
+
+export async function fetchStressTestRiskMetrics(
+    testId: string,
+    signal?: AbortSignal,
+): Promise<StressTestRiskMetricsResponse> {
+    return apiFetch(
+        getStressTestRiskMetricsUrl(testId),
+        {
+            errorMessage: "Risk metrikleri yüklenemedi",
+            signal,
+        },
+        stressTestRiskMetricsResponseSchema.parse,
+    )
+}
+
+export async function fetchStressTestSectorPaths(
+    testId: string,
+    signal?: AbortSignal,
+): Promise<StressTestSectorPathResponse[]> {
+    return apiFetch(
+        getStressTestSectorPathsUrl(testId),
+        {
+            errorMessage: "Sektörel stres yolları yüklenemedi",
+            signal,
+        },
+        stressTestSectorPathListResponseSchema.parse,
+    )
 }
