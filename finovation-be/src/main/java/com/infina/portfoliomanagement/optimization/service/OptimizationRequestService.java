@@ -660,7 +660,6 @@ public class OptimizationRequestService {
         List<String> mandatoryAssets = resolveAssetCodesByPreferenceType(request, AssetPreferenceType.FORCE_ADD);
         List<String> excludedAssets = resolveAssetCodesByPreferenceType(request, AssetPreferenceType.EXCLUDE);
 
-        assertExcludedAssetsWithinWeightChangeLimit(currentPortfolio, excludedAssets);
         assertExcludedHeldAssetsWithinRemovalLimit(currentPortfolio, excludedAssets);
 
         return new OptimizationEngineRequest(
@@ -679,28 +678,6 @@ public class OptimizationRequestService {
                 MAX_REMOVALS_DEFAULT,
                 null
         );
-    }
-
-    private void assertExcludedAssetsWithinWeightChangeLimit(
-            Map<String, BigDecimal> currentPortfolio,
-            List<String> excludedAssets
-    ) {
-        List<String> blockedExclusions = excludedAssets.stream()
-                .filter(assetCode -> {
-                    BigDecimal currentWeight = currentPortfolio.get(assetCode);
-                    return currentWeight != null
-                            && currentWeight.compareTo(MAX_WEIGHT_CHANGE_PER_ASSET_DEFAULT) > 0;
-                })
-                .sorted()
-                .toList();
-
-        if (!blockedExclusions.isEmpty()) {
-            throw new BaseException(
-                    ErrorCode.OPT_WEIGHT_CHANGE_LIMIT_EXCEEDED,
-                    "Excluded asset(s) exceed the maximum weight change allowed per asset "
-                            + "(" + MAX_WEIGHT_CHANGE_PER_ASSET_DEFAULT + "): " + blockedExclusions
-            );
-        }
     }
 
     private void assertExcludedHeldAssetsWithinRemovalLimit(
