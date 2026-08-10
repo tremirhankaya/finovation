@@ -41,5 +41,3 @@ data-export/
 
 node_modules/
 target/
-
-.claude/
