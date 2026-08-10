@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const apiMocks = vi.hoisted(() => ({
-  listInProgressDrafts: vi.fn(),
+  searchFundDrafts: vi.fn(),
   fetchFunds: vi.fn(),
   fetchFundMonitoring: vi.fn(),
   fetchOptimizationLogs: vi.fn(),
@@ -10,7 +10,7 @@ const apiMocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@/features/fund-design/api/fundDraftApi", () => ({
-  listInProgressDrafts: apiMocks.listInProgressDrafts,
+  searchFundDrafts: apiMocks.searchFundDrafts,
 }))
 
 vi.mock("@/features/fund-monitoring/api/fundMonitoringService", () => ({
@@ -99,7 +99,15 @@ describe("dashboardService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     apiMocks.fetchFunds.mockResolvedValue(FUNDS)
-    apiMocks.listInProgressDrafts.mockResolvedValue(DRAFTS)
+    apiMocks.searchFundDrafts.mockResolvedValue({
+      content: DRAFTS,
+      page: 0,
+      size: 10,
+      totalElements: DRAFTS.length,
+      totalPages: 1,
+      hasNext: false,
+      hasPrevious: false,
+    })
     apiMocks.fetchOptimizationLogs.mockResolvedValue(LOGS)
     apiMocks.fetchOptimizationResult.mockResolvedValue(OPTIMIZATION_RESULT)
     apiMocks.fetchStressTestHistory.mockResolvedValue(STRESS_TESTS)

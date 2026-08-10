@@ -49,17 +49,17 @@ public class AiHttpClient {
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                         log.error("[AiEngine] 4xx error: status={} path={}", res.getStatusCode(), path);
-                        throw new BaseException(ErrorCode.AI_ENGINE_INVALID_REQUEST);
+                        throw new BaseException(ErrorCode.STRESS_TEST_NOT_FOUND);
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
                         log.error("[AiEngine] 5xx error: status={} path={}", res.getStatusCode(), path);
-                        throw new BaseException(ErrorCode.AI_ENGINE_ERROR);
+                        throw new BaseException(ErrorCode.STRESS_TEST_NOT_FOUND);
                     })
                     .body(responseType);
 
             if (response == null) {
                 log.error("[AiEngine] Empty response body from {}", path);
-                throw new BaseException(ErrorCode.AI_ENGINE_ERROR);
+                throw new BaseException(ErrorCode.STRESS_TEST_NOT_FOUND);
             }
 
             log.info("[AiEngine] <-- 200 OK {}", path);
@@ -69,13 +69,13 @@ public class AiHttpClient {
             throw e;
         } catch (ResourceAccessException e) {
             log.error("[AiEngine] Network error {}: {}", path, e.getMessage());
-            throw new BaseException(ErrorCode.AI_ENGINE_UNAVAILABLE);
+            throw new BaseException(ErrorCode.STRESS_TEST_NOT_FOUND);
         } catch (RestClientResponseException e) {
             log.error("[AiEngine] Unexpected response: status={} body={}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BaseException(ErrorCode.AI_ENGINE_ERROR);
+            throw new BaseException(ErrorCode.STRESS_TEST_NOT_FOUND);
         } catch (Exception e) {
             log.error("[AiEngine] Unexpected error: {}", e.getMessage());
-            throw new BaseException(ErrorCode.AI_ENGINE_ERROR);
+            throw new BaseException(ErrorCode.STRESS_TEST_NOT_FOUND);
         }
     }
 }

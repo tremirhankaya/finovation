@@ -193,6 +193,7 @@ export default function FundManagementPage() {
 
   const rowCount = tab === "ARCHIVE" ? archived.length : funds.length
   const headers = headersFor(tab)
+  const hasActionsColumn = tab !== "ARCHIVE"
 
   const tabCounts: Record<Tab, number> = {
     FUNDS: tab === "FUNDS" ? totalElements : 0,
@@ -300,7 +301,7 @@ export default function FundManagementPage() {
                     <th
                       key={header}
                       className={
-                        index === headers.length - 1
+                        hasActionsColumn && index === headers.length - 1
                           ? styles.alignRight
                           : undefined
                       }
@@ -465,20 +466,40 @@ function FundRow({
       <tr>
         <td>
           <span className={styles.nameCell}>
-            <span className={styles.initials}>{initialsOf(item.name)}</span>
             {isDraft ? (
-              <span className={styles.nameText}>
-                {item.name ?? "İsimsiz taslak"}
-              </span>
+              <span className={styles.chevronSpacer} />
             ) : (
               <button
                 type="button"
-                className={styles.nameButton}
+                className={[
+                  styles.chevron,
+                  isExpanded ? styles.chevronOpen : "",
+                ].join(" ")}
                 onClick={onToggle}
+                aria-expanded={isExpanded}
+                aria-label={
+                  isExpanded ? "Portföy detayını kapat" : "Portföy detayını aç"
+                }
               >
-                {item.name ?? "İsimsiz fon"}
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </button>
             )}
+            <span className={styles.initials}>{initialsOf(item.name)}</span>
+            <span className={styles.nameText}>
+              {item.name ?? (isDraft ? "İsimsiz taslak" : "İsimsiz fon")}
+            </span>
           </span>
         </td>
         <td>

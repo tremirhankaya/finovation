@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 
 import DualRangeSlider from "@/features/fund-design/components/DualRangeSlider"
@@ -117,11 +117,6 @@ export default function FundDesignStrategyPage() {
   const [liquidityMinPct, setLiquidityMinPct] = useState(10)
   const [liquidityMaxPct, setLiquidityMaxPct] = useState(14)
   const [preferredLiquidityPct, setPreferredLiquidityPct] = useState(12)
-  const [preferredDraft, setPreferredDraft] = useState("12")
-  const [preferredFeedback, setPreferredFeedback] = useState<
-    "idle" | "accepted" | "adjusted" | "rejected"
-  >("idle")
-  const [preferredHint, setPreferredHint] = useState("")
   const [minStockCount, setMinStockCount] = useState(16)
   const [maxStockCount, setMaxStockCount] = useState(21)
   const [forcedAssetCodes, setForcedAssetCodes] = useState<string[]>([])
@@ -153,10 +148,6 @@ export default function FundDesignStrategyPage() {
   }, [draftId])
 
   useEffect(() => {
-    setPreferredDraft(String(preferredLiquidityPct))
-  }, [preferredLiquidityPct])
-
-  useEffect(() => {
     latestPayloadRef.current = {
       managementApproach: approach,
       tppMinPct: liquidityMinPct,
@@ -180,82 +171,6 @@ export default function FundDesignStrategyPage() {
 
   function markDirty() {
     isDirtyRef.current = true
-  }
-
-  function pulsePreferredFeedback(
-    kind: "accepted" | "adjusted" | "rejected",
-  ) {
-    setPreferredFeedback("idle")
-    requestAnimationFrame(() => setPreferredFeedback(kind))
-    window.setTimeout(() => setPreferredFeedback("idle"), 480)
-  }
-
-  function previewPreferredHint(raw: string) {
-    if (raw.trim() === "") {
-      setPreferredHint("")
-      return
-    }
-    const next = Number(raw)
-    if (!Number.isFinite(next) || !Number.isInteger(next)) {
-      setPreferredHint("")
-      return
-    }
-    if (next < liquidityBoundMin || next > liquidityBoundMax) {
-      setPreferredHint(
-        `İzin verilen aralık: %${liquidityBoundMin} – %${liquidityBoundMax}`,
-      )
-      return
-    }
-    if (next < liquidityMinPct || next > liquidityMaxPct) {
-      const clamped = clampToRange(next, liquidityMinPct, liquidityMaxPct)
-      setPreferredHint(`Seçili aralığa göre %${clamped} olacak`)
-      return
-    }
-    setPreferredHint("")
-  }
-
-  function commitPreferredDraft() {
-    setPreferredHint("")
-    const next = Number(preferredDraft)
-
-    if (!Number.isFinite(next) || !Number.isInteger(next)) {
-      setPreferredDraft(String(preferredLiquidityPct))
-      pulsePreferredFeedback("rejected")
-      return
-    }
-
-    if (next < liquidityBoundMin || next > liquidityBoundMax) {
-      setPreferredDraft(String(preferredLiquidityPct))
-      pulsePreferredFeedback("rejected")
-      return
-    }
-
-    if (next < liquidityMinPct || next > liquidityMaxPct) {
-      const clamped = clampToRange(next, liquidityMinPct, liquidityMaxPct)
-      markDirty()
-      setPreferredLiquidityPct(clamped)
-      setPreferredDraft(String(clamped))
-      pulsePreferredFeedback("adjusted")
-      return
-    }
-
-    markDirty()
-    setPreferredLiquidityPct(next)
-    setPreferredDraft(String(next))
-    pulsePreferredFeedback("accepted")
-  }
-
-  function handlePreferredKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Enter") {
-      event.currentTarget.blur()
-      return
-    }
-    if (event.key === "Escape") {
-      event.preventDefault()
-      setPreferredDraft(String(preferredLiquidityPct))
-      setPreferredHint("")
-      event.currentTarget.blur()
-    }
   }
 
   function applyValues(input: {
@@ -561,9 +476,8 @@ export default function FundDesignStrategyPage() {
                     <div className={styles.paramHeadingActions}>
                       <ParamInfoTip label="Hedef Likidite Oranı">
                         Belirlediğiniz aralık, portföyün tutabileceği likidite
-                        (TPP) bandıdır. Modeliniz tercih edilen orana yakın
-                        tercihlerde bulunmaya çalışır; ancak aralık içinde farklı
-                        değerlere de gidebilir.
+                        (TPP) bandıdır. Modeliniz bu aralık içinde kalmak
+                        koşuluyla farklı değerlere gidebilir.
                       </ParamInfoTip>
                       <button
                         type="button"
@@ -578,8 +492,6 @@ export default function FundDesignStrategyPage() {
                   <p className={styles.paramCaption}>
                     {selectedApproach.label}: %{selectedApproach.defaultLiquidityMinPct}
                     –%{selectedApproach.defaultLiquidityMaxPct}
-                    <span className={styles.paramCaptionDot}>·</span>
-                    Tercih %{selectedApproach.defaultPreferredLiquidityPct}
                   </p>
                   <DualRangeSlider
                     id="liquidity"
@@ -593,74 +505,6 @@ export default function FundDesignStrategyPage() {
                     formatBound={(value) => `%${value}`}
                     onChange={handleLiquidityRangeChange}
                   />
-                  <div className={styles.preferredRow}>
-                    <div className={styles.preferredLabelGroup}>
-                      <label
-                        className={styles.preferredLabel}
-                        htmlFor="preferred-liquidity"
-                      >
-                        Tercih edilen
-                      </label>
-                      <ParamInfoTip label="Tercih edilen">
-                        Modeliniz belirttiğiniz orana yakın tercihlerde
-                        bulunmaya çalışır; ancak aralık içinde çeşitli değerlere
-                        de gidebilir.
-                      </ParamInfoTip>
-                    </div>
-                    <label
-                      className={[
-                        styles.preferredValueField,
-                        preferredFeedback === "rejected"
-                          ? styles.preferredValueFieldRejected
-                          : preferredFeedback === "adjusted"
-                            ? styles.preferredValueFieldAdjusted
-                            : preferredFeedback === "accepted"
-                              ? styles.preferredValueFieldAccepted
-                              : styles.preferredValueFieldActive,
-                      ].join(" ")}
-                      htmlFor="preferred-liquidity-input"
-                    >
-                      <span className={styles.preferredPrefix}>%</span>
-                      <input
-                        id="preferred-liquidity-input"
-                        className={styles.preferredValueInput}
-                        type="text"
-                        inputMode="numeric"
-                        value={preferredDraft}
-                        disabled={!init}
-                        onChange={(event) => {
-                          setPreferredDraft(event.target.value)
-                          previewPreferredHint(event.target.value)
-                        }}
-                        onBlur={commitPreferredDraft}
-                        onKeyDown={handlePreferredKeyDown}
-                      />
-                    </label>
-                    <input
-                      id="preferred-liquidity"
-                      className={styles.preferredSlider}
-                      type="range"
-                      min={liquidityBoundMin}
-                      max={liquidityBoundMax}
-                      step={1}
-                      value={preferredLiquidityPct}
-                      disabled={!init}
-                      onChange={(event) => {
-                        markDirty()
-                        const next = Number(event.target.value)
-                        setPreferredLiquidityPct(
-                          clampToRange(
-                            next,
-                            liquidityMinPct,
-                            liquidityMaxPct,
-                          ),
-                        )
-                      }}
-                    />
-                  </div>
-                  {preferredHint ? (
-                    <p className={styles.preferredHint}>{preferredHint}</p>
-                  ) : null}
                 </div>
 
                 <div className={styles.paramField}>

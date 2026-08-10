@@ -1,4 +1,4 @@
-import { listInProgressDrafts } from "@/features/fund-design/api/fundDraftApi"
+import { searchFundDrafts } from "@/features/fund-design/api/fundDraftApi"
 import {
   fetchFundMonitoring,
   fetchFunds,
@@ -9,6 +9,8 @@ import {
 } from "@/features/optimization/api/optimizationApi"
 import { fetchStressTestHistory } from "@/features/stress-test/api/stressTestService"
 import type { DashboardOverviewLoadResult } from "@/features/dashboard/model/dashboard.types"
+
+const DRAFT_PREVIEW_SIZE = 10
 
 function messageFor(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback
@@ -24,7 +26,10 @@ export async function loadDashboardOverview(
   const [fundsResult, draftsResult, optimizationResult, stressResult] =
     await Promise.allSettled([
       fetchFunds(signal),
-      listInProgressDrafts(signal),
+      searchFundDrafts(
+        { status: "IN_PROGRESS", size: DRAFT_PREVIEW_SIZE },
+        signal,
+      ),
       fetchOptimizationLogs(signal),
       fetchStressTestHistory(signal),
     ])
@@ -32,7 +37,7 @@ export async function loadDashboardOverview(
   const funds = fundsResult.status === "fulfilled" ? fundsResult.value : []
   const drafts =
     draftsResult.status === "fulfilled"
-      ? [...draftsResult.value].sort((left, right) =>
+      ? [...draftsResult.value.content].sort((left, right) =>
           compareIsoDescending(left.updatedAt, right.updatedAt),
         )
       : []

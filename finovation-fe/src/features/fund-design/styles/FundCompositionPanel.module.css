@@ -1,56 +1,81 @@
 .panel {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
-  gap: 1.5rem;
-  padding: 1.15rem 1.15rem 1.35rem;
-}
-
-@media (max-width: 820px) {
-  .panel {
-    grid-template-columns: 1fr;
-  }
+  padding: 1.35rem 1.35rem 1.5rem;
 }
 
 .status {
   margin: 0;
-  padding: 1.35rem 1.15rem;
+  padding: 1.35rem;
   color: #8695a4;
   font-size: 0.8125rem;
 }
 
 .metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 0.85rem;
-  margin: 0;
+  display: flex;
+  gap: 2.25rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.35rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid #eef3f6;
 }
 
 .metric dt {
-  color: #8695a4;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: #94a3b8;
+  font-size: 0.75rem;
 }
 
 .metric dd {
-  margin: 0.2rem 0 0;
+  margin: 0.15rem 0 0;
   color: #0f1f3c;
-  font-size: 1.0625rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.holdingsTitle {
-  margin: 0 0 0.7rem;
-  color: #3d5163;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.25rem;
+  align-items: start;
 }
 
-.holdingList {
+@media (max-width: 900px) {
+  .content {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+}
+
+.blockTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  color: #55687d;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.blockCount {
+  color: #a3b1bd;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.allocation {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 1.25rem;
+  min-width: 0;
+}
+
+.allocation .blockTitle {
+  grid-column: 1 / -1;
+}
+
+.legend {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
@@ -59,23 +84,64 @@
   list-style: none;
 }
 
+.legendItem {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.legendLabel {
+  overflow: hidden;
+  color: #55687d;
+  font-size: 0.78125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendValue {
+  color: #0f1f3c;
+  font-size: 0.78125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.holdings {
+  min-width: 0;
+}
+
+.holdingList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .holding {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr) 56px;
+  grid-template-columns: 76px minmax(0, 1fr) 52px;
   align-items: center;
   gap: 0.7rem;
 }
 
 .holdingCode {
-  color: #0f1f3c;
-  font-size: 0.75rem;
-  font-weight: 700;
+  color: #3d5163;
+  font-size: 0.78125rem;
+  font-weight: 600;
 }
 
 .holdingTrack {
-  height: 7px;
+  height: 6px;
   border-radius: 999px;
-  background: #eef3f6;
+  background: #f1f5f8;
   overflow: hidden;
 }
 
@@ -86,9 +152,13 @@
   background: #2ec4a7;
 }
 
+.holdingFillTpp {
+  background: #b6c2cd;
+}
+
 .holdingWeight {
-  color: #41586d;
-  font-size: 0.75rem;
+  color: #0f1f3c;
+  font-size: 0.78125rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: right;
