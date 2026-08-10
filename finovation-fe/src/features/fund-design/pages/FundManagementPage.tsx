@@ -23,6 +23,7 @@ import styles from "@/features/fund-design/styles/FundManagementPage.module.css"
 
 const TOTAL_WIZARD_STEPS = 6
 const PAGE_SIZE = 10
+const MIN_SKELETON_ROWS = 3
 
 type Tab = "FUNDS" | "DRAFTS" | "ARCHIVE"
 
@@ -195,6 +196,8 @@ export default function FundManagementPage() {
   const headers = headersFor(tab)
   const hasActionsColumn = tab !== "ARCHIVE"
 
+  const skeletonRowCount = Math.max(rowCount, MIN_SKELETON_ROWS)
+
   const tabCounts: Record<Tab, number> = {
     FUNDS: tab === "FUNDS" ? totalElements : 0,
     DRAFTS: draftCount,
@@ -286,37 +289,41 @@ export default function FundManagementPage() {
           )}
         </div>
 
-        {isLoading && <p className={styles.emptyState}>Yükleniyor…</p>}
-
-        {!isLoading && rowCount === 0 && (
-          <p className={styles.emptyState}>{EMPTY_MESSAGES[tab]}</p>
-        )}
-
-        {!isLoading && rowCount > 0 && (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  {headers.map((header, index) => (
-                    <th
-                      key={header}
-                      className={
-                        hasActionsColumn && index === headers.length - 1
-                          ? styles.alignRight
-                          : undefined
-                      }
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {tab === "ARCHIVE"
-                  ? archived.map((item) => (
+        <div className={styles.body}>
+          {!isLoading && rowCount === 0 ? (
+            <p className={styles.emptyState}>{EMPTY_MESSAGES[tab]}</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    {headers.map((header, index) => (
+                      <th
+                        key={header}
+                        className={
+                          hasActionsColumn && index === headers.length - 1
+                            ? styles.alignRight
+                            : undefined
+                        }
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <SkeletonRows
+                      rowCount={skeletonRowCount}
+                      columnCount={headers.length}
+                      hasActionsColumn={hasActionsColumn}
+                    />
+                  ) : tab === "ARCHIVE" ? (
+                    archived.map((item) => (
                       <ArchivedRow key={item.draftId} item={item} />
                     ))
-                  : funds.map((item) => (
+                  ) : (
+                    funds.map((item) => (
                       <FundRow
                         key={item.draftId}
                         item={item}
@@ -344,37 +351,42 @@ export default function FundManagementPage() {
                           })
                         }
                       />
-                    ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {tab !== "ARCHIVE" && totalPages > 1 && (
-          <div className={styles.footer}>
-            <span className={styles.range}>
-              Sayfa {pageIndex + 1} / {totalPages} · {totalElements} kayıt
-            </span>
-            <div className={styles.pager}>
-              <button
-                type="button"
-                className={styles.pagerButton}
-                disabled={pageIndex === 0}
-                onClick={() => setPageIndex((current) => current - 1)}
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className={styles.pagerButton}
-                disabled={pageIndex + 1 >= totalPages}
-                onClick={() => setPageIndex((current) => current + 1)}
-              >
-                ›
-              </button>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        <div className={styles.footer}>
+          {tab !== "ARCHIVE" && !isLoading && totalElements > 0 && (
+            <>
+              <span className={styles.range}>
+                Sayfa {pageIndex + 1} / {Math.max(totalPages, 1)} ·{" "}
+                {totalElements} kayıt
+              </span>
+              <div className={styles.pager}>
+                <button
+                  type="button"
+                  className={styles.pagerButton}
+                  disabled={pageIndex === 0}
+                  onClick={() => setPageIndex((current) => current - 1)}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className={styles.pagerButton}
+                  disabled={pageIndex + 1 >= totalPages}
+                  onClick={() => setPageIndex((current) => current + 1)}
+                >
+                  ›
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       <ResumeDraftsDialog
@@ -419,6 +431,77 @@ function wizardPathFor(draftId: string, step: number): string {
     6: `/fund-design/${draftId}/approve`,
   }
   return paths[step] ?? paths[2]
+}
+
+type SkeletonRowsProps = {
+  rowCount: number
+  columnCount: number
+  hasActionsColumn: boolean
+}
+
+function SkeletonRows({
+  rowCount,
+  columnCount,
+  hasActionsColumn,
+}: SkeletonRowsProps) {
+  return (
+    <>
+      {Array.from({ length: rowCount }, (_, rowIndex) => (
+        <tr key={rowIndex} aria-hidden="true">
+          {Array.from({ length: columnCount }, (_, columnIndex) => {
+            const isFirst = columnIndex === 0
+            const isActions =
+              hasActionsColumn && columnIndex === columnCount - 1
+
+            if (isFirst) {
+              return (
+                <td key={columnIndex}>
+                  <span className={styles.nameCell}>
+                    <span className={styles.chevronSpacer} />
+                    <span
+                      className={[styles.shimmer, styles.shimmerAvatar].join(
+                        " ",
+                      )}
+                    />
+                    <span
+                      className={[styles.shimmer, styles.shimmerName].join(" ")}
+                    />
+                  </span>
+                </td>
+              )
+            }
+
+            if (isActions) {
+              return (
+                <td key={columnIndex}>
+                  <div className={styles.rowActions}>
+                    <span
+                      className={[styles.shimmer, styles.shimmerButton].join(
+                        " ",
+                      )}
+                    />
+                    <span
+                      className={[styles.shimmer, styles.shimmerButton].join(
+                        " ",
+                      )}
+                    />
+                  </div>
+                </td>
+              )
+            }
+
+            return (
+              <td key={columnIndex}>
+                <span
+                  className={[styles.shimmer, styles.shimmerCell].join(" ")}
+                />
+              </td>
+            )
+          })}
+        </tr>
+      ))}
+    </>
+  )
 }
 
 type ArchivedRowProps = {

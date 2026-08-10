@@ -148,6 +148,12 @@
   color: #a3b1bd;
 }
 
+.body {
+  display: flex;
+  flex-direction: column;
+  min-height: 232px;
+}
+
 .tableWrap {
   width: 100%;
   min-width: 0;
@@ -318,11 +324,64 @@
   background: #fbfdfe;
 }
 
+.shimmer {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #eef3f6 0%,
+    #f7fafc 50%,
+    #eef3f6 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerSweep 1.4s ease-in-out infinite;
+}
+
+.shimmerAvatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 9px;
+}
+
+.shimmerName {
+  width: min(160px, 60%);
+  height: 12px;
+}
+
+.shimmerCell {
+  width: min(96px, 70%);
+}
+
+.shimmerButton {
+  width: 68px;
+  height: 28px;
+  border-radius: 9px;
+}
+
+@keyframes shimmerSweep {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background: #eef3f6;
+  }
+}
+
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  min-height: 53px;
   padding: 0.8rem 1.15rem;
   border-top: 1px solid #f0f4f6;
 }
@@ -355,7 +414,8 @@
 }
 
 .emptyState {
-  padding: 3rem 1.5rem;
+  margin: auto;
+  padding: 1.5rem;
   color: #8695a4;
   font-size: 0.875rem;
   text-align: center;
