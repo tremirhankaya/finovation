@@ -1,0 +1,24 @@
+{
+  "model": "PPO_STRESS_CONTEXT",
+  "scenario": "SCENARIO_1_2025_03_17",
+  "initial_nav": 10000000.0,
+  "initial_weights": {
+    "GARAN.E": 0.10,
+    "AKBNK.E": 0.10,
+    "ASELS.E": 0.03,
+    "BIMAS.E": 0.05,
+    "TUPRS.E": 0.04,
+    "THYAO.E": 0.05,
+    "FROTO.E": 0.05,
+    "KCHOL.E": 0.09,
+    "SAHOL.E": 0.10,
+    "SISE.E": 0.05,
+    "EREGL.E": 0.05,
+    "TCELL.E": 0.05,
+    "TAVHL.E": 0.05,
+    "MGROS.E": 0.05,
+    "TOASO.E": 0.04,
+    "ULKER.E": 0.05,
+    "CASH_TPP": 0.05
+  }
+}

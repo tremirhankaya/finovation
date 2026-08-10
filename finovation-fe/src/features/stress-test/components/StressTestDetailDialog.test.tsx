@@ -2,7 +2,11 @@ import { render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const serviceMocks = vi.hoisted(() => ({
+    fetchStressTestAssetPath: vi.fn(),
     fetchStressTestDetail: vi.fn(),
+    fetchStressTestPortfolioPath: vi.fn(),
+    fetchStressTestSectorPaths: vi.fn(),
+    fetchStressTestSectors: vi.fn(),
 }))
 
 vi.mock(
@@ -32,7 +36,17 @@ const DETAIL = {
 
 describe("StressTestDetailDialog", () => {
     beforeEach(() => {
-        serviceMocks.fetchStressTestDetail.mockReset()
+        vi.clearAllMocks()
+        serviceMocks.fetchStressTestAssetPath.mockResolvedValue({
+            assetCode: "AKBNK.E",
+            assetType: "EQUITY",
+            points: [],
+        })
+        serviceMocks.fetchStressTestPortfolioPath.mockResolvedValue({
+            points: [],
+        })
+        serviceMocks.fetchStressTestSectorPaths.mockResolvedValue([])
+        serviceMocks.fetchStressTestSectors.mockResolvedValue([])
     })
 
     it("seçilen stres testinin detayını yükler ve gösterir", async () => {
@@ -46,11 +60,15 @@ describe("StressTestDetailDialog", () => {
         )
 
         expect(
-            await screen.findByText("Küresel Kriz"),
+            await screen.findByRole("dialog", {
+                name: "Küresel Kriz",
+            }),
         ).toBeInTheDocument()
 
         expect(screen.getByText("-4.20%")).toBeInTheDocument()
-        expect(screen.getByText("AKBNK.E")).toBeInTheDocument()
+        expect(
+            screen.getByRole("cell", { name: "AKBNK.E" }),
+        ).toBeInTheDocument()
 
         expect(
             serviceMocks.fetchStressTestDetail,

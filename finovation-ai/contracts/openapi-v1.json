@@ -513,6 +513,117 @@
           }
         }
       }
+    },
+    "/api/v1/rl/inference": {
+      "post": {
+        "tags": [
+          "rl-inference"
+        ],
+        "summary": "Run a packaged PPO policy on one fixed historical stress scenario",
+        "operationId": "run_rl_inference_api_v1_rl_inference_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RlInferenceRequest"
+              },
+              "examples": {
+                "scenario_1_realistic_portfolio": {
+                  "summary": "10 milyon TL başlangıç portföyü",
+                  "description": "İzahnameye uygun 16 hisse ve yüzde 5 CASH_TPP ile birinci sabit senaryoyu çalıştırır.",
+                  "value": {
+                    "model": "PPO_STRESS_CONTEXT",
+                    "scenario": "SCENARIO_1_2025_03_17",
+                    "initial_nav": 10000000.0,
+                    "initial_weights": {
+                      "GARAN.E": 0.1,
+                      "AKBNK.E": 0.1,
+                      "ASELS.E": 0.03,
+                      "BIMAS.E": 0.05,
+                      "TUPRS.E": 0.04,
+                      "THYAO.E": 0.05,
+                      "FROTO.E": 0.05,
+                      "KCHOL.E": 0.09,
+                      "SAHOL.E": 0.1,
+                      "SISE.E": 0.05,
+                      "EREGL.E": 0.05,
+                      "TCELL.E": 0.05,
+                      "TAVHL.E": 0.05,
+                      "MGROS.E": 0.05,
+                      "TOASO.E": 0.04,
+                      "ULKER.E": 0.05,
+                      "CASH_TPP": 0.05
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/RlInferenceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON request",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Snapshot or request conflict",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation or business rule failure",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected internal error",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Runtime bundle is not ready",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1575,6 +1686,196 @@
           "model_bundle_id"
         ],
         "title": "ReadyResponse"
+      },
+      "RlDailyResult": {
+        "properties": {
+          "day_number": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Day Number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "total_new_nav": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Total New Nav"
+          },
+          "passive_nav": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Passive Nav"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "maxProperties": 17,
+            "minProperties": 17,
+            "title": "Weights"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "day_number",
+          "date",
+          "total_new_nav",
+          "passive_nav",
+          "weights"
+        ],
+        "title": "RlDailyResult"
+      },
+      "RlInferenceRequest": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "PPO_MARKET_BASELINE",
+              "PPO_STRESS_CONTEXT",
+              "PPO_ASSET_IMPACT",
+              "PPO_ADAPTIVE_RECOVERY"
+            ],
+            "title": "Model"
+          },
+          "scenario": {
+            "type": "string",
+            "enum": [
+              "SCENARIO_1_2025_03_17",
+              "SCENARIO_2_2025_08_26"
+            ],
+            "title": "Scenario"
+          },
+          "initial_nav": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Nav"
+          },
+          "initial_weights": {
+            "additionalProperties": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0
+            },
+            "type": "object",
+            "maxProperties": 17,
+            "minProperties": 17,
+            "title": "Initial Weights"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model",
+          "scenario",
+          "initial_nav",
+          "initial_weights"
+        ],
+        "title": "RlInferenceRequest"
+      },
+      "RlInferenceResponse": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "PPO_MARKET_BASELINE",
+              "PPO_STRESS_CONTEXT",
+              "PPO_ASSET_IMPACT",
+              "PPO_ADAPTIVE_RECOVERY"
+            ],
+            "title": "Model"
+          },
+          "scenario": {
+            "type": "string",
+            "enum": [
+              "SCENARIO_1_2025_03_17",
+              "SCENARIO_2_2025_08_26"
+            ],
+            "title": "Scenario"
+          },
+          "scenario_start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Scenario Start Date"
+          },
+          "scenario_end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Scenario End Date"
+          },
+          "trading_day_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Trading Day Count"
+          },
+          "initial_nav": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Nav"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/RlDailyResult"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Days"
+          },
+          "final_nav": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Final Nav"
+          },
+          "return_pct": {
+            "type": "number",
+            "title": "Return Pct"
+          },
+          "passive_final_nav": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Passive Final Nav"
+          },
+          "passive_return_pct": {
+            "type": "number",
+            "title": "Passive Return Pct"
+          },
+          "outperformance_amount": {
+            "type": "number",
+            "title": "Outperformance Amount"
+          },
+          "outperformance_pct": {
+            "type": "number",
+            "title": "Outperformance Pct"
+          },
+          "total_commission": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Total Commission"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model",
+          "scenario",
+          "scenario_start_date",
+          "scenario_end_date",
+          "trading_day_count",
+          "initial_nav",
+          "days",
+          "final_nav",
+          "return_pct",
+          "passive_final_nav",
+          "passive_return_pct",
+          "outperformance_amount",
+          "outperformance_pct",
+          "total_commission"
+        ],
+        "title": "RlInferenceResponse"
       }
     }
   }

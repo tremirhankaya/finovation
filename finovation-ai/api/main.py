@@ -16,7 +16,7 @@ from api.errors import (
     validation_error_handler,
 )
 from api.lifecycle import lifespan_for
-from api.routes import forecasts, health, metadata, portfolios
+from api.routes import forecasts, health, metadata, portfolios, rl_inference
 from api.responses import Utf8JSONResponse
 from api.settings import ServiceSettings
 from api.dependencies import verify_api_key
@@ -71,6 +71,7 @@ def create_app(settings: ServiceSettings | None = None) -> FastAPI:
     app.include_router(metadata.router)
     app.include_router(forecasts.router, dependencies=[Depends(verify_api_key)])
     app.include_router(portfolios.router, dependencies=[Depends(verify_api_key)])
+    app.include_router(rl_inference.router, dependencies=[Depends(verify_api_key)])
     return app
 
 

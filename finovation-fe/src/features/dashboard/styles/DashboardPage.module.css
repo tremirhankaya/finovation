@@ -466,6 +466,13 @@
   text-decoration: none;
 }
 
+.headerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 14px;
+}
+
 .panelFooter a:hover,
 .headerLink:hover {
   text-decoration: underline;

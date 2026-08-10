@@ -1,10 +1,23 @@
 from __future__ import annotations
 
+import hmac
+
 from fastapi import Header, Request
 
 from api.errors import ApiError
 from api.runtime import RuntimeState
 from api.settings import ServiceSettings
+
+BEARER_PREFIX = "Bearer "
+
+
+def _presented_token(authorization: str | None, x_api_key: str | None) -> str | None:
+    if authorization and authorization.startswith(BEARER_PREFIX):
+        return authorization[len(BEARER_PREFIX):].strip() or None
+    if x_api_key:
+        return x_api_key.strip() or None
+    return None
+
 
 def verify_api_key(
     request: Request,
@@ -15,13 +28,10 @@ def verify_api_key(
     if not settings.api_key:
         return
 
-    token = None
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-    elif x_api_key:
-        token = x_api_key
-
-    if token != settings.api_key:
+    token = _presented_token(authorization, x_api_key)
+    if token is None or not hmac.compare_digest(
+        token.encode("utf-8"), settings.api_key.encode("utf-8")
+    ):
         raise ApiError(401, "UNAUTHORIZED", "Invalid API Key")
 
 

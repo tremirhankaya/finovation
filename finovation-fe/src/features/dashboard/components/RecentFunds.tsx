@@ -52,9 +52,14 @@ export default function RecentFunds({
           <span className={styles.panelEyebrow}>Fon Tasarımı</span>
           <h2>Fonlar ve taslaklar</h2>
         </div>
-        <Link className={styles.headerLink} to="/fund-design/create">
-          Tümünü gör
-        </Link>
+        <div className={styles.headerLinks}>
+          <Link className={styles.headerLink} to="/fund-design/active">
+            Aktif fonlar
+          </Link>
+          <Link className={styles.headerLink} to="/fund-design/create">
+            Taslaklar
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (
