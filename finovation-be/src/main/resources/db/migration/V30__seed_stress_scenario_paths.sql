@@ -1,4 +1,4 @@
--- V29__seed_stress_scenario_paths.sql
+-- V30__seed_stress_scenario_paths.sql
 -- Seeds deterministic daily stress paths for the two production scenarios.
 
 SET NOCOUNT ON;
