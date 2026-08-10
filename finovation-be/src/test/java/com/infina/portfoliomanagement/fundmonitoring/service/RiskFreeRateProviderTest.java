@@ -21,7 +21,6 @@ class RiskFreeRateProviderTest {
     void annualRate_returnsConfiguredTcmbPolicyRate() {
         RiskFreeRateProvider provider = new RiskFreeRateProvider(
                 new FundMonitoringProperties(
-                        new BigDecimal("1000000"),
                         new BigDecimal("37")
                 )
         );

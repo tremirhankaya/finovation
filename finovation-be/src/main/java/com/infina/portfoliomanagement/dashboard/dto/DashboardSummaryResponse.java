@@ -6,9 +6,11 @@ import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryRespo
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
 import com.infina.portfoliomanagement.stresstest.dto.response.StressTestHistoryResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public record DashboardSummaryResponse(
+        LocalDate businessDate,
         List<FundSummaryResponse> funds,
         List<FundDraftSummaryResponse> drafts,
         List<OptimizationLogEntryResponse> optimizationLogs,

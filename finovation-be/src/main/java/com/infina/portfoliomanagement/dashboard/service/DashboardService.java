@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.dashboard.service;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.dashboard.dto.DashboardSummaryResponse;
 import com.infina.portfoliomanagement.dashboard.dto.DashboardSummaryResponse.UnavailableSection;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
@@ -28,6 +29,7 @@ public class DashboardService {
     private final FundDraftService fundDraftService;
     private final OptimizationRequestService optimizationRequestService;
     private final StressTestService stressTestService;
+    private final FinancialTimeProvider financialTime;
 
     public DashboardSummaryResponse getSummary(String actorUsername) {
         EnumSet<UnavailableSection> unavailableSections =
@@ -73,6 +75,7 @@ public class DashboardService {
         );
 
         return new DashboardSummaryResponse(
+                financialTime.currentDate(),
                 funds,
                 drafts,
                 optimizationLogs,

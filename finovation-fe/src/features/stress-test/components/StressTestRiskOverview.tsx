@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { fetchStressTestPortfolioPath } from "@/features/stress-test/api/stressTestService"
 import {
@@ -70,7 +70,7 @@ export default function StressTestRiskOverview({
         }
     }, [points])
 
-    const getPointPosition = (index: number) => {
+    const getPointPosition = useCallback((index: number) => {
         const point = points[index]
         const range =
             chartRange.max - chartRange.min || 1
@@ -88,7 +88,7 @@ export default function StressTestRiskOverview({
             plotHeight
 
         return { x, y }
-    }
+    }, [chartRange, plotHeight, plotWidth, points])
 
     const path = useMemo(() => {
         if (points.length === 0) return ""
@@ -100,7 +100,7 @@ export default function StressTestRiskOverview({
                 return `${index === 0 ? "M" : "L"} ${x} ${y}`
             })
             .join(" ")
-    }, [points, chartRange])
+    }, [getPointPosition, points])
 
     const areaPath = useMemo(() => {
         if (!path) return ""

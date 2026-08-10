@@ -1,5 +1,7 @@
 package com.infina.portfoliomanagement.optimization.service;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProperties;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
@@ -138,7 +140,10 @@ class OptimizationRequestServiceTest {
                 fundDraftRepository,
                 fundPortfolioRepository,
                 fundPositionRepository,
-                CLOCK
+                new FinancialTimeProvider(
+                        CLOCK,
+                        new FinancialTimeProperties(false, null, null, ZoneOffset.UTC)
+                )
         );
     }
 

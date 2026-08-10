@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.marketdata.service.equity.price;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.entity.EquityPrice;
 import com.infina.portfoliomanagement.common.enums.AssetType;
@@ -29,6 +30,7 @@ public class EquityPriceSyncService {
     private final EquityPriceChangeCollector changeCollector;
     private final EquityPriceWriter priceWriter;
     private final Clock clock;
+    private final FinancialTimeProvider financialTime;
     private final int lookbackDays;
     private final int deepLookbackDays;
     private final LocalDate historyStart;
@@ -39,6 +41,7 @@ public class EquityPriceSyncService {
                                   EquityPriceChangeCollector changeCollector,
                                   EquityPriceWriter priceWriter,
                                   Clock clock,
+                                  FinancialTimeProvider financialTime,
                                   @Value("${marketdata.sync.price-lookback-days:30}") int lookbackDays,
                                   @Value("${marketdata.sync.price-deep-lookback-days:365}") int deepLookbackDays,
                                   @Value("${marketdata.sync.history-start:1990-01-01}") String historyStart) {
@@ -48,6 +51,7 @@ public class EquityPriceSyncService {
         this.changeCollector = changeCollector;
         this.priceWriter = priceWriter;
         this.clock = clock;
+        this.financialTime = financialTime;
         this.lookbackDays = lookbackDays;
         this.deepLookbackDays = deepLookbackDays;
         this.historyStart = LocalDate.parse(historyStart);
@@ -63,7 +67,7 @@ public class EquityPriceSyncService {
 
     private void run(String label, int lookback) {
         List<Asset> equities = assetRepository.findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType.EQUITY);
-        LocalDate today = LocalDate.now(clock);
+        LocalDate today = financialTime.currentDate();
 
         log.info("{} started: {} asset(s)", label, equities.size());
 

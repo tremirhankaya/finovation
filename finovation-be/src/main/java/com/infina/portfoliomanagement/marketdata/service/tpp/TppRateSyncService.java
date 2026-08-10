@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.marketdata.service.tpp;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.entity.TppRate;
 import com.infina.portfoliomanagement.common.enums.AssetType;
@@ -28,23 +29,26 @@ public class TppRateSyncService {
     private final AssetRepository assetRepository;
     private final TppRateRepository tppRateRepository;
     private final Clock clock;
+    private final FinancialTimeProvider financialTime;
     private final LocalDate historyStart;
 
     public TppRateSyncService(TppRateApi tppRateApi,
                               AssetRepository assetRepository,
                               TppRateRepository tppRateRepository,
                               Clock clock,
+                              FinancialTimeProvider financialTime,
                               @Value("${marketdata.sync.history-start:1990-01-01}") String historyStart) {
         this.tppRateApi = tppRateApi;
         this.assetRepository = assetRepository;
         this.tppRateRepository = tppRateRepository;
         this.clock = clock;
+        this.financialTime = financialTime;
         this.historyStart = LocalDate.parse(historyStart);
     }
 
     public void sync() {
         List<Asset> tppAssets = assetRepository.findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType.TPP);
-        LocalDate today = LocalDate.now(clock);
+        LocalDate today = financialTime.currentDate();
 
         log.info("tpp rate sync started: {} asset(s)", tppAssets.size());
 

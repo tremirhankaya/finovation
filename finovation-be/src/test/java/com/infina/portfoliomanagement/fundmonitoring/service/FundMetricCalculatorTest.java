@@ -63,7 +63,7 @@ class FundMetricCalculatorTest {
     @Test
     void insufficientHistory_returnsNullForAnnualMetrics() {
         List<FundValuationPoint> points = pointsFromReturns(
-                java.util.Collections.nCopies(251, new BigDecimal("0.001"))
+                java.util.Collections.nCopies(28, new BigDecimal("0.001"))
         );
 
         assertThat(calculator.annualizedVolatility(points)).isNull();

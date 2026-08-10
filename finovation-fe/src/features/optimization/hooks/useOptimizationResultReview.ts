@@ -187,9 +187,9 @@ export function useOptimizationResultReview(requestId: number) {
               assetCode: asset.assetCode,
               finalWeight: asset.finalWeight as number,
             }))
-          await approveOptimizationRequest(requestId, weightOverrides)
+          setRequest(await approveOptimizationRequest(requestId, weightOverrides))
         } else {
-          await rejectOptimizationRequest(requestId)
+          setRequest(await rejectOptimizationRequest(requestId))
         }
         setDecidedAs(decision)
       } catch (error) {

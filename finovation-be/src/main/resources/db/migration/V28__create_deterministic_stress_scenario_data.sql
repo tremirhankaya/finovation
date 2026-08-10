@@ -1,3 +1,4 @@
+-- Creates deterministic stress-test schema before scenario seed migrations.
 ALTER TABLE dbo.stress_scenarios
     ADD horizon_days SMALLINT NULL;
 
