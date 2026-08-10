@@ -61,7 +61,7 @@ infina:
   read-timeout: 15s
 
 fund-engine:
-  base-url: ${FUND_ENGINE_BASE_URL}
+  base-url: ${FUND_ENGINE_BASE_URL:http://localhost:8000}
   api-key: ${AI_ENGINE_API_KEY:}
   expected-model-snapshot: ${FUND_ENGINE_EXPECTED_MODEL_SNAPSHOT:FROZEN_2025-05-29_V3}
   connect-timeout: 5s
