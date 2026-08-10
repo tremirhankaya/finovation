@@ -20,7 +20,6 @@
   border-bottom: 1px solid #dfe7ef;
 }
 
-.brandBlock,
 .headerActions,
 .titleBlock,
 .errorBanner,
@@ -29,16 +28,10 @@
   align-items: center;
 }
 
-.brandBlock {
-  gap: 20px;
-}
-
 .titleBlock {
   align-items: flex-start;
   flex-direction: column;
   gap: 2px;
-  padding-left: 20px;
-  border-left: 1px solid #dfe7ef;
 }
 
 .titleBlock h1 {
@@ -1135,21 +1128,10 @@
     padding: 18px 14px 40px;
   }
 
-  .brandBlock,
   .headerActions,
   .priceTop {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .brandBlock {
-    gap: 14px;
-  }
-
-  .titleBlock {
-    padding: 13px 0 0;
-    border-top: 1px solid #dfe7ef;
-    border-left: 0;
   }
 
   .fundSelect {

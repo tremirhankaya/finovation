@@ -13,7 +13,6 @@ import type {
   PricePeriod,
 } from "@/features/fund-monitoring/model/fundMonitoring.types"
 import styles from "@/features/fund-monitoring/styles/FundMonitoringPage.module.css"
-import Logo from "@/shared/ui/Logo"
 
 export type FundMonitoringViewProps = {
   funds: FundOption[]
@@ -61,12 +60,9 @@ export function FundMonitoringView({
     <main className={styles.page} aria-busy={isLoading}>
       <div className={styles.shell}>
         <header className={styles.header}>
-          <div className={styles.brandBlock}>
-            <Logo variant="dark" size="small" />
-            <div className={styles.titleBlock}>
-              <h1>Fon İzleme ve Performans</h1>
-              <p>Portföy analiz paneli</p>
-            </div>
+          <div className={styles.titleBlock}>
+            <h1>Fon İzleme ve Performans</h1>
+            <p>Portföy analiz paneli</p>
           </div>
 
           <div className={styles.headerActions}>
