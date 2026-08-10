@@ -25,12 +25,9 @@ type NavigationItem = {
 const PRODUCT_NAVIGATION: NavigationItem[] = [
   { label: "Ana Sayfa", path: "/dashboard", icon: "home" },
   {
-    label: "Fon Tasarımı",
+    label: "Fon Yönetimi",
+    path: "/fund-design",
     icon: "design",
-    children: [
-      { label: "Fon Oluştur", path: "/fund-design/create", icon: "plus" },
-      { label: "Aktif Fonlarım", path: "/fund-design/active", icon: "briefcase" },
-    ],
   },
   {
     label: "Fon İzleme ve Performans",

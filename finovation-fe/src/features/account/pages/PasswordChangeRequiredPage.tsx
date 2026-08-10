@@ -16,7 +16,7 @@ const ROLE_LABELS = {
 
 const LOCKED_MODULES = [
   "Ana Sayfa",
-  "Fon Tasarımı",
+  "Fon Yönetimi",
   "Fon İzleme ve Performans",
   "Fon Optimizasyonu",
 ]
