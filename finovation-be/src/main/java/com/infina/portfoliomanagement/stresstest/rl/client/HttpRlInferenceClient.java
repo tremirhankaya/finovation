@@ -65,9 +65,8 @@ public class HttpRlInferenceClient implements RlInferenceClient {
         HttpStatusCode status = exception.getStatusCode();
 
         log.error(
-                "RL inference request failed. status={}, body={}",
-                status,
-                exception.getResponseBodyAsString()
+                "RL inference request failed. status={}",
+                status
         );
 
         if (status.value() == 422) {
