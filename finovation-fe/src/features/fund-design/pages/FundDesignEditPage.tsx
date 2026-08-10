@@ -185,7 +185,8 @@ export default function FundDesignEditPage() {
     onConfirm: () => {},
   })
 
-  // Modal içinde toplu hisse seçme & yüzde belirleme state'i: Record<assetCode, weightPct>
+  const [modalSelectedSectors, setModalSelectedSectors] = useState<string[]>([])
+  const [isModalSectorDropdownOpen, setIsModalSectorDropdownOpen] = useState(false)
   const [modalSelectedAssets, setModalSelectedAssets] = useState<Record<string, number>>({})
 
   const proposalRef = useRef<HTMLDivElement>(null)
@@ -200,6 +201,17 @@ export default function FundDesignEditPage() {
     }, 180)
     return () => clearTimeout(timer)
   }, [tableFilterText])
+
+  useEffect(() => {
+    if (isAddStockModalOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isAddStockModalOpen])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -1262,22 +1274,101 @@ export default function FundDesignEditPage() {
               </div>
               <button className={styles.closeModalBtn} onClick={() => setIsAddStockModalOpen(false)}>×</button>
             </div>
-            <div className={styles.modalSearchBox}>
+            <div className={styles.modalSearchBox} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <input
                 type="text"
                 placeholder="Kod veya isme göre ara..."
                 value={modalSearchText}
                 onChange={(e) => setModalSearchText(e.target.value)}
                 className={styles.modalSearchInput}
+                style={{ flex: 1, minWidth: '200px' }}
               />
+              {/* Custom Multi-Select Sector Dropdown */}
+              <div style={{ position: 'relative', flex: 1, minWidth: '150px' }}>
+                <div 
+                  className={styles.modalSearchInput} 
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsModalSectorDropdownOpen(!isModalSectorDropdownOpen);
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {modalSelectedSectors.length === 0 ? "Tüm Sektörler" : `${modalSelectedSectors.length} Sektör Seçildi`}
+                  </span>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                
+                {isModalSectorDropdownOpen && (
+                  <div 
+                    className={styles.customFilterMenu} 
+                    style={{ top: "calc(100% + 6px)", left: 0, width: "100%", zIndex: 50 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div
+                      className={styles.customFilterMenuHeader}
+                      onClick={() => setModalSelectedSectors([])}
+                    >
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#108e75" }}>
+                        ✓ Tüm Sektörler (Sıfırla)
+                      </span>
+                    </div>
+                    <div className={styles.customFilterMenuDivider} />
+                    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                      {Array.from(new Set(editModelUniverse.map(a => a.sectorName).filter((s): s is string => !!s))).sort().map(sec => {
+                        const isChecked = modalSelectedSectors.includes(sec)
+                        return (
+                          <div
+                            key={sec}
+                            className={[
+                              styles.customProposalMenuItem,
+                              isChecked ? styles.activeMenuItem : "",
+                            ].join(" ")}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setModalSelectedSectors((prev) =>
+                                prev.includes(sec)
+                                  ? prev.filter((s) => s !== sec)
+                                  : [...prev, sec]
+                              )
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {}}
+                                className={styles.checkboxInput}
+                              />
+                              <span>{sec}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className={styles.modalList} style={{ maxHeight: '340px' }}>
+            <div className={styles.modalList} style={{ maxHeight: '340px' }} onClick={() => setIsModalSectorDropdownOpen(false)}>
               {editModelUniverse
                 .filter((asset) => !positions.some((p) => p.assetCode === asset.assetCode))
                 .filter((asset) => {
                   if (!modalSearchText) return true;
                   const query = modalSearchText.toLocaleLowerCase("tr-TR").trim();
-                  return asset.assetCode.toLocaleLowerCase("tr-TR").includes(query) || asset.displayName.toLocaleLowerCase("tr-TR").includes(query);
+                  return asset.assetCode.toLocaleLowerCase("tr-TR").includes(query) || asset.displayName?.toLocaleLowerCase("tr-TR").includes(query);
+                })
+                .filter((asset) => {
+                  if (modalSelectedSectors.length === 0) return true;
+                  return asset.sectorName && modalSelectedSectors.includes(asset.sectorName);
+                })
+                .sort((a, b) => {
+                  const aSelected = a.assetCode in modalSelectedAssets ? 1 : 0;
+                  const bSelected = b.assetCode in modalSelectedAssets ? 1 : 0;
+                  if (aSelected !== bSelected) return bSelected - aSelected;
+                  return a.assetCode.localeCompare(b.assetCode);
                 })
                 .map((asset) => {
                   const isChecked = asset.assetCode in modalSelectedAssets

@@ -30,6 +30,9 @@ public class StressScenario {
     @Column(name = "is_active", nullable = false)
     private boolean active;
 
+    @Column(name = "horizon_days")
+    private Short horizonDays;
+
     @Column(name = "display_order", nullable = false)
     private Short displayOrder;
 

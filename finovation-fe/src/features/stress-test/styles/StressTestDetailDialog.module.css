@@ -1,6 +1,5 @@
 .dialog {
-    width: min(760px, calc(100vw - 32px));
-    max-height: 85vh;
+    width: min(1180px, calc(100vw - 32px));    max-height: 85vh;
     overflow-y: auto;
     padding: 24px;
     background: #fff;
@@ -101,4 +100,26 @@
 .error {
     color: #991b1b;
     background: #fff1f2;
+}
+.dialog :global(.chartTopRow) {
+    grid-template-columns: 1fr;
+}
+
+.dialog :global(.donutContent) {
+    grid-template-columns: 220px minmax(180px, 240px);
+    justify-content: center;
+    gap: 32px;
+}
+
+.dialog :global(.donutLegend) {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 760px) {
+    .dialog :global(.donutContent) {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 18px;
+    }
 }
