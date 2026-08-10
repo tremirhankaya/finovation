@@ -4,8 +4,8 @@ import { autoTable } from "jspdf-autotable"
 import robotoBoldFontUrl from "@/features/optimization/assets/fonts/Roboto-Bold.ttf"
 import robotoRegularFontUrl from "@/features/optimization/assets/fonts/Roboto-Regular.ttf"
 import {
-  formatDateTime,
   formatDecisionDateTime,
+  REQUEST_STATUS_LABELS,
   RISK_PROFILE_LABELS,
 } from "@/features/optimization/lib/optimizationExportLabels"
 import {
@@ -75,6 +75,22 @@ function heading(doc: DocWithAutoTable, text: string, y: number): void {
   doc.setFont(FONT_FAMILY, "normal")
 }
 
+function decidedByLabel(request: OptimizationRequestResponse): string {
+  return (
+    request.decidedByDisplayName ??
+    request.decidedByUsername ??
+    "—"
+  )
+}
+
+function requestedByLabel(request: OptimizationRequestResponse): string {
+  return (
+    request.requestedByDisplayName ??
+    request.requestedByUsername ??
+    "—"
+  )
+}
+
 function criteriaRowToLine(row: CriteriaRow): string[] {
   return [
     row.label,
@@ -92,32 +108,56 @@ export async function buildOptimizationResultPdf(
   const doc = new jsPDF() as DocWithAutoTable
   await registerTurkishFont(doc)
 
+  const statusLabel =
+    REQUEST_STATUS_LABELS[input.request.status] ?? input.request.status
+
   doc.setFont(FONT_FAMILY, "bold")
   doc.setFontSize(16)
-  doc.text("Fon Optimizasyonu — Onay Özeti", 14, 18)
+  doc.text(`Fon Optimizasyonu — ${statusLabel}`, 14, 18)
   doc.setFont(FONT_FAMILY, "normal")
+
+  const headerRows: string[][] = [
+    ["Fon", input.fundName],
+    ["Optimizasyon isteği", `#${input.request.id}`],
+    ["Durum", statusLabel],
+    [
+      "Risk profili",
+      RISK_PROFILE_LABELS[input.request.riskProfile] ??
+        input.request.riskProfile,
+    ],
+    ["İsteği oluşturan", requestedByLabel(input.request)],
+    ["Onaylayan/Reddeden", decidedByLabel(input.request)],
+    [
+      "Onay/red zamanı",
+      formatDecisionDateTime(input.request.status, input.request.updatedAt),
+    ],
+  ]
+  if (input.request.status === "REJECTED" && input.request.rejectionReason) {
+    headerRows.push(["Red gerekçesi", input.request.rejectionReason])
+  }
 
   autoTable(doc, {
     startY: 24,
     theme: "plain",
     styles: { ...TABLE_FONT, fontSize: 9 },
     columnStyles: { 0: { ...TABLE_HEAD_FONT, cellWidth: 45 } },
-    body: [
-      ["Fon", input.fundName],
-      ["Optimizasyon isteği", `#${input.request.id}`],
-      [
-        "Risk profili",
-        RISK_PROFILE_LABELS[input.request.riskProfile] ??
-          input.request.riskProfile,
-      ],
-      ["Veri zamanı", formatDateTime(input.request.dataTimestamp)],
-      ["İşlemi yapan", input.request.requestedByUsername ?? "—"],
-      [
-        "Onay/red zamanı",
-        formatDecisionDateTime(input.request.status, input.request.updatedAt),
-      ],
-    ],
+    body: headerRows,
   })
+
+  let y = nextY(doc, 24)
+  if (input.request.status === "REJECTED") {
+    doc.setFont(FONT_FAMILY, "normal")
+    doc.setFontSize(8.5)
+    doc.setTextColor(153, 27, 27)
+    const disclaimerLines = doc.splitTextToSize(
+      "Bu istek reddedildi; aşağıdaki tablolar modelin önerdiği, fona uygulanmamış değişiklikleri gösterir.",
+      180,
+    )
+    doc.text(disclaimerLines, 14, y - 6)
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(12)
+    y += disclaimerLines.length * 4
+  }
 
   const categories = buildResultCategories(input.assets)
   const countFor = (key: string) =>
@@ -126,7 +166,6 @@ export async function buildOptimizationResultPdf(
     (asset) => asset.manuallyOverridden,
   ).length
 
-  let y = nextY(doc, 24)
   heading(doc, "Portföy Değişim Özeti", y)
   autoTable(doc, {
     startY: y + 4,

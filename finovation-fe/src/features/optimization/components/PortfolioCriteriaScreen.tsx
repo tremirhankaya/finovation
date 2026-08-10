@@ -49,7 +49,6 @@ export default function PortfolioCriteriaScreen({
   onApprove,
   onReject,
 }: PortfolioCriteriaScreenProps) {
-  const [confirmingReject, setConfirmingReject] = useState(false)
   const [expandedAssetCodes, setExpandedAssetCodes] = useState<Set<string>>(
     new Set(),
   )
@@ -249,25 +248,14 @@ export default function PortfolioCriteriaScreen({
         >
           {isSubmitting ? "Gönderiliyor…" : "Portföyü Onayla ve Güncelle"}
         </button>
-        {confirmingReject ? (
-          <button
-            type="button"
-            className={styles.rejectButton}
-            onClick={onReject}
-            disabled={isSubmitting}
-          >
-            Emin misiniz? · İptal Etmek İçin Tıklayın
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={styles.linkButton}
-            onClick={() => setConfirmingReject(true)}
-            disabled={isSubmitting}
-          >
-            Optimizasyonu İptal Et
-          </button>
-        )}
+        <button
+          type="button"
+          className={styles.linkButton}
+          onClick={onReject}
+          disabled={isSubmitting}
+        >
+          Optimizasyonu İptal Et
+        </button>
       </div>
     </div>
   )

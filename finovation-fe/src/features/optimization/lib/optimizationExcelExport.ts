@@ -2,8 +2,8 @@ import { Workbook } from "exceljs"
 
 import {
   ACTION_TYPE_LABELS,
-  formatDateTime,
   formatDecisionDateTime,
+  REQUEST_STATUS_LABELS,
   RISK_PROFILE_LABELS,
 } from "@/features/optimization/lib/optimizationExportLabels"
 import {
@@ -60,6 +60,14 @@ export type OptimizationExcelExportInput = {
   criteriaRows: CriteriaRow[]
 }
 
+function decidedByLabel(request: OptimizationRequestResponse): string {
+  return request.decidedByDisplayName ?? request.decidedByUsername ?? "—"
+}
+
+function requestedByLabel(request: OptimizationRequestResponse): string {
+  return request.requestedByDisplayName ?? request.requestedByUsername ?? "—"
+}
+
 function addSummarySheet(
   workbook: Workbook,
   input: OptimizationExcelExportInput,
@@ -78,30 +86,48 @@ function addSummarySheet(
     (asset) => asset.manuallyOverridden,
   ).length
 
+  const statusLabel =
+    REQUEST_STATUS_LABELS[input.request.status] ?? input.request.status
+
   const rows: [string, string][] = [
     ["Fon", input.fundName],
     ["Optimizasyon isteği", `#${input.request.id}`],
+    ["Durum", statusLabel],
     [
       "Risk profili",
       RISK_PROFILE_LABELS[input.request.riskProfile] ??
         input.request.riskProfile,
     ],
-    ["Veri zamanı", formatDateTime(input.request.dataTimestamp)],
-    ["İşlemi yapan", input.request.requestedByUsername ?? "—"],
+    ["İsteği oluşturan", requestedByLabel(input.request)],
+    ["Onaylayan/Reddeden", decidedByLabel(input.request)],
     [
       "Onay/red zamanı",
       formatDecisionDateTime(input.request.status, input.request.updatedAt),
     ],
+  ]
+  if (input.request.status === "REJECTED" && input.request.rejectionReason) {
+    rows.push(["Red gerekçesi", input.request.rejectionReason])
+  }
+  rows.push(
     ["Artırılan hisse sayısı", String(countFor("INCREASED"))],
     ["Azaltılan hisse sayısı", String(countFor("DECREASED"))],
     ["Sabit kalan hisse sayısı", String(countFor("LOCKED"))],
     ["Manuel değiştirilen hisse sayısı", String(overriddenCount)],
-  ]
+  )
 
   for (const [label, value] of rows) {
     const row = sheet.addRow([label, value])
     row.getCell(1).font = { bold: true }
     styleBodyRow(row)
+  }
+
+  if (input.request.status === "REJECTED") {
+    const noteRow = sheet.addRow([
+      "Not: Bu istek reddedildi; yukarıdaki sayılar ve diğer sayfalardaki tablolar modelin " +
+        "önerdiği, fona uygulanmamış değişiklikleri gösterir.",
+    ])
+    noteRow.getCell(1).font = { italic: true, color: { argb: "FF991B1B" } }
+    sheet.mergeCells(noteRow.number, 1, noteRow.number, 2)
   }
 }
 

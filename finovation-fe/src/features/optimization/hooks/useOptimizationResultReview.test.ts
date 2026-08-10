@@ -287,8 +287,24 @@ describe("useOptimizationResultReview", () => {
 
     expect(optimizationApiMocks.rejectOptimizationRequest).toHaveBeenCalledWith(
       1,
+      undefined,
     )
     expect(result.current.decidedAs).toBe("reject")
+  })
+
+  it("decide('reject') gerekçeyi reddetme isteğiyle birlikte iletir", async () => {
+    optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
+    const { result } = renderHook(() => useOptimizationResultReview(1))
+    await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
+
+    await act(async () => {
+      await result.current.decide("reject", "Sektör dağılımı hedeflere uymuyor")
+    })
+
+    expect(optimizationApiMocks.rejectOptimizationRequest).toHaveBeenCalledWith(
+      1,
+      "Sektör dağılımı hedeflere uymuyor",
+    )
   })
 
   it("decide başarısız olduğunda hata mesajını kullanıcı diline çevirir", async () => {

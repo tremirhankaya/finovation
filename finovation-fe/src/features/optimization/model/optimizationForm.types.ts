@@ -11,6 +11,7 @@ export type OptimizableFund = {
   typeLabel: string
   active: boolean
   lastOptimizationDate: string | null
+  lastOptimizationDateRaw: string | null
   stockCount: number
   sectorCount: number
   equityWeightPercent: number

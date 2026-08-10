@@ -28,6 +28,7 @@ const REQUEST: OptimizationRequestResponse = {
   modelVersion: "v1.2.0",
   requestedByUserId: 7,
   requestedByUsername: "sefa.ecir",
+  requestedByDisplayName: "Sefa Ecir",
   decidedByUserId: 7,
   decidedByUsername: "sefa.ecir",
   decidedByDisplayName: "Sefa Ecir",
@@ -41,6 +42,7 @@ const REQUEST: OptimizationRequestResponse = {
   startedAt: "2026-08-06T10:00:00",
   completedAt: "2026-08-06T10:01:00",
   errorMessage: null,
+  rejectionReason: null,
   createdAt: "2026-08-06T10:00:00",
   updatedAt: "2026-08-06T10:05:00",
 }
@@ -277,5 +279,76 @@ describe("buildOptimizationResultPdf", () => {
       (row: string[]) => row[0] === "Onay/red zamanı",
     )
     expect(decisionRow[1]).not.toBe("—")
+  })
+
+  it("reddedilen istekte Durum satırı Reddedildi'yi, Onaylayan/Reddeden satırı gerçek reddedeni gösterir", async () => {
+    await buildOptimizationResultPdf({
+      fundName: "Finovation Atlas Fonu",
+      request: {
+        ...REQUEST,
+        status: "REJECTED",
+        requestedByUsername: "sefa.ecir",
+        requestedByDisplayName: null,
+        decidedByUsername: "onaylayan",
+        decidedByDisplayName: "Onay Veren",
+      },
+      assets: ASSETS,
+      criteriaRows: CRITERIA_ROWS,
+    })
+
+    const [, infoOptions] = autoTableMock.mock.calls[0]
+    const statusRow = infoOptions.body.find(
+      (row: string[]) => row[0] === "Durum",
+    )
+    expect(statusRow[1]).toBe("Reddedildi")
+
+    const requesterRow = infoOptions.body.find(
+      (row: string[]) => row[0] === "İsteği oluşturan",
+    )
+    expect(requesterRow[1]).toBe("sefa.ecir")
+
+    const deciderRow = infoOptions.body.find(
+      (row: string[]) => row[0] === "Onaylayan/Reddeden",
+    )
+    expect(deciderRow[1]).toBe("Onay Veren")
+  })
+
+  it("İsteği oluşturan alanında ad soyad varsa kullanıcı adı yerine onu gösterir", async () => {
+    await buildOptimizationResultPdf({
+      fundName: "Finovation Atlas Fonu",
+      request: {
+        ...REQUEST,
+        requestedByUsername: "sefa.ecir",
+        requestedByDisplayName: "Sefa Ecir",
+      },
+      assets: ASSETS,
+      criteriaRows: CRITERIA_ROWS,
+    })
+
+    const [, infoOptions] = autoTableMock.mock.calls[0]
+    const requesterRow = infoOptions.body.find(
+      (row: string[]) => row[0] === "İsteği oluşturan",
+    )
+    expect(requesterRow[1]).toBe("Sefa Ecir")
+  })
+
+  it("henüz karar verilmemiş istekte Onaylayan/Reddeden alanını boş gösterir", async () => {
+    await buildOptimizationResultPdf({
+      fundName: "Finovation Atlas Fonu",
+      request: {
+        ...REQUEST,
+        status: "COMPLETED",
+        decidedByUsername: null,
+        decidedByDisplayName: null,
+      },
+      assets: ASSETS,
+      criteriaRows: CRITERIA_ROWS,
+    })
+
+    const [, infoOptions] = autoTableMock.mock.calls[0]
+    const deciderRow = infoOptions.body.find(
+      (row: string[]) => row[0] === "Onaylayan/Reddeden",
+    )
+    expect(deciderRow[1]).toBe("—")
   })
 })

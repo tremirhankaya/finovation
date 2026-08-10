@@ -463,6 +463,92 @@
   background: #f1f5f9;
 }
 
+.fundSortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: var(--color-slate-500);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.fundSortButton:hover {
+  color: var(--color-teal-700);
+}
+
+.fundPinButton,
+.fundPinButtonActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: #cbd5e1;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.fundPinButton:hover {
+  color: var(--color-slate-500);
+  background: #f1f5f9;
+}
+
+.fundPinButtonActive {
+  color: var(--color-amber-600, #b45309);
+  background: #fffbeb;
+}
+
+.fundPinButtonActive:hover {
+  color: var(--color-amber-700, #92400e);
+  background: #fef3c7;
+}
+
+.fundRowPinned td {
+  background: #fffdf7;
+}
+
+.fundRowPinned:hover td {
+  background: #fffbeb;
+}
+
+.fundWeightLabels {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  color: var(--color-slate-500);
+  font-size: 0.72rem;
+}
+
+.fundWeightBarTrack {
+  display: flex;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  background: #e9edf2;
+  border-radius: 999px;
+}
+
+.fundWeightBarFill {
+  height: 100%;
+  background: var(--color-teal-600);
+}
+
+.fundWeightBarFillTpp {
+  height: 100%;
+  background: #cbd5e1;
+}
+
 .fundSelectionFooter {
   display: flex;
   align-items: center;

@@ -34,6 +34,35 @@
   font-size: 0.86rem;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 10px 16px;
+  color: var(--color-slate-500);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.backButton:hover {
+  color: var(--color-navy-950);
+  background: #f8fafc;
+  border-color: var(--color-teal-600);
+}
+
 .exportButton {
   display: inline-flex;
   align-items: center;
@@ -208,7 +237,14 @@
   background: #fffbeb;
 }
 
-.pdfButton {
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdfButton,
+.excelButton {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -223,11 +259,13 @@
   transition: border-color 0.15s ease;
 }
 
-.pdfButton:hover:not(:disabled) {
+.pdfButton:hover:not(:disabled),
+.excelButton:hover:not(:disabled) {
   border-color: var(--color-teal-600);
 }
 
-.pdfButton:disabled {
+.pdfButton:disabled,
+.excelButton:disabled {
   color: #c4cbd4;
   cursor: not-allowed;
 }

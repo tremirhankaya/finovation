@@ -18,6 +18,88 @@
   gap: 18px;
 }
 
+.headerCentered {
+  text-align: center;
+}
+
+.celebrationHero {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 4px auto -6px;
+}
+
+.celebrationCheck,
+.celebrationCheckNeutral {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  margin: 32px auto;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+.celebrationCheck {
+  background: var(--color-teal-600);
+  box-shadow: 0 0 0 6px rgba(13, 148, 136, 0.1);
+}
+
+.celebrationCheckNeutral {
+  background: var(--color-slate-500);
+  box-shadow: 0 0 0 6px rgba(100, 116, 139, 0.12);
+}
+
+.confettiDot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.confettiDotOrange {
+  top: 8px;
+  left: 20px;
+  background: #f97316;
+}
+
+.confettiDotGreen {
+  top: 2px;
+  left: 66px;
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+}
+
+.confettiDotPink {
+  top: 14px;
+  right: 16px;
+  background: #ec4899;
+}
+
+.confettiDotCyan {
+  top: 58px;
+  right: 2px;
+  background: #06b6d4;
+}
+
+.confettiDotBlue {
+  bottom: 20px;
+  left: 6px;
+  background: #3b82f6;
+}
+
+.confettiDotMagenta {
+  bottom: 6px;
+  right: 42px;
+  width: 6px;
+  height: 6px;
+  background: #d946ef;
+}
+
 .header h1 {
   margin: 0 0 4px;
   color: var(--color-navy-950);
@@ -480,30 +562,6 @@
   cursor: not-allowed;
 }
 
-.rejectButton {
-  min-height: 48px;
-  padding: 0 18px;
-  color: var(--color-red-800);
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.rejectButton:hover:not(:disabled) {
-  background: #ffe4e6;
-}
-
-.rejectButton:disabled {
-  color: #94a3b8;
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-  cursor: not-allowed;
-}
-
 .approvalActions {
   display: flex;
   justify-content: flex-end;
@@ -531,149 +589,64 @@
   border: 1px solid #a5f3fc;
 }
 
-.successPanel {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 32px;
-  background: #fff;
-  border: 1px solid #e9edf2;
-  border-radius: 16px;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 10px 24px -18px rgba(15, 23, 42, 0.18);
-}
-
-.successPanel h1 {
-  margin: 0;
-  color: var(--color-navy-950);
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-.successPanel p {
-  margin: 0;
-  color: var(--color-slate-500);
-  font-size: 0.86rem;
-}
-
 .successActions {
   display: flex;
   gap: 12px;
   margin-top: 8px;
 }
 
-.successBanner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
-  background: linear-gradient(135deg, #f0fdfa, #ecfeff);
-  border: 1px solid #99f6e4;
-  border-radius: 14px;
-}
-
-.successBanner strong {
-  display: block;
-  color: var(--color-navy-950);
+.successLead {
+  max-width: 480px;
+  margin: 8px auto 0;
+  color: var(--color-slate-500);
   font-size: 0.9rem;
+  line-height: 1.5;
 }
 
-.successBanner p {
-  margin: 3px 0 0;
-  color: #0f766e;
-  font-size: 0.8rem;
-}
 
-.successBannerIcon {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: #fff;
-  background: var(--color-teal-600);
-  border-radius: 999px;
-  box-shadow: 0 0 0 5px rgba(13, 148, 136, 0.12);
-  font-size: 0.92rem;
-  font-weight: 800;
-}
-
-.successInfoGrid {
+.metricCardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 18px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
   padding: 6px 0 10px;
 }
 
-.successInfoItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+.metricCard {
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid #e9edf2;
+  border-radius: 12px;
 }
 
-.successInfoIcon {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-}
-
-.successInfoIcon svg {
-  width: 17px;
-  height: 17px;
-}
-
-.successInfoIconSlate {
-  color: var(--color-slate-500);
-  background: #f1f5f9;
-}
-
-.successInfoIconIndigo {
-  color: #4f46e5;
-  background: #eef2ff;
-}
-
-.successInfoIconAmber {
-  color: #b45309;
-  background: #fef3c7;
-}
-
-.successInfoIconTeal {
-  color: var(--color-teal-700);
-  background: #f0fdfa;
-}
-
-.successInfoIconNavy {
-  color: var(--color-navy-950);
-  background: #eef1f6;
-}
-
-.successInfoItem > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 2px;
-}
-
-.successInfoItem > div > span {
-  color: var(--color-slate-500);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.successInfoItem > div > strong {
+.metricCardLabel {
+  display: block;
   color: var(--color-navy-950);
   font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.metricCardValue {
+  display: block;
+  margin-top: 10px;
+  color: var(--color-navy-950);
+  font-size: 1.5rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+.metricCardDescription {
+  margin: 10px 0 0;
+  color: var(--color-slate-500);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.metricCardTextValue {
+  margin: 10px 0 0;
+  color: var(--color-navy-950);
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.55;
 }
 
 .successNote {

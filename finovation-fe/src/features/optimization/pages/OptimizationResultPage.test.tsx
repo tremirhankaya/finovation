@@ -364,7 +364,7 @@ describe("OptimizationResultPage", () => {
     )
   })
 
-  it("iptal edince başarı ekranını farklı metinle gösterir", async () => {
+  it("iptal edince gerekçe penceresi açılır, onaylanınca başarı ekranını farklı metinle gösterir", async () => {
     const user = userEvent.setup()
     optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
     renderPage()
@@ -373,15 +373,80 @@ describe("OptimizationResultPage", () => {
     await user.click(
       screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
     )
-    await user.click(
-      screen.getByRole("button", {
-        name: "Emin misiniz? · İptal Etmek İçin Tıklayın",
-      }),
-    )
+
+    expect(
+      screen.getByRole("heading", { name: "Optimizasyonu reddet" }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Reddet" }))
 
     await waitFor(() =>
       expect(screen.getByText("Optimizasyon Reddedildi")).toBeInTheDocument(),
     )
+  })
+
+  it("iptal penceresinde yazılan gerekçeyi reddetme isteğiyle birlikte gönderir", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
+    )
+    await user.type(
+      screen.getByLabelText("Red gerekçesi (isteğe bağlı)"),
+      "Sektör dağılımı hedeflere uymuyor",
+    )
+    await user.click(screen.getByRole("button", { name: "Reddet" }))
+
+    await waitFor(() =>
+      expect(
+        optimizationApiMocks.rejectOptimizationRequest,
+      ).toHaveBeenCalledWith(1, "Sektör dağılımı hedeflere uymuyor"),
+    )
+  })
+
+  it("reddedilme ekranında reddedeni, tarihi ve gerekçeyi gösterir", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({
+      decidedByDisplayName: "Onay Veren",
+      decidedByUsername: "onaylayan",
+      updatedAt: "2026-08-10T17:15:00",
+      rejectionReason: "Sektör dağılımı hedeflere uymuyor",
+    })
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Reddet" }))
+
+    await waitFor(() =>
+      expect(screen.getByText("Optimizasyon Reddedildi")).toBeInTheDocument(),
+    )
+
+    expect(screen.getByText("Onay Veren")).toBeInTheDocument()
+    expect(
+      screen.getByText("Sektör dağılımı hedeflere uymuyor"),
+    ).toBeInTheDocument()
+  })
+
+  it("iptal penceresinde vazgeçilince istek gönderilmez ve pencere kapanır", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Vazgeç" }))
+
+    expect(
+      screen.queryByRole("heading", { name: "Optimizasyonu reddet" }),
+    ).not.toBeInTheDocument()
+    expect(optimizationApiMocks.rejectOptimizationRequest).not.toHaveBeenCalled()
   })
 
   it("onay hata verdiğinde hata bandını gösterir", async () => {

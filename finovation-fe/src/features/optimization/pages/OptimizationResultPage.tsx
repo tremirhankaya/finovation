@@ -4,73 +4,10 @@ import { useLocation, useNavigate, useParams } from "react-router"
 import AssetComparisonPanel from "@/features/optimization/components/AssetComparisonPanel"
 import OptimizationWizardSteps from "@/features/optimization/components/OptimizationWizardSteps"
 import PortfolioCriteriaScreen from "@/features/optimization/components/PortfolioCriteriaScreen"
+import RejectReasonDialog from "@/features/optimization/components/RejectReasonDialog"
 import { useOptimizationResultReview } from "@/features/optimization/hooks/useOptimizationResultReview"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
-
-const ICON_PROPS = {
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 1.75,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-}
-
-function LayersIcon() {
-  return (
-    <svg {...ICON_PROPS} aria-hidden="true">
-      <polygon points="12 3 3 8 12 13 21 8 12 3" />
-      <polyline points="3 16 12 21 21 16" />
-      <polyline points="3 12 12 17 21 12" />
-    </svg>
-  )
-}
-
-function SparklesIcon() {
-  return (
-    <svg {...ICON_PROPS} aria-hidden="true">
-      <path d="M11 3l1.6 4.8L17 9l-4.4 1.5L11 15l-1.6-4.5L5 9l4.4-1.2L11 3z" />
-      <path d="M18.5 14.5l.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9.9-2.5z" />
-    </svg>
-  )
-}
-
-function PencilIcon() {
-  return (
-    <svg {...ICON_PROPS} aria-hidden="true">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-    </svg>
-  )
-}
-
-function BadgeCheckIcon() {
-  return (
-    <svg {...ICON_PROPS} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8.5 12.2l2.2 2.2 4.8-4.8" />
-    </svg>
-  )
-}
-
-function UserIcon() {
-  return (
-    <svg {...ICON_PROPS} aria-hidden="true">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c0-4.2 3.8-6.5 8-6.5s8 2.3 8 6.5" />
-    </svg>
-  )
-}
-
-function CalendarIcon() {
-  return (
-    <svg {...ICON_PROPS} aria-hidden="true">
-      <rect x="3.5" y="5" width="17" height="15.5" rx="2.2" />
-      <path d="M16 3.2v4M8 3.2v4M3.5 10h17" />
-    </svg>
-  )
-}
 
 function equitySnapshot(
   assets: OptimizationResultAsset[],
@@ -109,6 +46,7 @@ export default function OptimizationResultPage() {
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [subView, setSubView] = useState<ResultSubView>("comparison")
   const [isEditingWeights, setIsEditingWeights] = useState(false)
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
 
   const exportPdf = async () => {
     if (!review.request) return
@@ -171,25 +109,85 @@ export default function OptimizationResultPage() {
   }
 
   if (review.decidedAs === "reject") {
+    const actorName =
+      review.request?.decidedByDisplayName ??
+      review.request?.decidedByUsername ??
+      "—"
+    const decidedAt = review.request?.updatedAt
+      ? new Date(review.request.updatedAt)
+      : null
+
     return (
       <main className={styles.page}>
         <div className={styles.wizardShell}>
-          <div className={styles.successPanel} role="status">
+          <div className={styles.celebrationHero} aria-hidden="true">
+            <span className={`${styles.confettiDot} ${styles.confettiDotOrange}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotGreen}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotPink}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotCyan}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotBlue}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotMagenta}`} />
+            <span className={styles.celebrationCheckNeutral}>✕</span>
+          </div>
+          <header className={`${styles.header} ${styles.headerCentered}`}>
             <h1>Optimizasyon Reddedildi</h1>
-            <p className={styles.subtitle}>{resolvedFundName}</p>
-            <p>
+            <p className={styles.subtitle}>
+              {resolvedFundName}
+              {decidedAt ? ` · ${formatDateTime(decidedAt)}` : ""}
+            </p>
+            <p className={styles.successLead} role="status">
               Optimizasyon sonucu reddedildi, fon üzerinde bir değişiklik
               yapılmadı.
             </p>
-            <div className={styles.successActions}>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={() => navigate("/optimization-requests/new")}
-              >
-                Yeni Optimizasyon
-              </button>
+          </header>
+
+          <section className={styles.panel}>
+            <h2 className={styles.panelEyebrow}>
+              <span className={styles.panelEyebrowDot} aria-hidden="true" />
+              İşlem Geçmişine Kaydedildi
+            </h2>
+            <div className={styles.metricCardGrid}>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  İşlemi yapan kullanıcı
+                </span>
+                <strong className={styles.metricCardValue}>
+                  {actorName}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Optimizasyonu reddeden kullanıcıdır.
+                </p>
+              </div>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>Tarih ve saat</span>
+                <strong className={styles.metricCardValue}>
+                  {decidedAt ? formatDateTime(decidedAt) : "—"}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Reddin gerçekleştiği tarih ve saattir.
+                </p>
+              </div>
+              {review.request?.rejectionReason && (
+                <div className={styles.metricCard}>
+                  <span className={styles.metricCardLabel}>
+                    Red gerekçesi
+                  </span>
+                  <p className={styles.metricCardTextValue}>
+                    {review.request.rejectionReason}
+                  </p>
+                </div>
+              )}
             </div>
+          </section>
+
+          <div className={styles.successActions}>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => navigate("/optimization-requests/new")}
+            >
+              Yeni Optimizasyon
+            </button>
           </div>
         </div>
       </main>
@@ -217,108 +215,100 @@ export default function OptimizationResultPage() {
     return (
       <main className={styles.page}>
         <div className={styles.wizardShell}>
-          <header className={styles.header}>
+          <div className={styles.celebrationHero} aria-hidden="true">
+            <span className={`${styles.confettiDot} ${styles.confettiDotOrange}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotGreen}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotPink}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotCyan}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotBlue}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotMagenta}`} />
+            <span className={styles.celebrationCheck}>✓</span>
+          </div>
+          <header className={`${styles.header} ${styles.headerCentered}`}>
             <h1>Optimizasyon Tamamlandı</h1>
             <p className={styles.subtitle}>
               {resolvedFundName}
               {decidedAt ? ` · ${formatDateTime(decidedAt)}` : ""}
             </p>
+            <p className={styles.successLead} role="status">
+              Fon portföyünüz başarıyla güncellendi. Onaylanan optimizasyon
+              dağılımı mevcut fonunuza uygulanmıştır.
+            </p>
           </header>
-
-          <div className={styles.successBanner} role="status">
-            <span className={styles.successBannerIcon} aria-hidden="true">
-              ✓
-            </span>
-            <div>
-              <strong>Fon portföyü başarıyla güncellendi.</strong>
-              <p>
-                Onaylanan optimizasyon dağılımı mevcut fonunuza
-                uygulanmıştır.
-              </p>
-            </div>
-          </div>
 
           <section className={styles.panel}>
             <h2 className={styles.panelEyebrow}>
               <span className={styles.panelEyebrowDot} aria-hidden="true" />
               İşlem Geçmişine Kaydedildi
             </h2>
-            <div className={styles.successInfoGrid}>
-              <div className={styles.successInfoItem}>
-                <span
-                  className={`${styles.successInfoIcon} ${styles.successInfoIconSlate}`}
-                >
-                  <LayersIcon />
+            <div className={styles.metricCardGrid}>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Optimizasyon öncesi ağırlıklar
                 </span>
-                <div>
-                  <span>Optimizasyon öncesi ağırlıklar</span>
-                  <strong>
-                    {before.count} hisse · %{before.total.toFixed(0)}
-                  </strong>
-                </div>
+                <strong className={styles.metricCardValue}>
+                  {before.count} hisse · %{before.total.toFixed(0)}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Optimizasyon başlamadan önceki portföy dağılımınızdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span
-                  className={`${styles.successInfoIcon} ${styles.successInfoIconIndigo}`}
-                >
-                  <SparklesIcon />
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Modelin önerdiği ağırlıklar
                 </span>
-                <div>
-                  <span>Modelin önerdiği ağırlıklar</span>
-                  <strong>
-                    {proposed.count} hisse · %{proposed.total.toFixed(0)}
-                  </strong>
-                </div>
+                <strong className={styles.metricCardValue}>
+                  {proposed.count} hisse · %{proposed.total.toFixed(0)}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Model tarafından hesaplanan optimize edilmiş dağılım
+                  önerisidir.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span
-                  className={`${styles.successInfoIcon} ${styles.successInfoIconAmber}`}
-                >
-                  <PencilIcon />
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Manuel değişiklik
                 </span>
-                <div>
-                  <span>Manuel değişiklik</span>
-                  <strong>
-                    {review.summary.overriddenCount > 0
-                      ? `${review.summary.overriddenCount} hisse manuel değiştirildi`
-                      : "Manuel değişiklik yapılmadı"}
-                  </strong>
-                </div>
+                <strong className={styles.metricCardValue}>
+                  {review.summary.overriddenCount > 0
+                    ? `${review.summary.overriddenCount} hisse manuel değiştirildi`
+                    : "Manuel değişiklik yapılmadı"}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Önerilen ağırlıklar üzerinde elle yaptığınız değişiklik
+                  sayısıdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span
-                  className={`${styles.successInfoIcon} ${styles.successInfoIconTeal}`}
-                >
-                  <BadgeCheckIcon />
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Onaylanan nihai ağırlıklar
                 </span>
-                <div>
-                  <span>Onaylanan nihai ağırlıklar</span>
-                  <strong>
-                    {final.count} hisse · %{final.total.toFixed(0)}
-                  </strong>
-                </div>
+                <strong className={styles.metricCardValue}>
+                  {final.count} hisse · %{final.total.toFixed(0)}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Onayladığınız ve fonunuza uygulanan son dağılımdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span
-                  className={`${styles.successInfoIcon} ${styles.successInfoIconNavy}`}
-                >
-                  <UserIcon />
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  İşlemi yapan kullanıcı
                 </span>
-                <div>
-                  <span>İşlemi yapan kullanıcı</span>
-                  <strong>{actorName}</strong>
-                </div>
+                <strong className={styles.metricCardValue}>
+                  {actorName}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Optimizasyonu onaylayan kullanıcıdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span
-                  className={`${styles.successInfoIcon} ${styles.successInfoIconSlate}`}
-                >
-                  <CalendarIcon />
-                </span>
-                <div>
-                  <span>Tarih ve saat</span>
-                  <strong>{decidedAt ? formatDateTime(decidedAt) : "—"}</strong>
-                </div>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>Tarih ve saat</span>
+                <strong className={styles.metricCardValue}>
+                  {decidedAt ? formatDateTime(decidedAt) : "—"}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Onayın gerçekleştiği tarih ve saattir.
+                </p>
               </div>
             </div>
             <p className={styles.successNote}>
@@ -429,10 +419,20 @@ export default function OptimizationResultPage() {
               setSubView("comparison")
             }}
             onApprove={() => void review.decide("approve")}
-            onReject={() => void review.decide("reject")}
+            onReject={() => setIsRejectDialogOpen(true)}
           />
         )}
       </div>
+
+      <RejectReasonDialog
+        open={isRejectDialogOpen}
+        isSubmitting={review.isSubmitting}
+        onCancel={() => setIsRejectDialogOpen(false)}
+        onConfirm={(reason) => {
+          setIsRejectDialogOpen(false)
+          void review.decide("reject", reason)
+        }}
+      />
     </main>
   )
 }

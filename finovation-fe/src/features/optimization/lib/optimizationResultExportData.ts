@@ -12,7 +12,7 @@ import { buildRiskMetricsSnapshots } from "@/features/optimization/lib/optimizat
 import type { OptimizationPdfExportInput } from "@/features/optimization/lib/optimizationPdfExport"
 import type { RiskProfile } from "@/features/optimization/model/optimizationSchemas"
 
-export async function loadOptimizationResultPdfInput(
+export async function loadOptimizationResultExportInput(
   requestId: number,
   fundName: string,
 ): Promise<OptimizationPdfExportInput> {

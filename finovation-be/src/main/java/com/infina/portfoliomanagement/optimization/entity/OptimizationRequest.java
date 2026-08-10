@@ -59,6 +59,9 @@ public class OptimizationRequest {
     @Column(name = "error_message", length = 1000)
     private String errorMessage;
 
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
     @Version
     @Column(nullable = false)
     private Long version;

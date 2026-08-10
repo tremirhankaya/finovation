@@ -642,7 +642,8 @@ class OptimizationRequestServiceTest {
         when(optimizationRequestRepository.saveAndFlush(any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        OptimizationRequestResponse response = service.reject(ACTOR_USERNAME, REQUEST_ID);
+        OptimizationRequestResponse response =
+                service.reject(ACTOR_USERNAME, REQUEST_ID, "Sektör dağılımı hedeflere uymuyor");
 
         assertThat(response.status()).isEqualTo(RequestStatus.REJECTED);
         assertThat(request.getStatus()).isEqualTo(RequestStatus.REJECTED);
@@ -650,6 +651,43 @@ class OptimizationRequestServiceTest {
         assertThat(response.decidedByUserId()).isEqualTo(7L);
         assertThat(response.decidedByUsername()).isEqualTo(ACTOR_USERNAME);
         assertThat(response.decidedByDisplayName()).isEqualTo("Sefa Ecir");
+        assertThat(response.requestedByUsername()).isEqualTo(ACTOR_USERNAME);
+        assertThat(response.requestedByDisplayName()).isEqualTo("Sefa Ecir");
+        assertThat(request.getRejectionReason()).isEqualTo("Sektör dağılımı hedeflere uymuyor");
+        assertThat(response.rejectionReason()).isEqualTo("Sektör dağılımı hedeflere uymuyor");
+    }
+
+    @Test
+    void reject_withBlankReason_storesNullRejectionReason() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.ADMIN)
+                .username(ACTOR_USERNAME)
+                .firstName("Sefa")
+                .lastName("Ecir")
+                .build();
+
+        OptimizationRequest request = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.COMPLETED)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+        when(optimizationRequestRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OptimizationRequestResponse response = service.reject(ACTOR_USERNAME, REQUEST_ID, "   ");
+
+        assertThat(request.getRejectionReason()).isNull();
+        assertThat(response.rejectionReason()).isNull();
     }
 
     @Test
@@ -847,22 +885,32 @@ class OptimizationRequestServiceTest {
     }
 
     @Test
-    void listLogs_forNonAdminActor_returnsOnlyTheirOwnRequestsWithFundNamesAndResultAvailability() {
+    void listLogs_forNonAdminActor_returnsOnlyTheirOwnDecidedOrFailedRequestsWithFundNamesAndResultAvailability() {
         User actor = User.builder()
                 .id(7L)
                 .role(Role.USER)
                 .username(ACTOR_USERNAME)
                 .build();
 
-        UUID otherFundId = UUID.fromString("22222222-2222-4222-8222-222222222222");
+        User approver = User.builder()
+                .id(3L)
+                .role(Role.ADMIN)
+                .username("onaylayan")
+                .firstName("Onay")
+                .lastName("Veren")
+                .build();
 
-        OptimizationRequest completedRequest = OptimizationRequest.builder()
+        UUID otherFundId = UUID.fromString("22222222-2222-4222-8222-222222222222");
+        UUID runningFundId = UUID.fromString("33333333-3333-4333-8333-333333333333");
+
+        OptimizationRequest approvedRequest = OptimizationRequest.builder()
                 .id(REQUEST_ID)
                 .fundId(FUND_ID)
                 .requestedBy(actor)
+                .decidedBy(approver)
                 .riskProfile(RiskProfile.BALANCED)
                 .maxAdditions(3)
-                .status(RequestStatus.COMPLETED)
+                .status(RequestStatus.APPROVED)
                 .version(0L)
                 .createdAt(LocalDateTime.now(CLOCK))
                 .updatedAt(LocalDateTime.now(CLOCK))
@@ -875,6 +923,19 @@ class OptimizationRequestServiceTest {
                 .riskProfile(RiskProfile.BALANCED)
                 .maxAdditions(3)
                 .status(RequestStatus.FAILED)
+                .errorMessage("Motor sunucusuna bağlanılamadı")
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        OptimizationRequest runningRequest = OptimizationRequest.builder()
+                .id(44L)
+                .fundId(runningFundId)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.RUNNING)
                 .version(0L)
                 .createdAt(LocalDateTime.now(CLOCK))
                 .updatedAt(LocalDateTime.now(CLOCK))
@@ -882,8 +943,10 @@ class OptimizationRequestServiceTest {
 
         when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
         when(optimizationRequestRepository.findAllByRequestedByIdOrderByCreatedAtDesc(7L))
-                .thenReturn(List.of(completedRequest, failedRequest));
-        when(fundDraftRepository.findAllByPublicIdIn(List.of(FUND_ID, otherFundId)))
+                .thenReturn(List.of(approvedRequest, failedRequest, runningRequest));
+        when(fundDraftRepository.findAllByPublicIdIn(
+                List.of(FUND_ID, otherFundId, runningFundId)
+        ))
                 .thenReturn(List.of(
                         FundDraft.builder().id(10L).publicId(FUND_ID).name("Optimizasyon Stabil Fon").build(),
                         FundDraft.builder().id(11L).publicId(otherFundId).name("Aktif Hisse Fonu").build()
@@ -892,14 +955,17 @@ class OptimizationRequestServiceTest {
         List<OptimizationLogEntryResponse> logs = service.listLogs(ACTOR_USERNAME);
 
         assertThat(logs).hasSize(2);
+        assertThat(logs).noneMatch(entry -> entry.requestId().equals(44L));
 
-        OptimizationLogEntryResponse completedEntry = logs.stream()
+        OptimizationLogEntryResponse approvedEntry = logs.stream()
                 .filter(entry -> entry.requestId().equals(REQUEST_ID))
                 .findFirst()
                 .orElseThrow();
-        assertThat(completedEntry.fundName()).isEqualTo("Optimizasyon Stabil Fon");
-        assertThat(completedEntry.status()).isEqualTo(RequestStatus.COMPLETED);
-        assertThat(completedEntry.resultAvailable()).isTrue();
+        assertThat(approvedEntry.fundName()).isEqualTo("Optimizasyon Stabil Fon");
+        assertThat(approvedEntry.status()).isEqualTo(RequestStatus.APPROVED);
+        assertThat(approvedEntry.resultAvailable()).isTrue();
+        assertThat(approvedEntry.decidedByUsername()).isEqualTo("onaylayan");
+        assertThat(approvedEntry.decidedByDisplayName()).isEqualTo("Onay Veren");
 
         OptimizationLogEntryResponse failedEntry = logs.stream()
                 .filter(entry -> entry.requestId().equals(43L))
@@ -908,8 +974,59 @@ class OptimizationRequestServiceTest {
         assertThat(failedEntry.fundName()).isEqualTo("Aktif Hisse Fonu");
         assertThat(failedEntry.status()).isEqualTo(RequestStatus.FAILED);
         assertThat(failedEntry.resultAvailable()).isFalse();
+        assertThat(failedEntry.errorMessage()).isEqualTo("Motor sunucusuna bağlanılamadı");
 
         verify(optimizationRequestRepository, org.mockito.Mockito.never()).findAllByOrderByCreatedAtDesc();
+    }
+
+    @Test
+    void listLogs_includesRejectionReasonForRejectedRequest() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.USER)
+                .username(ACTOR_USERNAME)
+                .firstName("Talep")
+                .lastName("Eden")
+                .build();
+
+        User rejector = User.builder()
+                .id(3L)
+                .role(Role.ADMIN)
+                .username("onaylayan")
+                .firstName("Onay")
+                .lastName("Veren")
+                .build();
+
+        OptimizationRequest rejectedRequest = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .decidedBy(rejector)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.REJECTED)
+                .rejectionReason("Sektör dağılımı hedeflere uymuyor")
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findAllByRequestedByIdOrderByCreatedAtDesc(7L))
+                .thenReturn(List.of(rejectedRequest));
+        when(fundDraftRepository.findAllByPublicIdIn(List.of(FUND_ID)))
+                .thenReturn(List.of(
+                        FundDraft.builder().id(10L).publicId(FUND_ID).name("Optimizasyon Stabil Fon").build()
+                ));
+
+        List<OptimizationLogEntryResponse> logs = service.listLogs(ACTOR_USERNAME);
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.get(0).status()).isEqualTo(RequestStatus.REJECTED);
+        assertThat(logs.get(0).rejectionReason()).isEqualTo("Sektör dağılımı hedeflere uymuyor");
+        assertThat(logs.get(0).requestedByUsername()).isEqualTo(ACTOR_USERNAME);
+        assertThat(logs.get(0).requestedByDisplayName()).isEqualTo("Talep Eden");
+        assertThat(logs.get(0).decidedByDisplayName()).isEqualTo("Onay Veren");
     }
 
     @Test

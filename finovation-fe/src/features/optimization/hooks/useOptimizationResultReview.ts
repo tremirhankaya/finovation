@@ -184,7 +184,7 @@ export function useOptimizationResultReview(requestId: number) {
   const goToResult = useCallback(() => setReviewStep(3), [])
 
   const decide = useCallback(
-    async (decision: Decision) => {
+    async (decision: Decision, rejectionReason?: string) => {
       if (decision === "approve" && isApprovalBlocked) return
 
       setIsSubmitting(true)
@@ -206,7 +206,10 @@ export function useOptimizationResultReview(requestId: number) {
             weightOverrides,
           )
         } else {
-          updatedRequest = await rejectOptimizationRequest(requestId)
+          updatedRequest = await rejectOptimizationRequest(
+            requestId,
+            rejectionReason,
+          )
         }
         setRequest(updatedRequest)
         setDecidedAs(decision)

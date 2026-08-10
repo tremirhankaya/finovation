@@ -14,6 +14,7 @@ public record OptimizationRequestResponse(
         String modelVersion,
         Long requestedByUserId,
         String requestedByUsername,
+        String requestedByDisplayName,
         Long decidedByUserId,
         String decidedByUsername,
         String decidedByDisplayName,
@@ -27,6 +28,7 @@ public record OptimizationRequestResponse(
         LocalDateTime startedAt,
         LocalDateTime completedAt,
         String errorMessage,
+        String rejectionReason,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

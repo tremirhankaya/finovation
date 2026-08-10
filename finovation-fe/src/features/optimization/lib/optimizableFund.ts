@@ -21,6 +21,7 @@ export function toOptimizableFund(
     lastOptimizationDate: response.lastOptimizationDate
       ? formatDate(response.lastOptimizationDate)
       : null,
+    lastOptimizationDateRaw: response.lastOptimizationDate,
     stockCount: response.stockCount,
     sectorCount: response.sectorCount,
     equityWeightPercent: response.equityWeightPercent,

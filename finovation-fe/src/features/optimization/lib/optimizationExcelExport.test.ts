@@ -12,6 +12,7 @@ const REQUEST: OptimizationRequestResponse = {
   modelVersion: "v1.2.0",
   requestedByUserId: 7,
   requestedByUsername: "sefa.ecir",
+  requestedByDisplayName: "Sefa Ecir",
   decidedByUserId: 7,
   decidedByUsername: "sefa.ecir",
   decidedByDisplayName: "Sefa Ecir",
@@ -25,6 +26,7 @@ const REQUEST: OptimizationRequestResponse = {
   startedAt: "2026-08-06T10:00:00",
   completedAt: "2026-08-06T10:01:00",
   errorMessage: null,
+  rejectionReason: null,
   createdAt: "2026-08-06T10:00:00",
   updatedAt: "2026-08-06T10:05:00",
 }
@@ -264,6 +266,79 @@ describe("buildOptimizationResultExcel", () => {
       ?.find((row) => row.getCell(1).value === "Onay/red zamanı")
 
     expect(decisionRow?.getCell(2).value).not.toBe("—")
+  })
+
+  it("reddedilen istekte Durum satırı Reddedildi'yi, Onaylayan/Reddeden satırı gerçek reddedeni gösterir", async () => {
+    const workbook = await buildOptimizationResultExcel({
+      fundName: "Finovation Atlas Fonu",
+      request: {
+        ...REQUEST,
+        status: "REJECTED",
+        requestedByUsername: "sefa.ecir",
+        requestedByDisplayName: null,
+        decidedByUsername: "onaylayan",
+        decidedByDisplayName: "Onay Veren",
+      },
+      assets: ASSETS,
+      criteriaRows: CRITERIA_ROWS,
+    })
+
+    const sheet = workbook.getWorksheet("Özet")
+    const rows = sheet?.getRows(1, sheet.rowCount) ?? []
+
+    const statusRow = rows.find((row) => row.getCell(1).value === "Durum")
+    expect(statusRow?.getCell(2).value).toBe("Reddedildi")
+
+    const requesterRow = rows.find(
+      (row) => row.getCell(1).value === "İsteği oluşturan",
+    )
+    expect(requesterRow?.getCell(2).value).toBe("sefa.ecir")
+
+    const deciderRow = rows.find(
+      (row) => row.getCell(1).value === "Onaylayan/Reddeden",
+    )
+    expect(deciderRow?.getCell(2).value).toBe("Onay Veren")
+  })
+
+  it("İsteği oluşturan alanında ad soyad varsa kullanıcı adı yerine onu gösterir", async () => {
+    const workbook = await buildOptimizationResultExcel({
+      fundName: "Finovation Atlas Fonu",
+      request: {
+        ...REQUEST,
+        requestedByUsername: "sefa.ecir",
+        requestedByDisplayName: "Sefa Ecir",
+      },
+      assets: ASSETS,
+      criteriaRows: CRITERIA_ROWS,
+    })
+
+    const sheet = workbook.getWorksheet("Özet")
+    const requesterRow = sheet
+      ?.getRows(1, sheet.rowCount)
+      ?.find((row) => row.getCell(1).value === "İsteği oluşturan")
+
+    expect(requesterRow?.getCell(2).value).toBe("Sefa Ecir")
+  })
+
+  it("henüz karar verilmemiş istekte Onaylayan/Reddeden alanını boş gösterir", async () => {
+    const workbook = await buildOptimizationResultExcel({
+      fundName: "Finovation Atlas Fonu",
+      request: {
+        ...REQUEST,
+        status: "COMPLETED",
+        decidedByUsername: null,
+        decidedByDisplayName: null,
+      },
+      assets: ASSETS,
+      criteriaRows: CRITERIA_ROWS,
+    })
+
+    const sheet = workbook.getWorksheet("Özet")
+    const deciderRow = sheet
+      ?.getRows(1, sheet.rowCount)
+      ?.find((row) => row.getCell(1).value === "Onaylayan/Reddeden")
+
+    expect(deciderRow?.getCell(2).value).toBe("—")
   })
 
   it("Model sürümü satırını Özet sayfasında göstermez", async () => {
