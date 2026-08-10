@@ -1,0 +1,95 @@
+.panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.5rem;
+  padding: 1.15rem 1.15rem 1.35rem;
+}
+
+@media (max-width: 820px) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+.status {
+  margin: 0;
+  padding: 1.35rem 1.15rem;
+  color: #8695a4;
+  font-size: 0.8125rem;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.metric dt {
+  color: #8695a4;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric dd {
+  margin: 0.2rem 0 0;
+  color: #0f1f3c;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.holdingsTitle {
+  margin: 0 0 0.7rem;
+  color: #3d5163;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.holdingList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.holding {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.holdingCode {
+  color: #0f1f3c;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.holdingTrack {
+  height: 7px;
+  border-radius: 999px;
+  background: #eef3f6;
+  overflow: hidden;
+}
+
+.holdingFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #2ec4a7;
+}
+
+.holdingWeight {
+  color: #41586d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}

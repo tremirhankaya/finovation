@@ -80,26 +80,21 @@ public interface FundDraftControllerDocs {
 
     @Operation(
             summary = "List archived fund drafts",
-            description = "Returns the caller's archived drafts and funds. Archived records are "
-                    + "hidden from every other query, so this endpoint reads them explicitly.",
+            description = "Read-only history of the caller's archived drafts and funds. Archived "
+                    + "records are hidden from every other query, so this endpoint reads them "
+                    + "explicitly. They cannot be brought back.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     List<ArchivedFundDraftResponse> listArchivedDrafts(UserDetails userDetails);
 
     @Operation(
             summary = "Archive a fund draft",
-            description = "Soft deletes the draft. It disappears from lists, monitoring and stress "
-                    + "tests, but stays restorable from the archive.",
+            description = "Soft deletes the draft. It disappears from every list, from monitoring "
+                    + "and from stress tests. The operation cannot be undone; the record stays "
+                    + "readable only through the archive listing.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     void archiveDraft(UserDetails userDetails, UUID draftId);
-
-    @Operation(
-            summary = "Restore an archived fund draft",
-            description = "Brings an archived draft back into the active lists.",
-            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
-    )
-    void restoreDraft(UserDetails userDetails, UUID draftId);
 
     @Operation(
             summary = "List model universe equities",

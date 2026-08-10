@@ -747,22 +747,6 @@ public class FundDraftService {
         log.info("Fund draft {} archived by {}", draftId, actorUsername);
     }
 
-    @Transactional
-    public void restoreDraft(String actorUsername, UUID draftId) {
-        User actor = requireActor(actorUsername);
-
-        int restored = fundDraftRepository.restoreArchived(
-                draftId,
-                actor.getId(),
-                LocalDateTime.now(clock)
-        );
-        if (restored == 0) {
-            throw new BaseException(ErrorCode.FUND_DRAFT_NOT_FOUND);
-        }
-
-        log.info("Fund draft {} restored by {}", draftId, actorUsername);
-    }
-
     @Transactional(readOnly = true)
     public List<ArchivedFundDraftResponse> listArchivedDrafts(String actorUsername) {
         User actor = requireActor(actorUsername);

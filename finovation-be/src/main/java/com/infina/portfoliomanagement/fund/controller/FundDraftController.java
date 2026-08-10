@@ -106,16 +106,6 @@ public class FundDraftController implements FundDraftControllerDocs {
     }
 
     @Override
-    @PostMapping("/{draftId}/restoration")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void restoreDraft(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID draftId
-    ) {
-        fundDraftService.restoreDraft(userDetails.getUsername(), draftId);
-    }
-
-    @Override
     @GetMapping("/model-universe")
     public List<ModelUniverseAssetResponse> listModelUniverse() {
         return fundDraftService.listModelUniverse();

@@ -5,7 +5,6 @@ import {
   getFundDraftInitUrl,
   getFundDraftModelUniverseUrl,
   getFundDraftPortfolioRulesUrl,
-  getFundDraftRestorationUrl,
   getFundDraftSelectedProposalUrl,
   getFundDraftWorkingPortfolioUrl,
   getFundDraftUrl,
@@ -137,17 +136,6 @@ export async function archiveFundDraft(
   await apiSend(getFundDraftUrl(draftId), {
     method: "DELETE",
     errorMessage: "Arşivlenemedi",
-    signal,
-  })
-}
-
-export async function restoreFundDraft(
-  draftId: string,
-  signal?: AbortSignal,
-): Promise<void> {
-  await apiSend(getFundDraftRestorationUrl(draftId), {
-    method: "POST",
-    errorMessage: "Geri yüklenemedi",
     signal,
   })
 }
