@@ -15,7 +15,8 @@ public interface DashboardControllerDocs {
 
     @Operation(
             summary = "Get dashboard summary",
-            description = "Returns fund, draft, optimization and stress test summaries for the authenticated user.",
+            description = "Returns fund, draft, optimization and stress test summaries for the authenticated user. "
+                    + "Sections that could not be loaded are listed in unavailableSections.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     DashboardSummaryResponse getSummary(UserDetails userDetails);

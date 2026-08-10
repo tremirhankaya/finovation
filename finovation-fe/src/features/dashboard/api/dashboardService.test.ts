@@ -69,6 +69,7 @@ const DASHBOARD_RESPONSE = {
       createdAt: "2026-08-08T15:00:00",
     },
   ],
+  unavailableSections: [],
 }
 
 describe("dashboardService", () => {
@@ -120,6 +121,27 @@ describe("dashboardService", () => {
     )
 
     await expect(loadDashboardOverview()).rejects.toThrow()
+  })
+
+  it("ulaşılamayan bölümleri kullanıcı mesajlarına dönüştürür", async () => {
+    apiMocks.apiFetch.mockImplementation(
+      async (_url, _options, parse: (body: unknown) => unknown) =>
+        parse({
+          ...DASHBOARD_RESPONSE,
+          funds: [],
+          unavailableSections: ["FUNDS", "STRESS_TESTS"],
+        }),
+    )
+
+    const response = await loadDashboardOverview()
+
+    expect(response.data.funds).toEqual([])
+    expect(response.errors).toEqual({
+      funds: "Fon bilgileri yüklenemedi.",
+      drafts: "",
+      optimization: "",
+      stressTests: "Stres testi özeti yüklenemedi.",
+    })
   })
 
   it("seçilen fonun performans isteğini mevcut servise iletir", async () => {

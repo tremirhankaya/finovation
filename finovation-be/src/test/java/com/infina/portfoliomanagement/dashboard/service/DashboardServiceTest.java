@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.dashboard.service;
 
+import com.infina.portfoliomanagement.dashboard.dto.DashboardSummaryResponse.UnavailableSection;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
@@ -99,6 +100,7 @@ class DashboardServiceTest {
         assertThat(response.optimizationLogs()).containsExactly(runningLog, completedLog);
         assertThat(response.latestOptimizationResult()).isSameAs(optimizationResult);
         assertThat(response.stressTests()).containsExactly(stressTest);
+        assertThat(response.unavailableSections()).isEmpty();
         verify(optimizationRequestService).getResult(USERNAME, 11L);
     }
 
@@ -114,7 +116,33 @@ class DashboardServiceTest {
         var response = service.getSummary(USERNAME);
 
         assertThat(response.latestOptimizationResult()).isNull();
+        assertThat(response.unavailableSections()).isEmpty();
         verify(optimizationRequestService, never()).getResult(USERNAME, 12L);
+    }
+
+    @Test
+    void getSummary_whenOneSectionFails_returnsRemainingSections() {
+        StressTestHistoryResponse stressTest = new StressTestHistoryResponse(
+                UUID.randomUUID(),
+                "GLOBAL_CRISIS",
+                "Küresel Kriz",
+                LocalDate.of(2026, 8, 8),
+                new BigDecimal("-0.08"),
+                LocalDateTime.of(2026, 8, 8, 15, 0)
+        );
+
+        when(fundMonitoringService.listFunds(USERNAME, null))
+                .thenThrow(new IllegalStateException("fund data unavailable"));
+        when(fundDraftService.listInProgressDrafts(USERNAME)).thenReturn(List.of());
+        when(optimizationRequestService.listLogs(USERNAME)).thenReturn(List.of());
+        when(stressTestService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
+
+        var response = service.getSummary(USERNAME);
+
+        assertThat(response.funds()).isEmpty();
+        assertThat(response.stressTests()).containsExactly(stressTest);
+        assertThat(response.unavailableSections())
+                .containsExactly(UnavailableSection.FUNDS);
     }
 
     private OptimizationLogEntryResponse optimizationLog(

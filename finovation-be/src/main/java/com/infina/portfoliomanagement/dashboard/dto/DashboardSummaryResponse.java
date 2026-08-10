@@ -13,6 +13,13 @@ public record DashboardSummaryResponse(
         List<FundDraftSummaryResponse> drafts,
         List<OptimizationLogEntryResponse> optimizationLogs,
         OptimizationResultResponse latestOptimizationResult,
-        List<StressTestHistoryResponse> stressTests
+        List<StressTestHistoryResponse> stressTests,
+        List<UnavailableSection> unavailableSections
 ) {
+    public enum UnavailableSection {
+        FUNDS,
+        DRAFTS,
+        OPTIMIZATION,
+        STRESS_TESTS
+    }
 }

@@ -19,7 +19,17 @@ const dashboardSummaryResponseSchema = z.object({
   optimizationLogs: z.array(optimizationLogEntryResponseSchema),
   latestOptimizationResult: optimizationResultSchema.nullable(),
   stressTests: z.array(stressTestHistoryResponseSchema),
+  unavailableSections: z
+    .array(z.enum(["FUNDS", "DRAFTS", "OPTIMIZATION", "STRESS_TESTS"]))
+    .default([]),
 })
+
+const SECTION_ERROR_MESSAGES = {
+  FUNDS: "Fon bilgileri yüklenemedi.",
+  DRAFTS: "Taslak bilgileri yüklenemedi.",
+  OPTIMIZATION: "Optimizasyon özeti yüklenemedi.",
+  STRESS_TESTS: "Stres testi özeti yüklenemedi.",
+} as const
 
 export async function loadDashboardOverview(
   signal?: AbortSignal,
@@ -32,6 +42,7 @@ export async function loadDashboardOverview(
     },
     dashboardSummaryResponseSchema.parse,
   )
+  const unavailableSections = new Set(response.unavailableSections)
 
   return {
     data: {
@@ -42,10 +53,18 @@ export async function loadDashboardOverview(
       stressTests: response.stressTests,
     },
     errors: {
-      funds: "",
-      drafts: "",
-      optimization: "",
-      stressTests: "",
+      funds: unavailableSections.has("FUNDS")
+        ? SECTION_ERROR_MESSAGES.FUNDS
+        : "",
+      drafts: unavailableSections.has("DRAFTS")
+        ? SECTION_ERROR_MESSAGES.DRAFTS
+        : "",
+      optimization: unavailableSections.has("OPTIMIZATION")
+        ? SECTION_ERROR_MESSAGES.OPTIMIZATION
+        : "",
+      stressTests: unavailableSections.has("STRESS_TESTS")
+        ? SECTION_ERROR_MESSAGES.STRESS_TESTS
+        : "",
     },
   }
 }
