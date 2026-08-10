@@ -180,6 +180,24 @@ public enum ErrorCode {
             "External service returned an error."
     ),
 
+    AI_ENGINE_UNAVAILABLE(
+            "AI_ENGINE_001",
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "AI Engine service is temporarily unavailable."
+    ),
+
+    AI_ENGINE_ERROR(
+            "AI_ENGINE_002",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "AI Engine service encountered an error."
+    ),
+
+    AI_ENGINE_INVALID_REQUEST(
+            "AI_ENGINE_003",
+            HttpStatus.BAD_REQUEST,
+            "Invalid request to AI Engine."
+    ),
+
     OPT_REQUEST_NOT_FOUND(
             "OPT_001",
             HttpStatus.NOT_FOUND,
@@ -226,6 +244,30 @@ public enum ErrorCode {
             "OPT_008",
             HttpStatus.CONFLICT,
             "This optimization request cannot change to the requested status from its current status."
+    ),
+
+    OPT_MAX_ADDITIONS_EXCEEDED(
+            "OPT_009",
+            HttpStatus.BAD_REQUEST,
+            "The number of force-added stocks exceeds the maximum additions limit for this optimization."
+    ),
+
+    OPT_MAX_REMOVALS_EXCEEDED(
+            "OPT_010",
+            HttpStatus.BAD_REQUEST,
+            "The number of excluded stocks exceeds the maximum removals limit for this optimization."
+    ),
+
+    OPT_WEIGHT_CHANGE_LIMIT_EXCEEDED(
+            "OPT_011",
+            HttpStatus.BAD_REQUEST,
+            "A force-added or excluded stock's required weight change exceeds the maximum allowed change per asset."
+    ),
+
+    OPT_RESULT_NOT_FOUND(
+            "OPT_012",
+            HttpStatus.NOT_FOUND,
+            "No result is available yet for this optimization request."
     ),
 
     FUND_INITIAL_SIZE_OUT_OF_RANGE(
@@ -406,6 +448,12 @@ public enum ErrorCode {
             "STRESS_003",
             HttpStatus.NOT_FOUND,
             "Stress test not found."
+    ),
+
+    STRESS_SCENARIO_COVERAGE_INCOMPLETE(
+            "STRESS_004",
+            HttpStatus.UNPROCESSABLE_CONTENT,
+            "Stress scenario does not cover all assets in the selected portfolio."
     ),
     ;
 
