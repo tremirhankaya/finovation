@@ -35,6 +35,7 @@ CREATE INDEX ix_stress_scenario_asset_shocks_scenario_id
 CREATE INDEX ix_stress_scenario_asset_shocks_asset_id
     ON dbo.stress_scenario_asset_shocks (asset_id);
 
+
 CREATE TABLE dbo.stress_scenario_asset_paths
 (
     id          BIGINT IDENTITY (1,1) NOT NULL,

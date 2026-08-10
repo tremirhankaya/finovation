@@ -1,4 +1,4 @@
--- V28__seed_stress_scenarios_and_shocks.sql
+-- V29__seed_stress_scenarios_and_shocks.sql
 -- Seeds 2 deterministic scenarios and 118 asset shocks (59 assets per scenario).
 
 SET NOCOUNT ON;

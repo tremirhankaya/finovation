@@ -180,24 +180,6 @@ public enum ErrorCode {
             "External service returned an error."
     ),
 
-    AI_ENGINE_UNAVAILABLE(
-            "AI_ENGINE_001",
-            HttpStatus.SERVICE_UNAVAILABLE,
-            "AI Engine service is temporarily unavailable."
-    ),
-
-    AI_ENGINE_ERROR(
-            "AI_ENGINE_002",
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "AI Engine service encountered an error."
-    ),
-
-    AI_ENGINE_INVALID_REQUEST(
-            "AI_ENGINE_003",
-            HttpStatus.BAD_REQUEST,
-            "Invalid request to AI Engine."
-    ),
-
     OPT_REQUEST_NOT_FOUND(
             "OPT_001",
             HttpStatus.NOT_FOUND,
@@ -245,7 +227,6 @@ public enum ErrorCode {
             HttpStatus.CONFLICT,
             "This optimization request cannot change to the requested status from its current status."
     ),
-
     OPT_MAX_ADDITIONS_EXCEEDED(
             "OPT_009",
             HttpStatus.BAD_REQUEST,
@@ -449,11 +430,27 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "Stress test not found."
     ),
-
     STRESS_SCENARIO_COVERAGE_INCOMPLETE(
             "STRESS_004",
             HttpStatus.UNPROCESSABLE_CONTENT,
             "Stress scenario does not cover all assets in the selected portfolio."
+    ),
+    AI_ENGINE_UNAVAILABLE(
+            "AI_ENGINE_001",
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "AI Engine service is temporarily unavailable."
+    ),
+
+    AI_ENGINE_ERROR(
+            "AI_ENGINE_002",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "AI Engine service encountered an error."
+    ),
+
+    AI_ENGINE_INVALID_REQUEST(
+            "AI_ENGINE_003",
+            HttpStatus.BAD_REQUEST,
+            "Invalid request to AI Engine."
     ),
     ;
 
