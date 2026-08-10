@@ -2,10 +2,9 @@ package com.infina.portfoliomanagement.stresstest.controller;
 
 import com.infina.portfoliomanagement.stresstest.controller.docs.StressTestControllerDocs;
 import com.infina.portfoliomanagement.stresstest.dto.request.RunStressTestRequest;
-import com.infina.portfoliomanagement.stresstest.dto.response.RunStressTestResponse;
-import com.infina.portfoliomanagement.stresstest.dto.response.StressTestDetailResponse;
-import com.infina.portfoliomanagement.stresstest.dto.response.StressTestHistoryResponse;
+import com.infina.portfoliomanagement.stresstest.dto.response.*;
 import com.infina.portfoliomanagement.stresstest.service.StressTestService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/stress-tests")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class StressTestController implements StressTestControllerDocs {
 
     private final StressTestService stressTestService;
@@ -77,5 +77,59 @@ public class StressTestController implements StressTestControllerDocs {
         );
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{testId}/path/{assetCode}")
+    public StressTestAssetPathResponse getAssetPath(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID testId,
+            @PathVariable String assetCode
+    ) {
+        return stressTestService.getAssetPath(
+                userDetails.getUsername(),
+                testId,
+                assetCode
+        );
+    }
+
+    @GetMapping("/{testId}/sectors")
+    public List<StressTestSectorImpactResponse> getSectorImpacts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID testId
+    ) {
+        return stressTestService.getSectorImpacts(
+                userDetails.getUsername(),
+                testId
+        );
+    }
+    @GetMapping("/{testId}/portfolio-path")
+    public StressTestPortfolioPathResponse getPortfolioPath(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID testId
+    ) {
+        return stressTestService.getPortfolioPath(
+                userDetails.getUsername(),
+                testId
+        );
+    }
+    @GetMapping("/{testId}/risk-metrics")
+    public StressTestRiskMetricsResponse getRiskMetrics(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID testId
+    ) {
+        return stressTestService.getRiskMetrics(
+                userDetails.getUsername(),
+                testId
+        );
+    }
+    @GetMapping("/{testId}/sector-paths")
+    public List<StressTestSectorPathResponse> getSectorPaths(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID testId
+    ) {
+        return stressTestService.getSectorPaths(
+                userDetails.getUsername(),
+                testId
+        );
     }
 }

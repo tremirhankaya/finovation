@@ -401,6 +401,11 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "Stress test not found."
     ),
+    STRESS_SCENARIO_COVERAGE_INCOMPLETE(
+            "STRESS_004",
+            HttpStatus.UNPROCESSABLE_CONTENT,
+            "Stress scenario does not cover all assets in the selected portfolio."
+    ),
     ;
 
     private final String code;

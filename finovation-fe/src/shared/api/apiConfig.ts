@@ -161,3 +161,40 @@ export function getOptimizationRequestRejectUrl(requestId: number): string {
 export function getInvestmentUniverseUrl(): string {
   return buildUrl(API_PATHS.investmentUniverse)
 }
+export function getPasswordChangeUrl(): string {
+  return buildUrl(API_PATHS.passwordChange)
+}
+
+export function getStressScenariosUrl(): string {
+  return buildUrl(API_PATHS.stressScenarios)
+}
+
+export function getStressTestsUrl(): string {
+  return buildUrl(API_PATHS.stressTests)
+}
+
+export function getStressTestUrl(testId: string): string {
+  return `${getStressTestsUrl()}/${encodeURIComponent(testId)}`
+}
+export function getStressTestAssetPathUrl(
+    testId: string,
+    assetCode: string,
+): string {
+  return `${getStressTestUrl(testId)}/path/${encodeURIComponent(assetCode)}`
+}
+
+export function getStressTestSectorsUrl(testId: string): string {
+  return `${getStressTestUrl(testId)}/sectors`
+}
+
+export function getStressTestPortfolioPathUrl(testId: string): string {
+  return `${getStressTestUrl(testId)}/portfolio-path`
+}
+
+export function getStressTestRiskMetricsUrl(testId: string): string {
+  return `${getStressTestUrl(testId)}/risk-metrics`
+}
+
+export function getStressTestSectorPathsUrl(testId: string): string {
+  return `${getStressTestUrl(testId)}/sector-paths`
+}
