@@ -381,11 +381,8 @@ public class FundMetricCalculator {
     }
 
     private List<FundValuationPoint> annualPoints(List<FundValuationPoint> points) {
-        if (points.size() < 30) {
-            return List.of();
-        }
         if (points.size() < ANNUAL_PRICE_OBSERVATIONS) {
-            return points;
+            return List.of();
         }
         return points.subList(points.size() - ANNUAL_PRICE_OBSERVATIONS, points.size());
     }
@@ -444,12 +441,8 @@ public class FundMetricCalculator {
             }
         }
 
-        if (alignedFundReturns.size() < 30) {
-            return AlignedReturns.empty();
-        }
-
         if (alignedFundReturns.size() < ANNUAL_RETURN_OBSERVATIONS) {
-            return new AlignedReturns(List.copyOf(alignedFundReturns), List.copyOf(alignedBenchmarkReturns));
+            return AlignedReturns.empty();
         }
 
         int from = alignedFundReturns.size() - ANNUAL_RETURN_OBSERVATIONS;
