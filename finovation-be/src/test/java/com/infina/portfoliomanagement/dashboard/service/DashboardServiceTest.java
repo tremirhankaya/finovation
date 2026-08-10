@@ -74,8 +74,13 @@ class DashboardServiceTest {
         FundDraftSummaryResponse draft = new FundDraftSummaryResponse(
                 UUID.randomUUID(),
                 "Yeni Taslak",
+                null,
+                null,
                 3,
                 FundDraftStatus.IN_PROGRESS,
+                null,
+                false,
+                LocalDateTime.of(2026, 8, 9, 12, 0),
                 LocalDateTime.of(2026, 8, 9, 12, 0)
         );
         OptimizationLogEntryResponse runningLog = optimizationLog(12L, false);
