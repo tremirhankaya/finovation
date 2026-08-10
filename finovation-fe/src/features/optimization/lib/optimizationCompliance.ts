@@ -17,6 +17,7 @@ const SINGLE_STOCK_MIN = 3
 const SINGLE_STOCK_MAX = 10
 const SECTOR_MAX = 30
 const MAX_REMOVALS = 3
+const MAX_ADDITIONS = 3
 
 export type ComplianceInput = {
   tppMinWeight: number
@@ -83,8 +84,23 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     projectedStockCount != null &&
     (projectedStockCount < input.stockCountMin ||
       projectedStockCount > input.stockCountMax)
+  const minReachableStockCount =
+    input.currentStockCount == null
+      ? null
+      : input.currentStockCount - MAX_REMOVALS + input.forceAddedAssetCount
+  const maxReachableStockCount =
+    input.currentStockCount == null
+      ? null
+      : input.currentStockCount - input.heldExcludedAssetCount + MAX_ADDITIONS
+  const stockCountUnreachable =
+    minReachableStockCount != null &&
+    maxReachableStockCount != null &&
+    (maxReachableStockCount < input.stockCountMin ||
+      minReachableStockCount > input.stockCountMax)
   const stockCountStatus: ComplianceRowStatus =
-    stockCountRangeStatus === "UYUMSUZ" || stockCountExceedsGuaranteed
+    stockCountRangeStatus === "UYUMSUZ" ||
+    stockCountExceedsGuaranteed ||
+    stockCountUnreachable
       ? "UYUMSUZ"
       : projectedStockCountOutOfRange
         ? "DIKKAT"
@@ -147,15 +163,17 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
           ? "Sistem sınırı 16–30 arasında, aralık genişliği en az 5 hisse olmalı"
           : stockCountExceedsGuaranteed
             ? `${guaranteedStockCount} hisse (sabit + zorunlu) seçilen ${input.stockCountMax} üst sınırını aşıyor`
-            : projectedStockCountOutOfRange
-              ? `Mevcut fon B'den ${input.heldExcludedAssetCount} çıkarma, D'den ${input.forceAddedAssetCount} zorunlu eklemeyle ${projectedStockCount} hisseye ${
-                  projectedStockCount != null &&
-                  input.currentStockCount != null &&
-                  projectedStockCount > input.currentStockCount
-                    ? "çıkıyor"
-                    : "düşüyor"
-                }, seçtiğiniz ${input.stockCountMin}–${input.stockCountMax} aralığının dışında kalıyor — optimizasyon yine de diğer hisselerle aralığı tutturabilir`
-              : `${input.stockCountMin}–${input.stockCountMax} arasında`,
+            : stockCountUnreachable
+              ? `Mevcut fon ${input.currentStockCount} hisse; en fazla ${MAX_REMOVALS} çıkarma ve ${MAX_ADDITIONS} ekleme ile ulaşılabilecek aralık ${minReachableStockCount}–${maxReachableStockCount} hisse, seçtiğiniz ${input.stockCountMin}–${input.stockCountMax} aralığıyla hiç kesişmiyor — optimizasyon çalıştırılamaz`
+              : projectedStockCountOutOfRange
+                ? `Mevcut fon B'den ${input.heldExcludedAssetCount} çıkarma, D'den ${input.forceAddedAssetCount} zorunlu eklemeyle ${projectedStockCount} hisseye ${
+                    projectedStockCount != null &&
+                    input.currentStockCount != null &&
+                    projectedStockCount > input.currentStockCount
+                      ? "çıkıyor"
+                      : "düşüyor"
+                  }, seçtiğiniz ${input.stockCountMin}–${input.stockCountMax} aralığının dışında kalıyor — optimizasyon yine de diğer hisselerle aralığı tutturabilir`
+                : `${input.stockCountMin}–${input.stockCountMax} arasında`,
     },
     {
       key: "kept-assets",

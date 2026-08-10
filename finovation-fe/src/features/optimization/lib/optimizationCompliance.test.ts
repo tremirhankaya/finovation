@@ -107,6 +107,39 @@ describe("buildComplianceRows", () => {
     expect(isComplianceReady(rows)).toBe(true)
   })
 
+  it("zorunlu çıkarma bütçesi tükendiğinde seçilen aralık ulaşılabilir aralığın tamamen altındaysa UYUMSUZ verir", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      stockCountMin: 16,
+      stockCountMax: 21,
+      currentStockCount: 25,
+      heldExcludedAssetCount: 3,
+      forceAddedAssetCount: 0,
+      keptAssetCount: 0,
+    })
+
+    const stockCountRow = rows.find((row) => row.key === "stock-count")
+    expect(stockCountRow?.status).toBe("UYUMSUZ")
+    expect(stockCountRow?.detail).toContain("22–25")
+    expect(isComplianceReady(rows)).toBe(false)
+  })
+
+  it("zorunlu çıkarma bütçesi tükense de seçilen aralık isteğe bağlı eklemeyle ulaşılabiliyorsa UYUMSUZ vermez", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      stockCountMin: 25,
+      stockCountMax: 30,
+      currentStockCount: 25,
+      heldExcludedAssetCount: 3,
+      forceAddedAssetCount: 0,
+      keptAssetCount: 0,
+    })
+
+    const stockCountRow = rows.find((row) => row.key === "stock-count")
+    expect(stockCountRow?.status).not.toBe("UYUMSUZ")
+    expect(isComplianceReady(rows)).toBe(true)
+  })
+
   it("C'de yapılan hariç tutmalar projekte edilen hisse sayısını etkilemez", () => {
     const rows = buildComplianceRows({
       ...VALID_INPUT,
