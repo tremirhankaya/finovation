@@ -16,6 +16,7 @@ const EQUITY_WEIGHT_CEILING = 95
 const SINGLE_STOCK_MIN = 3
 const SINGLE_STOCK_MAX = 10
 const SECTOR_MAX = 30
+const MAX_REMOVALS = 3
 
 export type ComplianceInput = {
   tppMinWeight: number
@@ -111,6 +112,11 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
   const sectorStatus: ComplianceRowStatus =
     input.maxSectorWeightPct > SECTOR_MAX ? "UYUMSUZ" : "UYUMLU"
 
+  const excludedRemovalsExceeded = input.heldExcludedAssetCount > MAX_REMOVALS
+  const forcedExcludedStatus: ComplianceRowStatus = excludedRemovalsExceeded
+    ? "UYUMSUZ"
+    : "UYUMLU"
+
   const rows: ComplianceRow[] = [
     {
       key: "equity-weight",
@@ -176,9 +182,11 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     {
       key: "forced-excluded-assets",
       label: "Zorunlu ve Hariç Tutulan Hisseler",
-      status: "UYUMLU",
-      locked: true,
-      detail: `${input.forceAddedAssetCount} hisse zorunlu eklenecek · ${input.excludedAssetCount} hisse hariç tutuldu; zorunlu hisseler için en az %3 ağırlık ayrılır`,
+      status: forcedExcludedStatus,
+      locked: forcedExcludedStatus === "UYUMLU",
+      detail: excludedRemovalsExceeded
+        ? `${input.heldExcludedAssetCount} mevcut hisse çıkarılmak isteniyor — tek optimizasyonda en fazla ${MAX_REMOVALS} hisse çıkarılabilir`
+        : `${input.forceAddedAssetCount} hisse zorunlu eklenecek · ${input.excludedAssetCount} hisse hariç tutuldu; zorunlu hisseler için en az %3 ağırlık ayrılır`,
     },
     {
       key: "sector-concentration",

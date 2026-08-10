@@ -42,7 +42,7 @@ class OptimizeRequest(StrictApiModel):
         default_factory=list,
         description=(
             "Son portföyde bulunması yasak hisseler; mevcutsa çıkarılması max_removals "
-            "ve per-asset delta limitlerine tabidir / forbidden final holdings."
+            "limitini tüketir ve per-asset delta limitinden muaftır / forbidden final holdings."
         ),
     )
     min_stock_count: int = Field(
@@ -59,7 +59,10 @@ class OptimizeRequest(StrictApiModel):
     )
     max_weight_change_per_asset: Weight = Field(
         gt=0.0,
-        description="Tek varlık için en yüksek mutlak değişim / maximum absolute weight delta.",
+        description=(
+            "Final portföyde kalan mevcut varlıklar ve CASH_TPP için en yüksek mutlak "
+            "değişim; additions/removals muaftır / retained-asset delta limit."
+        ),
     )
     max_additions: NonNegativeInt = Field(
         description="Eklenebilecek en fazla yeni hisse / maximum additions."

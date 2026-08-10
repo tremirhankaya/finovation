@@ -70,7 +70,12 @@ def test_optimize_respects_lock_delta_and_membership_limits(engine: PortfolioEng
         assert abs(alternative["weights"]["ASELS.E"] - 0.065) < 1e-9
         assert len(alternative["added_assets"]) <= request["max_additions"]
         assert len(alternative["removed_assets"]) <= request["max_removals"]
-        assert max(abs(value) for value in alternative["deltas"].values()) <= 0.0300002
+        retained = (
+            set(request["current_portfolio"])
+            - set(alternative["added_assets"])
+            - set(alternative["removed_assets"])
+        )
+        assert max(abs(alternative["deltas"][asset]) for asset in retained) <= 0.0300002
         assert alternative["universe58_beta"] <= 1.10 + 2e-7
         assert "realized_turnover_diagnostic" in alternative
 
@@ -101,7 +106,12 @@ def test_optimize_honors_mandatory_and_excluded_assets(engine: PortfolioEngine) 
         assert "MANDATORY_ASSET" in alternative["reason_codes"]["TCELL.E"]
         assert len(alternative["added_assets"]) <= request["max_additions"]
         assert len(alternative["removed_assets"]) <= request["max_removals"]
-        assert max(abs(value) for value in alternative["deltas"].values()) <= 0.0650002
+        retained = (
+            set(request["current_portfolio"])
+            - set(alternative["added_assets"])
+            - set(alternative["removed_assets"])
+        )
+        assert max(abs(alternative["deltas"][asset]) for asset in retained) <= 0.0650002
         assert alternative["weights"]["ASELS.E"] == pytest.approx(0.065)
 
 
@@ -134,17 +144,22 @@ def test_optimize_forced_membership_changes_consume_limits(engine: PortfolioEngi
         engine.optimize(excluded)
 
 
-def test_optimize_forced_membership_respects_delta_limit(engine: PortfolioEngine) -> None:
+def test_optimize_forced_membership_exempt_from_delta_limit(engine: PortfolioEngine) -> None:
     excluded = load_request("optimize_request.json")
     excluded["excluded_assets"] = ["AEFES.E"]
-    with pytest.raises(PortfolioError, match="cannot be removed"):
-        engine.optimize(excluded)
+    assert excluded["current_portfolio"]["AEFES.E"] > excluded["max_weight_change_per_asset"]
+    excluded_result = engine.optimize(excluded)
+    for alternative in excluded_result["alternatives"]:
+        assert "AEFES.E" not in alternative["weights"]
+        assert "AEFES.E" in alternative["removed_assets"]
 
     mandatory = load_request("optimize_request.json")
     mandatory["mandatory_assets"] = ["NETAS.E"]
     mandatory["max_weight_change_per_asset"] = 0.02
-    with pytest.raises(PortfolioError, match="mandatory new asset cannot satisfy"):
-        engine.optimize(mandatory)
+    mandatory_result = engine.optimize(mandatory)
+    for alternative in mandatory_result["alternatives"]:
+        assert 0.03 - 2e-7 <= alternative["weights"]["NETAS.E"] <= 0.10 + 2e-7
+        assert "NETAS.E" in alternative["added_assets"]
 
 
 def test_legacy_or_removed_fields_are_rejected(engine: PortfolioEngine) -> None:
