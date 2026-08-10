@@ -28,7 +28,7 @@ describe("StressPortfolioDonut", () => {
         expect(screen.getByText("20.00%")).toBeInTheDocument()
         expect(screen.getByText("TPP1G")).toBeInTheDocument()
         expect(screen.getByText("10.00%")).toBeInTheDocument()
-        expect(screen.getByText("2")).toBeInTheDocument()
+        expect(screen.getByText("2 Varlık")).toBeInTheDocument()
     })
 
     it("asset yoksa grafik oluşturmaz", () => {
