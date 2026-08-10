@@ -19,6 +19,7 @@ export default function DashboardPage() {
       <div className={styles.shell}>
         <DashboardHeader
           firstName={user?.firstName}
+          businessDate={dashboard.businessDate}
           isRefreshing={dashboard.isOverviewLoading}
           onRefresh={dashboard.reload}
         />

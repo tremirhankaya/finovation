@@ -48,11 +48,14 @@ export const fundDraftInitLimitsSchema = z.object({
 
 export const fundDraftSummarySchema = z.object({
   draftId: z.string().uuid(),
-  name: z.string(),
+  name: z.string().nullable(),
   currentStep: z.number().nullable(),
   status: z.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
   updatedAt: z.string(),
-})
+}).transform((draft) => ({
+  ...draft,
+  name: draft.name?.trim() || "İsimsiz Fon Taslağı",
+}))
 
 export const createdFundDraftSchema = z.object({
   draftId: z.string().uuid(),

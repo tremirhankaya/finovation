@@ -44,6 +44,7 @@ const SNAPSHOT = {
 
 function readyDashboard() {
   return {
+    businessDate: "2025-05-29",
     funds: FUNDS,
     drafts: [
       {
@@ -114,6 +115,7 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("heading", { name: "Merhaba, Ayşe" }),
     ).toBeInTheDocument()
+    expect(screen.getByText(/29 Mayıs 2025/)).toBeInTheDocument()
     expect(screen.getByLabelText("Genel özet")).toHaveTextContent(
       "Aktif Fonlar2",
     )
