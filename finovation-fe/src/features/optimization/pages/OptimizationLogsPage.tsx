@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router"
 
 import { fetchOptimizationLogs } from "@/features/optimization/api/optimizationApi"
 import {
@@ -9,6 +10,24 @@ import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimiz
 import type { OptimizationLogEntry } from "@/features/optimization/model/optimizationSchemas"
 import styles from "@/features/optimization/styles/OptimizationLogsPage.module.css"
 
+function logActorName(log: OptimizationLogEntry): string {
+  return (
+    log.decidedByDisplayName ??
+    log.decidedByUsername ??
+    log.requestedByDisplayName ??
+    log.requestedByUsername ??
+    "—"
+  )
+}
+
+function logStatusTitle(log: OptimizationLogEntry): string | undefined {
+  if (log.status === "FAILED" && log.errorMessage) return log.errorMessage
+  if (log.status === "REJECTED" && log.rejectionReason) {
+    return log.rejectionReason
+  }
+  return undefined
+}
+
 const ALL_FUNDS_VALUE = ""
 
 function toDateInputValue(iso: string): string {
@@ -16,6 +35,7 @@ function toDateInputValue(iso: string): string {
 }
 
 export default function OptimizationLogsPage() {
+  const navigate = useNavigate()
   const [logs, setLogs] = useState<OptimizationLogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
@@ -26,6 +46,8 @@ export default function OptimizationLogsPage() {
 
   const [pdfRequestId, setPdfRequestId] = useState<number | null>(null)
   const [pdfErrorMessage, setPdfErrorMessage] = useState("")
+  const [excelRequestId, setExcelRequestId] = useState<number | null>(null)
+  const [excelErrorMessage, setExcelErrorMessage] = useState("")
   const [isExportingLogs, setIsExportingLogs] = useState(false)
 
   useEffect(() => {
@@ -84,13 +106,13 @@ export default function OptimizationLogsPage() {
     setPdfErrorMessage("")
     setPdfRequestId(log.requestId)
     try {
-      const { loadOptimizationResultPdfInput } = await import(
-        "@/features/optimization/lib/optimizationResultPdfData"
+      const { loadOptimizationResultExportInput } = await import(
+        "@/features/optimization/lib/optimizationResultExportData"
       )
       const { downloadOptimizationResultPdf } = await import(
         "@/features/optimization/lib/optimizationPdfExport"
       )
-      const input = await loadOptimizationResultPdfInput(
+      const input = await loadOptimizationResultExportInput(
         log.requestId,
         log.fundName,
       )
@@ -99,6 +121,28 @@ export default function OptimizationLogsPage() {
       setPdfErrorMessage(getOptimizationErrorMessage(error))
     } finally {
       setPdfRequestId(null)
+    }
+  }
+
+  const handleDownloadExcel = async (log: OptimizationLogEntry) => {
+    setExcelErrorMessage("")
+    setExcelRequestId(log.requestId)
+    try {
+      const { loadOptimizationResultExportInput } = await import(
+        "@/features/optimization/lib/optimizationResultExportData"
+      )
+      const { downloadOptimizationResultExcel } = await import(
+        "@/features/optimization/lib/optimizationExcelExport"
+      )
+      const input = await loadOptimizationResultExportInput(
+        log.requestId,
+        log.fundName,
+      )
+      await downloadOptimizationResultExcel(input)
+    } catch (error) {
+      setExcelErrorMessage(getOptimizationErrorMessage(error))
+    } finally {
+      setExcelRequestId(null)
     }
   }
 
@@ -113,14 +157,23 @@ export default function OptimizationLogsPage() {
               amacıyla kaydedilir
             </p>
           </div>
-          <button
-            type="button"
-            className={styles.exportButton}
-            onClick={() => void handleExportLogs()}
-            disabled={isExportingLogs || filteredLogs.length === 0}
-          >
-            ↓ {isExportingLogs ? "Hazırlanıyor…" : "Kayıtları Dışa Aktar"}
-          </button>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.backButton}
+              onClick={() => navigate("/optimization-requests/new")}
+            >
+              ← Fon Optimizasyonuna Dön
+            </button>
+            <button
+              type="button"
+              className={styles.exportButton}
+              onClick={() => void handleExportLogs()}
+              disabled={isExportingLogs || filteredLogs.length === 0}
+            >
+              ↓ {isExportingLogs ? "Hazırlanıyor…" : "Kayıtları Dışa Aktar"}
+            </button>
+          </div>
         </div>
 
         <section className={styles.panel}>
@@ -189,6 +242,12 @@ export default function OptimizationLogsPage() {
             </div>
           )}
 
+          {!isLoading && !errorMessage && excelErrorMessage && (
+            <div className={styles.errorBanner} role="alert">
+              {excelErrorMessage}
+            </div>
+          )}
+
           {!isLoading && !errorMessage && filteredLogs.length === 0 && (
             <p className={styles.emptyState}>
               Filtrenizle eşleşen bir işlem kaydı bulunamadı.
@@ -211,32 +270,49 @@ export default function OptimizationLogsPage() {
                   {filteredLogs.map((log) => (
                     <tr key={log.requestId}>
                       <td>{formatDateTime(log.createdAt)}</td>
-                      <td>{log.requestedByUsername ?? "—"}</td>
+                      <td>{logActorName(log)}</td>
                       <td className={styles.fundCell}>{log.fundName}</td>
                       <td>
                         <span
                           className={`${styles.statusBadge} ${
                             styles[`statusBadge${log.status}`] ?? ""
                           }`}
+                          title={logStatusTitle(log)}
                         >
                           {REQUEST_STATUS_LABELS[log.status] ?? log.status}
                         </span>
                       </td>
                       <td>
-                        <button
-                          type="button"
-                          className={styles.pdfButton}
-                          disabled={
-                            !log.resultAvailable ||
-                            pdfRequestId === log.requestId
-                          }
-                          onClick={() => void handleDownloadPdf(log)}
-                        >
-                          ↓{" "}
-                          {pdfRequestId === log.requestId
-                            ? "Hazırlanıyor…"
-                            : "PDF"}
-                        </button>
+                        <div className={styles.rowActions}>
+                          <button
+                            type="button"
+                            className={styles.pdfButton}
+                            disabled={
+                              !log.resultAvailable ||
+                              pdfRequestId === log.requestId
+                            }
+                            onClick={() => void handleDownloadPdf(log)}
+                          >
+                            ↓{" "}
+                            {pdfRequestId === log.requestId
+                              ? "Hazırlanıyor…"
+                              : "PDF"}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.excelButton}
+                            disabled={
+                              !log.resultAvailable ||
+                              excelRequestId === log.requestId
+                            }
+                            onClick={() => void handleDownloadExcel(log)}
+                          >
+                            ↓{" "}
+                            {excelRequestId === log.requestId
+                              ? "Hazırlanıyor…"
+                              : "Excel"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

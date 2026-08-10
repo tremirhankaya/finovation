@@ -204,13 +204,14 @@
 .riskOption {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
+  gap: 10px;
+  min-height: 100%;
+  padding: 16px 15px;
   text-align: left;
   color: var(--color-navy-950);
   background: #fff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1.5px solid #e5edf1;
+  border-radius: 14px;
   cursor: pointer;
   transition:
     border-color var(--transition-fast),
@@ -219,13 +220,32 @@
 }
 
 .riskOption:hover {
-  border-color: var(--color-teal-400);
+  border-color: #c9ddd8;
 }
 
 .riskOptionSelected {
-  background: #f0fdfa;
-  border-color: var(--color-teal-600);
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  background: #f3fbf9;
+  border-color: #2ec4a7;
+  box-shadow: 0 0 0 1px rgba(46, 196, 167, 0.25);
+}
+
+.riskOptionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  color: #1a9e86;
+  background: #e7f6f2;
+  border-radius: 999px;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.riskOptionSelected .riskOptionIcon {
+  color: #fff;
+  background: #2ec4a7;
 }
 
 .riskOptionLabel {
@@ -236,6 +256,7 @@
 .riskOptionDescription {
   color: var(--color-slate-500);
   font-size: 0.86rem;
+  line-height: 1.45;
 }
 
 .togglePanelGrid {
@@ -330,6 +351,27 @@
   background: #f8fafc;
 }
 
+.pinnedAssetRow td {
+  background: #fff1f2;
+}
+
+.pinnedAssetRow:hover td {
+  background: #ffe4e6;
+}
+
+.pinnedBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 1px 7px;
+  color: var(--color-red-800);
+  background: #ffe4e6;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
 .assetCheckbox {
   width: 18px;
   height: 18px;
@@ -421,6 +463,92 @@
   background: #f1f5f9;
 }
 
+.fundSortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: var(--color-slate-500);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.fundSortButton:hover {
+  color: var(--color-teal-700);
+}
+
+.fundPinButton,
+.fundPinButtonActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: #cbd5e1;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.fundPinButton:hover {
+  color: var(--color-slate-500);
+  background: #f1f5f9;
+}
+
+.fundPinButtonActive {
+  color: var(--color-amber-600, #b45309);
+  background: #fffbeb;
+}
+
+.fundPinButtonActive:hover {
+  color: var(--color-amber-700, #92400e);
+  background: #fef3c7;
+}
+
+.fundRowPinned td {
+  background: #fffdf7;
+}
+
+.fundRowPinned:hover td {
+  background: #fffbeb;
+}
+
+.fundWeightLabels {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  color: var(--color-slate-500);
+  font-size: 0.72rem;
+}
+
+.fundWeightBarTrack {
+  display: flex;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  background: #e9edf2;
+  border-radius: 999px;
+}
+
+.fundWeightBarFill {
+  height: 100%;
+  background: var(--color-teal-600);
+}
+
+.fundWeightBarFillTpp {
+  height: 100%;
+  background: #cbd5e1;
+}
+
 .fundSelectionFooter {
   display: flex;
   align-items: center;
@@ -433,22 +561,32 @@
   font-size: 0.78rem;
 }
 
-.forceAddHint {
-  margin: 0;
-  padding: 10px 14px;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 10px;
-  font-size: 0.76rem;
-  line-height: 1.5;
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.forceAddWeightCell {
-  color: var(--color-teal-700);
+.resetDefaults {
+  flex: none;
+  padding: 0;
+  border: none;
+  color: var(--color-teal-600);
+  background: transparent;
+  font-size: 0.78rem;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  cursor: pointer;
+}
+
+.resetDefaults:hover {
+  text-decoration: underline;
+}
+
+.resetDefaults:focus-visible {
+  outline: 2px solid var(--color-teal-600);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .emptyState {
@@ -679,9 +817,9 @@
 .compliancePanel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   align-self: flex-start;
-  padding: 20px 20px 22px;
+  padding: 18px 18px 20px;
   background: #fff;
   border: 1px solid #e9edf2;
   border-radius: 16px;
@@ -692,44 +830,95 @@
   top: 24px;
 }
 
-.complianceIntro {
-  margin: -6px 0 0;
-  color: var(--color-slate-500);
-  font-size: 0.75rem;
-}
-
-.complianceRow {
-  display: grid;
-  gap: 4px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.complianceRow:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.complianceLabel {
+.complianceHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--color-navy-950);
 }
 
-.complianceLabelText {
-  display: flex;
+.compliancePanelTitle {
+  margin: 0;
+  color: var(--color-navy-950);
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.complianceInfoIcon {
+  flex: none;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--color-slate-500);
+  background: #f1f5f9;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  font-style: italic;
+  cursor: default;
+}
+
+.complianceRowList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.complianceRow {
+  display: flex;
+  align-items: flex-start;
   gap: 8px;
+}
+
+.complianceRowBody {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.complianceRowLabel {
+  color: var(--color-navy-950);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.complianceRowDetail {
+  color: var(--color-slate-500);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.complianceRowDash {
+  flex: none;
+  margin-top: 2px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+}
+
+.complianceLockedTag {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 1px 8px;
+  color: var(--color-slate-500);
+  background: #f1f5f9;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
 }
 
 .complianceDot {
   flex: none;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
   border-radius: 999px;
 }
 
@@ -745,32 +934,50 @@
   background: var(--color-red-500);
 }
 
-.complianceStatusUYUMLU {
-  color: var(--color-teal-700);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+.complianceDotLocked {
+  background: #cbd5e1;
 }
 
-.complianceStatusDIKKAT {
-  color: #92400e;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+.complianceLegend {
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
 }
 
-.complianceStatusUYUMSUZ {
-  color: var(--color-red-800);
-  font-size: 0.7rem;
+.complianceLegendTitle {
+  margin: 0 0 8px;
+  color: var(--color-navy-950);
+  font-size: 0.82rem;
   font-weight: 800;
-  letter-spacing: 0.03em;
 }
 
-.complianceDetail {
+.complianceLegendList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.complianceLegendList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-slate-500);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.complianceLegendList .complianceDot {
+  margin-top: 0;
+}
+
+.complianceFooterNote {
   margin: 0;
   color: var(--color-slate-500);
-  font-size: 0.73rem;
-  line-height: 1.45;
+  font-size: 0.68rem;
+  font-style: italic;
+  line-height: 1.4;
 }
 
 .submitButton {

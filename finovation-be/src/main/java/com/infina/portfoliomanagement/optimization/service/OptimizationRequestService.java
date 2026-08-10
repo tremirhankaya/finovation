@@ -95,6 +95,11 @@ public class OptimizationRequestService {
     private static final int MAX_REMOVALS_DEFAULT = 2;
     private static final BigDecimal PORTFOLIO_SUM_TOLERANCE = new BigDecimal("0.000001");
     private static final String CASH_TPP_CODE = "CASH_TPP";
+    private static final Set<RequestStatus> LOG_VISIBLE_STATUSES = Set.of(
+            RequestStatus.APPROVED,
+            RequestStatus.REJECTED,
+            RequestStatus.FAILED
+    );
     private static final Set<RequestStatus> RESULT_AVAILABLE_STATUSES = Set.of(
             RequestStatus.COMPLETED,
             RequestStatus.APPROVED,
@@ -380,6 +385,7 @@ public class OptimizationRequestService {
                 .collect(Collectors.toMap(FundDraft::getPublicId, FundDraft::getName, (left, right) -> left));
 
         return requests.stream()
+                .filter(request -> LOG_VISIBLE_STATUSES.contains(request.getStatus()))
                 .map(request -> toLogEntryResponse(request, fundNamesById))
                 .toList();
     }
@@ -389,12 +395,23 @@ public class OptimizationRequestService {
             Map<UUID, String> fundNamesById
     ) {
         User requestedBy = request.getRequestedBy();
+        User decidedBy = request.getDecidedBy();
         return new OptimizationLogEntryResponse(
                 request.getId(),
                 request.getFundId(),
                 fundNamesById.getOrDefault(request.getFundId(), "—"),
                 requestedBy != null ? requestedBy.getUsername() : null,
+                requestedBy != null
+                        ? (requestedBy.getFirstName() + " " + requestedBy.getLastName())
+                        : null,
+                decidedBy != null ? decidedBy.getId() : null,
+                decidedBy != null ? decidedBy.getUsername() : null,
+                decidedBy != null
+                        ? (decidedBy.getFirstName() + " " + decidedBy.getLastName())
+                        : null,
                 request.getStatus(),
+                request.getErrorMessage(),
+                request.getRejectionReason(),
                 request.getCreatedAt(),
                 request.getCompletedAt(),
                 request.getUpdatedAt(),
@@ -433,6 +450,7 @@ public class OptimizationRequestService {
         optimizationResultRepository.save(result);
 
         request.setStatus(RequestStatus.APPROVED);
+        request.setDecidedBy(actor);
         request.setUpdatedAt(now);
         OptimizationRequest saved = saveRequest(request);
 
@@ -538,7 +556,7 @@ public class OptimizationRequestService {
     }
 
     @Transactional
-    public OptimizationRequestResponse reject(String actorUsername, Long requestId) {
+    public OptimizationRequestResponse reject(String actorUsername, Long requestId, String reason) {
         User actor = resolveActor(actorUsername);
         OptimizationRequest request = findRequest(requestId);
 
@@ -546,6 +564,8 @@ public class OptimizationRequestService {
         assertStatusIn(request, RequestStatus.COMPLETED);
 
         request.setStatus(RequestStatus.REJECTED);
+        request.setDecidedBy(actor);
+        request.setRejectionReason(reason != null && !reason.isBlank() ? reason.trim() : null);
         request.setUpdatedAt(financialTime.now());
         OptimizationRequest saved = saveRequest(request);
 
@@ -578,6 +598,9 @@ public class OptimizationRequestService {
 
             request.setStatus(RequestStatus.COMPLETED);
             request.setModelVersion(engineResult.snapshotId());
+            if (engineResult.systemDate() != null) {
+                request.setDataTimestamp(LocalDate.parse(engineResult.systemDate()).atStartOfDay());
+            }
             request.setCompletedAt(financialTime.now());
             request.setUpdatedAt(financialTime.now());
             OptimizationRequest saved = saveRequest(request);
@@ -1104,6 +1127,7 @@ public class OptimizationRequestService {
 
     private OptimizationRequestResponse toResponse(OptimizationRequest request) {
         User requestedBy = request.getRequestedBy();
+        User decidedBy = request.getDecidedBy();
         Map<OptimizationConstraintCode, RequestConstraintTarget> targetsByCode =
                 resolveConstraintTargetsByCode(request);
 
@@ -1119,6 +1143,14 @@ public class OptimizationRequestService {
                 request.getModelVersion(),
                 requestedBy != null ? requestedBy.getId() : null,
                 requestedBy != null ? requestedBy.getUsername() : null,
+                requestedBy != null
+                        ? (requestedBy.getFirstName() + " " + requestedBy.getLastName())
+                        : null,
+                decidedBy != null ? decidedBy.getId() : null,
+                decidedBy != null ? decidedBy.getUsername() : null,
+                decidedBy != null
+                        ? (decidedBy.getFirstName() + " " + decidedBy.getLastName())
+                        : null,
                 request.getRiskProfile(),
                 request.getStatus(),
                 request.getMaxAdditions(),
@@ -1129,6 +1161,7 @@ public class OptimizationRequestService {
                 request.getStartedAt(),
                 request.getCompletedAt(),
                 request.getErrorMessage(),
+                request.getRejectionReason(),
                 request.getCreatedAt(),
                 request.getUpdatedAt()
         );

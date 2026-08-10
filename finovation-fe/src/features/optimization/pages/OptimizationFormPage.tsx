@@ -35,6 +35,41 @@ export default function OptimizationFormPage() {
     .filter((position) => keptAssetCodes.has(position.assetId))
     .reduce((sum, position) => sum + position.weightPercentage, 0)
 
+  const heldExcludedPositions = (form.snapshot?.positions ?? []).filter(
+    (position) => form.excludedHeldAssetIds.has(position.assetId),
+  )
+
+  const keepAtLimit = form.keepCount >= form.maxAssetSelectionsPerType
+  const heldExcludeAtLimit =
+    form.heldExcludeCount >= form.maxAssetSelectionsPerType
+  const universeExcludeAtLimit =
+    form.universeExcludeCount >= form.maxAssetSelectionsPerType
+  const forceAddAtLimit = form.forceAddCount >= form.maxAssetSelectionsPerType
+
+  const excludeDisabledCodes = new Set<string>()
+  if (universeExcludeAtLimit) {
+    for (const asset of form.unheldUniverseAssets) {
+      if (!excludedAssetCodes.has(asset.assetCode)) {
+        excludeDisabledCodes.add(asset.assetCode)
+      }
+    }
+  }
+  const excludePanelAssets = form.unheldUniverseAssets.filter(
+    (asset) => !forceAddedAssetCodes.has(asset.assetCode),
+  )
+
+  const forceAddDisabledCodes = new Set<string>()
+  if (forceAddAtLimit) {
+    for (const asset of form.unheldUniverseAssets) {
+      if (!forceAddedAssetCodes.has(asset.assetCode)) {
+        forceAddDisabledCodes.add(asset.assetCode)
+      }
+    }
+  }
+  const forceAddPanelAssets = form.unheldUniverseAssets.filter(
+    (asset) => !excludedAssetCodes.has(asset.assetCode),
+  )
+
   const hasNoFunds =
     !form.isLoadingFunds && !form.loadErrorMessage && form.funds.length === 0
 
@@ -56,13 +91,21 @@ export default function OptimizationFormPage() {
             <h1>{headerTitle}</h1>
             <p className={styles.subtitle}>{headerSubtitle}</p>
           </div>
-          {form.step === 2 && (
+          {form.step === 2 ? (
             <button
               type="button"
               className={styles.changeFundButton}
               onClick={form.goToFundSelection}
             >
               Fon Değiştir
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.changeFundButton}
+              onClick={() => navigate("/optimization-requests/logs")}
+            >
+              İşlem Loglarını Gör
             </button>
           )}
         </header>
@@ -111,32 +154,39 @@ export default function OptimizationFormPage() {
               <KeptAssetsPanel
                 positions={form.snapshot?.positions ?? []}
                 keptAssetCodes={keptAssetCodes}
+                excludedAssetIds={form.excludedHeldAssetIds}
                 keptWeightSum={keptWeightSum}
-                onToggle={(assetCode) =>
-                  form.toggleSelection(assetCode, "KEEP")
-                }
+                keepAtLimit={keepAtLimit}
+                excludeAtLimit={heldExcludeAtLimit}
+                onToggle={form.toggleHeldKeep}
+                onToggleExclude={form.toggleHeldExclude}
               />
 
               <div className={styles.togglePanelGrid}>
                 <AssetTogglePanel
                   title="C · Dahil Edilmeyecek Hisseler"
-                  description="İşaretlenen hisse optimizasyona hiç girmez; model bu hisseyi portföye ekleyemez."
-                  assets={form.universeAssets}
+                  description="İşaretlenen hisse optimizasyona hiç girmez; model bu hisseyi portföye ekleyemez. En fazla 3 hisse işaretlenebilir."
+                  assets={excludePanelAssets}
                   selectedAssetCodes={excludedAssetCodes}
-                  disabledAssetCodes={forceAddedAssetCodes}
+                  disabledAssetCodes={excludeDisabledCodes}
+                  disabledTitle="En fazla 3 hisse hariç tutulabilir"
                   toggleLabel="Hariç Tut"
                   variant="exclude"
                   onToggle={(assetCode) =>
                     form.toggleSelection(assetCode, "EXCLUDE")
                   }
+                  pinnedAssets={heldExcludedPositions}
+                  pinnedBadgeLabel="Yukarıdan"
+                  onTogglePinned={form.toggleHeldExclude}
                 />
 
                 <AssetTogglePanel
                   title="D · Zorunlu Eklenecek Hisseler"
-                  description="İşaretlenen hisse portföye mutlaka girer; sistem her biri için en az %3 ağırlık ayırır."
-                  assets={form.universeAssets}
+                  description="İşaretlenen hisse portföye mutlaka girer; sistem her biri için en az %3 ağırlık ayırır. En fazla 3 hisse işaretlenebilir."
+                  assets={forceAddPanelAssets}
                   selectedAssetCodes={forceAddedAssetCodes}
-                  disabledAssetCodes={excludedAssetCodes}
+                  disabledAssetCodes={forceAddDisabledCodes}
+                  disabledTitle="En fazla 3 hisse zorunlu eklenebilir"
                   toggleLabel="Ekle"
                   variant="forceAdd"
                   onToggle={(assetCode) =>
@@ -146,7 +196,17 @@ export default function OptimizationFormPage() {
               </div>
 
               <section className={styles.panel}>
-                <h2 className={styles.panelTitle}>E · Kısıt Tanımlama</h2>
+                <div className={styles.sectionHeading}>
+                  <h2 className={styles.panelTitle}>E · Kısıt Tanımlama</h2>
+                  <button
+                    type="button"
+                    className={styles.resetDefaults}
+                    disabled={!form.constraintsDeviateFromProfile}
+                    onClick={form.resetConstraintsToSuggested}
+                  >
+                    Varsayılana Dön
+                  </button>
+                </div>
                 <ConstraintRangeInputs
                   label="TPP Ağırlık Aralığı (%)"
                   min={form.tppMinWeight}

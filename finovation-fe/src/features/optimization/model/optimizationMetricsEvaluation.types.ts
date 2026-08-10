@@ -1,6 +1,6 @@
 export type ConstraintMetricStatus = "GREEN" | "AMBER" | "RED" | "GRAY"
 
-export type ConstraintMetricKey = "TOTAL_EQUITY_WEIGHT" | "TPP_WEIGHT" | "STOCK_COUNT" | "MAX_SINGLE_STOCK_WEIGHT" | "MAX_SECTOR_CONCENTRATION"
+export type ConstraintMetricKey = "TOTAL_PORTFOLIO_WEIGHT" | "TOTAL_EQUITY_WEIGHT" | "TPP_WEIGHT" | "STOCK_COUNT" | "MAX_SINGLE_STOCK_WEIGHT" | "MAX_SECTOR_CONCENTRATION"
 
 export type ConstraintMetric = {
   key: ConstraintMetricKey
@@ -36,6 +36,7 @@ export type PortfolioRiskMetricsSnapshot = {
 }
 
 export type ConstraintMetricInput = {
+  totalPortfolioWeight: number | null
   totalEquityWeight: number | null
   tppWeight: number | null
   tppUserMin: number

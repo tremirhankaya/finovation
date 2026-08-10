@@ -32,6 +32,7 @@ const DEFAULT_MAX_ADDITIONS = 3
 const MAX_ADDITIONS_FLOOR = 0
 const MAX_ADDITIONS_CEILING = 30
 const TPP_ASSET_SYMBOL = "TPP1G"
+const MAX_ASSET_SELECTIONS_PER_TYPE = 3
 
 export function useOptimizationForm() {
   const [step, setStep] = useState<WizardStep>(1)
@@ -160,6 +161,35 @@ export function useOptimizationForm() {
     return () => controller.abort()
   }, [selectedFundId])
 
+  const universeCodeBySymbol = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const asset of universeAssets) {
+      map.set(asset.assetCode, asset.assetCode)
+      const bareCode = asset.assetCode.split(".")[0]
+      if (!map.has(bareCode)) map.set(bareCode, asset.assetCode)
+    }
+    return map
+  }, [universeAssets])
+
+  const resolveUniverseCode = useCallback(
+    (symbol: string) => universeCodeBySymbol.get(symbol) ?? symbol,
+    [universeCodeBySymbol],
+  )
+
+  const heldUniverseCodes = useMemo(() => {
+    const codes = new Set<string>()
+    for (const position of snapshot?.positions ?? []) {
+      codes.add(resolveUniverseCode(position.symbol))
+    }
+    return codes
+  }, [snapshot, resolveUniverseCode])
+
+  const unheldUniverseAssets = useMemo(
+    () =>
+      universeAssets.filter((asset) => !heldUniverseCodes.has(asset.assetCode)),
+    [universeAssets, heldUniverseCodes],
+  )
+
   const toggleSelection = useCallback(
     (assetCode: string, type: AssetSelectionType) => {
       setSelection((current) => {
@@ -167,13 +197,82 @@ export function useOptimizationForm() {
         if (next[assetCode] === type) {
           delete next[assetCode]
         } else {
+          const countOfType = Object.entries(current).filter(
+            ([key, value]) =>
+              value === type &&
+              (type !== "EXCLUDE" || !heldUniverseCodes.has(key)),
+          ).length
+          if (countOfType >= MAX_ASSET_SELECTIONS_PER_TYPE) return current
           next[assetCode] = type
         }
         return next
       })
     },
-    [],
+    [heldUniverseCodes],
   )
+
+  const toggleHeldKeep = useCallback(
+    (assetId: string) => {
+      const position = (snapshot?.positions ?? []).find(
+        (item) => item.assetId === assetId,
+      )
+      if (!position || position.symbol === TPP_ASSET_SYMBOL) return
+      const universeCode = resolveUniverseCode(position.symbol)
+      setSelection((current) => {
+        const next = { ...current }
+        if (next[assetId] === "KEEP") {
+          delete next[assetId]
+        } else {
+          const keepCount = Object.values(current).filter(
+            (value) => value === "KEEP",
+          ).length
+          if (keepCount >= MAX_ASSET_SELECTIONS_PER_TYPE) return current
+          next[assetId] = "KEEP"
+          if (universeCode && next[universeCode] === "EXCLUDE") {
+            delete next[universeCode]
+          }
+        }
+        return next
+      })
+    },
+    [snapshot, resolveUniverseCode],
+  )
+
+  const toggleHeldExclude = useCallback(
+    (assetId: string) => {
+      const position = (snapshot?.positions ?? []).find(
+        (item) => item.assetId === assetId,
+      )
+      if (!position || position.symbol === TPP_ASSET_SYMBOL) return
+      const universeCode = resolveUniverseCode(position.symbol)
+      setSelection((current) => {
+        const next = { ...current }
+        if (next[universeCode] === "EXCLUDE") {
+          delete next[universeCode]
+        } else {
+          const heldExcludeCount = Object.entries(current).filter(
+            ([key, value]) => value === "EXCLUDE" && heldUniverseCodes.has(key),
+          ).length
+          if (heldExcludeCount >= MAX_ASSET_SELECTIONS_PER_TYPE) return current
+          next[universeCode] = "EXCLUDE"
+          if (next[assetId] === "KEEP") {
+            delete next[assetId]
+          }
+        }
+        return next
+      })
+    },
+    [snapshot, resolveUniverseCode, heldUniverseCodes],
+  )
+
+  const excludedHeldAssetIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const position of snapshot?.positions ?? []) {
+      const universeCode = resolveUniverseCode(position.symbol)
+      if (selection[universeCode] === "EXCLUDE") ids.add(position.assetId)
+    }
+    return ids
+  }, [snapshot, selection, resolveUniverseCode])
 
   const keptAssets = useMemo(
     () =>
@@ -191,6 +290,12 @@ export function useOptimizationForm() {
     [selection],
   )
 
+  const keepCount = keptAssets.length
+  const heldExcludeCount = excludedAssetCodes.filter((assetCode) =>
+    heldUniverseCodes.has(assetCode),
+  ).length
+  const universeExcludeCount = excludedAssetCodes.length - heldExcludeCount
+
   const forceAddedAssetCodes = useMemo(
     () =>
       Object.entries(selection)
@@ -199,14 +304,16 @@ export function useOptimizationForm() {
     [selection],
   )
 
-  const keptWeightSum = useMemo(
-    () => keptAssets.reduce((sum, asset) => sum + asset.weightPercentage, 0),
-    [keptAssets],
-  )
+  const forceAddCount = forceAddedAssetCodes.length
 
   const selectedFundSummary = useMemo(
     () => funds.find((fund) => fund.id === selectedFundId) ?? null,
     [funds, selectedFundId],
+  )
+
+  const keptWeightSum = useMemo(
+    () => keptAssets.reduce((sum, asset) => sum + asset.weightPercentage, 0),
+    [keptAssets],
   )
 
   const keptEquityPositions = useMemo(
@@ -263,7 +370,7 @@ export function useOptimizationForm() {
         minSingleStockWeightPct,
         maxSectorWeightPct,
         currentStockCount: selectedFundSummary?.stockCount ?? null,
-        maxAdditions,
+        heldExcludedAssetCount: heldExcludeCount,
       }),
     [
       tppMinWeight,
@@ -278,9 +385,27 @@ export function useOptimizationForm() {
       maxSingleStockWeightPct,
       minSingleStockWeightPct,
       maxSectorWeightPct,
-      maxAdditions,
+      heldExcludeCount,
     ],
   )
+
+  const suggestedConstraints = useMemo(
+    () => getSuggestedConstraints(riskProfile),
+    [riskProfile],
+  )
+
+  const constraintsDeviateFromProfile =
+    tppMinWeight !== suggestedConstraints.tppMinWeight ||
+    tppMaxWeight !== suggestedConstraints.tppMaxWeight ||
+    stockCountMin !== suggestedConstraints.stockCountMin ||
+    stockCountMax !== suggestedConstraints.stockCountMax
+
+  const resetConstraintsToSuggested = useCallback(() => {
+    setTppMinWeight(suggestedConstraints.tppMinWeight)
+    setTppMaxWeight(suggestedConstraints.tppMaxWeight)
+    setStockCountMin(suggestedConstraints.stockCountMin)
+    setStockCountMax(suggestedConstraints.stockCountMax)
+  }, [suggestedConstraints])
 
   const canSubmit =
     isComplianceReady(complianceRows) && !isSubmitting && !!selectedFundId
@@ -359,7 +484,19 @@ export function useOptimizationForm() {
     setRiskProfile,
     selection,
     toggleSelection,
+    toggleHeldKeep,
+    toggleHeldExclude,
+    excludedHeldAssetIds,
+    keepCount,
+    heldExcludeCount,
+    universeExcludeCount,
+    forceAddCount,
+    maxAssetSelectionsPerType: MAX_ASSET_SELECTIONS_PER_TYPE,
+    suggestedConstraints,
+    constraintsDeviateFromProfile,
+    resetConstraintsToSuggested,
     universeAssets,
+    unheldUniverseAssets,
     isLoadingUniverse,
     tppMinWeight,
     setTppMinWeight,

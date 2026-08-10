@@ -6,35 +6,49 @@ import styles from "@/features/optimization/styles/OptimizationFormPage.module.c
 export type KeptAssetsPanelProps = {
   positions: FundPosition[]
   keptAssetCodes: ReadonlySet<string>
+  excludedAssetIds: ReadonlySet<string>
   keptWeightSum: number
+  keepAtLimit: boolean
+  excludeAtLimit: boolean
   onToggle: (assetCode: string) => void
+  onToggleExclude: (assetId: string) => void
 }
 
 const ALL_SECTORS_VALUE = ""
+const TPP_ASSET_SYMBOL = "TPP1G"
 
 export default function KeptAssetsPanel({
   positions,
   keptAssetCodes,
+  excludedAssetIds,
   keptWeightSum,
+  keepAtLimit,
+  excludeAtLimit,
   onToggle,
+  onToggleExclude,
 }: KeptAssetsPanelProps) {
   const [query, setQuery] = useState("")
   const [sectorFilter, setSectorFilter] = useState(ALL_SECTORS_VALUE)
+
+  const stockPositions = useMemo(
+    () => positions.filter((position) => position.symbol !== TPP_ASSET_SYMBOL),
+    [positions],
+  )
 
   const sectorOptions = useMemo(
     () =>
       Array.from(
         new Set(
-          positions
+          stockPositions
             .map((position) => position.sectorName)
             .filter((sectorName): sectorName is string => Boolean(sectorName)),
         ),
       ).sort((a, b) => a.localeCompare(b, "tr-TR")),
-    [positions],
+    [stockPositions],
   )
 
   const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR")
-  const filteredPositions = positions.filter((position) => {
+  const filteredPositions = stockPositions.filter((position) => {
     if (sectorFilter && position.sectorName !== sectorFilter) return false
     if (!normalizedQuery) return true
     return [position.symbol, position.name, position.sectorName ?? ""]
@@ -51,10 +65,11 @@ export default function KeptAssetsPanel({
       <p className={styles.panelDescription}>
         {keptAssetCodes.size} hisse sabitlendi · toplam %
         {keptWeightSum.toFixed(0)}. İşaretlenen hisse portföyde kalır ve mevcut
-        ağırlığı sabit tutulur.
+        ağırlığı sabit tutulur. En fazla 3 hisse korunabilir, en fazla 3 hisse
+        çıkarılabilir.
       </p>
 
-      {positions.length > 0 && (
+      {stockPositions.length > 0 && (
         <>
           <input
             type="search"
@@ -81,7 +96,7 @@ export default function KeptAssetsPanel({
         </>
       )}
 
-      {positions.length === 0 ? (
+      {stockPositions.length === 0 ? (
         <p className={styles.emptyState}>
           Fonun mevcut pozisyon verisi bulunamadı.
         </p>
@@ -97,6 +112,7 @@ export default function KeptAssetsPanel({
                 <th>Hisse</th>
                 <th>Mevcut Ağırlık</th>
                 <th>Koru</th>
+                <th>Çıkar</th>
               </tr>
             </thead>
             <tbody>
@@ -119,8 +135,33 @@ export default function KeptAssetsPanel({
                       type="checkbox"
                       className={`${styles.assetToggleBox} ${styles.assetToggleBoxAdd}`}
                       checked={keptAssetCodes.has(position.assetId)}
+                      disabled={
+                        keepAtLimit && !keptAssetCodes.has(position.assetId)
+                      }
+                      title={
+                        keepAtLimit && !keptAssetCodes.has(position.assetId)
+                          ? "En fazla 3 hisse korunabilir"
+                          : undefined
+                      }
                       onChange={() => onToggle(position.assetId)}
                       aria-label={`${position.symbol} hissesini koru`}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className={`${styles.assetToggleBox} ${styles.assetToggleBoxExclude}`}
+                      checked={excludedAssetIds.has(position.assetId)}
+                      disabled={
+                        excludeAtLimit && !excludedAssetIds.has(position.assetId)
+                      }
+                      title={
+                        excludeAtLimit && !excludedAssetIds.has(position.assetId)
+                          ? "En fazla 3 hisse çıkarılabilir"
+                          : undefined
+                      }
+                      onChange={() => onToggleExclude(position.assetId)}
+                      aria-label={`${position.symbol} hissesini çıkar`}
                     />
                   </td>
                 </tr>

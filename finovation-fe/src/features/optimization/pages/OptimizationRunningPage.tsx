@@ -11,12 +11,6 @@ const RISK_PROFILE_LABELS: Record<RiskProfile, string> = {
   CONSERVATIVE: "Korumacı",
 }
 
-const RISK_PROFILE_TERM_LABELS: Record<RiskProfile, string> = {
-  AGGRESSIVE: "3 aylık değerlendirme vadesi",
-  BALANCED: "6 aylık değerlendirme vadesi",
-  CONSERVATIVE: "12 aylık değerlendirme vadesi",
-}
-
 export type OptimizationRunningViewProps = {
   fundId: string | null
   fundName?: string | null
@@ -47,9 +41,7 @@ export function OptimizationRunningView({
           <h1>Optimizasyon Çalışıyor</h1>
           <p className={styles.subtitle}>
             {fundName || (fundId != null ? `Fon #${fundId}` : "Fon")}
-            {riskProfile
-              ? ` · ${RISK_PROFILE_LABELS[riskProfile]} yaklaşım · ${RISK_PROFILE_TERM_LABELS[riskProfile]}`
-              : ""}
+            {riskProfile ? ` · ${RISK_PROFILE_LABELS[riskProfile]} yaklaşım` : ""}
           </p>
         </header>
 
@@ -118,7 +110,7 @@ export default function OptimizationRunningPage() {
       isCompleted={request?.status === "COMPLETED"}
       errorMessage={errorMessage || undefined}
       onRetry={retry}
-      onBack={() => navigate("/dashboard")}
+      onBack={() => navigate("/optimization-requests/new")}
       onViewResult={() =>
         navigate(`/optimization-requests/${requestId}/result`, {
           state: { fundName },

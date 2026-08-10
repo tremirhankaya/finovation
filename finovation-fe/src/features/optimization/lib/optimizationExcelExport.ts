@@ -2,15 +2,15 @@ import { Workbook } from "exceljs"
 
 import {
   ACTION_TYPE_LABELS,
-  CONSTRAINT_STATUS_LABELS,
-  formatDateTime,
-  INFO_STATUS_LABELS,
+  formatDecisionDateTime,
+  REQUEST_STATUS_LABELS,
   RISK_PROFILE_LABELS,
 } from "@/features/optimization/lib/optimizationExportLabels"
-import type {
-  ConstraintMetric,
-  InfoMetric,
-} from "@/features/optimization/model/optimizationMetricsEvaluation.types"
+import {
+  CRITERIA_STATUS_LABELS,
+  type CriteriaRow,
+} from "@/features/optimization/lib/optimizationCriteriaRows"
+import { buildResultCategories } from "@/features/optimization/lib/optimizationResultCategories"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import type { OptimizationRequestResponse } from "@/features/optimization/model/optimizationSchemas"
 
@@ -53,20 +53,19 @@ function styleBodyRow(row: StyleableRow): void {
   })
 }
 
-export type OptimizationExcelExportSummary = {
-  increasedCount: number
-  decreasedCount: number
-  keptCount: number
-  overriddenCount: number
-}
-
 export type OptimizationExcelExportInput = {
   fundName: string
   request: OptimizationRequestResponse
   assets: OptimizationResultAsset[]
-  summary: OptimizationExcelExportSummary
-  constraintMetrics: ConstraintMetric[]
-  infoMetrics: InfoMetric[]
+  criteriaRows: CriteriaRow[]
+}
+
+function decidedByLabel(request: OptimizationRequestResponse): string {
+  return request.decidedByDisplayName ?? request.decidedByUsername ?? "—"
+}
+
+function requestedByLabel(request: OptimizationRequestResponse): string {
+  return request.requestedByDisplayName ?? request.requestedByUsername ?? "—"
 }
 
 function addSummarySheet(
@@ -80,29 +79,65 @@ function addSummarySheet(
   ]
   styleHeaderRow(sheet.getRow(1))
 
+  const categories = buildResultCategories(input.assets)
+  const countFor = (key: string) =>
+    categories.find((category) => category.key === key)?.count ?? 0
+  const overriddenCount = input.assets.filter(
+    (asset) => asset.manuallyOverridden,
+  ).length
+
+  const statusLabel =
+    REQUEST_STATUS_LABELS[input.request.status] ?? input.request.status
+
   const rows: [string, string][] = [
     ["Fon", input.fundName],
     ["Optimizasyon isteği", `#${input.request.id}`],
+    ["Durum", statusLabel],
     [
       "Risk profili",
       RISK_PROFILE_LABELS[input.request.riskProfile] ??
         input.request.riskProfile,
     ],
-    ["Model sürümü", input.request.modelVersion ?? "—"],
-    ["Veri zamanı", formatDateTime(input.request.dataTimestamp)],
-    ["İşlemi yapan", input.request.requestedByUsername ?? "—"],
-    ["Onay/red zamanı", formatDateTime(input.request.updatedAt)],
-    ["Artırılan hisse sayısı", String(input.summary.increasedCount)],
-    ["Azaltılan hisse sayısı", String(input.summary.decreasedCount)],
-    ["Korunan hisse sayısı", String(input.summary.keptCount)],
-    ["Manuel değiştirilen hisse sayısı", String(input.summary.overriddenCount)],
+    ["İsteği oluşturan", requestedByLabel(input.request)],
+    ["Onaylayan/Reddeden", decidedByLabel(input.request)],
+    [
+      "Onay/red zamanı",
+      formatDecisionDateTime(input.request.status, input.request.updatedAt),
+    ],
   ]
+  if (input.request.status === "REJECTED" && input.request.rejectionReason) {
+    rows.push(["Red gerekçesi", input.request.rejectionReason])
+  }
+  rows.push(
+    ["Artırılan hisse sayısı", String(countFor("INCREASED"))],
+    ["Azaltılan hisse sayısı", String(countFor("DECREASED"))],
+    ["Sabit kalan hisse sayısı", String(countFor("LOCKED"))],
+    ["Manuel değiştirilen hisse sayısı", String(overriddenCount)],
+  )
 
   for (const [label, value] of rows) {
     const row = sheet.addRow([label, value])
     row.getCell(1).font = { bold: true }
     styleBodyRow(row)
   }
+
+  if (input.request.status === "REJECTED") {
+    const noteRow = sheet.addRow([
+      "Not: Bu istek reddedildi; yukarıdaki sayılar ve diğer sayfalardaki tablolar modelin " +
+        "önerdiği, fona uygulanmamış değişiklikleri gösterir.",
+    ])
+    noteRow.getCell(1).font = { italic: true, color: { argb: "FF991B1B" } }
+    sheet.mergeCells(noteRow.number, 1, noteRow.number, 2)
+  }
+}
+
+const DIRECTION_EPSILON = 0.001
+
+function resolveActionLabel(currentWeight: number, finalWeight: number): string {
+  const delta = finalWeight - currentWeight
+  if (delta > DIRECTION_EPSILON) return ACTION_TYPE_LABELS.INCREASE
+  if (delta < -DIRECTION_EPSILON) return ACTION_TYPE_LABELS.DECREASE
+  return ACTION_TYPE_LABELS.KEEP
 }
 
 function addAssetsSheet(
@@ -126,6 +161,7 @@ function addAssetsSheet(
   styleHeaderRow(sheet.getRow(1))
 
   for (const asset of assets) {
+    const finalWeight = asset.finalWeight ?? asset.proposedWeight
     const row = sheet.addRow({
       assetCode: asset.assetCode,
       name: asset.name,
@@ -133,9 +169,9 @@ function addAssetsSheet(
       assetType: asset.assetType,
       currentWeight: asset.currentWeight,
       proposedWeight: asset.proposedWeight,
-      finalWeight: asset.finalWeight ?? asset.proposedWeight,
-      changeAmount: asset.changeAmount,
-      actionType: ACTION_TYPE_LABELS[asset.actionType] ?? asset.actionType,
+      finalWeight,
+      changeAmount: Number((finalWeight - asset.currentWeight).toFixed(2)),
+      actionType: resolveActionLabel(asset.currentWeight, finalWeight),
       manuallyOverridden: asset.manuallyOverridden ? "Evet" : "Hayır",
       rationale: asset.rationale ?? "",
     })
@@ -151,7 +187,7 @@ function addSectorDistributionSheet(
   sheet.columns = [
     { header: "Sektör", key: "sectorName", width: 26 },
     { header: "Mevcut Ağırlık Toplamı (%)", key: "current", width: 24 },
-    { header: "Önerilen Ağırlık Toplamı (%)", key: "proposed", width: 26 },
+    { header: "Optimize Edilmiş Ağırlık Toplamı (%)", key: "proposed", width: 30 },
     { header: "Değişim (puan)", key: "change", width: 16 },
   ]
   styleHeaderRow(sheet.getRow(1))
@@ -164,7 +200,7 @@ function addSectorDistributionSheet(
     const sector = asset.sectorName ?? "Diğer"
     const entry = bySector.get(sector) ?? { current: 0, proposed: 0 }
     entry.current += asset.currentWeight
-    entry.proposed += asset.proposedWeight
+    entry.proposed += asset.finalWeight ?? asset.proposedWeight
     bySector.set(sector, entry)
   }
 
@@ -179,53 +215,30 @@ function addSectorDistributionSheet(
   }
 }
 
-function addConstraintMetricsSheet(
+function addCriteriaSheet(
   workbook: Workbook,
-  constraintMetrics: ConstraintMetric[],
+  sheetName: string,
+  rows: CriteriaRow[],
 ): void {
-  const sheet = workbook.addWorksheet("Kısıt Uyumu")
+  const sheet = workbook.addWorksheet(sheetName)
   sheet.columns = [
-    { header: "Metrik", key: "label", width: 30 },
-    { header: "Değer", key: "value", width: 12 },
+    { header: "Kriter", key: "label", width: 30 },
+    { header: "Mevcut", key: "currentValue", width: 12 },
+    { header: "Optimize Edilmiş", key: "proposedValue", width: 16 },
     { header: "Durum", key: "status", width: 18 },
     { header: "Detay", key: "detail", width: 55 },
   ]
   styleHeaderRow(sheet.getRow(1))
 
-  for (const metric of constraintMetrics) {
-    const row = sheet.addRow({
-      label: metric.label,
-      value: metric.value ?? "—",
-      status: CONSTRAINT_STATUS_LABELS[metric.status] ?? metric.status,
-      detail: metric.detail,
+  for (const row of rows) {
+    const excelRow = sheet.addRow({
+      label: row.label,
+      currentValue: row.currentValue ?? "—",
+      proposedValue: row.proposedValue ?? "—",
+      status: CRITERIA_STATUS_LABELS[row.status] ?? row.status,
+      detail: row.detail,
     })
-    styleBodyRow(row)
-  }
-}
-
-function addInfoMetricsSheet(
-  workbook: Workbook,
-  infoMetrics: InfoMetric[],
-): void {
-  const sheet = workbook.addWorksheet("Risk Metrikleri")
-  sheet.columns = [
-    { header: "Metrik", key: "label", width: 24 },
-    { header: "Mevcut", key: "currentValue", width: 12 },
-    { header: "Önerilen", key: "proposedValue", width: 12 },
-    { header: "Durum", key: "status", width: 18 },
-    { header: "Detay", key: "detail", width: 40 },
-  ]
-  styleHeaderRow(sheet.getRow(1))
-
-  for (const metric of infoMetrics) {
-    const row = sheet.addRow({
-      label: metric.label,
-      currentValue: metric.currentValue ?? "—",
-      proposedValue: metric.proposedValue ?? "—",
-      status: INFO_STATUS_LABELS[metric.status] ?? metric.status,
-      detail: metric.detail,
-    })
-    styleBodyRow(row)
+    styleBodyRow(excelRow)
   }
 }
 
@@ -236,11 +249,16 @@ export async function buildOptimizationResultExcel(
   workbook.creator = "Finovation"
   workbook.created = new Date()
 
+  const constraintRows = input.criteriaRows.filter(
+    (row) => row.unit !== "RATIO",
+  )
+  const infoRows = input.criteriaRows.filter((row) => row.unit === "RATIO")
+
   addSummarySheet(workbook, input)
   addAssetsSheet(workbook, input.assets)
   addSectorDistributionSheet(workbook, input.assets)
-  addConstraintMetricsSheet(workbook, input.constraintMetrics)
-  addInfoMetricsSheet(workbook, input.infoMetrics)
+  addCriteriaSheet(workbook, "Kısıt Uyumu", constraintRows)
+  addCriteriaSheet(workbook, "Risk Metrikleri", infoRows)
 
   return workbook
 }

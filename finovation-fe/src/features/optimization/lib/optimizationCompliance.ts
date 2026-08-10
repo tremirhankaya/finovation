@@ -31,7 +31,7 @@ export type ComplianceInput = {
   minSingleStockWeightPct: number
   maxSectorWeightPct: number
   currentStockCount: number | null
-  maxAdditions: number
+  heldExcludedAssetCount: number
 }
 
 function rangeStatus(
@@ -72,18 +72,22 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     STOCK_COUNT_MIN_RANGE_WIDTH,
   )
   const stockCountExceedsGuaranteed = guaranteedStockCount > input.stockCountMax
-  const maxReachableStockCount =
+  const projectedStockCount =
     input.currentStockCount == null
       ? null
-      : input.currentStockCount + input.maxAdditions
-  const stockCountUnreachable =
-    maxReachableStockCount != null && input.stockCountMin > maxReachableStockCount
+      : input.currentStockCount -
+        input.heldExcludedAssetCount +
+        input.forceAddedAssetCount
+  const projectedStockCountOutOfRange =
+    projectedStockCount != null &&
+    (projectedStockCount < input.stockCountMin ||
+      projectedStockCount > input.stockCountMax)
   const stockCountStatus: ComplianceRowStatus =
-    stockCountRangeStatus === "UYUMSUZ" ||
-    stockCountExceedsGuaranteed ||
-    stockCountUnreachable
+    stockCountRangeStatus === "UYUMSUZ" || stockCountExceedsGuaranteed
       ? "UYUMSUZ"
-      : "UYUMLU"
+      : projectedStockCountOutOfRange
+        ? "DIKKAT"
+        : "UYUMLU"
 
   const reservedWeight =
     input.keptWeightSum + input.forceAddedAssetCount * FORCE_ADD_MINIMUM_WEIGHT
@@ -110,7 +114,7 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
   const rows: ComplianceRow[] = [
     {
       key: "equity-weight",
-      label: "Hisse toplam ağırlığı",
+      label: "Hisse Toplam Ağırlığı",
       status: equityWeightStatus,
       detail:
         input.currentEquityWeightPct == null
@@ -121,7 +125,7 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     },
     {
       key: "tpp-range",
-      label: "TPP aralığı",
+      label: "TPP Aralığı",
       status: tppStatus,
       detail:
         tppStatus === "UYUMLU"
@@ -130,20 +134,26 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     },
     {
       key: "stock-count",
-      label: "Hisse sayısı",
+      label: "Hisse Sayısı",
       status: stockCountStatus,
       detail:
         stockCountRangeStatus === "UYUMSUZ"
           ? "Sistem sınırı 16–30 arasında, aralık genişliği en az 5 hisse olmalı"
           : stockCountExceedsGuaranteed
             ? `${guaranteedStockCount} hisse (sabit + zorunlu) seçilen ${input.stockCountMax} üst sınırını aşıyor`
-            : stockCountUnreachable
-              ? `Fonda şu an ${input.currentStockCount} hisse var, en fazla ${input.maxAdditions} yeni hisse eklenebiliyor (ulaşılabilir üst sınır ${maxReachableStockCount}) — hedef alt sınır ${input.stockCountMin}'e ulaşılamaz. Hisse sayısı alt sınırını ${maxReachableStockCount} veya altına düşürün.`
+            : projectedStockCountOutOfRange
+              ? `Mevcut fon B'den ${input.heldExcludedAssetCount} çıkarma, D'den ${input.forceAddedAssetCount} zorunlu eklemeyle ${projectedStockCount} hisseye ${
+                  projectedStockCount != null &&
+                  input.currentStockCount != null &&
+                  projectedStockCount > input.currentStockCount
+                    ? "çıkıyor"
+                    : "düşüyor"
+                }, seçtiğiniz ${input.stockCountMin}–${input.stockCountMax} aralığının dışında kalıyor — optimizasyon yine de diğer hisselerle aralığı tutturabilir`
               : `${input.stockCountMin}–${input.stockCountMax} arasında`,
     },
     {
       key: "kept-assets",
-      label: "Sabit tutulan hisseler",
+      label: "Sabit Tutulan Hisseler",
       status: keptWeightStatus,
       detail:
         keptWeightStatus === "UYUMLU"
@@ -152,7 +162,7 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     },
     {
       key: "single-stock-weight",
-      label: "Tek hisse ağırlığı",
+      label: "Tek Hisse Ağırlığı",
       status: singleStockStatus,
       detail:
         input.keptAssetCount === 0
@@ -165,13 +175,14 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     },
     {
       key: "forced-excluded-assets",
-      label: "Zorunlu ve hariç tutulan hisseler",
+      label: "Zorunlu ve Hariç Tutulan Hisseler",
       status: "UYUMLU",
+      locked: true,
       detail: `${input.forceAddedAssetCount} hisse zorunlu eklenecek · ${input.excludedAssetCount} hisse hariç tutuldu; zorunlu hisseler için en az %3 ağırlık ayrılır`,
     },
     {
       key: "sector-concentration",
-      label: "Sektör yoğunlaşması",
+      label: "Sektör Yoğunlaşması",
       status: sectorStatus,
       detail:
         input.keptAssetCount === 0
@@ -186,16 +197,20 @@ export function buildComplianceRows(input: ComplianceInput): ComplianceRow[] {
     (row) => row.status === "UYUMSUZ",
   )
     ? "UYUMSUZ"
-    : "UYUMLU"
+    : rows.some((row) => row.status === "DIKKAT")
+      ? "DIKKAT"
+      : "UYUMLU"
 
   rows.push({
     key: "overall",
-    label: "Toplam uygulanabilirlik",
+    label: "Toplam Uygulanabilirlik",
     status: overallStatus,
     detail:
       overallStatus === "UYUMLU"
         ? "Optimizasyon çalıştırılabilir"
-        : "Kırmızı durumlar giderilmeden optimizasyon çalıştırılamaz",
+        : overallStatus === "DIKKAT"
+          ? "Turuncu satırlar bilgilendirme amaçlıdır, optimizasyon yine de çalıştırılabilir"
+          : "Kırmızı durumlar giderilmeden optimizasyon çalıştırılamaz",
   })
 
   return rows

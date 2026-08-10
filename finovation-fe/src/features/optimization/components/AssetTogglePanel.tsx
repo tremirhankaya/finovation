@@ -3,15 +3,26 @@ import { useMemo, useState } from "react"
 import type { UniverseAsset } from "@/features/optimization/model/optimizationForm.types"
 import styles from "@/features/optimization/styles/OptimizationFormPage.module.css"
 
+export type PinnedAsset = {
+  assetId: string
+  symbol: string
+  name: string
+  sectorName: string | null
+}
+
 export type AssetTogglePanelProps = {
   title: string
   description: string
   assets: UniverseAsset[]
   selectedAssetCodes: ReadonlySet<string>
   disabledAssetCodes: ReadonlySet<string>
+  disabledTitle?: string
   toggleLabel: string
   variant?: "exclude" | "forceAdd"
   onToggle: (assetCode: string) => void
+  pinnedAssets?: PinnedAsset[]
+  pinnedBadgeLabel?: string
+  onTogglePinned?: (assetId: string) => void
 }
 
 const ALL_SECTORS_VALUE = ""
@@ -22,9 +33,13 @@ export default function AssetTogglePanel({
   assets,
   selectedAssetCodes,
   disabledAssetCodes,
+  disabledTitle,
   toggleLabel,
   variant = "forceAdd",
   onToggle,
+  pinnedAssets = [],
+  pinnedBadgeLabel,
+  onTogglePinned,
 }: AssetTogglePanelProps) {
   const [query, setQuery] = useState("")
   const [sectorFilter, setSectorFilter] = useState(ALL_SECTORS_VALUE)
@@ -41,20 +56,21 @@ export default function AssetTogglePanel({
     [assets],
   )
 
-  const forceAddOrder = useMemo(
-    () => [...selectedAssetCodes],
-    [selectedAssetCodes],
-  )
-
   const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR")
-  const filteredAssets = assets.filter((asset) => {
-    if (sectorFilter && asset.sectorName !== sectorFilter) return false
-    if (!normalizedQuery) return true
-    return [asset.symbol, asset.name, asset.sectorName ?? ""]
-      .join(" ")
-      .toLocaleLowerCase("tr-TR")
-      .includes(normalizedQuery)
-  })
+  const filteredAssets = assets
+    .filter((asset) => {
+      if (sectorFilter && asset.sectorName !== sectorFilter) return false
+      if (!normalizedQuery) return true
+      return [asset.symbol, asset.name, asset.sectorName ?? ""]
+        .join(" ")
+        .toLocaleLowerCase("tr-TR")
+        .includes(normalizedQuery)
+    })
+    .sort((a, b) => {
+      const aSelected = selectedAssetCodes.has(a.assetCode) ? 0 : 1
+      const bSelected = selectedAssetCodes.has(b.assetCode) ? 0 : 1
+      return aSelected - bSelected
+    })
 
   return (
     <section className={styles.panel}>
@@ -84,7 +100,7 @@ export default function AssetTogglePanel({
         ))}
       </select>
 
-      {filteredAssets.length === 0 ? (
+      {filteredAssets.length === 0 && pinnedAssets.length === 0 ? (
         <p className={styles.emptyState}>
           Aramanızla eşleşen hisse bulunamadı.
         </p>
@@ -94,11 +110,37 @@ export default function AssetTogglePanel({
             <thead>
               <tr>
                 <th>Hisse</th>
-                {variant === "forceAdd" && <th>Ayrılan Ağırlık</th>}
                 <th>{toggleLabel}</th>
               </tr>
             </thead>
             <tbody>
+              {pinnedAssets.map((pinned) => (
+                <tr key={`pinned-${pinned.assetId}`} className={styles.pinnedAssetRow}>
+                  <td>
+                    <span className={styles.assetRowSymbol}>
+                      {pinned.symbol}
+                    </span>{" "}
+                    <span className={styles.assetRowName}>{pinned.name}</span>
+                    {pinnedBadgeLabel && (
+                      <span className={styles.pinnedBadge}>
+                        {pinnedBadgeLabel}
+                      </span>
+                    )}
+                    <div className={styles.fundRowMeta}>
+                      {pinned.sectorName ?? "—"}
+                    </div>
+                  </td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className={`${styles.assetToggleBox} ${styles.assetToggleBoxExclude}`}
+                      checked
+                      onChange={() => onTogglePinned?.(pinned.assetId)}
+                      aria-label={`${pinned.symbol} hissesi için ${toggleLabel} (B panelinden)`}
+                    />
+                  </td>
+                </tr>
+              ))}
               {filteredAssets.map((asset) => (
                 <tr key={asset.assetCode}>
                   <td>
@@ -110,13 +152,6 @@ export default function AssetTogglePanel({
                       {asset.sectorName ?? "—"}
                     </div>
                   </td>
-                  {variant === "forceAdd" && (
-                    <td className={styles.forceAddWeightCell}>
-                      {selectedAssetCodes.has(asset.assetCode)
-                        ? `en az %${(forceAddOrder.indexOf(asset.assetCode) + 1) * 3}`
-                        : "—"}
-                    </td>
-                  )}
                   <td>
                     <input
                       type="checkbox"
@@ -127,6 +162,11 @@ export default function AssetTogglePanel({
                       }
                       checked={selectedAssetCodes.has(asset.assetCode)}
                       disabled={disabledAssetCodes.has(asset.assetCode)}
+                      title={
+                        disabledAssetCodes.has(asset.assetCode)
+                          ? disabledTitle
+                          : undefined
+                      }
                       onChange={() => onToggle(asset.assetCode)}
                       aria-label={`${asset.symbol} hissesi için ${toggleLabel}`}
                     />
@@ -136,15 +176,6 @@ export default function AssetTogglePanel({
             </tbody>
           </table>
         </div>
-      )}
-
-      {variant === "forceAdd" && (
-        <p className={styles.forceAddHint}>
-          Her seçilen hisse için portföyde en az <strong>%3</strong> ağırlık
-          ayrılır; seçim sırasına göre toplam ayrılan ağırlık artar (1. hisse
-          %3, 2. hisse %6, …) ve bu, kilitli hisselerle birlikte kullanılabilir
-          alanı (izahname üst limiti %95) tüketir.
-        </p>
       )}
     </section>
   )

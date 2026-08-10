@@ -24,6 +24,16 @@ function statusForUserRangeValue(
   return "AMBER"
 }
 
+function statusForTotalPortfolioWeight(
+  value: number | null,
+): ConstraintMetricStatus {
+  if (value == null) return "GRAY"
+  const deviation = Math.abs(value - thresholds.TOTAL_PORTFOLIO_WEIGHT_TARGET)
+  return deviation > thresholds.PROPOSED_TOTAL_PORTFOLIO_WEIGHT_TOLERANCE_POINTS
+    ? "RED"
+    : "GREEN"
+}
+
 function statusForTotalEquityWeight(
   value: number | null,
 ): ConstraintMetricStatus {
@@ -71,6 +81,16 @@ export function evaluateConstraintMetrics(
   input: ConstraintMetricInput,
 ): ConstraintMetric[] {
   return [
+    {
+      key: "TOTAL_PORTFOLIO_WEIGHT",
+      label: "Toplam Portföy Ağırlığı",
+      value: input.totalPortfolioWeight,
+      status: statusForTotalPortfolioWeight(input.totalPortfolioWeight),
+      detail:
+        input.totalPortfolioWeight == null
+          ? CANNOT_EVALUATE_DETAIL
+          : "Hisse + TPP toplamı %100 olmalı",
+    },
     {
       key: "TOTAL_EQUITY_WEIGHT",
       label: "Toplam Hisse Ağırlığı",
