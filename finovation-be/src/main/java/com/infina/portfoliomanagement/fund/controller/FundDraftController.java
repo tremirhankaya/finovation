@@ -1,9 +1,12 @@
 package com.infina.portfoliomanagement.fund.controller;
 
 import com.infina.portfoliomanagement.fund.controller.docs.FundDraftControllerDocs;
+import com.infina.portfoliomanagement.fund.dto.ArchivedFundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundDraftInitResponse;
+import com.infina.portfoliomanagement.fund.dto.FundDraftPageResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
+import com.infina.portfoliomanagement.fund.dto.FundDraftSearchCriteria;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.dto.FundEstimatesResponse;
 import com.infina.portfoliomanagement.fund.dto.ModelUniverseAssetResponse;
@@ -14,6 +17,8 @@ import com.infina.portfoliomanagement.fund.dto.analysis.SelectFundProposalReques
 import com.infina.portfoliomanagement.fund.dto.analysis.UpdateWorkingPortfolioRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
+import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
+import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
 import com.infina.portfoliomanagement.fund.service.FundDraftService;
 import com.infina.portfoliomanagement.fund.service.FundEstimationService;
 import jakarta.validation.Valid;
@@ -22,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +35,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -66,18 +73,46 @@ public class FundDraftController implements FundDraftControllerDocs {
 
     @Override
     @GetMapping
-    public List<FundDraftSummaryResponse> listInProgressDrafts(
-            @AuthenticationPrincipal UserDetails userDetails
+    public FundDraftPageResponse searchDrafts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(required = false) FundDraftStatus status,
+            @RequestParam(required = false) ManagementApproach managementApproach
     ) {
-        return fundDraftService.listInProgressDrafts(userDetails.getUsername());
+        return fundDraftService.searchDrafts(
+                userDetails.getUsername(),
+                new FundDraftSearchCriteria(page, size, q, status, managementApproach)
+        );
     }
 
     @Override
-    @GetMapping("/completed")
-    public List<FundDraftSummaryResponse> listCompletedDrafts(
+    @GetMapping("/archived")
+    public List<ArchivedFundDraftResponse> listArchivedDrafts(
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return fundDraftService.listCompletedDrafts(userDetails.getUsername());
+        return fundDraftService.listArchivedDrafts(userDetails.getUsername());
+    }
+
+    @Override
+    @DeleteMapping("/{draftId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void archiveDraft(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID draftId
+    ) {
+        fundDraftService.archiveDraft(userDetails.getUsername(), draftId);
+    }
+
+    @Override
+    @PostMapping("/{draftId}/restoration")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void restoreDraft(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID draftId
+    ) {
+        fundDraftService.restoreDraft(userDetails.getUsername(), draftId);
     }
 
     @Override

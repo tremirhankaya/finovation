@@ -46,14 +46,6 @@ export const fundDraftInitLimitsSchema = z.object({
   maxAssetPreferences: z.coerce.number().int(),
 })
 
-export const fundDraftSummarySchema = z.object({
-  draftId: z.string().uuid(),
-  name: z.string(),
-  currentStep: z.number().nullable(),
-  status: z.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
-  updatedAt: z.string(),
-})
-
 export const createdFundDraftSchema = z.object({
   draftId: z.string().uuid(),
   currentStep: z.coerce.number().int().optional(),
@@ -69,6 +61,35 @@ const optionalInt = z.preprocess((value) => {
   if (value === null || value === undefined || value === "") return null
   return value
 }, z.coerce.number().int().nullable())
+
+export const fundDraftSummarySchema = z.object({
+  draftId: z.string().uuid(),
+  name: z.string().nullable(),
+  managementApproach: managementApproachSchema.nullish(),
+  initialPortfolioSize: z.coerce.number().nullish(),
+  currentStep: z.number().nullable(),
+  status: z.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
+  designMode: z.enum(["AI_ASSISTED", "MANUAL"]).nullish(),
+  createdAt: z.string().nullish(),
+  updatedAt: z.string(),
+})
+
+export const archivedFundDraftSchema = z.object({
+  draftId: z.string().uuid(),
+  name: z.string().nullable(),
+  status: z.enum(["IN_PROGRESS", "COMPLETED"]),
+  archivedAt: z.string(),
+})
+
+export const fundDraftPageSchema = z.object({
+  content: z.array(fundDraftSummarySchema),
+  page: z.coerce.number().int(),
+  size: z.coerce.number().int(),
+  totalElements: z.coerce.number().int(),
+  totalPages: z.coerce.number().int(),
+  hasNext: z.boolean(),
+  hasPrevious: z.boolean(),
+})
 
 export const fundDraftSchema = z.object({
   draftId: z.string().uuid(),
@@ -166,6 +187,8 @@ export type FundDraftPortfolioRules = z.infer<
 >
 export type ModelUniverseAsset = z.infer<typeof modelUniverseAssetSchema>
 export type FundDraftSummary = z.infer<typeof fundDraftSummarySchema>
+export type FundDraftPage = z.infer<typeof fundDraftPageSchema>
+export type ArchivedFundDraft = z.infer<typeof archivedFundDraftSchema>
 
 export const FUND_TYPE_LABELS = {
   EQUITY_INTENSIVE: "Hisse Senedi Yoğun Fon",

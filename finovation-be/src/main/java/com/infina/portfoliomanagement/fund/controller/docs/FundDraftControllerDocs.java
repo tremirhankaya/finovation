@@ -1,8 +1,10 @@
 package com.infina.portfoliomanagement.fund.controller.docs;
 
 import com.infina.portfoliomanagement.common.config.OpenApiConfig;
+import com.infina.portfoliomanagement.fund.dto.ArchivedFundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundDraftInitResponse;
+import com.infina.portfoliomanagement.fund.dto.FundDraftPageResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.dto.ModelUniverseAssetResponse;
@@ -13,6 +15,8 @@ import com.infina.portfoliomanagement.fund.dto.analysis.SelectFundProposalReques
 import com.infina.portfoliomanagement.fund.dto.analysis.UpdateWorkingPortfolioRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
+import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
+import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -58,19 +62,44 @@ public interface FundDraftControllerDocs {
     FundDraftInitResponse getInit(UserDetails userDetails, FundDesignInitPage page, UUID draftId);
 
     @Operation(
-            summary = "List in-progress fund drafts",
-            description = "Returns the authenticated user's IN_PROGRESS drafts for resume/continue flows. "
-                    + "currentStep is the next wizard screen to open.",
+            summary = "Search the authenticated user's fund drafts",
+            description = "Paginated list scoped to the caller. Filter by status "
+                    + "(IN_PROGRESS for drafts, COMPLETED for funds), management approach and name. "
+                    + "Archived drafts are never returned. currentStep is the next wizard screen "
+                    + "to open for an in-progress draft.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
-    List<FundDraftSummaryResponse> listInProgressDrafts(UserDetails userDetails);
+    FundDraftPageResponse searchDrafts(
+            UserDetails userDetails,
+            int page,
+            int size,
+            String q,
+            FundDraftStatus status,
+            ManagementApproach managementApproach
+    );
 
     @Operation(
-            summary = "List completed fund drafts",
-            description = "Returns the authenticated user's COMPLETED drafts.",
+            summary = "List archived fund drafts",
+            description = "Returns the caller's archived drafts and funds. Archived records are "
+                    + "hidden from every other query, so this endpoint reads them explicitly.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
-    List<FundDraftSummaryResponse> listCompletedDrafts(UserDetails userDetails);
+    List<ArchivedFundDraftResponse> listArchivedDrafts(UserDetails userDetails);
+
+    @Operation(
+            summary = "Archive a fund draft",
+            description = "Soft deletes the draft. It disappears from lists, monitoring and stress "
+                    + "tests, but stays restorable from the archive.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    void archiveDraft(UserDetails userDetails, UUID draftId);
+
+    @Operation(
+            summary = "Restore an archived fund draft",
+            description = "Brings an archived draft back into the active lists.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    void restoreDraft(UserDetails userDetails, UUID draftId);
 
     @Operation(
             summary = "List model universe equities",

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
-import { listInProgressDrafts, type FundDraftSummary } from "@/features/fund-design/api/fundDraftApi"
+import { searchFundDrafts, type FundDraftSummary } from "@/features/fund-design/api/fundDraftApi"
 import Button from "@/shared/ui/Button"
 import styles from "@/features/fund-design/styles/FundDesignLandingPage.module.css"
 
@@ -11,9 +11,9 @@ export default function FundDraftsPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    listInProgressDrafts(controller.signal)
+    searchFundDrafts({ status: "IN_PROGRESS" }, controller.signal)
       .then((data) => {
-        setDrafts(data)
+        setDrafts(data.content)
         setLoading(false)
       })
       .catch((err) => {

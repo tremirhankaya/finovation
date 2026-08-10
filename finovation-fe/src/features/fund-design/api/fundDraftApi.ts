@@ -1,29 +1,34 @@
 import {
+  getArchivedFundDraftsUrl,
   getFundDraftAnalysisUrl,
   getFundDraftCompletionUrl,
   getFundDraftInitUrl,
   getFundDraftModelUniverseUrl,
   getFundDraftPortfolioRulesUrl,
+  getFundDraftRestorationUrl,
   getFundDraftSelectedProposalUrl,
   getFundDraftWorkingPortfolioUrl,
   getFundDraftUrl,
   getFundDraftsUrl,
   getFundEstimatesUrl,
 } from "@/shared/api/apiConfig"
-import { apiFetch } from "@/shared/api/httpClient"
+import { apiFetch, apiSend } from "@/shared/api/httpClient"
 import {
+  type ArchivedFundDraft,
   type CreatedFundDraft,
   type FundDesignInitPage,
   type FundDraft,
   type FundDraftInit,
+  type FundDraftPage,
   type FundDraftPortfolioRules,
   type ModelUniverseAsset,
   type FundDraftSummary,
+  archivedFundDraftSchema,
   createdFundDraftSchema,
   fundDraftInitSchema,
+  fundDraftPageSchema,
   fundDraftPortfolioRulesSchema,
   fundDraftSchema,
-  fundDraftSummarySchema,
   modelUniverseAssetSchema,
 } from "@/features/fund-design/model/fundDraftSchemas"
 import type { ManagementApproachCode } from "@/features/fund-design/model/managementApproach"
@@ -81,30 +86,70 @@ export async function getFundDraft(
   )
 }
 
-export async function listInProgressDrafts(
+export type SearchFundDraftsInput = {
+  page?: number
+  size?: number
+  q?: string
+  status?: "IN_PROGRESS" | "COMPLETED"
+  managementApproach?: ManagementApproachCode
+}
+
+export async function searchFundDrafts(
+  input: SearchFundDraftsInput = {},
   signal?: AbortSignal,
-): Promise<FundDraftSummary[]> {
+): Promise<FundDraftPage> {
+  const params = new URLSearchParams()
+  params.set("page", String(input.page ?? 0))
+  params.set("size", String(input.size ?? 10))
+  if (input.q) params.set("q", input.q)
+  if (input.status) params.set("status", input.status)
+  if (input.managementApproach) {
+    params.set("managementApproach", input.managementApproach)
+  }
+
   return apiFetch(
-    getFundDraftsUrl(),
+    `${getFundDraftsUrl()}?${params.toString()}`,
     {
-      errorMessage: "Fon taslakları listesi alınamadı",
+      errorMessage: "Fon listesi alınamadı",
       signal,
     },
-    z.array(fundDraftSummarySchema).parse,
+    fundDraftPageSchema.parse,
   )
 }
 
-export async function listCompletedDrafts(
+export async function listArchivedFundDrafts(
   signal?: AbortSignal,
-): Promise<FundDraftSummary[]> {
+): Promise<ArchivedFundDraft[]> {
   return apiFetch(
-    `${getFundDraftsUrl()}/completed`,
+    getArchivedFundDraftsUrl(),
     {
-      errorMessage: "Aktif fonlar listesi alınamadı",
+      errorMessage: "Arşiv listesi alınamadı",
       signal,
     },
-    z.array(fundDraftSummarySchema).parse,
+    z.array(archivedFundDraftSchema).parse,
   )
+}
+
+export async function archiveFundDraft(
+  draftId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await apiSend(getFundDraftUrl(draftId), {
+    method: "DELETE",
+    errorMessage: "Arşivlenemedi",
+    signal,
+  })
+}
+
+export async function restoreFundDraft(
+  draftId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await apiSend(getFundDraftRestorationUrl(draftId), {
+    method: "POST",
+    errorMessage: "Geri yüklenemedi",
+    signal,
+  })
 }
 
 export async function createFundDraft(

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
-import { listCompletedDrafts, type FundDraftSummary } from "@/features/fund-design/api/fundDraftApi"
+import { searchFundDrafts, type FundDraftSummary } from "@/features/fund-design/api/fundDraftApi"
 import styles from "@/features/fund-design/styles/FundDesignLandingPage.module.css"
 
 export default function FundActivePage() {
@@ -10,9 +10,9 @@ export default function FundActivePage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    listCompletedDrafts(controller.signal)
+    searchFundDrafts({ status: "COMPLETED" }, controller.signal)
       .then((data) => {
-        setDrafts(data)
+        setDrafts(data.content)
         setLoading(false)
       })
       .catch((err) => {
