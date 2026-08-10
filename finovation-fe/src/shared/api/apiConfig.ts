@@ -35,6 +35,8 @@ export const API_PATHS = {
   investmentUniverse:
       import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
       "/v1/investment-universe",
+  dashboard:
+      import.meta.env.VITE_DASHBOARD_PATH?.trim() || "/v1/dashboard",
 } as const
 
 function normalizePath(path: string): string {
@@ -139,7 +141,10 @@ export function getFundsUrl(): string {
 }
 
 export function getUserFundsUrl(ownerUserId: number): string {
-  const params = new URLSearchParams({ ownerUserId: String(ownerUserId) })
+  const params = new URLSearchParams({
+    ownerUserId: String(ownerUserId),
+  })
+
   return `${getFundsUrl()}?${params.toString()}`
 }
 
@@ -147,9 +152,18 @@ export function getFundMonitoringUrl(fundId: string): string {
   return `${getFundsUrl()}/${encodeURIComponent(fundId)}/monitoring`
 }
 
-export function getOptimizationRequestsUrl(fundId?: string): string {
+export function getDashboardSummaryUrl(): string {
+  return `${buildUrl(API_PATHS.dashboard)}/summary`
+}
+
+export function getOptimizationRequestsUrl(
+    fundId?: string,
+): string {
   const base = buildUrl(API_PATHS.optimizationRequests)
-  return fundId == null ? base : `${base}?fundId=${encodeURIComponent(fundId)}`
+
+  return fundId == null
+      ? base
+      : `${base}?fundId=${encodeURIComponent(fundId)}`
 }
 
 export function getOptimizableFundsUrl(): string {
@@ -160,29 +174,44 @@ export function getOptimizationLogsUrl(): string {
   return `${buildUrl(API_PATHS.optimizationRequests)}/logs`
 }
 
-export function getOptimizationFundPositionsUrl(fundId: string): string {
-  return `${buildUrl(API_PATHS.optimizationRequests)}/funds/${encodeURIComponent(fundId)}/current-positions`
+export function getOptimizationFundPositionsUrl(
+    fundId: string,
+): string {
+  return `${buildUrl(
+      API_PATHS.optimizationRequests,
+  )}/funds/${encodeURIComponent(fundId)}/current-positions`
 }
 
-export function getOptimizationRequestUrl(requestId: number): string {
+export function getOptimizationRequestUrl(
+    requestId: number,
+): string {
   return `${buildUrl(API_PATHS.optimizationRequests)}/${requestId}`
 }
 
-export function getOptimizationRequestRunUrl(requestId: number): string {
+export function getOptimizationRequestRunUrl(
+    requestId: number,
+): string {
   return `${getOptimizationRequestUrl(requestId)}/run`
 }
 
-export function getOptimizationRequestResultUrl(requestId: number): string {
+export function getOptimizationRequestResultUrl(
+    requestId: number,
+): string {
   return `${getOptimizationRequestUrl(requestId)}/result`
 }
 
-export function getOptimizationRequestApproveUrl(requestId: number): string {
+export function getOptimizationRequestApproveUrl(
+    requestId: number,
+): string {
   return `${getOptimizationRequestUrl(requestId)}/approve`
 }
 
-export function getOptimizationRequestRejectUrl(requestId: number): string {
+export function getOptimizationRequestRejectUrl(
+    requestId: number,
+): string {
   return `${getOptimizationRequestUrl(requestId)}/reject`
 }
+
 export function getInvestmentUniverseUrl(): string {
   return buildUrl(API_PATHS.investmentUniverse)
 }
@@ -196,5 +225,38 @@ export function getStressTestsUrl(): string {
 }
 
 export function getStressTestUrl(testId: string): string {
-  return `${buildUrl(API_PATHS.stressTests)}/${encodeURIComponent(testId)}`
+  return `${getStressTestsUrl()}/${encodeURIComponent(testId)}`
+}
+
+export function getStressTestAssetPathUrl(
+    testId: string,
+    assetCode: string,
+): string {
+  return `${getStressTestUrl(
+      testId,
+  )}/path/${encodeURIComponent(assetCode)}`
+}
+
+export function getStressTestSectorsUrl(
+    testId: string,
+): string {
+  return `${getStressTestUrl(testId)}/sectors`
+}
+
+export function getStressTestPortfolioPathUrl(
+    testId: string,
+): string {
+  return `${getStressTestUrl(testId)}/portfolio-path`
+}
+
+export function getStressTestRiskMetricsUrl(
+    testId: string,
+): string {
+  return `${getStressTestUrl(testId)}/risk-metrics`
+}
+
+export function getStressTestSectorPathsUrl(
+    testId: string,
+): string {
+  return `${getStressTestUrl(testId)}/sector-paths`
 }

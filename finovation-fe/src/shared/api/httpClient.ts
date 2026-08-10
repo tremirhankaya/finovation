@@ -30,7 +30,7 @@ type RefreshOperation = {
   promise: Promise<RefreshResult>
 }
 
-const REQUEST_TIMEOUT_MS = 20_000
+const REQUEST_TIMEOUT_MS = 60_000
 
 let sessionVersion = 0
 let refreshOperation: RefreshOperation | null = null

@@ -5,7 +5,6 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
-import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,17 +30,13 @@ class FundValuationCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        calculator = new FundValuationCalculator(
-                new FundMonitoringProperties(
-                        new BigDecimal("100"),
-                        new BigDecimal("37")
-                )
-        );
+        calculator = new FundValuationCalculator();
         firstAsset = asset(1L, "AAA.E");
         secondAsset = asset(2L, "BBB.E");
         fund = FundDraft.builder()
                 .id(10L)
                 .initialPortfolioSize(new BigDecimal("1000"))
+                .unitPrice(new BigDecimal("10"))
                 .createdAt(INCEPTION_DATE.atStartOfDay())
                 .build();
     }
@@ -64,6 +59,7 @@ class FundValuationCalculatorTest {
                 unitValues
         );
 
+        assertThat(result.outstandingShares()).isEqualByComparingTo("100");
         assertThat(result.points()).hasSize(2);
         assertThat(result.points().getFirst().nav()).isEqualByComparingTo("1000");
         assertThat(result.points().getFirst().sharePrice()).isEqualByComparingTo("10");
@@ -74,17 +70,19 @@ class FundValuationCalculatorTest {
     }
 
     @Test
-    void latestWeights_areAnchoredTodayAndHistoricallyValuedBackwards() {
+    void inceptionWeights_remainAnchoredWhenNewMarketDatesArrive() {
         List<FundPosition> positions = List.of(
                 position(firstAsset.getId(), "50"),
                 position(secondAsset.getId(), "50")
         );
         Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValues = Map.of(
-                firstAsset.getId(), values("10", "20"),
-                secondAsset.getId(), values("20", "20")
+                firstAsset.getId(), values("10", "20", "30"),
+                secondAsset.getId(), values("20", "20", "20")
         );
 
-        var result = calculator.calculateBackwardsFromLatest(
+        fund.setCreatedAt(INCEPTION_DATE.plusDays(1).atStartOfDay());
+
+        var result = calculator.calculateAroundInception(
                 fund,
                 positions,
                 List.of(firstAsset, secondAsset),
@@ -92,17 +90,48 @@ class FundValuationCalculatorTest {
                 INCEPTION_DATE
         );
 
-        assertThat(result.points()).hasSize(2);
+        assertThat(result.points()).hasSize(3);
         assertThat(result.points().getFirst().nav()).isEqualByComparingTo("750");
         assertThat(result.points().getFirst().sharePrice()).isEqualByComparingTo("7.5");
-        assertThat(result.latestPoint().nav()).isEqualByComparingTo("1000");
-        assertThat(result.latestPoint().sharePrice()).isEqualByComparingTo("10");
+        assertThat(result.points().get(1).sharePrice()).isEqualByComparingTo("10");
+        assertThat(result.latestPoint().nav()).isEqualByComparingTo("1250");
+        assertThat(result.latestPoint().sharePrice()).isEqualByComparingTo("12.5");
         assertThat(result.positions())
                 .extracting(position -> position.currentWeightPercentage())
                 .containsExactly(
-                        new BigDecimal("50.000000"),
-                        new BigDecimal("50.000000")
+                        new BigDecimal("60.000000"),
+                        new BigDecimal("40.000000")
                 );
+    }
+
+    @Test
+    void inceptionWithoutACommonValue_isRejectedInsteadOfChangingTheBaseDate() {
+        List<FundPosition> positions = List.of(
+                position(firstAsset.getId(), "50"),
+                position(secondAsset.getId(), "50")
+        );
+        NavigableMap<LocalDate, BigDecimal> firstValues = new TreeMap<>();
+        firstValues.put(INCEPTION_DATE, new BigDecimal("10"));
+        firstValues.put(INCEPTION_DATE.plusDays(2), new BigDecimal("20"));
+        NavigableMap<LocalDate, BigDecimal> secondValues = new TreeMap<>();
+        secondValues.put(INCEPTION_DATE, new BigDecimal("20"));
+        secondValues.put(INCEPTION_DATE.plusDays(2), new BigDecimal("20"));
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValues = Map.of(
+                firstAsset.getId(), firstValues,
+                secondAsset.getId(), secondValues
+        );
+        fund.setCreatedAt(INCEPTION_DATE.plusDays(1).atStartOfDay());
+
+        assertThatThrownBy(() -> calculator.calculateAroundInception(
+                fund,
+                positions,
+                List.of(firstAsset, secondAsset),
+                unitValues,
+                INCEPTION_DATE
+        ))
+                .isInstanceOf(BaseException.class)
+                .extracting(error -> ((BaseException) error).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE);
     }
 
     @Test

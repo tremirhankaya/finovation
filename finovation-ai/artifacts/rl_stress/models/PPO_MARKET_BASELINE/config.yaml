@@ -1,0 +1,301 @@
+config_version: 2.2.0
+project:
+  name: bist16_two_scenario_ppo_v22
+  initial_nav_try: 10000000.0
+  random_seed: 42
+  decision_frequency: daily
+  execution: t_minus_1_information_to_precommitted_t_moc_target
+  fractional_units: true
+model:
+  id: P0_SCENARIO_BLIND
+  role: deployable_control
+  deployable: true
+paths:
+  equity_prices: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\data\raw\equity_prices.parquet
+  fx_daily: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\data\raw\fx_daily.parquet
+  tpp_overnight: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\data\raw\tpp_overnight_observed.parquet
+  trading_calendar: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\data\raw\trading_calendar.parquet
+  instrument_master: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\data\raw\instrument_master.parquet
+  artifacts_dir: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\artifacts_v22
+  run_root: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\artifacts_v22\p0_scenario_blind\runs
+  report_root: C:\Users\ertun\Desktop\rl_model_2\bist_stress_rl_v2\artifacts_v22\p0_scenario_blind\reports
+universe:
+  tickers:
+  - GARAN.E
+  - AKBNK.E
+  - ASELS.E
+  - BIMAS.E
+  - TUPRS.E
+  - THYAO.E
+  - FROTO.E
+  - KCHOL.E
+  - SAHOL.E
+  - SISE.E
+  - EREGL.E
+  - TCELL.E
+  - TAVHL.E
+  - MGROS.E
+  - TOASO.E
+  - ULKER.E
+  tpp_symbol: TPP_ON
+  initial_weights:
+    GARAN.E: 0.1
+    AKBNK.E: 0.1
+    ASELS.E: 0.03
+    BIMAS.E: 0.05
+    TUPRS.E: 0.04
+    THYAO.E: 0.05
+    FROTO.E: 0.05
+    KCHOL.E: 0.09
+    SAHOL.E: 0.1
+    SISE.E: 0.05
+    EREGL.E: 0.05
+    TCELL.E: 0.05
+    TAVHL.E: 0.05
+    MGROS.E: 0.05
+    TOASO.E: 0.04
+    ULKER.E: 0.05
+    TPP_ON: 0.05
+data:
+  ignore_before: '2017-01-01'
+  train_start: '2017-01-02'
+  train_end: '2023-12-29'
+  validation_start: '2024-01-02'
+  validation_end: '2024-12-31'
+  relocked_test_start: '2025-01-02'
+  relocked_test_end: '2026-01-23'
+  lookback_sessions: 20
+  warmup_closes: 21
+  available_from_required: true
+  future_fill_forbidden: true
+  reject_abs_daily_return_over: 0.3
+  mask_neighbor_sessions: 1
+  daily_log_return_clip: 0.12
+  residual_block_length: 5
+  ridge_alpha: 0.0001
+  market_trim_each_tail: 0.1
+  event_bootstrap_reps: 250
+  events:
+    S1:
+      label: Imamoglu_tutuklandi
+      warmup_start: '2025-02-14'
+      active_start: '2025-03-17'
+      active_end: '2025-05-05'
+      dossier_end: '2025-06-03'
+    S2:
+      label: CHP_mutlak_butlan
+      warmup_start: '2025-07-28'
+      active_start: '2025-08-26'
+      active_end: '2025-10-17'
+      dossier_end: '2025-11-17'
+scenario_generator:
+  evaluation_loading_mode: event_in_generator
+  families:
+    S1: 0.45
+    S2: 0.45
+    NORMAL: 0.1
+  targeted_derivative_fraction: 0.0
+  targeted_low_frequency_blend: 0.25
+  normal_horizon:
+  - 28
+  - 48
+  residual_scale:
+    S1:
+    - 0.55
+    - 0.9
+    S2:
+    - 0.65
+    - 1.0
+    NORMAL:
+    - 0.9
+    - 1.1
+  S1:
+    horizon:
+    - 28
+    - 32
+    - 40
+    shock_delay_values:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    shock_delay_probabilities:
+    - 0.1
+    - 0.25
+    - 0.4
+    - 0.2
+    - 0.05
+    maximum_drawdown:
+    - 0.12
+    - 0.168
+    - 0.23
+    relief_recovery:
+    - 0.15
+    - 0.37
+    - 0.6
+    terminal_drawdown_ratio:
+    - 0.7
+    - 0.88
+    - 1.0
+    usdtry_terminal:
+    - 0.02
+    - 0.05
+    - 0.09
+    tpp_rate_mean:
+    - 40.0
+    - 47.0
+    - 52.0
+  S2:
+    horizon:
+    - 34
+    - 39
+    - 48
+    first_wave_drawdown:
+    - 0.06
+    - 0.103
+    - 0.14
+    relief_recovery:
+    - 0.65
+    - 0.99
+    - 1.15
+    terminal_drawdown:
+    - 0.08
+    - 0.114
+    - 0.17
+    terminal_offset_values:
+    - 0
+    - 1
+    - 2
+    - 3
+    terminal_offset_probabilities:
+    - 0.55
+    - 0.2
+    - 0.15
+    - 0.1
+    usdtry_terminal:
+    - 0.0
+    - 0.023
+    - 0.06
+    tpp_rate_mean:
+    - 37.0
+    - 41.75
+    - 46.0
+  validation_seeds_per_family: 32
+  test_seeds_per_family: 64
+  validation_seed_base: 2200000
+  test_seed_base: 3200000
+  loading_mode: train_only
+  training_track: clean_joint
+constraints:
+  equity_sum_min: 0.85
+  equity_sum_max: 0.95
+  tpp_min: 0.05
+  tpp_max: 0.15
+  stock_weight_min: 0.03
+  stock_weight_max: 0.1
+  heavy_threshold_strict: 0.05
+  heavy_sum_strict_max: 0.4
+  active_equity_count: 16
+  sum_tolerance: 1.0e-10
+  operational:
+    tpp_min: 0.055
+    tpp_max: 0.145
+    light_weight_max: 0.0495
+    heavy_weight_min: 0.0505
+    stock_weight_min: 0.0305
+    stock_weight_max: 0.0995
+    heavy_sum_max: 0.395
+    heavy_count_min: 2
+    heavy_count_max: 6
+    legacy_initial_target_allowed: true
+action:
+  version: action_v22_delta
+  space: Box(-1,1,18)
+  raw_dimension: 18
+  layout:
+    tpp_delta: 0
+    heavy_count_delta: 1
+    equity_tilts:
+    - 2
+    - 17
+  tpp_delta_cap_alert: 0.04
+  tpp_delta_cap_normal: 0.01
+  response_rate_alert: 0.75
+  response_rate_normal: 0.25
+  target_one_way_budget_alert: 0.12
+  target_one_way_budget_normal: 0.015
+  target_no_change_band: 0.003
+  tilt_scale: 0.75
+  heavy_membership_score_margin: 0.15
+  heavy_incumbency_bonus: 0.1
+  heavy_switch_cooldown_sessions: 3
+  minimum_one_way_turnover_to_execute: 0.0
+  max_realized_one_way_turnover: 0.2
+observation:
+  version: state_v4_blind
+  dimension: 233
+  clip: 5.0
+  include_scenario_global: false
+  include_asset_loading: false
+  exact_remaining_horizon_feature: false
+accounting:
+  buy_commission_rate: 0.0005
+  sell_commission_rate: 0.0005
+  tpp_day_count: 365.0
+reward:
+  version: reward_v4_centered
+  relative_net_log_return: 100.0
+  incremental_agent_mdd: 6.0
+  incremental_positive_mdd_gap: 4.0
+  target_change: 8.0
+  compliance_penalty: 0.0
+  terminal_bonus: 0.0
+  clip: null
+ppo:
+  implementation: stable_baselines3.PPO
+  device: cpu
+  vec_env: SubprocVecEnv
+  subproc_start_method: spawn
+  n_envs: 8
+  torch_num_threads: 4
+  torch_num_interop_threads: 1
+  n_steps: 192
+  batch_size: 256
+  n_epochs: 4
+  learning_rate_start: 0.0003
+  learning_rate_end: 5.0e-05
+  gamma: 0.995
+  gae_lambda: 0.95
+  clip_range_start: 0.2
+  clip_range_end: 0.1
+  ent_coef: 0.0005
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: 0.025
+  actor_layers:
+  - 192
+  - 96
+  critic_layers:
+  - 192
+  - 96
+  activation: Tanh
+  log_std_init: -1.7
+experiments:
+  smoke_timesteps: 49152
+  pilot_timesteps: 245760
+  final_timesteps_per_seed: 1179648
+  pilot_seeds:
+  - 42
+  - 31415
+  final_seeds:
+  - 42
+  - 31415
+  - 271828
+  validation_every_timesteps: 98304
+  checkpoint_every_timesteps: 98304
+  validation_episodes: 64
+logging:
+  full_training_step_log: false
+  full_validation_and_test_step_log: true
+  progress_increments: 100

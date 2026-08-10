@@ -9,9 +9,11 @@ export const modelUniverseAssetSchema = z
   .object({
     assetCode: z.string().min(1),
     displayName: z.string().nullish(),
+    sectorName: z.string().nullish(),
   })
   .transform((asset) => ({
     assetCode: asset.assetCode,
+    sectorName: asset.sectorName,
     displayName:
       asset.displayName && asset.displayName.trim()
         ? asset.displayName
@@ -46,11 +48,14 @@ export const fundDraftInitLimitsSchema = z.object({
 
 export const fundDraftSummarySchema = z.object({
   draftId: z.string().uuid(),
-  name: z.string(),
+  name: z.string().nullable(),
   currentStep: z.number().nullable(),
   status: z.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
   updatedAt: z.string(),
-})
+}).transform((draft) => ({
+  ...draft,
+  name: draft.name?.trim() || "İsimsiz Fon Taslağı",
+}))
 
 export const createdFundDraftSchema = z.object({
   draftId: z.string().uuid(),
@@ -89,6 +94,7 @@ export const fundDraftSchema = z.object({
   liquidityTargetPct: optionalInt,
   status: z.enum(["IN_PROGRESS", "COMPLETED"]).nullish(),
   createdAt: z.string().nullish(),
+  updatedAt: z.string().nullish(),
 })
 
 export const fundDraftPortfolioRulesSchema = z.object({

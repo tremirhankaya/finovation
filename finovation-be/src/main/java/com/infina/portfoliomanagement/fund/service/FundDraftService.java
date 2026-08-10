@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.fund.service;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundCurrencyOption;
@@ -44,7 +45,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,7 +71,7 @@ public class FundDraftService {
     private final FundAssetPreferenceRepository fundAssetPreferenceRepository;
     private final AssetRepository assetRepository;
     private final EquityDetailRepository equityDetailRepository;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
 
     @Transactional(readOnly = true)
     public FundDraftInitResponse getInit(
@@ -311,20 +311,24 @@ public class FundDraftService {
             return List.of();
         }
 
-        Map<Long, String> companyNameByAssetId = equityDetailRepository
+        Map<Long, EquityDetail> equityDetailByAssetId = equityDetailRepository
                 .findAllByAssetIdIn(assets.stream().map(Asset::getId).toList())
                 .stream()
                 .collect(Collectors.toMap(
                         EquityDetail::getAssetId,
-                        EquityDetail::getCompanyName,
+                        detail -> detail,
                         (left, right) -> left
                 ));
 
         cachedModelUniverse = assets.stream()
-                .map(asset -> new ModelUniverseAssetResponse(
-                        asset.getAssetCode(),
-                        resolveDisplayName(asset, companyNameByAssetId.get(asset.getId()))
-                ))
+                .map(asset -> {
+                    EquityDetail detail = equityDetailByAssetId.get(asset.getId());
+                    return new ModelUniverseAssetResponse(
+                            asset.getAssetCode(),
+                            resolveDisplayName(asset, detail != null ? detail.getCompanyName() : null),
+                            detail != null && detail.getSector() != null ? detail.getSector().getName() : null
+                    );
+                })
                 .toList();
         return cachedModelUniverse;
     }
@@ -342,7 +346,7 @@ public class FundDraftService {
                 limits
         );
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         FundDraft draft = FundDraft.newDraft(
                 request.name().trim(),
                 request.initialPortfolioSize(),
@@ -410,7 +414,7 @@ public class FundDraftService {
                 limits.maxAssetPreferences()
         );
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         draft.setManagementApproach(request.managementApproach());
         draft.setTppMinPct(request.tppMinPct().shortValue());
         draft.setTppMaxPct(request.tppMaxPct().shortValue());
@@ -496,7 +500,7 @@ public class FundDraftService {
         FundDraftAnalysisStateResponse state =
                 fundAnalysisPersistenceService.selectProposal(draft, fingerprint, rank);
         advanceCurrentStep(draft, FundDesignSteps.EDIT);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
         fundDraftRepository.save(draft);
         return state;
     }
@@ -521,7 +525,7 @@ public class FundDraftService {
                 limits
         );
         advanceCurrentStep(draft, FundDesignSteps.EDIT);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
         fundDraftRepository.save(draft);
         return response;
     }
@@ -704,7 +708,7 @@ public class FundDraftService {
 
         draft.setStatus(FundDraftStatus.COMPLETED);
         advanceCurrentStep(draft, FundDesignSteps.APPROVAL);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
 
         FundDraft saved = fundDraftRepository.save(draft);
         log.info("Fund draft {} completed by {}", saved.getPublicId(), actorUsername);

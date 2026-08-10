@@ -84,18 +84,12 @@ export default function StressTestPage() {
             })
 
             setResult(response)
-
-            setHistory((current) => [
-                {
-                    testId: response.testId,
-                    scenarioCode: response.scenarioCode,
-                    scenarioName: response.scenarioName,
-                    asOfDate: response.asOfDate,
-                    portfolioImpact: response.portfolioImpact,
-                    createdAt: new Date().toISOString().slice(0, 19),
-                },
-                ...current,
-            ])
+            try {
+                setHistory(await fetchStressTestHistory())
+                setHistoryError("")
+            } catch {
+                setHistoryError("Stres testi geçmişi yenilenemedi.")
+            }
         } catch (error) {
             setResult(null)
 
@@ -147,21 +141,7 @@ export default function StressTestPage() {
                     </label>
                 </header>
 
-                <section className={styles.intro}>
-                    <div>
-                        <span className={styles.eyebrow}>Senaryo Analizi</span>
 
-                        <h2>
-                            Portföyünüzün farklı piyasa koşullarındaki olası davranışını
-                            analiz edin.
-                        </h2>
-
-                        <p>
-                            Hazır stres senaryolarını kullanarak seçili portföyünüzün
-                            varlık ve portföy bazındaki olası etkilerini inceleyin.
-                        </p>
-                    </div>
-                </section>
 
                 {isLoading && (
                     <div className={styles.loadingBanner} role="status">

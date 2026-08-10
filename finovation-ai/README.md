@@ -1,5 +1,7 @@
 # ML Fund Engine V3 dosya paketi
 
+> Bu kopya, mevcut CREATE/OPTIMIZE servislerine gömülü BIST stres PPO inference endpointini de ekler. Kurulum ve çalıştırma için `PLUG_AND_PLAY.md`, Java sözleşmesi için `contracts/RL_JAVA_INTEGRATION_GUIDE.md` dosyasına bakın.
+
 Bu klasör, `2025-05-29` sistem tarihine ve `2025-05-28` forecast origin tarihine dondurulmuş mevcut model/CREATE/OPTIMIZE çalışmasının taşınabilir servis paketidir.
 
 Python HTTP API V1 artık bu klasör içinde `api/` altında bulunur. API mevcut model/optimizer matematiğini değiştirmeden dondurulmuş snapshot'ı HTTP/JSON üzerinden sunar.
