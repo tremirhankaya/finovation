@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
 
+import appShellStyles from "@/app/layout/AppShell.module.css"
 import AccountSecurityDialog from "@/features/account/components/AccountSecurityDialog"
 import { useAuth } from "@/features/auth/context/AuthContext"
 import Dialog from "@/shared/ui/Dialog"
@@ -52,7 +53,7 @@ export default function PasswordChangeRequiredPage() {
   return (
     <div className={styles.page}>
       <aside className={styles.sidebar} aria-label="Kısıtlı hesap menüsü">
-        <div className={styles.brand}>
+        <div className={appShellStyles.brand}>
           <Logo variant="dark" size="small" subtitle="Karar Destek Platformu" />
         </div>
 
@@ -71,25 +72,32 @@ export default function PasswordChangeRequiredPage() {
           ))}
         </div>
 
-        <div className={styles.sidebarFooter}>
+        <div
+          className={`${appShellStyles.sidebarFooter} ${styles.sidebarFooter}`}
+        >
           <button
             type="button"
-            className={styles.signOutButton}
+            className={appShellStyles.signOutButton}
             onClick={() => void handleSignOut()}
           >
-            Çıkış Yap
+            <span className={appShellStyles.navigationIcon}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10 17l5-5-5-5m5 5H3m12-9h5a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-5" />
+              </svg>
+            </span>
+            <span>Çıkış Yap</span>
           </button>
           <button
             type="button"
-            className={styles.userSummary}
+            className={appShellStyles.userSummary}
             aria-haspopup="dialog"
             aria-label={`${fullName} hesap ve güvenlik`}
             onClick={openPasswordDialog}
           >
-            <span className={styles.avatar} aria-hidden="true">
+            <span className={appShellStyles.avatar} aria-hidden="true">
               {fullName.charAt(0).toLocaleUpperCase("tr-TR")}
             </span>
-            <span className={styles.userDetails}>
+            <span className={appShellStyles.userDetails}>
               <strong>{fullName}</strong>
               <span>{ROLE_LABELS[user.role]}</span>
             </span>

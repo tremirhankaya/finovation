@@ -1,0 +1,839 @@
+{
+  "request_id": "optimize-example-001",
+  "mode": "OPTIMIZE",
+  "system_date": "2025-05-29",
+  "forecast_origin": "2025-05-28",
+  "alternatives": [
+    {
+      "objective_id": "RETURN_FOCUSED",
+      "horizon": "6M",
+      "weights": {
+        "AEFES.E": 0.03500000000000004,
+        "AKBNK.E": 0.03500000000000001,
+        "AKSA.E": 0.05590709090909134,
+        "ASELS.E": 0.065,
+        "BIMAS.E": 0.050001000000000004,
+        "CASH_TPP": 0.12999999999999998,
+        "CIMSA.E": 0.03,
+        "ENKAI.E": 0.07636363636363623,
+        "EREGL.E": 0.04500099999999987,
+        "FROTO.E": 0.03500000000000001,
+        "HALKB.E": 0.03,
+        "KCHOL.E": 0.03,
+        "MGROS.E": 0.07636363636363634,
+        "SISE.E": 0.03,
+        "TAVHL.E": 0.03,
+        "TCELL.E": 0.07636363636363616,
+        "THYAO.E": 0.030000000000000013,
+        "TTKOM.E": 0.03,
+        "TTRAK.E": 0.03,
+        "TUPRS.E": 0.03,
+        "ULKER.E": 0.049999999999999996
+      },
+      "stock_count": 20,
+      "equity_weight": 0.87,
+      "tpp_weight": 0.12999999999999998,
+      "expected_model_utility_log": 0.12794293028352624,
+      "horizon_volatility": 0.16257441531706224,
+      "universe58_beta": 0.8148507284568157,
+      "sector_exposures": {
+        "S409136": 0.10636363636363616,
+        "S8212": 0.065,
+        "S8220": 0.09,
+        "S8222": 0.065,
+        "S8236": 0.12636463636363635,
+        "S8244": 0.030000000000000013,
+        "S8282": 0.08500000000000003,
+        "S8304": 0.07636363636363623,
+        "S8308": 0.04500099999999987,
+        "S8312": 0.065,
+        "S8316": 0.08590709090909135,
+        "S8320": 0.03
+      },
+      "large_position_threshold": 0.05,
+      "large_position_assets": [
+        "AKSA.E",
+        "ASELS.E",
+        "BIMAS.E",
+        "ENKAI.E",
+        "MGROS.E",
+        "TCELL.E"
+      ],
+      "large_position_total_weight": 0.3999990000000001,
+      "weight_semantics": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
+      "objective_value": 0.12133532015460508,
+      "reason_codes": {
+        "AEFES.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "AKBNK.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "AKSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "ASELS.E": [
+          "LOCKED_EXACT_WEIGHT",
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_UNCHANGED"
+        ],
+        "BIMAS.E": [
+          "HIGH_MODEL_UTILITY",
+          "WEIGHT_DECREASED"
+        ],
+        "CIMSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ENKAI.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "EREGL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "FROTO.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "HALKB.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "KCHOL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "MGROS.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "SISE.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TAVHL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TCELL.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "THYAO.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TTKOM.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "TTRAK.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TUPRS.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "ULKER.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_INCREASED"
+        ],
+        "CASH_TPP": [
+          "TPP_ONE_DAY_CARRY",
+          "PORTFOLIO_RISK_BUFFER",
+          "WEIGHT_INCREASED"
+        ]
+      },
+      "reason_texts": {
+        "AEFES.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "AKBNK.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "AKSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "ASELS.E": [
+          "Bu varlığın mevcut ağırlığı tam olarak korundu.",
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföyle aynı kaldı."
+        ],
+        "BIMAS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "CIMSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ENKAI.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "EREGL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "FROTO.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "HALKB.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "KCHOL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "MGROS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "SISE.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TAVHL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TCELL.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "THYAO.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TTKOM.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "TTRAK.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TUPRS.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "ULKER.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "CASH_TPP": [
+          "TPP ağırlığı, onaylı tek-günlük faiz carry hesabıyla değerlendirildi.",
+          "TPP, hisse kovaryansı taşımayan likidite ve risk tamponudur.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ]
+      },
+      "solution_class": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM",
+      "deltas": {
+        "AEFES.E": -0.029999999999999964,
+        "AKBNK.E": -0.029999999999999992,
+        "AKSA.E": 0.009543454545454987,
+        "ASELS.E": 0.0,
+        "BIMAS.E": -0.014998999999999998,
+        "CASH_TPP": 0.02999999999999997,
+        "CIMSA.E": 0.03,
+        "ENKAI.E": 0.029999999999999874,
+        "EREGL.E": -0.019999000000000135,
+        "FROTO.E": -0.029999999999999992,
+        "HALKB.E": 0.03,
+        "KCHOL.E": -0.016363636363636358,
+        "MGROS.E": 0.029999999999999985,
+        "SISE.E": -0.016363636363636358,
+        "TAVHL.E": -0.016363636363636358,
+        "TCELL.E": 0.029999999999999805,
+        "THYAO.E": -0.016363636363636344,
+        "TTKOM.E": 0.03,
+        "TTRAK.E": -0.016363636363636358,
+        "TUPRS.E": -0.016363636363636358,
+        "ULKER.E": 0.003636363636363639
+      },
+      "added_assets": [
+        "CIMSA.E",
+        "HALKB.E",
+        "TTKOM.E"
+      ],
+      "removed_assets": [],
+      "locked_assets": {
+        "ASELS.E": 0.065
+      },
+      "realized_turnover_diagnostic": 0.2231798181818182
+    },
+    {
+      "objective_id": "BALANCED_UTILITY",
+      "horizon": "6M",
+      "weights": {
+        "AEFES.E": 0.035,
+        "AKBNK.E": 0.035000000000000024,
+        "AKSA.E": 0.05590709090909097,
+        "ASELS.E": 0.065,
+        "BIMAS.E": 0.050001000000000115,
+        "CASH_TPP": 0.13,
+        "CIMSA.E": 0.03,
+        "ENKAI.E": 0.07636363636363626,
+        "EREGL.E": 0.05,
+        "FROTO.E": 0.035,
+        "HALKB.E": 0.03,
+        "KCHOL.E": 0.030000000000000047,
+        "MGROS.E": 0.07636363636363636,
+        "SISE.E": 0.030000000000000016,
+        "TAVHL.E": 0.03,
+        "TCELL.E": 0.07636363636363634,
+        "THYAO.E": 0.030000000000000072,
+        "TTKOM.E": 0.03,
+        "TTRAK.E": 0.03000000000000007,
+        "TUPRS.E": 0.04500099999999971,
+        "ULKER.E": 0.03
+      },
+      "stock_count": 20,
+      "equity_weight": 0.87,
+      "tpp_weight": 0.13,
+      "expected_model_utility_log": 0.003378198420952834,
+      "horizon_volatility": 0.16154307773952487,
+      "universe58_beta": 0.8107408671649164,
+      "sector_exposures": {
+        "S409136": 0.10636363636363634,
+        "S8212": 0.06500000000000003,
+        "S8220": 0.09000000000000007,
+        "S8222": 0.065,
+        "S8236": 0.12636463636363648,
+        "S8244": 0.030000000000000072,
+        "S8282": 0.065,
+        "S8304": 0.07636363636363626,
+        "S8308": 0.05,
+        "S8312": 0.06500000000000007,
+        "S8316": 0.10090809090909067,
+        "S8320": 0.03
+      },
+      "large_position_threshold": 0.05,
+      "large_position_assets": [
+        "AKSA.E",
+        "ASELS.E",
+        "BIMAS.E",
+        "ENKAI.E",
+        "MGROS.E",
+        "TCELL.E"
+      ],
+      "large_position_total_weight": 0.39999900000000005,
+      "weight_semantics": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
+      "objective_value": -0.02271796754460534,
+      "reason_codes": {
+        "AEFES.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "AKBNK.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "AKSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "ASELS.E": [
+          "LOCKED_EXACT_WEIGHT",
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_UNCHANGED"
+        ],
+        "BIMAS.E": [
+          "HIGH_MODEL_UTILITY",
+          "WEIGHT_DECREASED"
+        ],
+        "CIMSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ENKAI.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "EREGL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "FROTO.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "HALKB.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "KCHOL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "MGROS.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "SISE.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TAVHL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TCELL.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "THYAO.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TTKOM.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "TTRAK.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TUPRS.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "ULKER.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "CASH_TPP": [
+          "TPP_ONE_DAY_CARRY",
+          "PORTFOLIO_RISK_BUFFER",
+          "WEIGHT_INCREASED"
+        ]
+      },
+      "reason_texts": {
+        "AEFES.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "AKBNK.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "AKSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "ASELS.E": [
+          "Bu varlığın mevcut ağırlığı tam olarak korundu.",
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföyle aynı kaldı."
+        ],
+        "BIMAS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "CIMSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ENKAI.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "EREGL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "FROTO.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "HALKB.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "KCHOL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "MGROS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "SISE.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TAVHL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TCELL.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "THYAO.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TTKOM.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "TTRAK.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TUPRS.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "ULKER.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "CASH_TPP": [
+          "TPP ağırlığı, onaylı tek-günlük faiz carry hesabıyla değerlendirildi.",
+          "TPP, hisse kovaryansı taşımayan likidite ve risk tamponudur.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ]
+      },
+      "solution_class": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM",
+      "deltas": {
+        "AEFES.E": -0.03,
+        "AKBNK.E": -0.029999999999999978,
+        "AKSA.E": 0.009543454545454612,
+        "ASELS.E": 0.0,
+        "BIMAS.E": -0.014998999999999887,
+        "CASH_TPP": 0.03,
+        "CIMSA.E": 0.03,
+        "ENKAI.E": 0.029999999999999902,
+        "EREGL.E": -0.015,
+        "FROTO.E": -0.03,
+        "HALKB.E": 0.03,
+        "KCHOL.E": -0.01636363636363631,
+        "MGROS.E": 0.03,
+        "SISE.E": -0.01636363636363634,
+        "TAVHL.E": -0.016363636363636358,
+        "TCELL.E": 0.029999999999999985,
+        "THYAO.E": -0.016363636363636285,
+        "TTKOM.E": 0.03,
+        "TTRAK.E": -0.01636363636363629,
+        "TUPRS.E": -0.001362636363636649,
+        "ULKER.E": -0.016363636363636358
+      },
+      "added_assets": [
+        "CIMSA.E",
+        "HALKB.E",
+        "TTKOM.E"
+      ],
+      "removed_assets": [],
+      "locked_assets": {
+        "ASELS.E": 0.065
+      },
+      "realized_turnover_diagnostic": 0.21954345454545451
+    },
+    {
+      "objective_id": "ROBUST_RISK_CONTROLLED",
+      "horizon": "6M",
+      "weights": {
+        "AEFES.E": 0.035,
+        "AKBNK.E": 0.03500000000000001,
+        "AKSA.E": 0.049999999999999975,
+        "ASELS.E": 0.065,
+        "BIMAS.E": 0.07652283553884537,
+        "CASH_TPP": 0.13,
+        "CIMSA.E": 0.03,
+        "ENKAI.E": 0.055300581143884364,
+        "EREGL.E": 0.04000099999999926,
+        "FROTO.E": 0.05,
+        "HALKB.E": 0.03,
+        "KCHOL.E": 0.03000000000000002,
+        "MGROS.E": 0.07636363636363636,
+        "SISE.E": 0.03000000000000003,
+        "TAVHL.E": 0.03,
+        "TCELL.E": 0.06094375354683237,
+        "THYAO.E": 0.030000000000000533,
+        "TTRAK.E": 0.05,
+        "TUPRS.E": 0.06586819340680142,
+        "ULKER.E": 0.03
+      },
+      "stock_count": 19,
+      "equity_weight": 0.87,
+      "tpp_weight": 0.13,
+      "expected_model_utility_log": -0.19272070211798575,
+      "horizon_volatility": 0.1592753661971798,
+      "universe58_beta": 0.7990063304529407,
+      "sector_exposures": {
+        "S409136": 0.06094375354683237,
+        "S8212": 0.065,
+        "S8220": 0.09000000000000005,
+        "S8222": 0.065,
+        "S8236": 0.15288647190248172,
+        "S8244": 0.030000000000000533,
+        "S8282": 0.065,
+        "S8304": 0.055300581143884364,
+        "S8308": 0.04000099999999926,
+        "S8312": 0.1,
+        "S8316": 0.11586819340680139,
+        "S8320": 0.03
+      },
+      "large_position_threshold": 0.05,
+      "large_position_assets": [
+        "ASELS.E",
+        "BIMAS.E",
+        "ENKAI.E",
+        "MGROS.E",
+        "TCELL.E",
+        "TUPRS.E"
+      ],
+      "large_position_total_weight": 0.3999989999999999,
+      "weight_semantics": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
+      "objective_value": -0.2561423078111001,
+      "reason_codes": {
+        "AEFES.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "AKBNK.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "AKSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "ASELS.E": [
+          "LOCKED_EXACT_WEIGHT",
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_UNCHANGED"
+        ],
+        "BIMAS.E": [
+          "HIGH_MODEL_UTILITY",
+          "WEIGHT_INCREASED"
+        ],
+        "CIMSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ENKAI.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "EREGL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "FROTO.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "HALKB.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "KCHOL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "MGROS.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "SISE.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TAVHL.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TCELL.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT",
+          "WEIGHT_INCREASED"
+        ],
+        "THYAO.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "TTRAK.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_INCREASED"
+        ],
+        "TUPRS.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_INCREASED"
+        ],
+        "ULKER.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT",
+          "WEIGHT_DECREASED"
+        ],
+        "CASH_TPP": [
+          "TPP_ONE_DAY_CARRY",
+          "PORTFOLIO_RISK_BUFFER",
+          "WEIGHT_INCREASED"
+        ]
+      },
+      "reason_texts": {
+        "AEFES.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "AKBNK.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "AKSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "ASELS.E": [
+          "Bu varlığın mevcut ağırlığı tam olarak korundu.",
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföyle aynı kaldı."
+        ],
+        "BIMAS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "CIMSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ENKAI.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "EREGL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "FROTO.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "HALKB.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "KCHOL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "MGROS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "SISE.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TAVHL.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TCELL.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "THYAO.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "TTRAK.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "TUPRS.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ],
+        "ULKER.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
+          "Ağırlık mevcut portföye göre azaltıldı."
+        ],
+        "CASH_TPP": [
+          "TPP ağırlığı, onaylı tek-günlük faiz carry hesabıyla değerlendirildi.",
+          "TPP, hisse kovaryansı taşımayan likidite ve risk tamponudur.",
+          "Ağırlık mevcut portföye göre artırıldı."
+        ]
+      },
+      "solution_class": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM",
+      "deltas": {
+        "AEFES.E": -0.03,
+        "AKBNK.E": -0.029999999999999992,
+        "AKSA.E": 0.003636363636363618,
+        "ASELS.E": 0.0,
+        "BIMAS.E": 0.011522835538845366,
+        "CASH_TPP": 0.03,
+        "CIMSA.E": 0.03,
+        "ENKAI.E": 0.008936944780248007,
+        "EREGL.E": -0.024999000000000743,
+        "FROTO.E": -0.015,
+        "HALKB.E": 0.03,
+        "KCHOL.E": -0.016363636363636337,
+        "MGROS.E": 0.03,
+        "SISE.E": -0.016363636363636327,
+        "TAVHL.E": -0.016363636363636358,
+        "TCELL.E": 0.01458011718319601,
+        "THYAO.E": -0.016363636363635824,
+        "TTRAK.E": 0.003636363636363646,
+        "TUPRS.E": 0.01950455704316506,
+        "ULKER.E": -0.016363636363636358
+      },
+      "added_assets": [
+        "CIMSA.E",
+        "HALKB.E"
+      ],
+      "removed_assets": [],
+      "locked_assets": {
+        "ASELS.E": 0.065
+      },
+      "realized_turnover_diagnostic": 0.18181718181818182
+    }
+  ],
+  "policy_config_id": "PORTFOLIO_OBJECTIVES_V3_NEW_PROSPECTUS",
+  "api_version": "v1",
+  "snapshot_id": "FROZEN_2025-05-29_V3",
+  "model_bundle_id": "EQUITY_FORECAST_BUNDLE_V3",
+  "processing_time_ms": 0.0
+}

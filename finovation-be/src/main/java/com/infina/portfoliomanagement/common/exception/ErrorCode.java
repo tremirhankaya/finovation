@@ -126,6 +126,12 @@ public enum ErrorCode {
             "You must change your password before accessing this resource."
     ),
 
+    ACCOUNT_INACTIVE(
+            "AUTH_020",
+            HttpStatus.UNAUTHORIZED,
+            "This account is not active."
+    ),
+
     USER_NOT_FOUND(
             "USER_001",
             HttpStatus.NOT_FOUND,
@@ -400,11 +406,6 @@ public enum ErrorCode {
             "STRESS_003",
             HttpStatus.NOT_FOUND,
             "Stress test not found."
-    ),
-    STRESS_SCENARIO_COVERAGE_INCOMPLETE(
-            "STRESS_004",
-            HttpStatus.UNPROCESSABLE_CONTENT,
-            "Stress scenario does not cover all assets in the selected portfolio."
     ),
     ;
 

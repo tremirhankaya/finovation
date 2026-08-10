@@ -25,12 +25,37 @@
   min-width: 0;
 }
 
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .header h1 {
   margin: 0 0 4px;
   color: var(--color-navy-950);
   font-size: 1.7rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+.changeFundButton {
+  flex: none;
+  min-height: 40px;
+  padding: 0 16px;
+  color: var(--color-navy-950);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.changeFundButton:hover {
+  border-color: var(--color-teal-600);
 }
 
 .subtitle {
@@ -166,7 +191,7 @@
 .panelDescription {
   margin: 0;
   color: var(--color-slate-500);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
@@ -204,13 +229,13 @@
 }
 
 .riskOptionLabel {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 .riskOptionDescription {
   color: var(--color-slate-500);
-  font-size: 0.78rem;
+  font-size: 0.86rem;
 }
 
 .togglePanelGrid {
@@ -230,7 +255,7 @@
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: var(--radius-md);
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   transition: border-color var(--transition-fast);
 }
 
@@ -241,10 +266,43 @@
   outline-offset: 1px;
 }
 
+.sectorFilterSelect {
+  min-height: 40px;
+  margin-top: 10px;
+  padding: 0 14px;
+  color: var(--color-navy-950);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.sectorFilterSelect:focus-visible {
+  border-color: var(--color-teal-600);
+  outline: 2px solid rgba(13, 148, 136, 0.18);
+  outline-offset: 1px;
+}
+
+.assetTableScroll {
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+}
+
 .assetTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.84rem;
+  font-size: 0.92rem;
+}
+
+.assetTableScroll .assetTable thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
 }
 
 .assetTable th {
@@ -282,8 +340,85 @@
   accent-color: var(--color-red-500);
 }
 
+.assetRowSymbol {
+  font-weight: 700;
+}
+
+.assetRowName {
+  color: var(--color-slate-500);
+}
+
+.assetToggleBox {
+  appearance: none;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.assetToggleBox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.assetToggleBox:checked {
+  border-color: transparent;
+}
+
+.assetToggleBoxAdd:checked {
+  background: var(--color-teal-600);
+}
+
+.assetToggleBoxExclude:checked {
+  background: var(--color-red-500);
+}
+
+.assetToggleBox:checked::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 .fundRowName {
   font-weight: 700;
+}
+
+.fundRowMeta {
+  margin-top: 2px;
+  color: var(--color-slate-500);
+  font-size: 0.82rem;
+}
+
+.fundStatusBadge,
+.fundStatusBadgeActive {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.fundStatusBadgeActive {
+  color: var(--color-teal-700);
+  background: #f0fdfa;
+}
+
+.fundStatusBadge {
+  color: var(--color-slate-500);
+  background: #f1f5f9;
 }
 
 .fundSelectionFooter {
@@ -296,6 +431,24 @@
 .fundSelectionHint {
   color: var(--color-slate-500);
   font-size: 0.78rem;
+}
+
+.forceAddHint {
+  margin: 0;
+  padding: 10px 14px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.forceAddWeightCell {
+  color: var(--color-teal-700);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .emptyState {
@@ -385,13 +538,13 @@
 
 .rangeFieldLabel {
   color: var(--color-navy-950);
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   font-weight: 700;
 }
 
 .rangeFieldBounds {
   color: var(--color-slate-500);
-  font-size: 0.76rem;
+  font-size: 0.82rem;
 }
 
 .rangeInputs {
@@ -426,7 +579,7 @@
 .rangeHint {
   margin: 0;
   color: var(--color-slate-500);
-  font-size: 0.75rem;
+  font-size: 0.82rem;
 }
 
 .sliderTrackWrap {

@@ -104,6 +104,7 @@ class OptimizationRepositoryIntegrationTest extends AbstractIntegrationTest {
                 .modelVersion("v1")
                 .requestedBy(fundManager)
                 .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
                 .status(RequestStatus.PREPARING)
                 .version(0L)
                 .createdAt(now)

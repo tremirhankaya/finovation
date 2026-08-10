@@ -2,6 +2,8 @@ package com.infina.portfoliomanagement.optimization.dto;
 
 import com.infina.portfoliomanagement.optimization.enums.RiskProfile;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -29,7 +31,12 @@ public record CreateOptimizationRequestRequest(
         Integer stockCountMin,
 
         @NotNull(message = "Stock count maximum must not be null.")
-        Integer stockCountMax
+        Integer stockCountMax,
+
+        @NotNull(message = "Maximum additions must not be null.")
+        @Min(value = 0, message = "Maximum additions must be at least 0.")
+        @Max(value = 30, message = "Maximum additions must be at most 30.")
+        Integer maxAdditions
 
 ) {
 }

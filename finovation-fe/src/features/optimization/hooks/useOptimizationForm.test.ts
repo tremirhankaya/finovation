@@ -1,19 +1,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const fundMonitoringMocks = vi.hoisted(() => ({
-  fetchFunds: vi.fn(),
-  fetchFundMonitoring: vi.fn(),
-}))
 const optimizationApiMocks = vi.hoisted(() => ({
   createOptimizationRequest: vi.fn(),
   fetchInvestmentUniverse: vi.fn(),
+  fetchOptimizableFunds: vi.fn(),
+  fetchOptimizationFundPositions: vi.fn(),
 }))
 
-vi.mock(
-  "@/features/fund-monitoring/api/fundMonitoringService",
-  () => fundMonitoringMocks,
-)
 vi.mock("@/features/optimization/api/optimizationApi", () => ({
   ...optimizationApiMocks,
 }))
@@ -24,43 +18,41 @@ import { ApiRequestError } from "@/shared/api/apiError"
 const FUND = {
   id: "11111111-1111-4111-8111-111111111111",
   name: "Finovation Atlas Fonu",
-  type: "Hisse Senedi Yoğun Fon",
+  type: "EQUITY_INTENSIVE" as const,
+  active: true,
+  lastOptimizationDate: "2026-07-28",
+  stockCount: 18,
+  sectorCount: 12,
+  equityWeightPercent: 90,
+  tppWeightPercent: 10,
 }
 
 function snapshot() {
   return {
-    fund: FUND,
-    asOfDate: "2026-08-04",
-    currency: "TRY",
-    currentSharePrice: 100,
-    dailyChangePercentage: 0,
-    priceHistory: {},
-    technicalIndicators: [],
-    periodReturns: [],
+    fundName: FUND.name,
     positions: [
       {
-        assetId: "AKBNK",
-        symbol: "AKBNK",
+        assetId: "101",
+        symbol: "AKBNK.E",
         name: "Akbank",
         sectorName: "Bankacılık",
         weightPercentage: 8,
       },
       {
-        assetId: "ASELS",
-        symbol: "ASELS",
+        assetId: "102",
+        symbol: "ASELS.E",
         name: "Aselsan",
         sectorName: "Savunma",
         weightPercentage: 7,
       },
     ],
-    sectorAllocations: [],
   }
 }
 
 describe("useOptimizationForm", () => {
   beforeEach(() => {
-    fundMonitoringMocks.fetchFunds.mockReset().mockResolvedValue([FUND])
-    fundMonitoringMocks.fetchFundMonitoring
+    optimizationApiMocks.fetchOptimizableFunds.mockReset().mockResolvedValue([FUND])
+    optimizationApiMocks.fetchOptimizationFundPositions
       .mockReset()
       .mockResolvedValue(snapshot())
     optimizationApiMocks.createOptimizationRequest.mockReset()
@@ -94,6 +86,30 @@ describe("useOptimizationForm", () => {
     expect(result.current.step).toBe(1)
   })
 
+  it("risk profili değişince TPP ve hisse sayısı önerilen aralıkları günceller", async () => {
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.tppMinWeight).toBe(8)
+    expect(result.current.tppMaxWeight).toBe(12)
+    expect(result.current.stockCountMin).toBe(21)
+    expect(result.current.stockCountMax).toBe(26)
+
+    act(() => result.current.setRiskProfile("AGGRESSIVE"))
+
+    expect(result.current.tppMinWeight).toBe(5)
+    expect(result.current.tppMaxWeight).toBe(10)
+    expect(result.current.stockCountMin).toBe(25)
+    expect(result.current.stockCountMax).toBe(30)
+
+    act(() => result.current.setRiskProfile("CONSERVATIVE"))
+
+    expect(result.current.tppMinWeight).toBe(10)
+    expect(result.current.tppMaxWeight).toBe(15)
+    expect(result.current.stockCountMin).toBe(16)
+    expect(result.current.stockCountMax).toBe(21)
+  })
+
   it("varsayılan aralıklarla uyumluluk durumu geçerlidir ve gönderime izin verir", async () => {
     const { result } = renderHook(() => useOptimizationForm())
 
@@ -119,25 +135,65 @@ describe("useOptimizationForm", () => {
     const { result } = renderHook(() => useOptimizationForm())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
 
-    await waitFor(() => expect(result.current.selection.AKBNK).toBe("KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
     const keptRow = result.current.complianceRows.find(
       (row) => row.key === "kept-assets",
     )
     expect(keptRow?.detail).toContain("toplam %8")
   })
 
+  it("korunmayan bir hisse %10'u aşsa da gönderimi engellemez, korunan hisse aşarsa engeller", async () => {
+    optimizationApiMocks.fetchOptimizationFundPositions.mockReset().mockResolvedValue({
+      ...snapshot(),
+      positions: [
+        {
+          assetId: "101",
+          symbol: "AKBNK.E",
+          name: "Akbank",
+          sectorName: "Bankacılık",
+          weightPercentage: 13,
+        },
+        {
+          assetId: "102",
+          symbol: "ASELS.E",
+          name: "Aselsan",
+          sectorName: "Savunma",
+          weightPercentage: 7,
+        },
+      ],
+    })
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.canSubmit).toBe(true)
+    const singleStockRowBefore = result.current.complianceRows.find(
+      (row) => row.key === "single-stock-weight",
+    )
+    expect(singleStockRowBefore?.status).toBe("UYUMLU")
+
+    act(() => result.current.toggleSelection("101", "KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
+
+    const singleStockRowAfter = result.current.complianceRows.find(
+      (row) => row.key === "single-stock-weight",
+    )
+    expect(singleStockRowAfter?.status).toBe("UYUMSUZ")
+    expect(result.current.canSubmit).toBe(false)
+  })
+
   it("aynı hisseye tekrar tıklanınca seçimi kaldırır", async () => {
     const { result } = renderHook(() => useOptimizationForm())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
-    await waitFor(() => expect(result.current.selection.AKBNK).toBe("KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
 
-    await waitFor(() => expect(result.current.selection.AKBNK).toBeUndefined())
+    await waitFor(() => expect(result.current.selection["101"]).toBeUndefined())
   })
 
   it("submit çağrıldığında isteği doğru payload ile gönderip onSubmitted'ı çağırır", async () => {
@@ -148,8 +204,8 @@ describe("useOptimizationForm", () => {
     const { result } = renderHook(() => useOptimizationForm())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
-    act(() => result.current.toggleSelection("AKBNK", "KEEP"))
-    await waitFor(() => expect(result.current.selection.AKBNK).toBe("KEEP"))
+    act(() => result.current.toggleSelection("101", "KEEP"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
 
     const onSubmitted = vi.fn()
     await act(async () => {
@@ -160,13 +216,13 @@ describe("useOptimizationForm", () => {
       expect.objectContaining({
         fundId: FUND.id,
         riskProfile: "BALANCED",
-        tppMinWeight: 5,
-        tppMaxWeight: 15,
-        stockCountMin: 16,
-        stockCountMax: 30,
+        tppMinWeight: 8,
+        tppMaxWeight: 12,
+        stockCountMin: 21,
+        stockCountMax: 26,
         assetPreferences: [
           {
-            assetCode: "AKBNK",
+            assetCode: "AKBNK.E",
             preferenceType: "KEEP",
             currentWeight: 8,
           },

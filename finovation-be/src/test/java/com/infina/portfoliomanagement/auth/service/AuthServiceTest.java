@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -149,6 +150,22 @@ class AuthServiceTest {
         assertError(
                 () -> authService.login(new LoginRequest("user", "wrong-password")),
                 ErrorCode.INVALID_CREDENTIALS
+        );
+
+        verify(loginAttemptStore, never()).clearIpAttempts(CLIENT_IP);
+        verify(loginAttemptStore, never()).clearUsernameAttempts("user");
+    }
+
+    @Test
+    void login_inactiveAccount_returnsDedicatedError() {
+        when(loginAttemptStore.recordIpAttempt(CLIENT_IP)).thenReturn(1L);
+        when(loginAttemptStore.recordUsernameAttempt("user")).thenReturn(1L);
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new DisabledException("disabled"));
+
+        assertError(
+                () -> authService.login(new LoginRequest("user", "password")),
+                ErrorCode.ACCOUNT_INACTIVE
         );
 
         verify(loginAttemptStore, never()).clearIpAttempts(CLIENT_IP);

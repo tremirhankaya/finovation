@@ -16,6 +16,7 @@ type NavigationItem = {
       | "optimization"
       | "stress"
       | "users"
+      | "logs"
       | "plus"
       | "briefcase"
   children?: { label: string; path: string; icon: "plus" | "briefcase" }[]
@@ -46,6 +47,15 @@ const PRODUCT_NAVIGATION: NavigationItem[] = [
     path: "/stress-test",
     icon: "stress",
   },
+]
+
+const SYSTEM_NAVIGATION: NavigationItem[] = [
+  {
+    label: "Kullanıcı ve Şirket Yönetimi",
+    path: "/users",
+    icon: "users",
+  },
+  { label: "Log İzleme", path: "/system-logs", icon: "logs" },
 ]
 
 const ROLE_LABELS = {
@@ -114,6 +124,15 @@ function NavigationIcon({ icon }: { icon: NavigationItem["icon"] }) {
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+    )
+  }
+
+  if (icon === "logs") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="m7 9 3 3-3 3m5 0h5" />
       </svg>
     )
   }
@@ -206,7 +225,11 @@ function NavigationLink({ item }: { item: NavigationItem }) {
   )
 }
 
-export default function AppShell() {
+type AppShellProps = {
+  mode?: "product" | "system"
+}
+
+export default function AppShell({ mode = "product" }: AppShellProps) {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -217,6 +240,8 @@ export default function AppShell() {
   }
 
   const fullName = `${user.firstName} ${user.lastName}`.trim() || user.username
+  const navigationItems =
+    mode === "system" ? SYSTEM_NAVIGATION : PRODUCT_NAVIGATION
 
   return (
     <div
@@ -235,14 +260,17 @@ export default function AppShell() {
           <Logo variant="dark" size="small" subtitle="Karar Destek Platformu" />
         </div>
 
-        <nav className={styles.navigation} aria-label="Ürün menüsü">
-          {PRODUCT_NAVIGATION.map((item) => (
-            <NavigationLink key={item.path} item={item} />
+        <nav
+          className={styles.navigation}
+          aria-label={mode === "system" ? "Sistem menüsü" : "Ürün menüsü"}
+        >
+          {navigationItems.map((item) => (
+            <NavigationLink key={item.label} item={item} />
           ))}
         </nav>
 
         <div className={styles.sidebarFooter}>
-          {user.canAccessPanel && (
+          {mode === "product" && user.canAccessPanel && (
             <NavigationLink
               item={{
                 label: "Kullanıcı Yönetimi",

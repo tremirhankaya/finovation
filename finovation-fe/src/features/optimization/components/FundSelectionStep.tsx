@@ -1,8 +1,8 @@
-import type { FundOption } from "@/features/fund-monitoring/model/fundMonitoring.types"
+import type { OptimizableFund } from "@/features/optimization/model/optimizationForm.types"
 import styles from "@/features/optimization/styles/OptimizationFormPage.module.css"
 
 export type FundSelectionStepProps = {
-  funds: FundOption[]
+  funds: OptimizableFund[]
   selectedFundId: string
   onSelectFund: (fundId: string) => void
   onContinue: () => void
@@ -41,18 +41,16 @@ export default function FundSelectionStep({
         <table className={styles.assetTable}>
           <thead>
             <tr>
-              <th>Fon</th>
-              <th>Tür</th>
               <th aria-hidden="true" />
+              <th>Fon</th>
+              <th>Durum</th>
+              <th>Son Optimizasyon</th>
+              <th>Hisse / TPP</th>
             </tr>
           </thead>
           <tbody>
             {funds.map((fund) => (
               <tr key={fund.id}>
-                <td>
-                  <span className={styles.fundRowName}>{fund.name}</span>
-                </td>
-                <td>{fund.type}</td>
                 <td>
                   <input
                     type="radio"
@@ -62,6 +60,29 @@ export default function FundSelectionStep({
                     onChange={() => onSelectFund(fund.id)}
                     aria-label={`${fund.name} fonunu seç`}
                   />
+                </td>
+                <td>
+                  <span className={styles.fundRowName}>{fund.name}</span>
+                  <div className={styles.fundRowMeta}>
+                    {fund.stockCount} hisse · {fund.sectorCount} sektör
+                  </div>
+                </td>
+                <td>
+                  <span
+                    className={
+                      fund.active
+                        ? styles.fundStatusBadgeActive
+                        : styles.fundStatusBadge
+                    }
+                  >
+                    {fund.active ? "Aktif" : "Pasif"}
+                  </span>
+                </td>
+                <td>
+                  {fund.lastOptimizationDate ?? "Optimizasyon yapılmadı"}
+                </td>
+                <td>
+                  %{fund.equityWeightPercent} / %{fund.tppWeightPercent}
                 </td>
               </tr>
             ))}
@@ -78,11 +99,9 @@ export default function FundSelectionStep({
         >
           Optimizasyona Başla
         </button>
-        {funds.length === 1 && (
-          <span className={styles.fundSelectionHint}>
-            Yalnızca tek fon varsa fon otomatik seçilir.
-          </span>
-        )}
+        <span className={styles.fundSelectionHint}>
+          Yalnızca tek fon varsa fon otomatik seçilir.
+        </span>
       </div>
     </section>
   )

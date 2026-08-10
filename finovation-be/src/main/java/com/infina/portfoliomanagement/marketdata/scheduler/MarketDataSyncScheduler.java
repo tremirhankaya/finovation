@@ -11,11 +11,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.time.Instant;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "marketdata.sync", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MarketDataSyncScheduler {
 
     private final SectorSyncService sectorSyncService;

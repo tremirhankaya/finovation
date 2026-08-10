@@ -8,6 +8,7 @@ import UserCreateModal from "@/features/users/components/UserCreateModal"
 import UserDeleteConfirm from "@/features/users/components/UserDeleteConfirm"
 import UserEditModal from "@/features/users/components/UserEditModal"
 import UserErrorDialog from "@/features/users/components/UserErrorDialog"
+import UserFundsDialog from "@/features/users/components/UserFundsDialog"
 import UserPagination from "@/features/users/components/UserPagination"
 import UserSearchToolbar from "@/features/users/components/UserSearchToolbar"
 import UserTable from "@/features/users/components/UserTable"
@@ -44,7 +45,7 @@ const EMPTY_FILTERS: UserListFilters = {
 
 export default function UsersPage() {
   const navigate = useNavigate()
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const canCreateUser = user?.canCreateUser ?? false
   const isAdmin = user?.role === "ADMIN"
   const assignableRoles = user?.assignableRoles ?? []
@@ -55,6 +56,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(0)
   const [editingUserId, setEditingUserId] = useState<number | null>(null)
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null)
+  const [fundOwnerUserId, setFundOwnerUserId] = useState<number | null>(null)
   const [editError, setEditError] = useState<Error | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -111,6 +113,11 @@ export default function UsersPage() {
     deletingUserId === null
       ? null
       : (users.find((item) => item.id === deletingUserId) ?? null)
+
+  const fundOwnerUser =
+    fundOwnerUserId === null
+      ? null
+      : (users.find((item) => item.id === fundOwnerUserId) ?? null)
 
   const applyFilters = (next: UserListFilters) => {
     setFilters(next)
@@ -309,19 +316,15 @@ export default function UsersPage() {
                 + Yeni kullanıcı
               </button>
             )}
-            <button
-              className={styles.signOutButton}
-              type="button"
-              onClick={() => {
-                if (isAdmin) {
-                  void signOut()
-                  return
-                }
-                navigate("/dashboard")
-              }}
-            >
-              {isAdmin ? "Çıkış yap" : "Ana sayfaya dön"}
-            </button>
+            {!isAdmin && (
+              <button
+                className={styles.signOutButton}
+                type="button"
+                onClick={() => navigate("/dashboard")}
+              >
+                Ana sayfaya dön
+              </button>
+            )}
           </div>
         </header>
 
@@ -382,6 +385,11 @@ export default function UsersPage() {
                 onDelete={(userId) => {
                   setDeletingUserId(userId)
                 }}
+                onViewFunds={
+                  user?.role === "COMPANY_MANAGER"
+                    ? (userId) => setFundOwnerUserId(userId)
+                    : undefined
+                }
               />
 
               <UserPagination
@@ -472,6 +480,12 @@ export default function UsersPage() {
         onConfirm={() => {
           void handleDelete()
         }}
+      />
+
+      <UserFundsDialog
+        open={fundOwnerUser !== null}
+        user={fundOwnerUser}
+        onClose={() => setFundOwnerUserId(null)}
       />
 
       <UserErrorDialog

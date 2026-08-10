@@ -6,7 +6,7 @@ import type { RiskProfile } from "@/features/optimization/model/optimizationSche
 import styles from "@/features/optimization/styles/OptimizationRunningPage.module.css"
 
 const RISK_PROFILE_LABELS: Record<RiskProfile, string> = {
-  AGGRESSIVE: "Atak",
+  AGGRESSIVE: "Agresif",
   BALANCED: "Dengeli",
   CONSERVATIVE: "Korumacı",
 }
@@ -85,7 +85,10 @@ export function OptimizationRunningView({
           </div>
         )}
 
-        <OptimizationRunningSteps />
+        <OptimizationRunningSteps
+          isRunning={isRunning}
+          isCompleted={isCompleted}
+        />
 
         {onBack && (
           <button className={styles.backButton} type="button" onClick={onBack}>

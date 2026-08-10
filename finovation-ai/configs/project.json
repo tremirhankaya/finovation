@@ -1,0 +1,119 @@
+{
+  "project_id": "ML_FUND_ENGINE_V2_JUL2017_STRICT",
+  "system_date": "2025-05-29",
+  "forecast_origin": "2025-05-28",
+  "strict_source_min_date": "2017-07-01",
+  "training_start_date": "2017-07-01",
+  "label_maturity_cutoff": "2025-05-28",
+  "horizons_months": [3, 6, 12],
+  "quantiles": [0.1, 0.5, 0.9],
+  "development_windows": [
+    {"fold_id": "DEV_2020", "start": "2020-01-01", "end": "2020-12-31"},
+    {"fold_id": "DEV_2021", "start": "2021-01-01", "end": "2021-12-31"},
+    {"fold_id": "DEV_2022", "start": "2022-01-01", "end": "2022-12-31"},
+    {"fold_id": "DEV_2023_H1", "start": "2023-01-01", "end": "2023-05-31"}
+  ],
+  "sealed_holdout": {"fold_id": "COMMON_HOLDOUT", "start": "2023-06-01", "end": "2024-05-28"},
+  "minimum_names_per_origin": 40,
+  "random_seed": 1907,
+  "feature_sets": ["EQUITY_ONLY", "RATE_ONLY"],
+  "quantile_candidates": {
+    "Q_BALANCED": {
+      "n_estimators": 1400,
+      "learning_rate": 0.03,
+      "num_leaves": 31,
+      "max_depth": 5,
+      "min_child_samples": 80,
+      "subsample": 0.9,
+      "colsample_bytree": 0.85,
+      "reg_alpha": 0.1,
+      "reg_lambda": 2.0
+    },
+    "Q_REGULARIZED": {
+      "n_estimators": 1600,
+      "learning_rate": 0.025,
+      "num_leaves": 15,
+      "max_depth": 4,
+      "min_child_samples": 120,
+      "subsample": 0.85,
+      "colsample_bytree": 0.75,
+      "reg_alpha": 0.25,
+      "reg_lambda": 5.0
+    },
+    "Q_EXPRESSIVE": {
+      "n_estimators": 1800,
+      "learning_rate": 0.02,
+      "num_leaves": 47,
+      "max_depth": 6,
+      "min_child_samples": 60,
+      "subsample": 0.9,
+      "colsample_bytree": 0.9,
+      "reg_alpha": 0.05,
+      "reg_lambda": 3.0
+    }
+  },
+  "catboost_candidates": {
+    "C_SHALLOW": {
+      "iterations": 1200,
+      "learning_rate": 0.04,
+      "depth": 4,
+      "l2_leaf_reg": 10.0
+    },
+    "C_BALANCED": {
+      "iterations": 1600,
+      "learning_rate": 0.03,
+      "depth": 5,
+      "l2_leaf_reg": 12.0
+    },
+    "C_DEEP": {
+      "iterations": 2000,
+      "learning_rate": 0.025,
+      "depth": 6,
+      "l2_leaf_reg": 16.0
+    }
+  },
+  "ranker_candidates": {
+    "R_BALANCED": {
+      "n_estimators": 1500,
+      "learning_rate": 0.03,
+      "num_leaves": 31,
+      "max_depth": 5,
+      "min_child_samples": 60,
+      "subsample": 0.9,
+      "colsample_bytree": 0.85,
+      "reg_alpha": 0.1,
+      "reg_lambda": 3.0
+    },
+    "R_REGULARIZED": {
+      "n_estimators": 1600,
+      "learning_rate": 0.025,
+      "num_leaves": 15,
+      "max_depth": 4,
+      "min_child_samples": 100,
+      "subsample": 0.85,
+      "colsample_bytree": 0.75,
+      "reg_alpha": 0.25,
+      "reg_lambda": 6.0
+    },
+    "R_EXPRESSIVE": {
+      "n_estimators": 1800,
+      "learning_rate": 0.02,
+      "num_leaves": 63,
+      "max_depth": 6,
+      "min_child_samples": 120,
+      "subsample": 0.8,
+      "colsample_bytree": 0.75,
+      "reg_alpha": 0.1,
+      "reg_lambda": 5.0
+    }
+  },
+  "quality_gates": {
+    "max_coverage_80_error": 0.12,
+    "max_core_crossing_rate": 0.005,
+    "minimum_q50_unique": 20,
+    "minimum_mean_date_spearman": 0.03,
+    "minimum_positive_date_spearman_rate": 0.55,
+    "minimum_top_bottom_20_spread": 0.0,
+    "maximum_worst_fold_spearman_loss": -0.05
+  }
+}

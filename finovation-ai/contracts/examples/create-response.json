@@ -1,0 +1,426 @@
+{
+  "request_id": "create-example-001",
+  "mode": "CREATE",
+  "system_date": "2025-05-29",
+  "forecast_origin": "2025-05-28",
+  "alternatives": [
+    {
+      "objective_id": "RETURN_FOCUSED",
+      "horizon": "6M",
+      "weights": {
+        "AKSA.E": 0.03,
+        "ALBRK.E": 0.07953989355080336,
+        "ASELS.E": 0.030000000000000002,
+        "BIMAS.E": 0.03,
+        "CASH_TPP": 0.14,
+        "CCOLA.E": 0.03,
+        "CIMSA.E": 0.1,
+        "DOHOL.E": 0.030001000000000035,
+        "EKGYO.E": 0.050001000000000045,
+        "ENKAI.E": 0.04999999999999998,
+        "GARAN.E": 0.030000000000000006,
+        "GUBRF.E": 0.04999999999999997,
+        "HALKB.E": 0.1,
+        "MGROS.E": 0.05,
+        "PGSUS.E": 0.04999999999999998,
+        "TCELL.E": 0.049999999999999975,
+        "TTKOM.E": 0.07045810644919659,
+        "ULKER.E": 0.030000000000000016
+      },
+      "stock_count": 17,
+      "equity_weight": 0.86,
+      "tpp_weight": 0.14,
+      "expected_model_utility_log": 0.14697959431321175,
+      "horizon_volatility": 0.16996615028012768,
+      "universe58_beta": 0.8454472965709164,
+      "sector_exposures": {
+        "S409136": 0.12045810644919656,
+        "S8212": 0.20953989355080338,
+        "S8220": 0.030001000000000035,
+        "S8222": 0.030000000000000002,
+        "S8234": 0.050001000000000045,
+        "S8236": 0.08,
+        "S8244": 0.04999999999999998,
+        "S8282": 0.06000000000000001,
+        "S8304": 0.04999999999999998,
+        "S8316": 0.07999999999999996,
+        "S8320": 0.1
+      },
+      "large_position_threshold": 0.05,
+      "large_position_assets": [
+        "ALBRK.E",
+        "CIMSA.E",
+        "EKGYO.E",
+        "HALKB.E",
+        "TTKOM.E"
+      ],
+      "large_position_total_weight": 0.399999,
+      "weight_semantics": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
+      "objective_value": 0.13975747125295002,
+      "reason_codes": {
+        "AKSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ALBRK.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ASELS.E": [
+          "MANDATORY_ASSET",
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "BIMAS.E": [
+          "HIGH_MODEL_UTILITY"
+        ],
+        "CCOLA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "CIMSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "DOHOL.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "EKGYO.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ENKAI.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "GARAN.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT"
+        ],
+        "GUBRF.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "HALKB.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "MGROS.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "PGSUS.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "TCELL.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "TTKOM.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ULKER.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT"
+        ],
+        "CASH_TPP": [
+          "TPP_ONE_DAY_CARRY",
+          "PORTFOLIO_RISK_BUFFER"
+        ]
+      },
+      "reason_texts": {
+        "AKSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ALBRK.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ASELS.E": [
+          "Bu hisse kullanıcı tarafından zorunlu tutuldu.",
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "BIMAS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir."
+        ],
+        "CCOLA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "CIMSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "DOHOL.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "EKGYO.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ENKAI.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "GARAN.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi."
+        ],
+        "GUBRF.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "HALKB.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "MGROS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "PGSUS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "TCELL.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "TTKOM.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ULKER.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi."
+        ],
+        "CASH_TPP": [
+          "TPP ağırlığı, onaylı tek-günlük faiz carry hesabıyla değerlendirildi.",
+          "TPP, hisse kovaryansı taşımayan likidite ve risk tamponudur."
+        ]
+      },
+      "solution_class": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM"
+    },
+    {
+      "objective_id": "ROBUST_RISK_CONTROLLED",
+      "horizon": "6M",
+      "weights": {
+        "AKSA.E": 0.038787391236976894,
+        "ALBRK.E": 0.08597989070302521,
+        "ASELS.E": 0.03986301338038267,
+        "BIMAS.E": 0.06701821995871338,
+        "CASH_TPP": 0.13999999999999999,
+        "CCOLA.E": 0.1,
+        "CIMSA.E": 0.03,
+        "DOAS.E": 0.03,
+        "DOHOL.E": 0.03,
+        "EKGYO.E": 0.03000000000000004,
+        "ENKAI.E": 0.06994448950153934,
+        "GARAN.E": 0.030000000000000044,
+        "GUBRF.E": 0.039829317339762846,
+        "HALKB.E": 0.03,
+        "MGROS.E": 0.07011880084887966,
+        "PGSUS.E": 0.030000000000000165,
+        "TCELL.E": 0.048458877030719376,
+        "THYAO.E": 0.03000000000000006,
+        "TTKOM.E": 0.030000000000000242,
+        "ULKER.E": 0.03
+      },
+      "stock_count": 19,
+      "equity_weight": 0.86,
+      "tpp_weight": 0.13999999999999999,
+      "expected_model_utility_log": -0.18298674875253387,
+      "horizon_volatility": 0.15903137967499723,
+      "universe58_beta": 0.7957261179428586,
+      "sector_exposures": {
+        "S409136": 0.07845887703071962,
+        "S8212": 0.14597989070302525,
+        "S8220": 0.03,
+        "S8222": 0.03986301338038267,
+        "S8232": 0.03,
+        "S8234": 0.03000000000000004,
+        "S8236": 0.13713702080759305,
+        "S8244": 0.06000000000000023,
+        "S8282": 0.13,
+        "S8304": 0.06994448950153934,
+        "S8316": 0.07861670857673975,
+        "S8320": 0.03
+      },
+      "large_position_threshold": 0.05,
+      "large_position_assets": [
+        "ALBRK.E",
+        "BIMAS.E",
+        "CCOLA.E",
+        "ENKAI.E",
+        "MGROS.E"
+      ],
+      "large_position_total_weight": 0.3930614010121576,
+      "weight_semantics": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
+      "objective_value": -0.24621419805586667,
+      "reason_codes": {
+        "AKSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ALBRK.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ASELS.E": [
+          "MANDATORY_ASSET",
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "BIMAS.E": [
+          "HIGH_MODEL_UTILITY"
+        ],
+        "CCOLA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "CIMSA.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "DOAS.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT"
+        ],
+        "DOHOL.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "EKGYO.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ENKAI.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "GARAN.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT"
+        ],
+        "GUBRF.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "HALKB.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "MGROS.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "PGSUS.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "TCELL.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "THYAO.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT"
+        ],
+        "TTKOM.E": [
+          "HIGH_MODEL_UTILITY",
+          "RELATIVE_RANK_SUPPORT"
+        ],
+        "ULKER.E": [
+          "DIVERSIFICATION_AND_CONSTRAINT_FIT"
+        ],
+        "CASH_TPP": [
+          "TPP_ONE_DAY_CARRY",
+          "PORTFOLIO_RISK_BUFFER"
+        ]
+      },
+      "reason_texts": {
+        "AKSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ALBRK.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ASELS.E": [
+          "Bu hisse kullanıcı tarafından zorunlu tutuldu.",
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "BIMAS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir."
+        ],
+        "CCOLA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "CIMSA.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "DOAS.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi."
+        ],
+        "DOHOL.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "EKGYO.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ENKAI.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "GARAN.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi."
+        ],
+        "GUBRF.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "HALKB.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "MGROS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "PGSUS.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "TCELL.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "THYAO.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi."
+        ],
+        "TTKOM.E": [
+          "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
+          "Hissenin göreli seçim sinyali evrenin üst çeyrektedir."
+        ],
+        "ULKER.E": [
+          "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi."
+        ],
+        "CASH_TPP": [
+          "TPP ağırlığı, onaylı tek-günlük faiz carry hesabıyla değerlendirildi.",
+          "TPP, hisse kovaryansı taşımayan likidite ve risk tamponudur."
+        ]
+      },
+      "solution_class": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM"
+    }
+  ],
+  "policy_config_id": "PORTFOLIO_OBJECTIVES_V3_NEW_PROSPECTUS",
+  "api_version": "v1",
+  "snapshot_id": "FROZEN_2025-05-29_V3",
+  "model_bundle_id": "EQUITY_FORECAST_BUNDLE_V3",
+  "processing_time_ms": 0.0
+}

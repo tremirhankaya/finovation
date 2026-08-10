@@ -30,10 +30,8 @@ public record PortfolioRuleLimits(
                 profileLimits.aboveThresholdPct(),
                 profileLimits.aboveThresholdSumMax(),
                 profileLimits.weightSumTolerancePct(),
-                draft.getMinStockCount() == null ? 0 : draft.getMinStockCount().intValue(),
-                draft.getMaxStockCount() == null
-                        ? Integer.MAX_VALUE
-                        : draft.getMaxStockCount().intValue()
+                profileLimits.minStockCount(),
+                profileLimits.maxStockCount()
         );
     }
 

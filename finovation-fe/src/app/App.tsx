@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router"
 
 import AppShell from "@/app/layout/AppShell"
+import SystemPanelLayout from "@/app/layout/SystemPanelLayout"
 import ProtectedRoute from "@/app/router/ProtectedRoute"
 import GuestRoute from "@/app/router/GuestRoute"
 import AuthProvider from "@/features/auth/context/AuthProvider"
@@ -18,11 +19,13 @@ import FundDesignEditPage from "@/features/fund-design/pages/FundDesignEditPage"
 import FundDesignSuccessPage from "@/features/fund-design/pages/FundDesignSuccessPage"
 import FundMonitoringPage from "@/features/fund-monitoring/pages/FundMonitoringPage"
 import OptimizationFormPage from "@/features/optimization/pages/OptimizationFormPage"
+import OptimizationLogsPage from "@/features/optimization/pages/OptimizationLogsPage"
 import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
 import OptimizationRunningPage from "@/features/optimization/pages/OptimizationRunningPage"
 import UsersPage from "@/features/users/pages/UsersPage"
 import StressTestPage from "@/features/stress-test/pages/StressTestPage"
 import PasswordChangeRequiredPage from "@/features/account/pages/PasswordChangeRequiredPage"
+import SystemLogsPage from "@/features/system-logs/pages/SystemLogsPage"
 
 export default function App() {
     return (
@@ -108,6 +111,10 @@ export default function App() {
                             element={<OptimizationFormPage />}
                         />
                         <Route
+                            path="/optimization-requests/logs"
+                            element={<OptimizationLogsPage />}
+                        />
+                        <Route
                             path="/optimization-requests/:requestId/running"
                             element={<OptimizationRunningPage />}
                         />
@@ -118,13 +125,22 @@ export default function App() {
                     </Route>
 
                     <Route
-                        path="/users"
                         element={
                             <ProtectedRoute requirePanelAccess>
-                                <UsersPage />
+                                <SystemPanelLayout />
                             </ProtectedRoute>
                         }
-                    />
+                    >
+                        <Route path="/users" element={<UsersPage />} />
+                        <Route
+                            path="/system-logs"
+                            element={
+                                <ProtectedRoute requireAdmin>
+                                    <SystemLogsPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                    </Route>
 
                     <Route
                         path="*"

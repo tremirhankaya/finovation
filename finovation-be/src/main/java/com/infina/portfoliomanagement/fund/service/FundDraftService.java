@@ -12,6 +12,7 @@ import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.dto.ModelUniverseAssetResponse;
 import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPortfolioRulesRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
+import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineCreateResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAssetDto;
@@ -310,20 +311,24 @@ public class FundDraftService {
             return List.of();
         }
 
-        Map<Long, String> companyNameByAssetId = equityDetailRepository
+        Map<Long, EquityDetail> equityDetailByAssetId = equityDetailRepository
                 .findAllByAssetIdIn(assets.stream().map(Asset::getId).toList())
                 .stream()
                 .collect(Collectors.toMap(
                         EquityDetail::getAssetId,
-                        EquityDetail::getCompanyName,
+                        detail -> detail,
                         (left, right) -> left
                 ));
 
         cachedModelUniverse = assets.stream()
-                .map(asset -> new ModelUniverseAssetResponse(
-                        asset.getAssetCode(),
-                        resolveDisplayName(asset, companyNameByAssetId.get(asset.getId()))
-                ))
+                .map(asset -> {
+                    EquityDetail detail = equityDetailByAssetId.get(asset.getId());
+                    return new ModelUniverseAssetResponse(
+                            asset.getAssetCode(),
+                            resolveDisplayName(asset, detail != null ? detail.getCompanyName() : null),
+                            detail != null && detail.getSector() != null ? detail.getSector().getName() : null
+                    );
+                })
                 .toList();
         return cachedModelUniverse;
     }
@@ -463,15 +468,17 @@ public class FundDraftService {
         FundModelAnalysisRequest request = toAnalysisRequest(draft);
         ModelRun run = fundAnalysisPersistenceService.startRun(draft, fingerprint);
         try {
-            FundModelAnalysisResponse response = fundModelClient.analyze(request);
+            FundEngineCreateResponse response = fundModelClient.analyze(request);
             fundAnalysisPersistenceService.completeRun(run, draft, response, fingerprint);
             log.info(
                     "Fund draft {} analysis completed by user {} with {} proposals",
                     draft.getPublicId(),
                     draft.getCreatedByUserId(),
-                    response.proposals() == null ? 0 : response.proposals().size()
+                    response.alternatives() == null ? 0 : response.alternatives().size()
             );
-            return response;
+            
+            FundDraftAnalysisStateResponse newState = fundAnalysisPersistenceService.loadState(draft, fingerprint);
+            return new FundModelAnalysisResponse(newState.proposals());
         } catch (RuntimeException ex) {
             fundAnalysisPersistenceService.failRun(
                     run,
@@ -672,22 +679,21 @@ public class FundDraftService {
     private FundModelAnalysisRequest toAnalysisRequest(FundDraft draft) {
         InvestmentHorizon horizon =
                 draft.getHorizon() != null ? draft.getHorizon() : InvestmentHorizon.M12;
-        FundProperties limits = fundDesignProfileService.getLimits(draft.getFundType());
         return new FundModelAnalysisRequest(
-                loadExcludedCodes(draft.getId()),
                 horizon,
-                loadForcedCodes(draft.getId()),
-                draft.getMaxStockCount().intValue(),
                 draft.getMinStockCount().intValue(),
-                toWeightPct(draft.getTppMaxPct()),
+                draft.getMaxStockCount().intValue(),
                 toWeightPct(draft.getTppMinPct()),
-                toWeightPct(draft.getSingleStockMaxPct()),
-                limits.sectorMaxPct()
+                toWeightPct(draft.getTppMaxPct()),
+                loadForcedCodes(draft.getId()),
+                loadExcludedCodes(draft.getId())
         );
     }
 
     private static BigDecimal toWeightPct(Short percent) {
-        return BigDecimal.valueOf(percent == null ? 0 : percent.intValue());
+        if (percent == null) return BigDecimal.ZERO;
+        return BigDecimal.valueOf(percent.intValue())
+                .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
     }
 
     @Transactional

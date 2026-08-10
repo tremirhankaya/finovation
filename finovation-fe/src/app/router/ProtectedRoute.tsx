@@ -9,6 +9,7 @@ type ProtectedRouteProps = {
   children: ReactNode
   requirePanelAccess?: boolean
   requireProductAccess?: boolean
+  requireAdmin?: boolean
   allowPasswordChangeRequired?: boolean
 }
 
@@ -16,6 +17,7 @@ export default function ProtectedRoute({
   children,
   requirePanelAccess = false,
   requireProductAccess = false,
+  requireAdmin = false,
   allowPasswordChangeRequired = false,
 }: ProtectedRouteProps) {
   const {
@@ -66,6 +68,10 @@ export default function ProtectedRoute({
   }
 
   if (requireProductAccess && user.role === "ADMIN") {
+    return <Navigate to={homePath} replace />
+  }
+
+  if (requireAdmin && user.role !== "ADMIN") {
     return <Navigate to={homePath} replace />
   }
 

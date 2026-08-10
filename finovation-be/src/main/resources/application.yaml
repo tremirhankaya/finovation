@@ -1,6 +1,8 @@
 spring:
   application:
     name: finovation
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
     url: ${DB_URL}
@@ -52,6 +54,18 @@ infina:
   connect-timeout: 5s
   read-timeout: 15s
 
+fund-engine:
+  base-url: ${FUND_ENGINE_BASE_URL}
+  api-key: ${AI_ENGINE_API_KEY:}
+  expected-model-snapshot: ${FUND_ENGINE_EXPECTED_MODEL_SNAPSHOT:FROZEN_2025-05-29_V3}
+  connect-timeout: 5s
+  read-timeout: 60s
+
+ai:
+  engine:
+    base-url: ${AI_ENGINE_BASE_URL:http://localhost:8000}
+    api-key: ${AI_ENGINE_API_KEY:test-token}
+
 fund:
   monitoring:
     fixed-outstanding-shares: ${FUND_MONITORING_FIXED_OUTSTANDING_SHARES:1000000}
@@ -84,9 +98,26 @@ resilience4j:
         retry-exceptions:
           - org.springframework.web.client.HttpServerErrorException
           - org.springframework.web.client.HttpClientErrorException$TooManyRequests
+      fund-engine:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException$ServiceUnavailable
+          - org.springframework.web.client.ResourceAccessException
   circuitbreaker:
     instances:
       infina:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        ignore-exceptions:
+          - com.infina.portfoliomanagement.common.exception.BaseException
+      fund-engine:
         sliding-window-size: 20
         minimum-number-of-calls: 10
         failure-rate-threshold: 50

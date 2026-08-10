@@ -8,7 +8,7 @@ describe("RiskProfilePanel", () => {
   it("üç risk yaklaşımı seçeneğini gösterir, seçili olanı işaretler", () => {
     render(<RiskProfilePanel value="BALANCED" onChange={vi.fn()} />)
 
-    expect(screen.getByRole("radio", { name: /Atak/ })).toHaveAttribute(
+    expect(screen.getByRole("radio", { name: /Agresif/ })).toHaveAttribute(
       "aria-checked",
       "false",
     )
@@ -28,7 +28,7 @@ describe("RiskProfilePanel", () => {
 
     render(<RiskProfilePanel value="BALANCED" onChange={onChange} />)
 
-    await user.click(screen.getByRole("radio", { name: /Atak/ }))
+    await user.click(screen.getByRole("radio", { name: /Agresif/ }))
 
     expect(onChange).toHaveBeenCalledWith("AGGRESSIVE")
   })

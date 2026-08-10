@@ -15,13 +15,16 @@ const USER = {
   companyId: 3,
   companyName: "Infina",
   role: "USER",
-  status: "LOCKED",
+  status: "ACTIVE",
   createdAt: "2026-08-02T10:00:00",
 }
 
 describe("user API schemas", () => {
-  it("LOCKED durumunu geçerli backend değeri olarak kabul eder", () => {
-    expect(userListItemSchema.parse(USER).status).toBe("LOCKED")
+  it("yalnız aktif ve pasif kullanıcı durumlarını kabul eder", () => {
+    expect(userListItemSchema.parse(USER).status).toBe("ACTIVE")
+    expect(() =>
+      userListItemSchema.parse({ ...USER, status: "LOCKED" }),
+    ).toThrow()
   })
 
   it("bozuk sayfalama sözleşmesini reddeder", () => {

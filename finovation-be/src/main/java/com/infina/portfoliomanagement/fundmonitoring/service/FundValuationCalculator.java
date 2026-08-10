@@ -52,6 +52,41 @@ public class FundValuationCalculator {
             Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
             LocalDate historyStartDate
     ) {
+        return calculate(
+                fund,
+                positions,
+                assets,
+                unitValuesByAsset,
+                historyStartDate,
+                QuantityAnchor.EARLIEST_DATE
+        );
+    }
+
+    public FundValuationResult calculateBackwardsFromLatest(
+            FundDraft fund,
+            List<FundPosition> positions,
+            List<Asset> assets,
+            Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
+            LocalDate historyStartDate
+    ) {
+        return calculate(
+                fund,
+                positions,
+                assets,
+                unitValuesByAsset,
+                historyStartDate,
+                QuantityAnchor.LATEST_DATE
+        );
+    }
+
+    private FundValuationResult calculate(
+            FundDraft fund,
+            List<FundPosition> positions,
+            List<Asset> assets,
+            Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
+            LocalDate historyStartDate,
+            QuantityAnchor quantityAnchor
+    ) {
         if (positions.isEmpty()) {
             throw unavailable();
         }
@@ -66,7 +101,9 @@ public class FundValuationCalculator {
                 positions,
                 unitValuesByAsset
         );
-        LocalDate baseDate = commonDates.getFirst();
+        LocalDate baseDate = quantityAnchor == QuantityAnchor.LATEST_DATE
+                ? commonDates.getLast()
+                : commonDates.getFirst();
         Map<Long, BigDecimal> quantities = calculateQuantities(
                 fund,
                 positions,
@@ -232,5 +269,10 @@ public class FundValuationCalculator {
 
     private BaseException unavailable() {
         return new BaseException(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE);
+    }
+
+    private enum QuantityAnchor {
+        EARLIEST_DATE,
+        LATEST_DATE
     }
 }

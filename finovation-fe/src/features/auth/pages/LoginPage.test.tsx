@@ -92,6 +92,28 @@ describe("LoginPage", () => {
     )
   })
 
+  it("pasif hesapta kullanıcıya hesap durumunu açıklar", async () => {
+    authServiceMocks.login.mockRejectedValue(
+      toApiRequestError(
+        { code: "AUTH_020", message: "This account is not active." },
+        401,
+        "Giriş başarısız oldu",
+      ),
+    )
+    const user = userEvent.setup()
+
+    renderLoginPage()
+    await user.type(await screen.findByLabelText("Kullanıcı Adı"), "pasif")
+    await user.type(screen.getByLabelText("Şifre"), "Password123!")
+    await user.click(screen.getByRole("button", { name: "Giriş yap" }))
+
+    expect(
+      await screen.findByText(
+        "Hesabınız aktif değildir. Yöneticinizle iletişime geçin.",
+      ),
+    ).toHaveAttribute("role", "alert")
+  })
+
   it("boş alanlarda API isteği göndermeden alan hatalarını gösterir", async () => {
     renderLoginPage()
 

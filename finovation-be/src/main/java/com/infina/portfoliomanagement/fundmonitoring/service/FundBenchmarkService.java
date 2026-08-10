@@ -36,7 +36,11 @@ public class FundBenchmarkService {
     private static final String BIST_30_SOURCE_CODE = "XU030";
     private static final String BIST_100_RETURN_SOURCE_CODE = "XU100_CFNNTLTL";
     private static final String REPO_GROSS_SOURCE_CODE = "REPBR";
+    private static final String DEPOSIT_TRY_SOURCE_CODE = "MEVTL";
     private static final String INFLATION_SOURCE_CODE = "TUCPIM";
+    private static final String GOLD_TRY_SOURCE_CODE = "XGLD";
+    private static final String USD_TRY_SOURCE_CODE = "USD/TRY";
+    private static final String EUR_TRY_SOURCE_CODE = "EUR/TRY";
     private static final BigDecimal BIST_100_WEIGHT = new BigDecimal("0.90");
     private static final BigDecimal REPO_GROSS_WEIGHT = new BigDecimal("0.10");
     private static final BigDecimal COMPOSITE_BASE_VALUE = new BigDecimal("100");
@@ -59,9 +63,25 @@ public class FundBenchmarkService {
                 REPO_GROSS_SOURCE_CODE,
                 () -> indexValues(REPO_GROSS_SOURCE_CODE, from, asOfDate)
         );
+        NavigableMap<LocalDate, BigDecimal> depositTryValues = safelyLoad(
+                DEPOSIT_TRY_SOURCE_CODE,
+                () -> indexValues(DEPOSIT_TRY_SOURCE_CODE, from, asOfDate)
+        );
         NavigableMap<LocalDate, BigDecimal> inflationValues = safelyLoad(
                 INFLATION_SOURCE_CODE,
-                () -> economicValues(INFLATION_SOURCE_CODE, from, asOfDate)
+                () -> inflationIndexValues(INFLATION_SOURCE_CODE, from, asOfDate)
+        );
+        NavigableMap<LocalDate, BigDecimal> goldTryValues = safelyLoad(
+                GOLD_TRY_SOURCE_CODE,
+                () -> indexValues(GOLD_TRY_SOURCE_CODE, from, asOfDate)
+        );
+        NavigableMap<LocalDate, BigDecimal> usdTryValues = safelyLoad(
+                USD_TRY_SOURCE_CODE,
+                () -> indexValues(USD_TRY_SOURCE_CODE, from, asOfDate)
+        );
+        NavigableMap<LocalDate, BigDecimal> eurTryValues = safelyLoad(
+                EUR_TRY_SOURCE_CODE,
+                () -> indexValues(EUR_TRY_SOURCE_CODE, from, asOfDate)
         );
 
         NavigableMap<LocalDate, BigDecimal> compositeBenchmarkValues =
@@ -86,17 +106,9 @@ public class FundBenchmarkService {
                 comparisonAsset(
                         "official-equity-benchmark",
                         "BENCHMARK",
-                        "Fon Karşılaştırma Ölçütü",
+                        "BENCHMARK",
                         "#dc2626",
                         compositeBenchmarkValues,
-                        asOfDate
-                ),
-                comparisonAsset(
-                        "bist-30",
-                        "BIST30",
-                        "BIST 30",
-                        "#2563eb",
-                        bist30Values,
                         asOfDate
                 ),
                 comparisonAsset(
@@ -108,11 +120,19 @@ public class FundBenchmarkService {
                         asOfDate
                 ),
                 comparisonAsset(
-                        "repo-gross",
-                        "REPBR",
-                        "BIST-KYD Repo (Brüt) Endeksi",
-                        "#0891b2",
-                        repoGrossValues,
+                        "bist-30",
+                        "BIST30",
+                        "BIST 30",
+                        "#2563eb",
+                        bist30Values,
+                        asOfDate
+                ),
+                comparisonAsset(
+                        "deposit-try",
+                        "MEVDUAT",
+                        "Mevduat Getirisi",
+                        "#0f766e",
+                        depositTryValues,
                         asOfDate
                 ),
                 comparisonAsset(
@@ -121,6 +141,38 @@ public class FundBenchmarkService {
                         "TÜFE",
                         "#ea580c",
                         inflationValues,
+                        asOfDate
+                ),
+                comparisonAsset(
+                        "gold-try",
+                        "ALTIN",
+                        "Gram Altın",
+                        "#ca8a04",
+                        goldTryValues,
+                        asOfDate
+                ),
+                comparisonAsset(
+                        "usd-try",
+                        "USD/TRY",
+                        "USD",
+                        "#16a34a",
+                        usdTryValues,
+                        asOfDate
+                ),
+                comparisonAsset(
+                        "eur-try",
+                        "EUR/TRY",
+                        "Euro",
+                        "#0284c7",
+                        eurTryValues,
+                        asOfDate
+                ),
+                comparisonAsset(
+                        "repo-gross",
+                        "REPBR",
+                        "BIST-KYD Repo (Brüt) Endeksi",
+                        "#0891b2",
+                        repoGrossValues,
                         asOfDate
                 )
         );
@@ -198,20 +250,31 @@ public class FundBenchmarkService {
         return values;
     }
 
-    private NavigableMap<LocalDate, BigDecimal> economicValues(
+    private NavigableMap<LocalDate, BigDecimal> inflationIndexValues(
             String sourceCode,
             LocalDate from,
             LocalDate to
     ) {
-        NavigableMap<LocalDate, BigDecimal> values = new TreeMap<>();
+        NavigableMap<LocalDate, BigDecimal> monthlyRates = new TreeMap<>();
         for (EconomicPriceRecord economicPrice : benchmarkPriceApi.fetchEconomicRange(
                 sourceCode,
                 from,
                 to
         )) {
             if (economicPrice.dataDate() != null && economicPrice.price() != null) {
-                values.put(economicPrice.dataDate(), economicPrice.price());
+                monthlyRates.put(economicPrice.dataDate(), economicPrice.price());
             }
+        }
+
+        NavigableMap<LocalDate, BigDecimal> values = new TreeMap<>();
+        BigDecimal cumulativeIndex = COMPOSITE_BASE_VALUE;
+        for (Map.Entry<LocalDate, BigDecimal> monthlyRate : monthlyRates.entrySet()) {
+            BigDecimal growthFactor = BigDecimal.ONE.add(
+                    monthlyRate.getValue().movePointLeft(2)
+            );
+            cumulativeIndex = cumulativeIndex.multiply(growthFactor)
+                    .setScale(12, RoundingMode.HALF_UP);
+            values.put(monthlyRate.getKey(), cumulativeIndex);
         }
         return values;
     }
