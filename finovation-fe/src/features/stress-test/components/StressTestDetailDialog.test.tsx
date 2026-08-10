@@ -39,11 +39,14 @@ describe("StressTestDetailDialog", () => {
     serviceMocks.fetchStressTestSectorPaths.mockReset()
     serviceMocks.fetchStressTestSectors.mockReset()
 
-    const pendingRequest = () => new Promise(() => {})
-    serviceMocks.fetchStressTestAssetPath.mockImplementation(pendingRequest)
-    serviceMocks.fetchStressTestPortfolioPath.mockImplementation(pendingRequest)
-    serviceMocks.fetchStressTestSectorPaths.mockImplementation(pendingRequest)
-    serviceMocks.fetchStressTestSectors.mockImplementation(pendingRequest)
+    serviceMocks.fetchStressTestAssetPath.mockResolvedValue({
+      assetCode: "AKBNK.E",
+      assetType: "EQUITY",
+      points: [],
+    })
+    serviceMocks.fetchStressTestPortfolioPath.mockResolvedValue({ points: [] })
+    serviceMocks.fetchStressTestSectorPaths.mockResolvedValue([])
+    serviceMocks.fetchStressTestSectors.mockResolvedValue([])
   })
 
   it("seçilen stres testinin detayını yükler ve gösterir", async () => {
@@ -56,8 +59,9 @@ describe("StressTestDetailDialog", () => {
     })
 
     expect(within(dialog).getByText("-4.20%")).toBeInTheDocument()
-    expect(within(dialog).getAllByText("AKBNK.E").length).toBeGreaterThan(0)
-
+    expect(
+      within(dialog).getByRole("cell", { name: "AKBNK.E" }),
+    ).toBeInTheDocument()
     expect(serviceMocks.fetchStressTestDetail).toHaveBeenCalledWith(
       DETAIL.testId,
       expect.any(AbortSignal),

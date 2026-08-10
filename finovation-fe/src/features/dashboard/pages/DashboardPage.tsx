@@ -23,8 +23,6 @@ export default function DashboardPage() {
           onRefresh={dashboard.reload}
         />
 
-        <QuickActions />
-
         <DashboardSummaryCards
           fundCount={dashboard.funds.length}
           draftCount={dashboard.drafts.length}
@@ -32,8 +30,11 @@ export default function DashboardPage() {
           optimizationLogs={dashboard.optimizationLogs}
           optimizationResult={dashboard.latestOptimizationResult}
           latestStressTest={latestStressTest}
+          errors={dashboard.errors}
           isLoading={dashboard.isOverviewLoading}
         />
+
+        <QuickActions />
 
         <div className={styles.mainGrid}>
           <FundPerformanceOverview
