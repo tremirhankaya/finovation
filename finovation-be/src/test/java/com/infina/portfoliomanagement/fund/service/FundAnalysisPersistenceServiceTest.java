@@ -1,5 +1,7 @@
 package com.infina.portfoliomanagement.fund.service;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProperties;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
@@ -14,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +48,10 @@ class FundAnalysisPersistenceServiceTest {
                 fundPositionRepository,
                 fundDraftRepository,
                 assetRepository,
-                Clock.systemUTC()
+                new FinancialTimeProvider(
+                        Clock.systemUTC(),
+                        new FinancialTimeProperties(false, null, null, ZoneOffset.UTC)
+                )
         );
     }
 

@@ -157,6 +157,72 @@ describe("useOptimizationResultReview", () => {
     expect(updated?.manuallyOverridden).toBe(false)
   })
 
+  it("resetAllFinalWeights sadece manuel değiştirilenlerin işaretini kaldırır, diğerlerine dokunmaz", async () => {
+    const { result } = renderHook(() => useOptimizationResultReview(1))
+    await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
+    const [firstCode, secondCode] = result.current.assets.map(
+      (asset) => asset.assetCode,
+    )
+
+    act(() => result.current.setFinalWeight(firstCode, 42))
+    act(() => result.current.setFinalWeight(secondCode, 17))
+    expect(result.current.summary.overriddenCount).toBe(2)
+
+    act(() => result.current.resetAllFinalWeights())
+
+    expect(result.current.summary.overriddenCount).toBe(0)
+    const first = result.current.assets.find(
+      (asset) => asset.assetCode === firstCode,
+    )
+    const second = result.current.assets.find(
+      (asset) => asset.assetCode === secondCode,
+    )
+    expect(first?.finalWeight).toBeNull()
+    expect(first?.manuallyOverridden).toBe(false)
+    expect(second?.finalWeight).toBeNull()
+    expect(second?.manuallyOverridden).toBe(false)
+  })
+
+  it("summary, ekrandaki kategori mantığıyla hesaplanır — actionType'a göre değil görünür değişime göre sayar", async () => {
+    optimizationApiMocks.fetchOptimizationResult.mockResolvedValue({
+      generatedAt: RESULT.generatedAt,
+      assets: [
+        {
+          assetCode: "TCELL",
+          name: "Turkcell",
+          sectorName: "Telekomünikasyon",
+          assetType: "EQUITY",
+          currentWeight: 6.3,
+          proposedWeight: 6.4,
+          finalWeight: null,
+          changeAmount: 0.1,
+          actionType: "INCREASE",
+          manuallyOverridden: false,
+          rationale: null,
+        },
+        {
+          assetCode: "MGROS",
+          name: "Migros",
+          sectorName: "Perakende Ticaret",
+          assetType: "EQUITY",
+          currentWeight: 9,
+          proposedWeight: 12,
+          finalWeight: null,
+          changeAmount: 3,
+          actionType: "INCREASE",
+          manuallyOverridden: false,
+          rationale: null,
+        },
+      ],
+      metrics: [],
+    })
+
+    const { result } = renderHook(() => useOptimizationResultReview(1))
+    await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
+
+    expect(result.current.summary.increasedCount).toBe(1)
+  })
+
   it("decide('approve') başarılı olduğunda decidedAs'ı 'approve' yapar", async () => {
     optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({})
     const { result } = renderHook(() => useOptimizationResultReview(1))
@@ -173,12 +239,33 @@ describe("useOptimizationResultReview", () => {
     expect(result.current.isSubmitting).toBe(false)
   })
 
+  it("decide('approve') backend'den dönen gerçek onaylayan/zaman bilgisini request state'ine yansıtır", async () => {
+    optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({
+      ...COMPLETED_REQUEST,
+      status: "APPROVED",
+      decidedByUserId: 3,
+      decidedByUsername: "onay-veren-yonetici",
+      updatedAt: "2026-08-10T16:53:00",
+    })
+    const { result } = renderHook(() => useOptimizationResultReview(1))
+    await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
+
+    await act(async () => {
+      await result.current.decide("approve")
+    })
+
+    expect(result.current.request?.decidedByUsername).toBe(
+      "onay-veren-yonetici",
+    )
+    expect(result.current.request?.status).toBe("APPROVED")
+  })
+
   it("decide('approve') elle değiştirilen ağırlıkları override olarak gönderir", async () => {
     optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({})
     const { result } = renderHook(() => useOptimizationResultReview(1))
     await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
 
-    act(() => result.current.setFinalWeight("STK0", 6))
+    act(() => result.current.setFinalWeight("STK0", 5.5))
 
     await act(async () => {
       await result.current.decide("approve")
@@ -186,7 +273,7 @@ describe("useOptimizationResultReview", () => {
 
     expect(
       optimizationApiMocks.approveOptimizationRequest,
-    ).toHaveBeenCalledWith(1, [{ assetCode: "STK0", finalWeight: 6 }])
+    ).toHaveBeenCalledWith(1, [{ assetCode: "STK0", finalWeight: 5.5 }])
   })
 
   it("decide('reject') başarılı olduğunda decidedAs'ı 'reject' yapar", async () => {
@@ -200,8 +287,24 @@ describe("useOptimizationResultReview", () => {
 
     expect(optimizationApiMocks.rejectOptimizationRequest).toHaveBeenCalledWith(
       1,
+      undefined,
     )
     expect(result.current.decidedAs).toBe("reject")
+  })
+
+  it("decide('reject') gerekçeyi reddetme isteğiyle birlikte iletir", async () => {
+    optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
+    const { result } = renderHook(() => useOptimizationResultReview(1))
+    await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
+
+    await act(async () => {
+      await result.current.decide("reject", "Sektör dağılımı hedeflere uymuyor")
+    })
+
+    expect(optimizationApiMocks.rejectOptimizationRequest).toHaveBeenCalledWith(
+      1,
+      "Sektör dağılımı hedeflere uymuyor",
+    )
   })
 
   it("decide başarısız olduğunda hata mesajını kullanıcı diline çevirir", async () => {
@@ -225,7 +328,7 @@ describe("useOptimizationResultReview", () => {
     const { result } = renderHook(() => useOptimizationResultReview(1))
     await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
 
-    expect(result.current.constraintMetrics.length).toBe(5)
+    expect(result.current.constraintMetrics.length).toBe(6)
     expect(result.current.infoMetrics.length).toBe(9)
     expect(result.current.isApprovalBlocked).toBe(false)
   })

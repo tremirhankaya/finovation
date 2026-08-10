@@ -1,0 +1,5 @@
+﻿INFO:     127.0.0.1:53542 - "GET /health/ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53542 - "POST /api/v1/portfolios/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53542 - "POST /api/v1/portfolios/optimize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53542 - "POST /api/v1/rl/inference HTTP/1.1" 200 OK
+

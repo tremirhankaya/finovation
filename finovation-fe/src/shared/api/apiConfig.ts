@@ -35,6 +35,8 @@ export const API_PATHS = {
   investmentUniverse:
       import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
       "/v1/investment-universe",
+  dashboard:
+      import.meta.env.VITE_DASHBOARD_PATH?.trim() || "/v1/dashboard",
 } as const
 
 function normalizePath(path: string): string {
@@ -152,6 +154,10 @@ export function getUserFundsUrl(ownerUserId: number): string {
 
 export function getFundMonitoringUrl(fundId: string): string {
   return `${getFundsUrl()}/${encodeURIComponent(fundId)}/monitoring`
+}
+
+export function getDashboardSummaryUrl(): string {
+  return `${buildUrl(API_PATHS.dashboard)}/summary`
 }
 
 export function getOptimizationRequestsUrl(

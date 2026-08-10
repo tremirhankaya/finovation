@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.fundmonitoring.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
@@ -11,7 +12,6 @@ import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPortfolioRepository;
 import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
 import com.infina.portfoliomanagement.fundmonitoring.classification.AssetClassificationProviderRegistry;
-import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundPositionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundComparisonAssetResponse;
@@ -36,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -69,8 +68,7 @@ public class FundMonitoringService {
     private final FundBenchmarkService benchmarkService;
     private final SimilarFundService similarFundService;
     private final RiskFreeRateProvider riskFreeRateProvider;
-    private final FundMonitoringProperties properties;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
 
     @Transactional(readOnly = true)
     public List<FundSummaryResponse> listFunds(
@@ -107,7 +105,7 @@ public class FundMonitoringService {
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
         accessPolicy.assertCanView(fund, actor.getId());
 
-        LocalDate today = LocalDate.now(clock);
+        LocalDate today = financialTime.currentDate();
         FundMonitoringCalculation calculation = calculateFund(fund, today);
         List<Asset> assets = calculation.assets();
         FundValuationResult valuation = calculation.valuation();
@@ -144,7 +142,7 @@ public class FundMonitoringService {
                 FundSummaryResponse.from(fund),
                 latest.date(),
                 fund.getCurrencyCode(),
-                properties.fixedOutstandingShares(),
+                valuation.outstandingShares(),
                 latest.sharePrice(),
                 metricCalculator.dailyChange(points),
                 priceHistory(points, latest.date()),
@@ -195,7 +193,7 @@ public class FundMonitoringService {
         BigDecimal totalWeight = weightsByAssetCode.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        LocalDate now = LocalDate.now(clock);
+        LocalDate now = financialTime.currentDate();
         LocalDate historyStart = now.minusYears(1).minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS);
 
         List<FundPosition> syntheticPositions = weightsByAssetCode.entrySet().stream()
@@ -252,7 +250,7 @@ public class FundMonitoringService {
                         historyStart,
                         today
                 );
-        FundValuationResult valuation = valuationCalculator.calculateBackwardsFromLatest(
+        FundValuationResult valuation = valuationCalculator.calculateAroundInception(
                 fund,
                 portfolioPositions,
                 assets,
@@ -364,7 +362,7 @@ public class FundMonitoringService {
             int colorIndex
     ) {
         LocalDate asOfDate = valuation == null
-                ? LocalDate.now(clock)
+                ? financialTime.currentDate()
                 : valuation.latestPoint().date();
         Map<String, BigDecimal> returns = metricCalculator.comparisonReturns(
                 valuation == null ? List.of() : valuation.points(),

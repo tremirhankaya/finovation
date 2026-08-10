@@ -4,16 +4,17 @@ import { autoTable } from "jspdf-autotable"
 import robotoBoldFontUrl from "@/features/optimization/assets/fonts/Roboto-Bold.ttf"
 import robotoRegularFontUrl from "@/features/optimization/assets/fonts/Roboto-Regular.ttf"
 import {
-  ACTION_TYPE_LABELS,
-  CONSTRAINT_STATUS_LABELS,
-  formatDateTime,
-  INFO_STATUS_LABELS,
+  formatDecisionDateTime,
+  REQUEST_STATUS_LABELS,
   RISK_PROFILE_LABELS,
 } from "@/features/optimization/lib/optimizationExportLabels"
-import type {
-  ConstraintMetric,
-  InfoMetric,
-} from "@/features/optimization/model/optimizationMetricsEvaluation.types"
+import {
+  CRITERIA_STATUS_LABELS,
+  formatCriteriaDelta,
+  formatCriteriaValue,
+  type CriteriaRow,
+} from "@/features/optimization/lib/optimizationCriteriaRows"
+import { buildResultCategories } from "@/features/optimization/lib/optimizationResultCategories"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import type { OptimizationRequestResponse } from "@/features/optimization/model/optimizationSchemas"
 
@@ -26,11 +27,6 @@ const TABLE_HEAD_FONT = { font: FONT_FAMILY, fontStyle: "bold" as const }
 function formatWeight(value: number | null): string {
   if (value == null) return "—"
   return `%${value.toFixed(1).replace(/\.0$/, "")}`
-}
-
-function formatMetricValue(value: number | null): string {
-  if (value == null) return "—"
-  return value.toFixed(2).replace(/\.00$/, "").replace(/0$/, "")
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -61,20 +57,11 @@ async function registerTurkishFont(doc: jsPDF): Promise<void> {
   doc.setFont(FONT_FAMILY, "normal")
 }
 
-export type OptimizationPdfExportSummary = {
-  increasedCount: number
-  decreasedCount: number
-  keptCount: number
-  overriddenCount: number
-}
-
 export type OptimizationPdfExportInput = {
   fundName: string
   request: OptimizationRequestResponse
   assets: OptimizationResultAsset[]
-  summary: OptimizationPdfExportSummary
-  constraintMetrics: ConstraintMetric[]
-  infoMetrics: InfoMetric[]
+  criteriaRows: CriteriaRow[]
 }
 
 function nextY(doc: DocWithAutoTable, fallback: number): number {
@@ -88,54 +75,118 @@ function heading(doc: DocWithAutoTable, text: string, y: number): void {
   doc.setFont(FONT_FAMILY, "normal")
 }
 
+function decidedByLabel(request: OptimizationRequestResponse): string {
+  return (
+    request.decidedByDisplayName ??
+    request.decidedByUsername ??
+    "—"
+  )
+}
+
+function requestedByLabel(request: OptimizationRequestResponse): string {
+  return (
+    request.requestedByDisplayName ??
+    request.requestedByUsername ??
+    "—"
+  )
+}
+
+function criteriaRowToLine(row: CriteriaRow): string[] {
+  return [
+    row.label,
+    formatCriteriaValue(row.currentValue, row.unit),
+    formatCriteriaValue(row.proposedValue, row.unit),
+    formatCriteriaDelta(row.currentValue, row.proposedValue, row.unit).text,
+    CRITERIA_STATUS_LABELS[row.status] ?? row.status,
+    row.detail,
+  ]
+}
+
 export async function buildOptimizationResultPdf(
   input: OptimizationPdfExportInput,
 ): Promise<jsPDF> {
   const doc = new jsPDF() as DocWithAutoTable
   await registerTurkishFont(doc)
 
+  const statusLabel =
+    REQUEST_STATUS_LABELS[input.request.status] ?? input.request.status
+
   doc.setFont(FONT_FAMILY, "bold")
   doc.setFontSize(16)
-  doc.text("Fon Optimizasyonu — Onay Özeti", 14, 18)
+  doc.text(`Fon Optimizasyonu — ${statusLabel}`, 14, 18)
   doc.setFont(FONT_FAMILY, "normal")
+
+  const headerRows: string[][] = [
+    ["Fon", input.fundName],
+    ["Optimizasyon isteği", `#${input.request.id}`],
+    ["Durum", statusLabel],
+    [
+      "Risk profili",
+      RISK_PROFILE_LABELS[input.request.riskProfile] ??
+        input.request.riskProfile,
+    ],
+    ["İsteği oluşturan", requestedByLabel(input.request)],
+    ["Onaylayan/Reddeden", decidedByLabel(input.request)],
+    [
+      "Onay/red zamanı",
+      formatDecisionDateTime(input.request.status, input.request.updatedAt),
+    ],
+  ]
+  if (input.request.status === "REJECTED" && input.request.rejectionReason) {
+    headerRows.push(["Red gerekçesi", input.request.rejectionReason])
+  }
 
   autoTable(doc, {
     startY: 24,
     theme: "plain",
     styles: { ...TABLE_FONT, fontSize: 9 },
     columnStyles: { 0: { ...TABLE_HEAD_FONT, cellWidth: 45 } },
-    body: [
-      ["Fon", input.fundName],
-      ["Optimizasyon isteği", `#${input.request.id}`],
-      [
-        "Risk profili",
-        RISK_PROFILE_LABELS[input.request.riskProfile] ??
-          input.request.riskProfile,
-      ],
-      ["Model sürümü", input.request.modelVersion ?? "—"],
-      ["Veri zamanı", formatDateTime(input.request.dataTimestamp)],
-      ["İşlemi yapan", input.request.requestedByUsername ?? "—"],
-      ["Onay/red zamanı", formatDateTime(input.request.updatedAt)],
-    ],
+    body: headerRows,
   })
 
   let y = nextY(doc, 24)
+  if (input.request.status === "REJECTED") {
+    doc.setFont(FONT_FAMILY, "normal")
+    doc.setFontSize(8.5)
+    doc.setTextColor(153, 27, 27)
+    const disclaimerLines = doc.splitTextToSize(
+      "Bu istek reddedildi; aşağıdaki tablolar modelin önerdiği, fona uygulanmamış değişiklikleri gösterir.",
+      180,
+    )
+    doc.text(disclaimerLines, 14, y - 6)
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(12)
+    y += disclaimerLines.length * 4
+  }
+
+  const categories = buildResultCategories(input.assets)
+  const countFor = (key: string) =>
+    categories.find((category) => category.key === key)?.count ?? 0
+  const overriddenCount = input.assets.filter(
+    (asset) => asset.manuallyOverridden,
+  ).length
+
   heading(doc, "Portföy Değişim Özeti", y)
   autoTable(doc, {
     startY: y + 4,
     theme: "grid",
     styles: { ...TABLE_FONT, fontSize: 9, halign: "center" },
     headStyles: { ...TABLE_HEAD_FONT, fillColor: [15, 118, 110] },
-    head: [["Artırılan", "Azaltılan", "Korunan", "Manuel Değiştirilen"]],
+    head: [["Artırılan", "Azaltılan", "Sabit Kalan", "Manuel Değiştirilen"]],
     body: [
       [
-        String(input.summary.increasedCount),
-        String(input.summary.decreasedCount),
-        String(input.summary.keptCount),
-        String(input.summary.overriddenCount),
+        String(countFor("INCREASED")),
+        String(countFor("DECREASED")),
+        String(countFor("LOCKED")),
+        String(overriddenCount),
       ],
     ],
   })
+
+  const constraintRows = input.criteriaRows.filter(
+    (row) => row.unit !== "RATIO",
+  )
+  const infoRows = input.criteriaRows.filter((row) => row.unit === "RATIO")
 
   y = nextY(doc, y)
   heading(doc, "Kısıt/İzahname Uyum Özeti", y)
@@ -144,30 +195,23 @@ export async function buildOptimizationResultPdf(
     theme: "grid",
     styles: { ...TABLE_FONT, fontSize: 8.5 },
     headStyles: { ...TABLE_HEAD_FONT, fillColor: [15, 118, 110] },
-    head: [["Metrik", "Değer", "Durum", "Detay"]],
-    body: input.constraintMetrics.map((metric) => [
-      metric.label,
-      formatMetricValue(metric.value),
-      CONSTRAINT_STATUS_LABELS[metric.status] ?? metric.status,
-      metric.detail,
-    ]),
+    head: [
+      ["Kriter", "Mevcut Fon", "Optimize Edilmiş", "Değişim", "Durum", "Detay"],
+    ],
+    body: constraintRows.map(criteriaRowToLine),
   })
 
   y = nextY(doc, y)
-  heading(doc, "Risk Metrikleri Karşılaştırması", y)
+  heading(doc, "Risk ve Getiri Metrikleri", y)
   autoTable(doc, {
     startY: y + 4,
     theme: "grid",
     styles: { ...TABLE_FONT, fontSize: 8.5 },
     headStyles: { ...TABLE_HEAD_FONT, fillColor: [15, 118, 110] },
-    head: [["Metrik", "Mevcut", "Önerilen", "Durum", "Detay"]],
-    body: input.infoMetrics.map((metric) => [
-      metric.label,
-      formatMetricValue(metric.currentValue),
-      formatMetricValue(metric.proposedValue),
-      INFO_STATUS_LABELS[metric.status] ?? metric.status,
-      metric.detail,
-    ]),
+    head: [
+      ["Metrik", "Mevcut", "Önerilen", "Değişim", "Durum", "Detay"],
+    ],
+    body: infoRows.map(criteriaRowToLine),
   })
 
   doc.addPage()
@@ -177,14 +221,13 @@ export async function buildOptimizationResultPdf(
     theme: "grid",
     styles: { ...TABLE_FONT, fontSize: 8 },
     headStyles: { ...TABLE_HEAD_FONT, fillColor: [15, 118, 110] },
-    head: [["Kod", "Ad", "Mevcut", "Önerilen", "Final", "Durum"]],
+    head: [["Kod", "Ad", "Mevcut", "Önerilen", "Final"]],
     body: input.assets.map((asset) => [
       asset.assetCode,
       asset.name,
       formatWeight(asset.currentWeight),
       formatWeight(asset.proposedWeight),
       formatWeight(asset.finalWeight ?? asset.proposedWeight),
-      ACTION_TYPE_LABELS[asset.actionType] ?? asset.actionType,
     ]),
   })
 

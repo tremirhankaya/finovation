@@ -435,6 +435,7 @@ public enum ErrorCode {
             HttpStatus.UNPROCESSABLE_CONTENT,
             "Stress scenario does not cover all assets in the selected portfolio."
     ),
+
     AI_ENGINE_UNAVAILABLE(
             "AI_ENGINE_001",
             HttpStatus.SERVICE_UNAVAILABLE,

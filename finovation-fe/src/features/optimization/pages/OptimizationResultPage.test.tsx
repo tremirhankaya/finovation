@@ -30,12 +30,6 @@ vi.mock("@/features/optimization/lib/optimizationExcelExport", () => ({
   ...excelExportMocks,
 }))
 
-const useAuthMock = vi.hoisted(() => vi.fn())
-
-vi.mock("@/features/auth/context/AuthContext", () => ({
-  useAuth: useAuthMock,
-}))
-
 import OptimizationResultPage from "@/features/optimization/pages/OptimizationResultPage"
 
 const COMPLETED_REQUEST = {
@@ -45,6 +39,9 @@ const COMPLETED_REQUEST = {
   modelVersion: null,
   requestedByUserId: 7,
   requestedByUsername: "fon-yoneticisi",
+  decidedByUserId: null,
+  decidedByUsername: null,
+  decidedByDisplayName: null,
   riskProfile: "BALANCED",
   status: "COMPLETED",
   tppMinWeight: 5,
@@ -178,10 +175,6 @@ describe("OptimizationResultPage", () => {
     optimizationApiMocks.rejectOptimizationRequest.mockReset()
     pdfExportMocks.downloadOptimizationResultPdf.mockReset()
     excelExportMocks.downloadOptimizationResultExcel.mockReset()
-    useAuthMock.mockReset().mockReturnValue({
-      user: { username: "fon-yoneticisi", firstName: "Sefa", lastName: "Ecir" },
-      signOut: vi.fn(),
-    })
   })
 
   it("yüklenirken durum bandını gösterir", () => {
@@ -282,6 +275,53 @@ describe("OptimizationResultPage", () => {
     expect(
       optimizationApiMocks.approveOptimizationRequest,
     ).toHaveBeenCalledWith(1, [])
+    expect(
+      screen.queryByRole("button", { name: "İşlem Loglarını Gör" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("onay ekranında gerçek onaylayan kullanıcıyı ve gerçek onay zamanını gösterir, anlık oturumu değil", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({
+      ...COMPLETED_REQUEST,
+      status: "APPROVED",
+      decidedByUsername: "onay-veren-yonetici",
+      updatedAt: "2026-08-10T16:53:00",
+    })
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Portföyü Onayla ve Güncelle" }),
+    )
+
+    await waitFor(() =>
+      expect(screen.getByText("Optimizasyon Tamamlandı")).toBeInTheDocument(),
+    )
+    expect(screen.getByText("onay-veren-yonetici")).toBeInTheDocument()
+  })
+
+  it("onay ekranında ad-soyad varsa kullanıcı adı yerine onu gösterir", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.approveOptimizationRequest.mockResolvedValue({
+      ...COMPLETED_REQUEST,
+      status: "APPROVED",
+      decidedByUsername: "sefa16",
+      decidedByDisplayName: "Sefa Ecir",
+      updatedAt: "2026-08-10T16:53:00",
+    })
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Portföyü Onayla ve Güncelle" }),
+    )
+
+    await waitFor(() =>
+      expect(screen.getByText("Optimizasyon Tamamlandı")).toBeInTheDocument(),
+    )
+    expect(screen.getByText("Sefa Ecir")).toBeInTheDocument()
+    expect(screen.queryByText("sefa16")).not.toBeInTheDocument()
   })
 
   it("kriter ekranında PDF olarak indir butonuna tıklanınca export'u tetikler", async () => {
@@ -324,7 +364,7 @@ describe("OptimizationResultPage", () => {
     )
   })
 
-  it("iptal edince başarı ekranını farklı metinle gösterir", async () => {
+  it("iptal edince gerekçe penceresi açılır, onaylanınca başarı ekranını farklı metinle gösterir", async () => {
     const user = userEvent.setup()
     optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
     renderPage()
@@ -333,15 +373,80 @@ describe("OptimizationResultPage", () => {
     await user.click(
       screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
     )
-    await user.click(
-      screen.getByRole("button", {
-        name: "Emin misiniz? · İptal Etmek İçin Tıklayın",
-      }),
-    )
+
+    expect(
+      screen.getByRole("heading", { name: "Optimizasyonu reddet" }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Reddet" }))
 
     await waitFor(() =>
       expect(screen.getByText("Optimizasyon Reddedildi")).toBeInTheDocument(),
     )
+  })
+
+  it("iptal penceresinde yazılan gerekçeyi reddetme isteğiyle birlikte gönderir", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({})
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
+    )
+    await user.type(
+      screen.getByLabelText("Red gerekçesi (isteğe bağlı)"),
+      "Sektör dağılımı hedeflere uymuyor",
+    )
+    await user.click(screen.getByRole("button", { name: "Reddet" }))
+
+    await waitFor(() =>
+      expect(
+        optimizationApiMocks.rejectOptimizationRequest,
+      ).toHaveBeenCalledWith(1, "Sektör dağılımı hedeflere uymuyor"),
+    )
+  })
+
+  it("reddedilme ekranında reddedeni, tarihi ve gerekçeyi gösterir", async () => {
+    const user = userEvent.setup()
+    optimizationApiMocks.rejectOptimizationRequest.mockResolvedValue({
+      decidedByDisplayName: "Onay Veren",
+      decidedByUsername: "onaylayan",
+      updatedAt: "2026-08-10T17:15:00",
+      rejectionReason: "Sektör dağılımı hedeflere uymuyor",
+    })
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Reddet" }))
+
+    await waitFor(() =>
+      expect(screen.getByText("Optimizasyon Reddedildi")).toBeInTheDocument(),
+    )
+
+    expect(screen.getByText("Onay Veren")).toBeInTheDocument()
+    expect(
+      screen.getByText("Sektör dağılımı hedeflere uymuyor"),
+    ).toBeInTheDocument()
+  })
+
+  it("iptal penceresinde vazgeçilince istek gönderilmez ve pencere kapanır", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await goToCriteriaScreen(user)
+    await user.click(
+      screen.getByRole("button", { name: "Optimizasyonu İptal Et" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Vazgeç" }))
+
+    expect(
+      screen.queryByRole("heading", { name: "Optimizasyonu reddet" }),
+    ).not.toBeInTheDocument()
+    expect(optimizationApiMocks.rejectOptimizationRequest).not.toHaveBeenCalled()
   })
 
   it("onay hata verdiğinde hata bandını gösterir", async () => {
@@ -382,6 +487,21 @@ describe("OptimizationResultPage", () => {
     await waitFor(() =>
       expect(screen.getByText("Optimizasyon Tamamlandı")).toBeInTheDocument(),
     )
+  })
+
+  it("daha önce onaylanmış bir istek başka bir oturumda açıldığında gerçek onaylayanı gösterir, sayfayı açan kişiyi değil", async () => {
+    optimizationApiMocks.fetchOptimizationRequest.mockResolvedValue({
+      ...COMPLETED_REQUEST,
+      status: "APPROVED",
+      decidedByUsername: "gecmiste-onaylayan",
+      updatedAt: "2026-08-05T11:00:00",
+    })
+    renderPage()
+
+    await waitFor(() =>
+      expect(screen.getByText("Optimizasyon Tamamlandı")).toBeInTheDocument(),
+    )
+    expect(screen.getByText("gecmiste-onaylayan")).toBeInTheDocument()
   })
 
   it("kısıt metriği kırmızıysa Portföyü Onayla ve Güncelle butonunu devre dışı bırakır", async () => {

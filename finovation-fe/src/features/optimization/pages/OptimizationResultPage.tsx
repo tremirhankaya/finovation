@@ -1,10 +1,10 @@
 import { useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
 
-import { useAuth } from "@/features/auth/context/AuthContext"
 import AssetComparisonPanel from "@/features/optimization/components/AssetComparisonPanel"
 import OptimizationWizardSteps from "@/features/optimization/components/OptimizationWizardSteps"
 import PortfolioCriteriaScreen from "@/features/optimization/components/PortfolioCriteriaScreen"
+import RejectReasonDialog from "@/features/optimization/components/RejectReasonDialog"
 import { useOptimizationResultReview } from "@/features/optimization/hooks/useOptimizationResultReview"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
@@ -38,7 +38,6 @@ export default function OptimizationResultPage() {
   const params = useParams<{ requestId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useAuth()
   const requestId = Number(params.requestId)
   const review = useOptimizationResultReview(requestId)
   const fundName = (location.state as { fundName?: string } | null)?.fundName
@@ -47,7 +46,7 @@ export default function OptimizationResultPage() {
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [subView, setSubView] = useState<ResultSubView>("comparison")
   const [isEditingWeights, setIsEditingWeights] = useState(false)
-  const [decidedAt] = useState(() => new Date())
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
 
   const exportPdf = async () => {
     if (!review.request) return
@@ -60,9 +59,7 @@ export default function OptimizationResultPage() {
         fundName: resolvedFundName,
         request: review.request,
         assets: review.assets,
-        summary: review.summary,
-        constraintMetrics: review.constraintMetrics,
-        infoMetrics: review.infoMetrics,
+        criteriaRows: review.criteriaRows,
       })
     } finally {
       setIsExportingPdf(false)
@@ -80,9 +77,7 @@ export default function OptimizationResultPage() {
         fundName: resolvedFundName,
         request: review.request,
         assets: review.assets,
-        summary: review.summary,
-        constraintMetrics: review.constraintMetrics,
-        infoMetrics: review.infoMetrics,
+        criteriaRows: review.criteriaRows,
       })
     } finally {
       setIsExportingExcel(false)
@@ -114,25 +109,85 @@ export default function OptimizationResultPage() {
   }
 
   if (review.decidedAs === "reject") {
+    const actorName =
+      review.request?.decidedByDisplayName ??
+      review.request?.decidedByUsername ??
+      "—"
+    const decidedAt = review.request?.updatedAt
+      ? new Date(review.request.updatedAt)
+      : null
+
     return (
       <main className={styles.page}>
         <div className={styles.wizardShell}>
-          <div className={styles.successPanel} role="status">
+          <div className={styles.celebrationHero} aria-hidden="true">
+            <span className={`${styles.confettiDot} ${styles.confettiDotOrange}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotGreen}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotPink}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotCyan}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotBlue}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotMagenta}`} />
+            <span className={styles.celebrationCheckNeutral}>✕</span>
+          </div>
+          <header className={`${styles.header} ${styles.headerCentered}`}>
             <h1>Optimizasyon Reddedildi</h1>
-            <p className={styles.subtitle}>{resolvedFundName}</p>
-            <p>
+            <p className={styles.subtitle}>
+              {resolvedFundName}
+              {decidedAt ? ` · ${formatDateTime(decidedAt)}` : ""}
+            </p>
+            <p className={styles.successLead} role="status">
               Optimizasyon sonucu reddedildi, fon üzerinde bir değişiklik
               yapılmadı.
             </p>
-            <div className={styles.successActions}>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={() => navigate("/optimization-requests/new")}
-              >
-                Yeni Optimizasyon
-              </button>
+          </header>
+
+          <section className={styles.panel}>
+            <h2 className={styles.panelEyebrow}>
+              <span className={styles.panelEyebrowDot} aria-hidden="true" />
+              İşlem Geçmişine Kaydedildi
+            </h2>
+            <div className={styles.metricCardGrid}>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  İşlemi yapan kullanıcı
+                </span>
+                <strong className={styles.metricCardValue}>
+                  {actorName}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Optimizasyonu reddeden kullanıcıdır.
+                </p>
+              </div>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>Tarih ve saat</span>
+                <strong className={styles.metricCardValue}>
+                  {decidedAt ? formatDateTime(decidedAt) : "—"}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Reddin gerçekleştiği tarih ve saattir.
+                </p>
+              </div>
+              {review.request?.rejectionReason && (
+                <div className={styles.metricCard}>
+                  <span className={styles.metricCardLabel}>
+                    Red gerekçesi
+                  </span>
+                  <p className={styles.metricCardTextValue}>
+                    {review.request.rejectionReason}
+                  </p>
+                </div>
+              )}
             </div>
+          </section>
+
+          <div className={styles.successActions}>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => navigate("/optimization-requests/new")}
+            >
+              Yeni Optimizasyon
+            </button>
           </div>
         </div>
       </main>
@@ -149,70 +204,111 @@ export default function OptimizationResultPage() {
       review.assets,
       (asset) => asset.finalWeight ?? asset.proposedWeight,
     )
-    const actorName = user ? `${user.firstName} ${user.lastName}` : "—"
+    const actorName =
+      review.request?.decidedByDisplayName ??
+      review.request?.decidedByUsername ??
+      "—"
+    const decidedAt = review.request?.updatedAt
+      ? new Date(review.request.updatedAt)
+      : null
 
     return (
       <main className={styles.page}>
         <div className={styles.wizardShell}>
-          <header className={styles.header}>
+          <div className={styles.celebrationHero} aria-hidden="true">
+            <span className={`${styles.confettiDot} ${styles.confettiDotOrange}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotGreen}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotPink}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotCyan}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotBlue}`} />
+            <span className={`${styles.confettiDot} ${styles.confettiDotMagenta}`} />
+            <span className={styles.celebrationCheck}>✓</span>
+          </div>
+          <header className={`${styles.header} ${styles.headerCentered}`}>
             <h1>Optimizasyon Tamamlandı</h1>
             <p className={styles.subtitle}>
-              {resolvedFundName} · {formatDateTime(decidedAt)}
+              {resolvedFundName}
+              {decidedAt ? ` · ${formatDateTime(decidedAt)}` : ""}
+            </p>
+            <p className={styles.successLead} role="status">
+              Fon portföyünüz başarıyla güncellendi. Onaylanan optimizasyon
+              dağılımı mevcut fonunuza uygulanmıştır.
             </p>
           </header>
-
-          <div className={styles.successBanner} role="status">
-            <span className={styles.successBannerIcon} aria-hidden="true">
-              ✓
-            </span>
-            <div>
-              <strong>Fon portföyü başarıyla güncellendi.</strong>
-              <p>
-                Onaylanan optimizasyon dağılımı mevcut fonunuza
-                uygulanmıştır.
-              </p>
-            </div>
-          </div>
 
           <section className={styles.panel}>
             <h2 className={styles.panelEyebrow}>
               <span className={styles.panelEyebrowDot} aria-hidden="true" />
               İşlem Geçmişine Kaydedildi
             </h2>
-            <div className={styles.successInfoGrid}>
-              <div className={styles.successInfoItem}>
-                <span>Optimizasyon öncesi ağırlıklar</span>
-                <strong>
+            <div className={styles.metricCardGrid}>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Optimizasyon öncesi ağırlıklar
+                </span>
+                <strong className={styles.metricCardValue}>
                   {before.count} hisse · %{before.total.toFixed(0)}
                 </strong>
+                <p className={styles.metricCardDescription}>
+                  Optimizasyon başlamadan önceki portföy dağılımınızdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span>Modelin önerdiği ağırlıklar</span>
-                <strong>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Modelin önerdiği ağırlıklar
+                </span>
+                <strong className={styles.metricCardValue}>
                   {proposed.count} hisse · %{proposed.total.toFixed(0)}
                 </strong>
+                <p className={styles.metricCardDescription}>
+                  Model tarafından hesaplanan optimize edilmiş dağılım
+                  önerisidir.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span>Manuel değişiklik</span>
-                <strong>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Manuel değişiklik
+                </span>
+                <strong className={styles.metricCardValue}>
                   {review.summary.overriddenCount > 0
                     ? `${review.summary.overriddenCount} hisse manuel değiştirildi`
                     : "Manuel değişiklik yapılmadı"}
                 </strong>
+                <p className={styles.metricCardDescription}>
+                  Önerilen ağırlıklar üzerinde elle yaptığınız değişiklik
+                  sayısıdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span>Onaylanan nihai ağırlıklar</span>
-                <strong>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  Onaylanan nihai ağırlıklar
+                </span>
+                <strong className={styles.metricCardValue}>
                   {final.count} hisse · %{final.total.toFixed(0)}
                 </strong>
+                <p className={styles.metricCardDescription}>
+                  Onayladığınız ve fonunuza uygulanan son dağılımdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span>İşlemi yapan kullanıcı</span>
-                <strong>{actorName}</strong>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>
+                  İşlemi yapan kullanıcı
+                </span>
+                <strong className={styles.metricCardValue}>
+                  {actorName}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Optimizasyonu onaylayan kullanıcıdır.
+                </p>
               </div>
-              <div className={styles.successInfoItem}>
-                <span>Tarih ve saat</span>
-                <strong>{formatDateTime(decidedAt)}</strong>
+              <div className={styles.metricCard}>
+                <span className={styles.metricCardLabel}>Tarih ve saat</span>
+                <strong className={styles.metricCardValue}>
+                  {decidedAt ? formatDateTime(decidedAt) : "—"}
+                </strong>
+                <p className={styles.metricCardDescription}>
+                  Onayın gerçekleştiği tarih ve saattir.
+                </p>
               </div>
             </div>
             <p className={styles.successNote}>
@@ -229,13 +325,6 @@ export default function OptimizationResultPage() {
               onClick={() => navigate("/fund-monitoring")}
             >
               Fon İzlemeye Git
-            </button>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => navigate("/optimization-requests/logs")}
-            >
-              İşlem Loglarını Gör
             </button>
             <button
               type="button"
@@ -293,6 +382,7 @@ export default function OptimizationResultPage() {
               editable={isEditingWeights}
               onFinalWeightChange={review.setFinalWeight}
               onResetFinalWeight={review.resetFinalWeight}
+              onResetAllFinalWeights={review.resetAllFinalWeights}
             />
 
             <div className={styles.criteriaActions}>
@@ -329,10 +419,20 @@ export default function OptimizationResultPage() {
               setSubView("comparison")
             }}
             onApprove={() => void review.decide("approve")}
-            onReject={() => void review.decide("reject")}
+            onReject={() => setIsRejectDialogOpen(true)}
           />
         )}
       </div>
+
+      <RejectReasonDialog
+        open={isRejectDialogOpen}
+        isSubmitting={review.isSubmitting}
+        onCancel={() => setIsRejectDialogOpen(false)}
+        onConfirm={(reason) => {
+          setIsRejectDialogOpen(false)
+          void review.decide("reject", reason)
+        }}
+      />
     </main>
   )
 }

@@ -8,6 +8,7 @@ import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryRespo
 import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
+import com.infina.portfoliomanagement.optimization.dto.RejectOptimizationRequestRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -122,8 +123,10 @@ public interface OptimizationRequestControllerDocs {
 
     @Operation(
             summary = "Reject optimization request",
-            description = "Rejects a COMPLETED optimization request.",
+            description = "Rejects a COMPLETED optimization request, optionally recording the actor's reason " +
+                    "for the rejection.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
-    ResponseEntity<OptimizationRequestResponse> rejectOptimizationRequest(UserDetails userDetails, Long id);
+    ResponseEntity<OptimizationRequestResponse> rejectOptimizationRequest(
+            UserDetails userDetails, Long id, RejectOptimizationRequestRequest request);
 }

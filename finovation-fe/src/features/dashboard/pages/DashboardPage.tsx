@@ -19,11 +19,10 @@ export default function DashboardPage() {
       <div className={styles.shell}>
         <DashboardHeader
           firstName={user?.firstName}
+          businessDate={dashboard.businessDate}
           isRefreshing={dashboard.isOverviewLoading}
           onRefresh={dashboard.reload}
         />
-
-        <QuickActions />
 
         <DashboardSummaryCards
           fundCount={dashboard.funds.length}
@@ -32,8 +31,11 @@ export default function DashboardPage() {
           optimizationLogs={dashboard.optimizationLogs}
           optimizationResult={dashboard.latestOptimizationResult}
           latestStressTest={latestStressTest}
+          errors={dashboard.errors}
           isLoading={dashboard.isOverviewLoading}
         />
+
+        <QuickActions />
 
         <div className={styles.mainGrid}>
           <FundPerformanceOverview

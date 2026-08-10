@@ -1,6 +1,7 @@
 import DashboardIcon, {
   type DashboardIconName,
 } from "@/features/dashboard/components/DashboardIcon"
+import type { DashboardSectionErrors } from "@/features/dashboard/model/dashboard.types"
 import { formatPercentage } from "@/features/fund-monitoring/lib/fundMonitoringFormatters"
 import type { FundMonitoringSnapshot } from "@/features/fund-monitoring/model/fundMonitoring.types"
 import { REQUEST_STATUS_LABELS } from "@/features/optimization/lib/optimizationExportLabels"
@@ -31,7 +32,7 @@ function OptimizationCardValue({
   result: OptimizationResult | null
   log?: OptimizationLogEntry
 }): Pick<SummaryCard, "value" | "detail"> {
-  if (result) {
+  if (log?.resultAvailable && result) {
     const { proposed } = buildRiskMetricsSnapshots(result.metrics)
     return {
       value:
@@ -58,6 +59,7 @@ type DashboardSummaryCardsProps = {
   optimizationLogs: OptimizationLogEntry[]
   optimizationResult: OptimizationResult | null
   latestStressTest?: StressTestHistoryResponse
+  errors: DashboardSectionErrors
   isLoading: boolean
 }
 
@@ -68,39 +70,52 @@ export default function DashboardSummaryCards({
   optimizationLogs,
   optimizationResult,
   latestStressTest,
+  errors,
   isLoading,
 }: DashboardSummaryCardsProps) {
   const oneMonthReturn = snapshot?.periodReturns.find(
     (item) => item.period === "1M",
   )?.value
-  const optimizationLog = optimizationLogs.find((log) => log.resultAvailable)
+  const optimizationLog = optimizationLogs[0]
   const optimization = OptimizationCardValue({
-    result: optimizationResult,
-    log: optimizationLog ?? optimizationLogs[0],
+    result: optimizationLog?.resultAvailable ? optimizationResult : null,
+    log: optimizationLog,
   })
 
   const cards: SummaryCard[] = [
     {
       label: "Aktif Fonlar",
-      value: isLoading ? "—" : String(fundCount),
-      detail:
-        fundCount > 0 ? "İzlenen ve işlem yapılabilir" : "Henüz aktif fon yok",
+      value: isLoading || errors.funds ? "—" : String(fundCount),
+      detail: errors.funds
+        ? "Veri alınamadı"
+        : fundCount > 0
+          ? "İzlenen ve işlem yapılabilir"
+          : "Henüz aktif fon yok",
       icon: "fund",
     },
     {
       label: "Devam Eden Taslaklar",
-      value: isLoading ? "—" : String(draftCount),
-      detail:
-        draftCount > 0 ? "Tasarımı bekleyen fonlar" : "Bekleyen taslak yok",
+      value: isLoading || errors.drafts ? "—" : String(draftCount),
+      detail: errors.drafts
+        ? "Veri alınamadı"
+        : draftCount > 0
+          ? "Tasarımı devam eden fonlar"
+          : "Bekleyen taslak yok",
       icon: "draft",
     },
     {
-      label: "1 Aylık Getiri",
+      label: "Seçili Fon · 1A Getiri",
       value:
-        isLoading || oneMonthReturn === undefined
+        isLoading ||
+        errors.funds ||
+        errors.monitoring ||
+        oneMonthReturn === undefined
           ? "—"
           : formatPercentage(oneMonthReturn),
-      detail: snapshot?.fund.name ?? "Aktif fon seçilmedi",
+      detail:
+        errors.funds || errors.monitoring
+          ? "Veri alınamadı"
+          : (snapshot?.fund.name ?? "Aktif fon seçilmedi"),
       icon: "performance",
       tone:
         oneMonthReturn == null
@@ -111,17 +126,26 @@ export default function DashboardSummaryCards({
     },
     {
       label: "Son Optimizasyon",
-      value: isLoading ? "—" : optimization.value,
-      detail: isLoading ? "Veriler yükleniyor" : optimization.detail,
+      value:
+        isLoading || (errors.optimization && !optimizationLog)
+          ? "—"
+          : optimization.value,
+      detail: isLoading
+        ? "Veriler yükleniyor"
+        : errors.optimization && !optimizationLog
+          ? "Veri alınamadı"
+          : optimization.detail,
       icon: "optimization",
     },
     {
       label: "Son Stres Etkisi",
       value:
-        isLoading || !latestStressTest
+        isLoading || errors.stressTests || !latestStressTest
           ? "—"
           : formatStressPercentage(latestStressTest.portfolioImpact),
-      detail: latestStressTest?.scenarioName ?? "Henüz stres testi yok",
+      detail: errors.stressTests
+        ? "Veri alınamadı"
+        : (latestStressTest?.scenarioName ?? "Henüz stres testi yok"),
       icon: "stress",
       tone:
         !latestStressTest || latestStressTest.portfolioImpact === 0

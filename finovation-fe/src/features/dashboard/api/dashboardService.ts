@@ -1,103 +1,72 @@
-import { searchFundDrafts } from "@/features/fund-design/api/fundDraftApi"
+import { z } from "zod"
+
+import { fundDraftSummarySchema } from "@/features/fund-design/model/fundDraftSchemas"
 import {
   fetchFundMonitoring,
-  fetchFunds,
+  toFundOption,
 } from "@/features/fund-monitoring/api/fundMonitoringService"
-import {
-  fetchOptimizationLogs,
-  fetchOptimizationResult,
-} from "@/features/optimization/api/optimizationApi"
-import { fetchStressTestHistory } from "@/features/stress-test/api/stressTestService"
+import { fundSummaryResponseSchema } from "@/features/fund-monitoring/model/fundMonitoringSchemas"
+import { optimizationResultSchema } from "@/features/optimization/model/optimizationResultSchemas"
+import { optimizationLogEntryResponseSchema } from "@/features/optimization/model/optimizationSchemas"
+import { stressTestHistoryResponseSchema } from "@/features/stress-test/model/stressTestSchemas"
 import type { DashboardOverviewLoadResult } from "@/features/dashboard/model/dashboard.types"
+import { getDashboardSummaryUrl } from "@/shared/api/apiConfig"
+import { apiFetch } from "@/shared/api/httpClient"
 
-const DRAFT_PREVIEW_SIZE = 10
+const dashboardSummaryResponseSchema = z.object({
+  businessDate: z.iso.date(),
+  funds: z.array(fundSummaryResponseSchema),
+  drafts: z.array(fundDraftSummarySchema),
+  optimizationLogs: z.array(optimizationLogEntryResponseSchema),
+  latestOptimizationResult: optimizationResultSchema.nullable(),
+  stressTests: z.array(stressTestHistoryResponseSchema),
+  unavailableSections: z
+    .array(z.enum(["FUNDS", "DRAFTS", "OPTIMIZATION", "STRESS_TESTS"]))
+    .default([]),
+})
 
-function messageFor(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback
-}
-
-function compareIsoDescending(left: string, right: string): number {
-  return right.localeCompare(left)
-}
+const SECTION_ERROR_MESSAGES = {
+  FUNDS: "Fon bilgileri yüklenemedi.",
+  DRAFTS: "Taslak bilgileri yüklenemedi.",
+  OPTIMIZATION: "Optimizasyon özeti yüklenemedi.",
+  STRESS_TESTS: "Stres testi özeti yüklenemedi.",
+} as const
 
 export async function loadDashboardOverview(
   signal?: AbortSignal,
 ): Promise<DashboardOverviewLoadResult> {
-  const [fundsResult, draftsResult, optimizationResult, stressResult] =
-    await Promise.allSettled([
-      fetchFunds(signal),
-      searchFundDrafts(
-        { status: "IN_PROGRESS", size: DRAFT_PREVIEW_SIZE },
-        signal,
-      ),
-      fetchOptimizationLogs(signal),
-      fetchStressTestHistory(signal),
-    ])
-
-  const funds = fundsResult.status === "fulfilled" ? fundsResult.value : []
-  const drafts =
-    draftsResult.status === "fulfilled"
-      ? [...draftsResult.value.content].sort((left, right) =>
-          compareIsoDescending(left.updatedAt, right.updatedAt),
-        )
-      : []
-  const optimizationLogs =
-    optimizationResult.status === "fulfilled"
-      ? [...optimizationResult.value].sort((left, right) =>
-          compareIsoDescending(left.createdAt, right.createdAt),
-        )
-      : []
-  const stressTests =
-    stressResult.status === "fulfilled"
-      ? [...stressResult.value].sort((left, right) =>
-          compareIsoDescending(left.createdAt, right.createdAt),
-        )
-      : []
-
-  let latestOptimizationResult = null
-  let optimizationError =
-    optimizationResult.status === "rejected"
-      ? messageFor(optimizationResult.reason, "Optimizasyon özeti yüklenemedi.")
-      : ""
-
-  const latestResultLog = optimizationLogs.find((log) => log.resultAvailable)
-
-  if (latestResultLog) {
-    try {
-      latestOptimizationResult = await fetchOptimizationResult(
-        latestResultLog.requestId,
-        signal,
-      )
-    } catch (error) {
-      optimizationError = messageFor(
-        error,
-        "Son optimizasyon sonucu yüklenemedi.",
-      )
-    }
-  }
+  const response = await apiFetch(
+    getDashboardSummaryUrl(),
+    {
+      errorMessage: "Dashboard özeti yüklenemedi",
+      signal,
+    },
+    dashboardSummaryResponseSchema.parse,
+  )
+  const unavailableSections = new Set(response.unavailableSections)
 
   return {
     data: {
-      funds,
-      drafts,
-      optimizationLogs,
-      latestOptimizationResult,
-      stressTests,
+      businessDate: response.businessDate,
+      funds: response.funds.map(toFundOption),
+      drafts: response.drafts,
+      optimizationLogs: response.optimizationLogs,
+      latestOptimizationResult: response.latestOptimizationResult,
+      stressTests: response.stressTests,
     },
     errors: {
-      funds:
-        fundsResult.status === "rejected"
-          ? messageFor(fundsResult.reason, "Fonlar yüklenemedi.")
-          : "",
-      drafts:
-        draftsResult.status === "rejected"
-          ? messageFor(draftsResult.reason, "Fon taslakları yüklenemedi.")
-          : "",
-      optimization: optimizationError,
-      stressTests:
-        stressResult.status === "rejected"
-          ? messageFor(stressResult.reason, "Stres testi özeti yüklenemedi.")
-          : "",
+      funds: unavailableSections.has("FUNDS")
+        ? SECTION_ERROR_MESSAGES.FUNDS
+        : "",
+      drafts: unavailableSections.has("DRAFTS")
+        ? SECTION_ERROR_MESSAGES.DRAFTS
+        : "",
+      optimization: unavailableSections.has("OPTIMIZATION")
+        ? SECTION_ERROR_MESSAGES.OPTIMIZATION
+        : "",
+      stressTests: unavailableSections.has("STRESS_TESTS")
+        ? SECTION_ERROR_MESSAGES.STRESS_TESTS
+        : "",
     },
   }
 }

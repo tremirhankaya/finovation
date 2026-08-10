@@ -44,6 +44,7 @@ const SNAPSHOT = {
 
 function readyDashboard() {
   return {
+    businessDate: "2025-05-29",
     funds: FUNDS,
     drafts: [
       {
@@ -114,11 +115,12 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("heading", { name: "Merhaba, Ayşe" }),
     ).toBeInTheDocument()
+    expect(screen.getByText(/29 Mayıs 2025/)).toBeInTheDocument()
     expect(screen.getByLabelText("Genel özet")).toHaveTextContent(
       "Aktif Fonlar2",
     )
     expect(screen.getByLabelText("Genel özet")).toHaveTextContent(
-      "1 Aylık Getiri+%4,20",
+      "Seçili Fon · 1A Getiri+%4,20",
     )
     expect(
       screen.getByRole("img", {
@@ -135,6 +137,14 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("link", { name: /Optimizasyon Başlat/ }),
     ).toHaveAttribute("href", "/optimization-requests/new")
+    expect(screen.getByRole("link", { name: "Aktif fonlar" })).toHaveAttribute(
+      "href",
+      "/fund-design/active",
+    )
+    expect(screen.getByRole("link", { name: "Taslaklar" })).toHaveAttribute(
+      "href",
+      "/fund-design/create",
+    )
   })
 
   it("fon seçimini ve manuel yenilemeyi hook'a iletir", async () => {
@@ -156,5 +166,35 @@ describe("DashboardPage", () => {
 
     expect(dashboard.selectFund).toHaveBeenCalledWith("fund-2")
     expect(dashboard.reload).toHaveBeenCalledOnce()
+  })
+
+  it("daha yeni bir optimizasyon devam ediyorsa KPI'da güncel durumu gösterir", () => {
+    const dashboard = readyDashboard()
+    dashboardMocks.useDashboard.mockReturnValue({
+      ...dashboard,
+      optimizationLogs: [
+        {
+          requestId: 8,
+          fundId: "fund-2",
+          fundName: "Denge Fonu",
+          requestedByUsername: "ayse",
+          status: "RUNNING" as const,
+          createdAt: "2026-08-10T11:00:00",
+          completedAt: null,
+          updatedAt: "2026-08-10T11:01:00",
+          resultAvailable: false,
+        },
+        ...dashboard.optimizationLogs,
+      ],
+    })
+
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    )
+
+    const summary = screen.getByLabelText("Genel özet")
+    expect(summary).toHaveTextContent("Son OptimizasyonÇalışıyorDenge Fonu")
   })
 })

@@ -4,12 +4,10 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
-import com.infina.portfoliomanagement.fundmonitoring.config.FundMonitoringProperties;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
 import com.infina.portfoliomanagement.fundmonitoring.model.ValuedFundPosition;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -20,15 +18,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class FundValuationCalculator {
 
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
     private static final BigDecimal WEIGHT_TOLERANCE = new BigDecimal("0.0001");
     private static final int QUANTITY_SCALE = 12;
     private static final int MONEY_SCALE = 8;
-
-    private final FundMonitoringProperties properties;
 
     public FundValuationResult calculate(
             FundDraft fund,
@@ -57,12 +52,13 @@ public class FundValuationCalculator {
                 positions,
                 assets,
                 unitValuesByAsset,
+                fund.getCreatedAt().toLocalDate(),
                 historyStartDate,
                 QuantityAnchor.EARLIEST_DATE
         );
     }
 
-    public FundValuationResult calculateBackwardsFromLatest(
+    public FundValuationResult calculateAroundInception(
             FundDraft fund,
             List<FundPosition> positions,
             List<Asset> assets,
@@ -74,8 +70,9 @@ public class FundValuationCalculator {
                 positions,
                 assets,
                 unitValuesByAsset,
+                fund.getCreatedAt().toLocalDate(),
                 historyStartDate,
-                QuantityAnchor.LATEST_DATE
+                QuantityAnchor.INCEPTION_DATE
         );
     }
 
@@ -84,6 +81,7 @@ public class FundValuationCalculator {
             List<FundPosition> positions,
             List<Asset> assets,
             Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
+            LocalDate inceptionDate,
             LocalDate historyStartDate,
             QuantityAnchor quantityAnchor
     ) {
@@ -101,9 +99,12 @@ public class FundValuationCalculator {
                 positions,
                 unitValuesByAsset
         );
-        LocalDate baseDate = quantityAnchor == QuantityAnchor.LATEST_DATE
-                ? commonDates.getLast()
-                : commonDates.getFirst();
+        LocalDate baseDate = resolveBaseDate(
+                inceptionDate,
+                commonDates,
+                quantityAnchor
+        );
+        BigDecimal outstandingShares = calculateOutstandingShares(fund);
         Map<Long, BigDecimal> quantities = calculateQuantities(
                 fund,
                 positions,
@@ -112,7 +113,13 @@ public class FundValuationCalculator {
         );
 
         List<FundValuationPoint> points = commonDates.stream()
-                .map(date -> calculatePoint(date, positions, unitValuesByAsset, quantities))
+                .map(date -> calculatePoint(
+                        date,
+                        positions,
+                        unitValuesByAsset,
+                        quantities,
+                        outstandingShares
+                ))
                 .toList();
         FundValuationPoint latestPoint = points.getLast();
         List<ValuedFundPosition> valuedPositions = positions.stream()
@@ -129,7 +136,41 @@ public class FundValuationCalculator {
                 ))
                 .toList();
 
-        return new FundValuationResult(points, valuedPositions);
+        return new FundValuationResult(
+                outstandingShares,
+                points,
+                valuedPositions
+        );
+    }
+
+    private LocalDate resolveBaseDate(
+            LocalDate inceptionDate,
+            SortedSet<LocalDate> commonDates,
+            QuantityAnchor quantityAnchor
+    ) {
+        if (quantityAnchor == QuantityAnchor.EARLIEST_DATE) {
+            return commonDates.getFirst();
+        }
+        if (!commonDates.contains(inceptionDate)) {
+            throw unavailable();
+        }
+        return inceptionDate;
+    }
+
+    private BigDecimal calculateOutstandingShares(FundDraft fund) {
+        BigDecimal initialPortfolioSize = fund.getInitialPortfolioSize();
+        BigDecimal initialUnitPrice = fund.getUnitPrice();
+        if (initialPortfolioSize == null
+                || initialPortfolioSize.signum() <= 0
+                || initialUnitPrice == null
+                || initialUnitPrice.signum() <= 0) {
+            throw unavailable();
+        }
+        return initialPortfolioSize.divide(
+                initialUnitPrice,
+                QUANTITY_SCALE,
+                RoundingMode.HALF_UP
+        );
     }
 
     private void assertWeightsSumToOneHundred(List<FundPosition> positions) {
@@ -218,7 +259,8 @@ public class FundValuationCalculator {
             LocalDate date,
             List<FundPosition> positions,
             Map<Long, NavigableMap<LocalDate, BigDecimal>> pricesByAsset,
-            Map<Long, BigDecimal> quantities
+            Map<Long, BigDecimal> quantities,
+            BigDecimal outstandingShares
     ) {
         BigDecimal nav = positions.stream()
                 .map(position -> quantities.get(position.getAssetId())
@@ -226,7 +268,7 @@ public class FundValuationCalculator {
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(MONEY_SCALE, RoundingMode.HALF_UP);
         BigDecimal sharePrice = nav.divide(
-                properties.fixedOutstandingShares(),
+                outstandingShares,
                 MONEY_SCALE,
                 RoundingMode.HALF_UP
         );
@@ -273,6 +315,6 @@ public class FundValuationCalculator {
 
     private enum QuantityAnchor {
         EARLIEST_DATE,
-        LATEST_DATE
+        INCEPTION_DATE
     }
 }

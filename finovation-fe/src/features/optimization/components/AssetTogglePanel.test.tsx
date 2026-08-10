@@ -163,4 +163,138 @@ describe("AssetTogglePanel", () => {
       screen.getByRole("checkbox", { name: "MGROS hissesi için Ekle" }),
     ).not.toHaveClass(styles.assetToggleBoxExclude)
   })
+
+  it("seçili hisseleri listenin en üstüne sıralar", () => {
+    render(
+      <AssetTogglePanel
+        title="C · Dahil Edilmeyecek Hisseler"
+        description="açıklama"
+        assets={ASSETS}
+        selectedAssetCodes={new Set(["TTKOM"])}
+        disabledAssetCodes={new Set()}
+        toggleLabel="Hariç Tut"
+        onToggle={vi.fn()}
+      />,
+    )
+
+    const rows = screen.getAllByRole("row").slice(1)
+    expect(within(rows[0]).getByText("TTKOM")).toBeInTheDocument()
+    expect(within(rows[1]).getByText("MGROS")).toBeInTheDocument()
+  })
+
+  it("pinnedAssets satırlarını listenin en üstünde, rozetle ve her zaman işaretli gösterir", () => {
+    render(
+      <AssetTogglePanel
+        title="C · Dahil Edilmeyecek Hisseler"
+        description="açıklama"
+        assets={ASSETS}
+        selectedAssetCodes={new Set()}
+        disabledAssetCodes={new Set()}
+        toggleLabel="Hariç Tut"
+        onToggle={vi.fn()}
+        pinnedAssets={[
+          {
+            assetId: "101",
+            symbol: "AKBNK",
+            name: "Akbank",
+            sectorName: "Bankacılık",
+          },
+        ]}
+        pinnedBadgeLabel="Yukarıdan"
+      />,
+    )
+
+    const rows = screen.getAllByRole("row").slice(1)
+    expect(within(rows[0]).getByText("AKBNK")).toBeInTheDocument()
+    expect(within(rows[0]).getByText("Yukarıdan")).toBeInTheDocument()
+    expect(within(rows[1]).getByText("MGROS")).toBeInTheDocument()
+
+    expect(
+      screen.getByRole("checkbox", {
+        name: "AKBNK hissesi için Hariç Tut (B panelinden)",
+      }),
+    ).toBeChecked()
+  })
+
+  it("pinnedAssets satırına tıklayınca onTogglePinned'ı doğru assetId ile çağırır", async () => {
+    const user = userEvent.setup()
+    const onTogglePinned = vi.fn()
+
+    render(
+      <AssetTogglePanel
+        title="C · Dahil Edilmeyecek Hisseler"
+        description="açıklama"
+        assets={ASSETS}
+        selectedAssetCodes={new Set()}
+        disabledAssetCodes={new Set()}
+        toggleLabel="Hariç Tut"
+        onToggle={vi.fn()}
+        pinnedAssets={[
+          {
+            assetId: "101",
+            symbol: "AKBNK",
+            name: "Akbank",
+            sectorName: "Bankacılık",
+          },
+        ]}
+        onTogglePinned={onTogglePinned}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "AKBNK hissesi için Hariç Tut (B panelinden)",
+      }),
+    )
+
+    expect(onTogglePinned).toHaveBeenCalledWith("101")
+  })
+
+  it("pinnedAssets varsa arama sonucu boş olsa bile tabloyu gösterir", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <AssetTogglePanel
+        title="C · Dahil Edilmeyecek Hisseler"
+        description="açıklama"
+        assets={ASSETS}
+        selectedAssetCodes={new Set()}
+        disabledAssetCodes={new Set()}
+        toggleLabel="Hariç Tut"
+        onToggle={vi.fn()}
+        pinnedAssets={[
+          {
+            assetId: "101",
+            symbol: "AKBNK",
+            name: "Akbank",
+            sectorName: "Bankacılık",
+          },
+        ]}
+      />,
+    )
+
+    await user.type(screen.getByRole("searchbox"), "xyz-yok")
+
+    expect(screen.getByText("AKBNK")).toBeInTheDocument()
+    expect(
+      screen.queryByText("Aramanızla eşleşen hisse bulunamadı."),
+    ).not.toBeInTheDocument()
+  })
+
+  it("Ayrılan Ağırlık sütununu göstermez", () => {
+    render(
+      <AssetTogglePanel
+        title="D · Zorunlu Eklenecek Hisseler"
+        description="açıklama"
+        assets={ASSETS}
+        selectedAssetCodes={new Set()}
+        disabledAssetCodes={new Set()}
+        toggleLabel="Ekle"
+        variant="forceAdd"
+        onToggle={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByText("Ayrılan Ağırlık")).not.toBeInTheDocument()
+  })
 })

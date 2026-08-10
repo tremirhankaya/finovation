@@ -46,6 +46,7 @@ export const fundDraftInitLimitsSchema = z.object({
   maxAssetPreferences: z.coerce.number().int(),
 })
 
+
 export const createdFundDraftSchema = z.object({
   draftId: z.string().uuid(),
   currentStep: z.coerce.number().int().optional(),
@@ -70,15 +71,20 @@ export const fundDraftSummarySchema = z.object({
   currentStep: z.number().nullable(),
   status: z.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
   designMode: z.enum(["AI_ASSISTED", "MANUAL"]).nullish(),
+  pinned: z.boolean().optional(),
   createdAt: z.string().nullish(),
   updatedAt: z.string(),
-})
+}).transform((draft) => ({
+  ...draft,
+  name: draft.name?.trim() || "İsimsiz Fon Taslağı",
+}))
 
 export const archivedFundDraftSchema = z.object({
   draftId: z.string().uuid(),
   name: z.string().nullable(),
   status: z.enum(["IN_PROGRESS", "COMPLETED"]),
   archivedAt: z.string(),
+  deletedBy: z.string().nullable().optional(),
 })
 
 export const fundDraftPageSchema = z.object({
@@ -112,6 +118,7 @@ export const fundDraftSchema = z.object({
   liquidityTargetPct: optionalInt,
   status: z.enum(["IN_PROGRESS", "COMPLETED"]).nullish(),
   createdAt: z.string().nullish(),
+  updatedAt: z.string().nullish(),
 })
 
 export const fundDraftPortfolioRulesSchema = z.object({

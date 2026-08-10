@@ -8,6 +8,7 @@ import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryRespo
 import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationRequestResponse;
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
+import com.infina.portfoliomanagement.optimization.dto.RejectOptimizationRequestRequest;
 import com.infina.portfoliomanagement.optimization.service.OptimizationRequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -135,10 +136,12 @@ public class OptimizationRequestController implements OptimizationRequestControl
     @PostMapping("/{id}/reject")
     public ResponseEntity<OptimizationRequestResponse> rejectOptimizationRequest(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long id
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) RejectOptimizationRequestRequest request
     ) {
+        String reason = request != null ? request.reason() : null;
         return ResponseEntity.ok(
-                optimizationRequestService.reject(userDetails.getUsername(), id)
+                optimizationRequestService.reject(userDetails.getUsername(), id, reason)
         );
     }
 }

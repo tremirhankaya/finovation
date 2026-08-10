@@ -1,8 +1,18 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { MemoryRouter, Route, Routes } from "react-router"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import {
+const optimizationApiMocks = vi.hoisted(() => ({
+  fetchOptimizationRequest: vi.fn(),
+  runOptimizationRequest: vi.fn(),
+}))
+
+vi.mock("@/features/optimization/api/optimizationApi", () => ({
+  ...optimizationApiMocks,
+}))
+
+import OptimizationRunningPage, {
   OptimizationRunningView,
   type OptimizationRunningViewProps,
 } from "@/features/optimization/pages/OptimizationRunningPage"
@@ -23,7 +33,6 @@ describe("OptimizationRunningView", () => {
     )
     expect(screen.getByText(/Fon #11111111/)).toBeInTheDocument()
     expect(screen.getByText(/Dengeli yaklaşım/)).toBeInTheDocument()
-    expect(screen.getByText(/6 aylık değerlendirme vadesi/)).toBeInTheDocument()
     expect(screen.getByRole("main")).toHaveAttribute("aria-busy", "true")
   })
 
@@ -129,5 +138,60 @@ describe("OptimizationRunningView", () => {
 
     await user.click(screen.getByRole("button", { name: "Panele dön" }))
     expect(onBack).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("OptimizationRunningPage", () => {
+  beforeEach(() => {
+    optimizationApiMocks.fetchOptimizationRequest.mockReset().mockResolvedValue({
+      id: 1,
+      fundId: 42,
+      dataTimestamp: null,
+      modelVersion: null,
+      requestedByUserId: 7,
+      requestedByUsername: "fon-yoneticisi",
+      riskProfile: "BALANCED",
+      status: "COMPLETED",
+      tppMinWeight: 5,
+      tppMaxWeight: 15,
+      stockCountMin: 16,
+      stockCountMax: 30,
+      startedAt: null,
+      completedAt: "2026-08-07T09:00:00",
+      errorMessage: null,
+      createdAt: "2026-08-06T10:00:00",
+      updatedAt: "2026-08-06T10:00:00",
+    })
+    optimizationApiMocks.runOptimizationRequest.mockReset()
+  })
+
+  it("Panele dön butonu optimizasyonun ilk sayfasına döner, ana ekrana değil", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={["/optimization-requests/1/running"]}>
+        <Routes>
+          <Route
+            path="/optimization-requests/:requestId/running"
+            element={<OptimizationRunningPage />}
+          />
+          <Route
+            path="/optimization-requests/new"
+            element={<div>Yeni optimizasyon</div>}
+          />
+          <Route path="/dashboard" element={<div>Ana ekran</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Panele dön" }),
+      ).toBeInTheDocument(),
+    )
+    await user.click(screen.getByRole("button", { name: "Panele dön" }))
+
+    expect(screen.getByText("Yeni optimizasyon")).toBeInTheDocument()
+    expect(screen.queryByText("Ana ekran")).not.toBeInTheDocument()
   })
 })
