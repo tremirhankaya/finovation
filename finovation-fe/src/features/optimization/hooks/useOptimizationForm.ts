@@ -274,6 +274,17 @@ export function useOptimizationForm() {
     return ids
   }, [snapshot, selection, resolveUniverseCode])
 
+  const maxExcludedHeldAssetWeightPct = useMemo(() => {
+    let max = 0
+    for (const position of snapshot?.positions ?? []) {
+      const universeCode = resolveUniverseCode(position.symbol)
+      if (selection[universeCode] === "EXCLUDE") {
+        max = Math.max(max, position.weightPercentage)
+      }
+    }
+    return max
+  }, [snapshot, selection, resolveUniverseCode])
+
   const keptAssets = useMemo(
     () =>
       (snapshot?.positions ?? []).filter(
@@ -371,6 +382,7 @@ export function useOptimizationForm() {
         maxSectorWeightPct,
         currentStockCount: selectedFundSummary?.stockCount ?? null,
         heldExcludedAssetCount: heldExcludeCount,
+        maxExcludedHeldAssetWeightPct,
       }),
     [
       tppMinWeight,
@@ -386,6 +398,7 @@ export function useOptimizationForm() {
       minSingleStockWeightPct,
       maxSectorWeightPct,
       heldExcludeCount,
+      maxExcludedHeldAssetWeightPct,
     ],
   )
 

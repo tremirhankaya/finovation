@@ -94,7 +94,7 @@ public class OptimizationRequestService {
     private static final BigDecimal FORCE_ADD_MINIMUM_WEIGHT = new BigDecimal("3");
     private static final BigDecimal PERCENT_TO_FRACTION_DIVISOR = BigDecimal.valueOf(100);
     private static final BigDecimal MAX_WEIGHT_CHANGE_PER_ASSET_DEFAULT = new BigDecimal("0.03");
-    private static final int MAX_REMOVALS_DEFAULT = 2;
+    private static final int MAX_REMOVALS_DEFAULT = 3;
     private static final BigDecimal PORTFOLIO_SUM_TOLERANCE = new BigDecimal("0.000001");
     private static final String CASH_TPP_CODE = "CASH_TPP";
     private static final Set<RequestStatus> LOG_VISIBLE_STATUSES = Set.of(
@@ -660,6 +660,9 @@ public class OptimizationRequestService {
         List<String> mandatoryAssets = resolveAssetCodesByPreferenceType(request, AssetPreferenceType.FORCE_ADD);
         List<String> excludedAssets = resolveAssetCodesByPreferenceType(request, AssetPreferenceType.EXCLUDE);
 
+        assertExcludedAssetsWithinWeightChangeLimit(currentPortfolio, excludedAssets);
+        assertExcludedHeldAssetsWithinRemovalLimit(currentPortfolio, excludedAssets);
+
         return new OptimizationEngineRequest(
                 request.getId().toString(),
                 resolveHorizon(request.getRiskProfile()),
@@ -676,6 +679,45 @@ public class OptimizationRequestService {
                 MAX_REMOVALS_DEFAULT,
                 null
         );
+    }
+
+    private void assertExcludedAssetsWithinWeightChangeLimit(
+            Map<String, BigDecimal> currentPortfolio,
+            List<String> excludedAssets
+    ) {
+        List<String> blockedExclusions = excludedAssets.stream()
+                .filter(assetCode -> {
+                    BigDecimal currentWeight = currentPortfolio.get(assetCode);
+                    return currentWeight != null
+                            && currentWeight.compareTo(MAX_WEIGHT_CHANGE_PER_ASSET_DEFAULT) > 0;
+                })
+                .sorted()
+                .toList();
+
+        if (!blockedExclusions.isEmpty()) {
+            throw new BaseException(
+                    ErrorCode.OPT_WEIGHT_CHANGE_LIMIT_EXCEEDED,
+                    "Excluded asset(s) exceed the maximum weight change allowed per asset "
+                            + "(" + MAX_WEIGHT_CHANGE_PER_ASSET_DEFAULT + "): " + blockedExclusions
+            );
+        }
+    }
+
+    private void assertExcludedHeldAssetsWithinRemovalLimit(
+            Map<String, BigDecimal> currentPortfolio,
+            List<String> excludedAssets
+    ) {
+        long heldExclusionCount = excludedAssets.stream()
+                .filter(currentPortfolio::containsKey)
+                .count();
+
+        if (heldExclusionCount > MAX_REMOVALS_DEFAULT) {
+            throw new BaseException(
+                    ErrorCode.OPT_MAX_REMOVALS_EXCEEDED,
+                    "Excluded currently-held assets (" + heldExclusionCount + ") exceed the maximum "
+                            + "removals allowed per optimization (" + MAX_REMOVALS_DEFAULT + ")"
+            );
+        }
     }
 
     private EngineAlternative selectAlternative(OptimizationEngineResult engineResult, RiskProfile riskProfile) {

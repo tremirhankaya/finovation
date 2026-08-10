@@ -33,11 +33,13 @@ import com.infina.portfoliomanagement.optimization.dto.OptimizableFundResponse;
 import com.infina.portfoliomanagement.optimization.engine.EngineAlternative;
 import com.infina.portfoliomanagement.optimization.engine.OptimizationEngineClient;
 import com.infina.portfoliomanagement.optimization.engine.OptimizationEngineResult;
+import com.infina.portfoliomanagement.optimization.entity.AssetPreference;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationRequest;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationResult;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationResultAsset;
 import com.infina.portfoliomanagement.optimization.entity.OptimizationResultMetric;
 import com.infina.portfoliomanagement.optimization.entity.RequestConstraintTarget;
+import com.infina.portfoliomanagement.optimization.enums.AssetPreferenceType;
 import com.infina.portfoliomanagement.optimization.enums.OptimizationConstraintCode;
 import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
 import com.infina.portfoliomanagement.optimization.enums.ResultActionType;
@@ -65,6 +67,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -348,6 +351,146 @@ class OptimizationRequestServiceTest {
 
         assertThat(request.getStatus()).isEqualTo(RequestStatus.COMPLETED);
         assertThat(request.getDataTimestamp()).isNull();
+    }
+
+    @Test
+    void run_withExcludedAssetAboveWeightChangeLimit_failsBeforeCallingEngine() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.ADMIN)
+                .username(ACTOR_USERNAME)
+                .build();
+
+        OptimizationRequest request = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.PREPARING)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+        when(optimizationRequestRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(requestConstraintTargetRepository.findAllByRequestId(REQUEST_ID)).thenReturn(List.of(
+                constraintTarget(OptimizationConstraintCode.STOCK_COUNT_MIN, BigDecimal.valueOf(16), null),
+                constraintTarget(OptimizationConstraintCode.STOCK_COUNT_MAX, null, BigDecimal.valueOf(30)),
+                constraintTarget(OptimizationConstraintCode.TPP_MIN, BigDecimal.valueOf(5), null),
+                constraintTarget(OptimizationConstraintCode.TPP_MAX, null, BigDecimal.valueOf(15))
+        ));
+
+        AssetPreference excludeAkbnk = AssetPreference.builder()
+                .id(1L)
+                .request(request)
+                .assetCode("AKBNK.E")
+                .preferenceType(AssetPreferenceType.EXCLUDE)
+                .active(true)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+        when(assetPreferenceRepository.findAllByRequestId(REQUEST_ID)).thenReturn(List.of(excludeAkbnk));
+
+        when(fundMonitoringService.getCurrentPositions(ACTOR_USERNAME, FUND_ID))
+                .thenReturn(fundMonitoringResponse().positions());
+
+        Asset tppAsset = Asset.builder()
+                .id(99L)
+                .assetCode("TPP1G")
+                .assetType(AssetType.TPP)
+                .active(true)
+                .build();
+        when(assetRepository.findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType.TPP))
+                .thenReturn(List.of(tppAsset));
+
+        assertThatThrownBy(() -> service.run(ACTOR_USERNAME, REQUEST_ID))
+                .isInstanceOf(BaseException.class)
+                .extracting(error -> ((BaseException) error).getErrorCode())
+                .isEqualTo(ErrorCode.OPT_WEIGHT_CHANGE_LIMIT_EXCEEDED);
+
+        assertThat(request.getStatus()).isEqualTo(RequestStatus.FAILED);
+        verifyNoInteractions(optimizationEngineClient);
+    }
+
+    @Test
+    void run_withMoreExcludedHeldAssetsThanMaxRemovals_failsBeforeCallingEngine() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.ADMIN)
+                .username(ACTOR_USERNAME)
+                .build();
+
+        OptimizationRequest request = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.PREPARING)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+        when(optimizationRequestRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(requestConstraintTargetRepository.findAllByRequestId(REQUEST_ID)).thenReturn(List.of(
+                constraintTarget(OptimizationConstraintCode.STOCK_COUNT_MIN, BigDecimal.valueOf(16), null),
+                constraintTarget(OptimizationConstraintCode.STOCK_COUNT_MAX, null, BigDecimal.valueOf(30)),
+                constraintTarget(OptimizationConstraintCode.TPP_MIN, BigDecimal.valueOf(5), null),
+                constraintTarget(OptimizationConstraintCode.TPP_MAX, null, BigDecimal.valueOf(15))
+        ));
+
+        List<String> heldAssetCodes = List.of("A.E", "B.E", "C.E", "D.E");
+        List<AssetPreference> excludePreferences = heldAssetCodes.stream()
+                .map(assetCode -> AssetPreference.builder()
+                        .request(request)
+                        .assetCode(assetCode)
+                        .preferenceType(AssetPreferenceType.EXCLUDE)
+                        .active(true)
+                        .createdAt(LocalDateTime.now(CLOCK))
+                        .updatedAt(LocalDateTime.now(CLOCK))
+                        .build())
+                .toList();
+        when(assetPreferenceRepository.findAllByRequestId(REQUEST_ID)).thenReturn(excludePreferences);
+
+        List<FundPositionResponse> positions = new ArrayList<>();
+        for (int i = 0; i < heldAssetCodes.size(); i++) {
+            positions.add(new FundPositionResponse(
+                    String.valueOf(i + 1),
+                    heldAssetCodes.get(i),
+                    heldAssetCodes.get(i),
+                    "Sektör",
+                    BigDecimal.valueOf(2)
+            ));
+        }
+        positions.add(new FundPositionResponse("99", "TPP1G", "TPP", null, BigDecimal.valueOf(92)));
+        when(fundMonitoringService.getCurrentPositions(ACTOR_USERNAME, FUND_ID)).thenReturn(positions);
+
+        Asset tppAsset = Asset.builder()
+                .id(99L)
+                .assetCode("TPP1G")
+                .assetType(AssetType.TPP)
+                .active(true)
+                .build();
+        when(assetRepository.findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType.TPP))
+                .thenReturn(List.of(tppAsset));
+
+        assertThatThrownBy(() -> service.run(ACTOR_USERNAME, REQUEST_ID))
+                .isInstanceOf(BaseException.class)
+                .extracting(error -> ((BaseException) error).getErrorCode())
+                .isEqualTo(ErrorCode.OPT_MAX_REMOVALS_EXCEEDED);
+
+        assertThat(request.getStatus()).isEqualTo(RequestStatus.FAILED);
+        verifyNoInteractions(optimizationEngineClient);
     }
 
     @Test
