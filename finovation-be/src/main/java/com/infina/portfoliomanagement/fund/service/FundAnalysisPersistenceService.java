@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.fund.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
@@ -36,8 +37,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,11 +56,11 @@ public class FundAnalysisPersistenceService {
     private final FundPositionRepository fundPositionRepository;
     private final FundDraftRepository fundDraftRepository;
     private final AssetRepository assetRepository;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
 
     @Transactional
     public void invalidateRunsForDraft(Long draftId) {
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         List<ModelRun> completed = modelRunRepository
                 .findAllByFundDraft_IdAndStatus(draftId, ModelRunStatus.COMPLETED);
         for (ModelRun run : completed) {
@@ -89,13 +88,13 @@ public class FundAnalysisPersistenceService {
 
     @Transactional
     public ModelRun startRun(FundDraft draft, String rulesFingerprint) {
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         invalidateRunsForDraft(draft.getId());
 
         ModelRun run = ModelRun.builder()
                 .fundDraft(draft)
                 .status(ModelRunStatus.GENERATING_PROPOSALS)
-                .dataCutoffDate(LocalDate.now(clock))
+                .dataCutoffDate(financialTime.currentDate())
                 .modelVersion("mock-v1")
                 .rulesFingerprint(rulesFingerprint)
                 .startedAt(now)
@@ -112,7 +111,7 @@ public class FundAnalysisPersistenceService {
             FundEngineCreateResponse response,
             String rulesFingerprint
     ) {
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         List<FundEngineAlternativeDto> alternatives =
                 response.alternatives() == null ? List.of() : response.alternatives();
 
@@ -178,7 +177,7 @@ public class FundAnalysisPersistenceService {
 
     @Transactional
     public void failRun(ModelRun run, String errorCode, String message) {
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         run.setStatus(ModelRunStatus.FAILED);
         run.setErrorCode(errorCode);
         run.setErrorMessage(message == null ? null : message.substring(0, Math.min(500, message.length())));
@@ -240,7 +239,7 @@ public class FundAnalysisPersistenceService {
                 .findByModelRunIdAndProposalRank(run.getId(), (short) rank)
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_PROPOSAL_NOT_FOUND));
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         List<FundPortfolio> previouslySelected =
                 fundPortfolioRepository.findAllByFundDraft_IdAndSelectedTrue(draft.getId());
         for (FundPortfolio portfolio : previouslySelected) {
@@ -315,7 +314,7 @@ public class FundAnalysisPersistenceService {
         if (assets == null || assets.isEmpty()) {
             throw new BaseException(ErrorCode.FUND_WORKING_PORTFOLIO_INVALID);
         }
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         FundPortfolio selected = fundPortfolioRepository
                 .findByFundDraftIdAndSelectedTrue(draft.getId())
                 .orElse(null);

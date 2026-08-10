@@ -43,6 +43,12 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
 
+financial-time:
+  simulation-enabled: ${FINANCIAL_TIME_SIMULATION_ENABLED:false}
+  system-anchor-date: ${FINANCIAL_TIME_SYSTEM_ANCHOR_DATE:2026-08-10}
+  financial-anchor-date: ${FINANCIAL_TIME_FINANCIAL_ANCHOR_DATE:2025-05-29}
+  zone: ${FINANCIAL_TIME_ZONE:Europe/Istanbul}
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
@@ -68,7 +74,6 @@ ai:
 
 fund:
   monitoring:
-    fixed-outstanding-shares: ${FUND_MONITORING_FIXED_OUTSTANDING_SHARES:1000000}
     policy-rate-percent: ${TCMB_POLICY_RATE_PERCENT:37}
 
 marketdata:

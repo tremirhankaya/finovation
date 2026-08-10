@@ -6,6 +6,7 @@ export type ResultCategoryKey =
   | "DECREASED"
   | "ADDED"
   | "REMOVED"
+  | "LOCKED"
   | "UNCHANGED"
 
 export type ResultCategory = {
@@ -24,6 +25,15 @@ function isRemoved(asset: OptimizationResultAsset): boolean {
   return asset.currentWeight > WEIGHT_EPSILON && asset.proposedWeight <= WEIGHT_EPSILON
 }
 
+function getRoundedDelta(asset: OptimizationResultAsset): number {
+  const effectiveWeight = asset.finalWeight ?? asset.proposedWeight
+  return Math.round(effectiveWeight) - Math.round(asset.currentWeight)
+}
+
+function isLocked(asset: OptimizationResultAsset): boolean {
+  return asset.actionType === "KEEP"
+}
+
 export function matchesCategory(
   asset: OptimizationResultAsset,
   category: ResultCategoryKey,
@@ -36,11 +46,28 @@ export function matchesCategory(
     case "REMOVED":
       return isRemoved(asset)
     case "INCREASED":
-      return asset.actionType === "INCREASE" && !isAdded(asset)
+      return (
+        !isAdded(asset) &&
+        !isRemoved(asset) &&
+        !isLocked(asset) &&
+        getRoundedDelta(asset) > 0
+      )
     case "DECREASED":
-      return asset.actionType === "DECREASE" && !isRemoved(asset)
+      return (
+        !isAdded(asset) &&
+        !isRemoved(asset) &&
+        !isLocked(asset) &&
+        getRoundedDelta(asset) < 0
+      )
+    case "LOCKED":
+      return !isAdded(asset) && !isRemoved(asset) && isLocked(asset)
     case "UNCHANGED":
-      return asset.actionType === "KEEP"
+      return (
+        !isAdded(asset) &&
+        !isRemoved(asset) &&
+        !isLocked(asset) &&
+        getRoundedDelta(asset) === 0
+      )
   }
 }
 
@@ -53,6 +80,7 @@ export function buildResultCategories(
     { key: "DECREASED", label: "Azaltılanlar" },
     { key: "ADDED", label: "Yeni Eklenenler" },
     { key: "REMOVED", label: "Çıkarılanlar" },
+    { key: "LOCKED", label: "Sabit Kalanlar" },
     { key: "UNCHANGED", label: "Değişmeyenler" },
   ]
 

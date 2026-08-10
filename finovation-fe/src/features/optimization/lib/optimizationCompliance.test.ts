@@ -19,8 +19,8 @@ const VALID_INPUT: ComplianceInput = {
   maxSingleStockWeightPct: 8,
   minSingleStockWeightPct: 4,
   maxSectorWeightPct: 16,
-  currentStockCount: 21,
-  maxAdditions: 3,
+  currentStockCount: 30,
+  heldExcludedAssetCount: 1,
 }
 
 describe("buildComplianceRows", () => {
@@ -90,28 +90,48 @@ describe("buildComplianceRows", () => {
     expect(stockCountRow?.detail).toContain("25 hisse")
   })
 
-  it("hedef alt sınıra mevcut hisse + eklenebilecek hisseyle ulaşılamıyorsa UYUMSUZ verir", () => {
+  it("B'den çıkarma + D'den zorunlu ekleme sonucu projekte edilen hisse sayısı seçilen aralığın altında kalırsa DIKKAT verir ama gönderimi engellemez", () => {
     const rows = buildComplianceRows({
       ...VALID_INPUT,
-      stockCountMin: 25,
-      stockCountMax: 30,
+      stockCountMin: 21,
+      stockCountMax: 26,
       currentStockCount: 21,
-      maxAdditions: 3,
+      heldExcludedAssetCount: 3,
+      forceAddedAssetCount: 0,
+      keptAssetCount: 0,
     })
 
     const stockCountRow = rows.find((row) => row.key === "stock-count")
-    expect(stockCountRow?.status).toBe("UYUMSUZ")
-    expect(stockCountRow?.detail).toContain("ulaşılamaz")
-    expect(isComplianceReady(rows)).toBe(false)
+    expect(stockCountRow?.status).toBe("DIKKAT")
+    expect(stockCountRow?.detail).toContain("18 hisseye")
+    expect(isComplianceReady(rows)).toBe(true)
   })
 
-  it("hedef alt sınıra mevcut hisse + eklenebilecek hisseyle ulaşılabiliyorsa UYUMLU verir", () => {
+  it("C'de yapılan hariç tutmalar projekte edilen hisse sayısını etkilemez", () => {
     const rows = buildComplianceRows({
       ...VALID_INPUT,
-      stockCountMin: 24,
-      stockCountMax: 30,
+      stockCountMin: 21,
+      stockCountMax: 26,
       currentStockCount: 21,
-      maxAdditions: 3,
+      heldExcludedAssetCount: 0,
+      forceAddedAssetCount: 0,
+      keptAssetCount: 0,
+      excludedAssetCount: 3,
+    })
+
+    const stockCountRow = rows.find((row) => row.key === "stock-count")
+    expect(stockCountRow?.status).toBe("UYUMLU")
+  })
+
+  it("B'den çıkarma + D'den zorunlu eklemeyle projekte edilen hisse sayısı seçilen aralığa uyarsa UYUMLU verir", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      stockCountMin: 21,
+      stockCountMax: 26,
+      currentStockCount: 21,
+      heldExcludedAssetCount: 0,
+      forceAddedAssetCount: 3,
+      keptAssetCount: 0,
     })
 
     const stockCountRow = rows.find((row) => row.key === "stock-count")

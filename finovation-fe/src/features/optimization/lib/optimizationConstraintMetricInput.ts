@@ -22,6 +22,7 @@ export function buildConstraintMetricInput(
 
   if (assets.length === 0) {
     return {
+      totalPortfolioWeight: null,
       totalEquityWeight: null,
       tppWeight: null,
       tppUserMin: resolvedTppUserMin,
@@ -54,10 +55,12 @@ export function buildConstraintMetricInput(
     sectorTotals.set(sector, (sectorTotals.get(sector) ?? 0) + pickWeight(asset))
   }
   const maxSectorConcentration = Math.max(0, ...sectorTotals.values())
+  const tppWeight = tppAsset ? pickWeight(tppAsset) : 0
 
   return {
+    totalPortfolioWeight: totalEquityWeight + tppWeight,
     totalEquityWeight,
-    tppWeight: tppAsset ? pickWeight(tppAsset) : 0,
+    tppWeight,
     tppUserMin: resolvedTppUserMin,
     tppUserMax: resolvedTppUserMax,
     stockCount: heldEquities.length,

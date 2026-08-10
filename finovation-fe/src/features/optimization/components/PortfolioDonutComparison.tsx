@@ -5,16 +5,18 @@ import styles from "@/features/optimization/styles/OptimizationResultPage.module
 
 export const DONUT_COLORS = [
   "#0d9488",
-  "#14b8a6",
-  "#2dd4bf",
-  "#5eead4",
-  "#0f766e",
-  "#134e4a",
-  "#0284c7",
-  "#38bdf8",
+  "#2563eb",
+  "#d97706",
   "#7c3aed",
-  "#c084fc",
-  "#94a3b8",
+  "#65a30d",
+  "#db2777",
+  "#0891b2",
+  "#ea580c",
+  "#4f46e5",
+  "#059669",
+  "#c026d3",
+  "#ca8a04",
+  "#9333ea",
   "#475569",
 ] as const
 
@@ -114,7 +116,8 @@ function Donut({
                 strokeDashoffset={offset}
                 transform="rotate(-90 80 80)"
                 opacity={isDimmed ? DIMMED_OPACITY : 1}
-                className={styles.donutSlice}
+                className={`${styles.donutSlice} ${isActive ? styles.donutSliceActive : ""}`}
+                style={isActive ? { color: colorFor(slice.sectorName) } : undefined}
                 onMouseEnter={() => onHoverSector(slice.sectorName)}
                 onMouseLeave={() => onHoverSector(null)}
               />
@@ -126,7 +129,10 @@ function Donut({
               <span className={styles.donutCenterHoverName}>
                 {hoveredSector}
               </span>
-              <span className={styles.donutCenterHoverValue}>
+              <span
+                className={styles.donutCenterHoverValue}
+                style={{ color: colorFor(hoveredSector) }}
+              >
                 %
                 {(
                   slices.find((slice) => slice.sectorName === hoveredSector)
@@ -270,7 +276,10 @@ export default function PortfolioDonutComparison({
                 <td>
                   <span
                     className={styles.sectorSwatch}
-                    style={{ background: colorFor(sectorName) }}
+                    style={{
+                      background: colorFor(sectorName),
+                      color: colorFor(sectorName),
+                    }}
                     aria-hidden="true"
                   />
                   {sectorName}

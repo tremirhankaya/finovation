@@ -23,6 +23,7 @@ import {
 } from "@/features/dashboard/api/dashboardService"
 
 const DASHBOARD_RESPONSE = {
+  businessDate: "2025-05-29",
   funds: [
     {
       id: "11111111-1111-4111-8111-111111111111",
@@ -35,7 +36,7 @@ const DASHBOARD_RESPONSE = {
   drafts: [
     {
       draftId: "22222222-2222-4222-8222-222222222222",
-      name: "Yeni Taslak",
+      name: null,
       currentStep: 4,
       status: "IN_PROGRESS",
       updatedAt: "2026-08-09T10:00:00",
@@ -47,7 +48,13 @@ const DASHBOARD_RESPONSE = {
       fundId: "11111111-1111-4111-8111-111111111111",
       fundName: "Büyüme Fonu",
       requestedByUsername: "user",
+      requestedByDisplayName: "User Name",
+      decidedByUserId: null,
+      decidedByUsername: null,
+      decidedByDisplayName: null,
       status: "COMPLETED",
+      errorMessage: null,
+      rejectionReason: null,
       createdAt: "2026-08-09T10:00:00",
       completedAt: "2026-08-09T10:05:00",
       updatedAt: "2026-08-09T10:05:00",
@@ -100,7 +107,9 @@ describe("dashboardService", () => {
         type: "Hisse Senedi Yoğun Fon",
       },
     ])
+    expect(response.data.businessDate).toBe("2025-05-29")
     expect(response.data.drafts).toHaveLength(1)
+    expect(response.data.drafts[0]?.name).toBe("İsimsiz Fon Taslağı")
     expect(response.data.optimizationLogs).toHaveLength(1)
     expect(response.data.latestOptimizationResult).toEqual(
       DASHBOARD_RESPONSE.latestOptimizationResult,

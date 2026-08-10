@@ -1,46 +1,21 @@
-import { useState } from "react"
+import { Fragment, useMemo, useState } from "react"
 
-import type { CriteriaRow } from "@/features/optimization/lib/optimizationCriteriaRows"
+import {
+  CRITERIA_STATUS_LABELS,
+  formatCriteriaDelta,
+  formatCriteriaValue,
+  type CriteriaRow,
+} from "@/features/optimization/lib/optimizationCriteriaRows"
+import { sortRationaleAssetsBySector } from "@/features/optimization/lib/optimizationRationaleSectors"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
 
-function formatValue(value: number | null, unit: CriteriaRow["unit"]): string {
-  if (value == null) return "—"
-  if (unit === "PERCENT") return `%${value.toFixed(0)}`
-  if (unit === "COUNT") return `${Math.round(value)}`
-  return value.toFixed(2)
-}
-
-function formatDelta(
-  currentValue: number | null,
-  proposedValue: number | null,
-  unit: CriteriaRow["unit"],
-): { text: string; direction: "up" | "down" | "flat" } {
-  if (currentValue == null || proposedValue == null) {
-    return { text: "—", direction: "flat" }
-  }
-  const delta = proposedValue - currentValue
-  const rounded = unit === "RATIO" ? delta : Math.round(delta)
-  if (Math.abs(rounded) < (unit === "RATIO" ? 0.005 : 0.5)) {
-    return { text: "—", direction: "flat" }
-  }
-  const formatted =
-    unit === "PERCENT"
-      ? `%${Math.abs(rounded).toFixed(0)}`
-      : unit === "COUNT"
-        ? `${Math.abs(rounded)}`
-        : Math.abs(rounded).toFixed(2)
-  return delta > 0
-    ? { text: `+${formatted}`, direction: "up" }
-    : { text: `-${formatted}`, direction: "down" }
-}
-
-const STATUS_LABELS: Record<CriteriaRow["status"], string> = {
-  GREEN: "Uyumlu",
-  AMBER: "Sınıra Yakın",
-  RED: "İhlal Var",
-  NEUTRAL: "Bilgi",
-  GRAY: "Kontrol Edilemedi",
+function rationaleDotClass(
+  actionType: OptimizationResultAsset["actionType"],
+): string {
+  if (actionType === "INCREASE") return styles.rationaleDotUp
+  if (actionType === "DECREASE") return styles.rationaleDotDown
+  return styles.rationaleDotFlat
 }
 
 export type PortfolioCriteriaScreenProps = {
@@ -74,7 +49,26 @@ export default function PortfolioCriteriaScreen({
   onApprove,
   onReject,
 }: PortfolioCriteriaScreenProps) {
-  const [confirmingReject, setConfirmingReject] = useState(false)
+  const [expandedAssetCodes, setExpandedAssetCodes] = useState<Set<string>>(
+    new Set(),
+  )
+
+  const toggleRationaleCard = (assetCode: string) => {
+    setExpandedAssetCodes((current) => {
+      const next = new Set(current)
+      if (next.has(assetCode)) {
+        next.delete(assetCode)
+      } else {
+        next.add(assetCode)
+      }
+      return next
+    })
+  }
+
+  const sortedRationaleAssets = useMemo(
+    () => sortRationaleAssetsBySector(rationaleAssets),
+    [rationaleAssets],
+  )
 
   return (
     <div className={styles.main}>
@@ -114,7 +108,7 @@ export default function PortfolioCriteriaScreen({
           Portföy Kriterleri Karşılaştırması
         </p>
 
-        <table className={styles.comparisonTable}>
+        <table className={`${styles.comparisonTable} ${styles.criteriaTable}`}>
           <thead>
             <tr>
               <th>Kriter</th>
@@ -125,66 +119,101 @@ export default function PortfolioCriteriaScreen({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
-              const delta = formatDelta(
+            {rows.map((row, index) => {
+              const delta = formatCriteriaDelta(
                 row.currentValue,
                 row.proposedValue,
                 row.unit,
               )
+              const isFirstMetricRow =
+                row.unit === "RATIO" && rows[index - 1]?.unit !== "RATIO"
+
               return (
-                <tr key={row.key}>
-                  <td>{row.label}</td>
-                  <td>{formatValue(row.currentValue, row.unit)}</td>
-                  <td>
-                    <strong>{formatValue(row.proposedValue, row.unit)}</strong>
-                  </td>
-                  <td
-                    className={
-                      delta.direction === "up"
-                        ? styles.changePositive
-                        : delta.direction === "down"
-                          ? styles.changeNegative
-                          : undefined
-                    }
-                  >
-                    {delta.text}
-                  </td>
-                  <td>
-                    <span className={styles.criteriaStatusCell}>
-                      <span
-                        className={`${styles.metricDot} ${styles[`metricDot${row.status}`]}`}
-                        aria-hidden="true"
-                      />
-                      <span
-                        className={`${styles.metricStatus} ${styles[`metricStatus${row.status}`]}`}
-                      >
-                        {STATUS_LABELS[row.status]}
+                <Fragment key={row.key}>
+                  {isFirstMetricRow && (
+                    <tr className={styles.criteriaSectionDivider}>
+                      <td colSpan={5}>Risk ve Getiri Metrikleri</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td>{row.label}</td>
+                    <td>{formatCriteriaValue(row.currentValue, row.unit)}</td>
+                    <td>
+                      <strong>
+                        {formatCriteriaValue(row.proposedValue, row.unit)}
+                      </strong>
+                    </td>
+                    <td className={styles[`metricStatus${row.status}`]}>
+                      {delta.text}
+                    </td>
+                    <td>
+                      <span className={styles.criteriaStatusCell}>
+                        <span
+                          className={`${styles.metricDot} ${styles[`metricDot${row.status}`]}`}
+                          aria-hidden="true"
+                        />
+                        <span
+                          className={`${styles.metricStatus} ${styles[`metricStatus${row.status}`]}`}
+                        >
+                          {CRITERIA_STATUS_LABELS[row.status]}
+                        </span>
                       </span>
-                    </span>
-                    <p className={styles.criteriaStatusDetail}>{row.detail}</p>
-                  </td>
-                </tr>
+                      <p className={styles.criteriaStatusDetail}>
+                        {row.detail}
+                      </p>
+                    </td>
+                  </tr>
+                </Fragment>
               )
             })}
           </tbody>
         </table>
       </section>
 
-      {rationaleAssets.length > 0 && (
+      {sortedRationaleAssets.length > 0 && (
         <section className={styles.panel}>
           <h2 className={styles.panelEyebrow}>
             <span className={styles.panelEyebrowDot} aria-hidden="true" />
             Model Gerekçeleri
           </h2>
           <div className={styles.rationaleGrid}>
-            {rationaleAssets.map((asset) => (
-              <div key={asset.assetCode} className={styles.rationaleCard}>
-                <span className={styles.rationaleAssetCode}>
-                  {asset.assetCode}
-                </span>
-                <p className={styles.rationaleText}>{asset.rationale}</p>
-              </div>
-            ))}
+            {sortedRationaleAssets.map((asset) => {
+              const isExpanded = expandedAssetCodes.has(asset.assetCode)
+              return (
+                <div
+                  key={asset.assetCode}
+                  className={`${styles.rationaleCard} ${isExpanded ? styles.rationaleCardExpanded : ""}`}
+                >
+                  <div className={styles.rationaleCardHeader}>
+                    <span className={styles.rationaleCardName}>
+                      <span
+                        className={`${styles.rationaleDot} ${rationaleDotClass(asset.actionType)}`}
+                        aria-hidden="true"
+                      />
+                      {asset.assetCode}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.rationaleCardToggle}
+                      onClick={() => toggleRationaleCard(asset.assetCode)}
+                      aria-expanded={isExpanded}
+                      aria-label={
+                        isExpanded
+                          ? `${asset.assetCode} gerekçesini gizle`
+                          : `${asset.assetCode} gerekçesini göster`
+                      }
+                    >
+                      {isExpanded ? "▲" : "▼"}
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <p className={styles.rationaleCardText}>
+                      {asset.rationale}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </section>
       )}
@@ -219,25 +248,14 @@ export default function PortfolioCriteriaScreen({
         >
           {isSubmitting ? "Gönderiliyor…" : "Portföyü Onayla ve Güncelle"}
         </button>
-        {confirmingReject ? (
-          <button
-            type="button"
-            className={styles.rejectButton}
-            onClick={onReject}
-            disabled={isSubmitting}
-          >
-            Emin misiniz? · İptal Etmek İçin Tıklayın
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={styles.linkButton}
-            onClick={() => setConfirmingReject(true)}
-            disabled={isSubmitting}
-          >
-            Optimizasyonu İptal Et
-          </button>
-        )}
+        <button
+          type="button"
+          className={styles.linkButton}
+          onClick={onReject}
+          disabled={isSubmitting}
+        >
+          Optimizasyonu İptal Et
+        </button>
       </div>
     </div>
   )

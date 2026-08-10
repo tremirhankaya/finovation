@@ -2,6 +2,8 @@ package com.infina.portfoliomanagement.fund.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProperties;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
@@ -120,7 +122,7 @@ class FundDraftServiceTest {
                 fundAssetPreferenceRepository,
                 assetRepository,
                 equityDetailRepository,
-                Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC)
+                financialTime(Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC))
         );
 
         actor = User.builder()
@@ -130,6 +132,13 @@ class FundDraftServiceTest {
 
         lenient().when(fundAssetPreferenceRepository.findAllByFundDraftIdAndPreferenceType(any(), any()))
                 .thenReturn(List.of());
+    }
+
+    private static FinancialTimeProvider financialTime(Clock clock) {
+        return new FinancialTimeProvider(
+                clock,
+                new FinancialTimeProperties(false, null, null, ZoneOffset.UTC)
+        );
     }
 
     @Test

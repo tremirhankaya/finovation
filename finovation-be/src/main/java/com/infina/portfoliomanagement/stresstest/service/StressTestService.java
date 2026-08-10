@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.stresstest.service;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.marketdata.entity.EquityDetail;
 import com.infina.portfoliomanagement.marketdata.repository.EquityDetailRepository;
 import com.infina.portfoliomanagement.stresstest.dto.StressPortfolioSnapshot;
@@ -41,7 +42,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
-import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -57,9 +57,9 @@ public class StressTestService {
     private final StressTestEngine stressTestEngine;
     private final StressTestPersistenceService persistenceService;
     private final StressTestResponseMapper responseMapper;
+    private final FinancialTimeProvider financialTime;
     private final StressTestRepository stressTestRepository;
     private final StressTestPositionSnapshotRepository snapshotRepository;
-    private final Clock clock;
     private final StressScenarioAssetPathRepository stressScenarioAssetPathRepository;
     private final EquityDetailRepository equityDetailRepository;
 
@@ -84,7 +84,7 @@ public class StressTestService {
                         request.fundId()
                 );
 
-        LocalDate asOfDate = resolveAsOfDate(LocalDate.now(clock));
+        LocalDate asOfDate = resolveAsOfDate(financialTime.currentDate());
         String requestId = "stress-" + UUID.randomUUID();
 
         StressTest stressTest = persistenceService.createRunningTest(

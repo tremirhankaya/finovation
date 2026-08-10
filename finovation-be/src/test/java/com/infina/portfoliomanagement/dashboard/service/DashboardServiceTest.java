@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.dashboard.service;
 
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.dashboard.dto.DashboardSummaryResponse.UnavailableSection;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
@@ -44,6 +45,8 @@ class DashboardServiceTest {
     private OptimizationRequestService optimizationRequestService;
     @Mock
     private StressTestService stressTestService;
+    @Mock
+    private FinancialTimeProvider financialTime;
 
     private DashboardService service;
 
@@ -53,12 +56,14 @@ class DashboardServiceTest {
                 fundMonitoringService,
                 fundDraftService,
                 optimizationRequestService,
-                stressTestService
+                stressTestService,
+                financialTime
         );
     }
 
     @Test
     void getSummary_aggregatesModuleDataAndLoadsLatestAvailableOptimizationResult() {
+        LocalDate businessDate = LocalDate.of(2025, 5, 29);
         FundSummaryResponse fund = new FundSummaryResponse(
                 UUID.randomUUID(),
                 "Atlas Fonu",
@@ -92,9 +97,11 @@ class DashboardServiceTest {
         when(optimizationRequestService.getResult(USERNAME, 11L))
                 .thenReturn(optimizationResult);
         when(stressTestService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
+        when(financialTime.currentDate()).thenReturn(businessDate);
 
         var response = service.getSummary(USERNAME);
 
+        assertThat(response.businessDate()).isEqualTo(businessDate);
         assertThat(response.funds()).containsExactly(fund);
         assertThat(response.drafts()).containsExactly(draft);
         assertThat(response.optimizationLogs()).containsExactly(runningLog, completedLog);
@@ -154,7 +161,13 @@ class DashboardServiceTest {
                 UUID.randomUUID(),
                 "Atlas Fonu",
                 USERNAME,
+                null,
+                null,
+                null,
+                null,
                 resultAvailable ? RequestStatus.COMPLETED : RequestStatus.RUNNING,
+                null,
+                null,
                 LocalDateTime.of(2026, 8, 10, 10, 0),
                 resultAvailable ? LocalDateTime.of(2026, 8, 10, 10, 5) : null,
                 LocalDateTime.of(2026, 8, 10, 10, 5),

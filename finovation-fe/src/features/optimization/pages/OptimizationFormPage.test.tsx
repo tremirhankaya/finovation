@@ -55,6 +55,10 @@ function renderPage() {
           path="/optimization-requests/:requestId/running"
           element={<div>Çalıştırma ekranı</div>}
         />
+        <Route
+          path="/optimization-requests/logs"
+          element={<div>Loglar ekranı</div>}
+        />
       </Routes>
     </MemoryRouter>,
   )
@@ -181,6 +185,95 @@ describe("OptimizationFormPage", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument())
   })
 
+  it("Varsayılana Dön başlangıçta pasif, kısıt değiştirilince aktifleşip varsayılana döner", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await continueToPreferencesStep(user)
+
+    expect(
+      screen.getByRole("button", { name: "Varsayılana Dön" }),
+    ).toBeDisabled()
+
+    const tppMinSlider = screen.getByRole("slider", {
+      name: "TPP Ağırlık Aralığı (%) Minimum kaydırıcı",
+    })
+    fireEvent.change(tppMinSlider, { target: { value: "9" } })
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Varsayılana Dön" }),
+      ).toBeEnabled(),
+    )
+    expect(
+      screen.getByRole("textbox", { name: "TPP Ağırlık Aralığı (%) Minimum" }),
+    ).toHaveValue("9")
+
+    await user.click(screen.getByRole("button", { name: "Varsayılana Dön" }))
+
+    expect(
+      screen.getByRole("textbox", { name: "TPP Ağırlık Aralığı (%) Minimum" }),
+    ).toHaveValue("8")
+    expect(
+      screen.getByRole("button", { name: "Varsayılana Dön" }),
+    ).toBeDisabled()
+  })
+
+  it("B panelinde çıkarılan hisse C panelinde en üstte rozetle görünür ve C'nin kendi sınırını etkilemez", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await continueToPreferencesStep(user)
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "AKBNK hissesini çıkar" }),
+    )
+
+    const pinnedCheckbox = screen.getByRole("checkbox", {
+      name: "AKBNK hissesi için Hariç Tut (B panelinden)",
+    })
+    expect(pinnedCheckbox).toBeChecked()
+    expect(screen.getByText("Yukarıdan")).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Hariç Tut" }),
+    )
+
+    expect(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Hariç Tut" }),
+    ).toBeChecked()
+  })
+
+  it("C'de hariç tutulan hisse D'de görünmez, seçim kaldırılınca geri gelir", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await continueToPreferencesStep(user)
+
+    expect(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Ekle" }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Hariç Tut" }),
+    )
+
+    expect(
+      screen.queryByRole("checkbox", { name: "MGROS hissesi için Ekle" }),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Hariç Tut" }),
+    )
+
+    expect(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Ekle" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("checkbox", { name: "MGROS hissesi için Ekle" }),
+    ).not.toBeChecked()
+  })
+
   it("Fon Değiştir butonu fon seçimi adımına döner", async () => {
     const user = userEvent.setup()
     renderPage()
@@ -194,5 +287,38 @@ describe("OptimizationFormPage", () => {
         screen.getByRole("button", { name: "Optimizasyona Başla" }),
       ).toBeInTheDocument(),
     )
+  })
+
+  it("1. adımda İşlem Loglarını Gör butonu loglar ekranına götürür", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "İşlem Loglarını Gör" }),
+      ).toBeInTheDocument(),
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "İşlem Loglarını Gör" }),
+    )
+
+    await waitFor(() =>
+      expect(screen.getByText("Loglar ekranı")).toBeInTheDocument(),
+    )
+  })
+
+  it("2. adımda İşlem Loglarını Gör butonu görünmez, Fon Değiştir görünür", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await continueToPreferencesStep(user)
+
+    expect(
+      screen.queryByRole("button", { name: "İşlem Loglarını Gör" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Fon Değiştir" }),
+    ).toBeInTheDocument()
   })
 })

@@ -8,6 +8,7 @@ import type { OptimizationLogEntry } from "@/features/optimization/model/optimiz
 import type { StressTestHistoryResponse } from "@/features/stress-test/model/stressTestSchemas"
 
 export type DashboardOverviewData = {
+  businessDate: string | null
   funds: FundOption[]
   drafts: FundDraftSummary[]
   optimizationLogs: OptimizationLogEntry[]

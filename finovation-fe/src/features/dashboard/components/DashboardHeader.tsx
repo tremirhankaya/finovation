@@ -10,12 +10,14 @@ const dateFormatter = new Intl.DateTimeFormat("tr-TR", {
 
 type DashboardHeaderProps = {
   firstName?: string
+  businessDate?: string | null
   isRefreshing: boolean
   onRefresh: () => void
 }
 
 export default function DashboardHeader({
   firstName,
+  businessDate,
   isRefreshing,
   onRefresh,
 }: DashboardHeaderProps) {
@@ -36,8 +38,10 @@ export default function DashboardHeader({
       </div>
 
       <div className={styles.headerMeta}>
-        <time dateTime={new Date().toISOString()}>
-          {dateFormatter.format(new Date())}
+        <time dateTime={businessDate ?? undefined}>
+          {businessDate
+            ? dateFormatter.format(new Date(`${businessDate}T00:00:00`))
+            : "Veri tarihi yükleniyor…"}
         </time>
         <button
           type="button"

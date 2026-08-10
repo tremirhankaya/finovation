@@ -137,11 +137,14 @@ export async function approveOptimizationRequest(
 
 export async function rejectOptimizationRequest(
   requestId: number,
+  reason?: string,
 ): Promise<OptimizationRequestResponse> {
+  const trimmedReason = reason?.trim()
   return apiFetch(
     getOptimizationRequestRejectUrl(requestId),
     {
       method: "POST",
+      body: trimmedReason ? { reason: trimmedReason } : undefined,
       errorMessage: "Optimizasyon sonucu reddedilemedi",
     },
     optimizationRequestResponseSchema.parse,

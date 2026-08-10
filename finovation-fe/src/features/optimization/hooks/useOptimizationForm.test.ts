@@ -250,6 +250,239 @@ describe("useOptimizationForm", () => {
     expect(result.current.isSubmitting).toBe(false)
   })
 
+  it("kısıtlar önerilen profil değerlerinden sapınca constraintsDeviateFromProfile true olur", async () => {
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.constraintsDeviateFromProfile).toBe(false)
+
+    act(() => result.current.setTppMinWeight(9))
+
+    expect(result.current.constraintsDeviateFromProfile).toBe(true)
+
+    act(() => result.current.setTppMinWeight(8))
+
+    expect(result.current.constraintsDeviateFromProfile).toBe(false)
+  })
+
+  it("risk profili değişince constraintsDeviateFromProfile yeniden false olur", async () => {
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.setStockCountMax(25))
+    expect(result.current.constraintsDeviateFromProfile).toBe(true)
+
+    act(() => result.current.setRiskProfile("AGGRESSIVE"))
+
+    expect(result.current.constraintsDeviateFromProfile).toBe(false)
+  })
+
+  it("toggleHeldKeep bir pozisyonu korumaya alır ve tekrar tıklanınca kaldırır", async () => {
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleHeldKeep("101"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
+
+    act(() => result.current.toggleHeldKeep("101"))
+    await waitFor(() => expect(result.current.selection["101"]).toBeUndefined())
+  })
+
+  it("toggleHeldExclude bir pozisyonu excludedHeldAssetIds'e ekler ve tekrar tıklanınca kaldırır", async () => {
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleHeldExclude("101"))
+    await waitFor(() =>
+      expect(result.current.excludedHeldAssetIds.has("101")).toBe(true),
+    )
+
+    act(() => result.current.toggleHeldExclude("101"))
+    await waitFor(() =>
+      expect(result.current.excludedHeldAssetIds.has("101")).toBe(false),
+    )
+  })
+
+  it("TPP1G bir hisse olmadığı için ne koru ne çıkar ile seçilebilir", async () => {
+    optimizationApiMocks.fetchOptimizationFundPositions.mockReset().mockResolvedValue({
+      ...snapshot(),
+      positions: [
+        ...snapshot().positions,
+        {
+          assetId: "999",
+          symbol: "TPP1G",
+          name: "TPP Fonu",
+          sectorName: null,
+          weightPercentage: 10,
+        },
+      ],
+    })
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleHeldKeep("999"))
+    expect(result.current.selection["999"]).toBeUndefined()
+
+    act(() => result.current.toggleHeldExclude("999"))
+    expect(result.current.excludedHeldAssetIds.has("999")).toBe(false)
+  })
+
+  it("koru ve çıkar aynı pozisyon için birbirini iptal eder", async () => {
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleHeldKeep("101"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
+
+    act(() => result.current.toggleHeldExclude("101"))
+    await waitFor(() =>
+      expect(result.current.excludedHeldAssetIds.has("101")).toBe(true),
+    )
+    expect(result.current.selection["101"]).toBeUndefined()
+
+    act(() => result.current.toggleHeldKeep("101"))
+    await waitFor(() => expect(result.current.selection["101"]).toBe("KEEP"))
+    expect(result.current.excludedHeldAssetIds.has("101")).toBe(false)
+  })
+
+  it("resetConstraintsToSuggested kısıtları mevcut risk profilinin varsayılanına döndürür", async () => {
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.setTppMinWeight(9))
+    act(() => result.current.setStockCountMax(25))
+    expect(result.current.constraintsDeviateFromProfile).toBe(true)
+
+    act(() => result.current.resetConstraintsToSuggested())
+
+    expect(result.current.tppMinWeight).toBe(8)
+    expect(result.current.tppMaxWeight).toBe(12)
+    expect(result.current.stockCountMin).toBe(21)
+    expect(result.current.stockCountMax).toBe(26)
+    expect(result.current.constraintsDeviateFromProfile).toBe(false)
+  })
+
+  it("unheldUniverseAssets zaten fonda olan hisseleri listeden çıkarır", async () => {
+    optimizationApiMocks.fetchInvestmentUniverse.mockReset().mockResolvedValue([
+      { assetCode: "AKBNK.E", name: "Akbank", sectorName: "Bankacılık" },
+      { assetCode: "MGROS", name: "Migros", sectorName: "Perakende Ticaret" },
+    ])
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.universeAssets.map((a) => a.assetCode)).toEqual([
+      "AKBNK.E",
+      "MGROS",
+    ])
+    expect(
+      result.current.unheldUniverseAssets.map((a) => a.assetCode),
+    ).toEqual(["MGROS"])
+  })
+
+  it("toggleHeldKeep en fazla 3 hisseyle sınırlıdır", async () => {
+    optimizationApiMocks.fetchOptimizationFundPositions.mockReset().mockResolvedValue({
+      ...snapshot(),
+      positions: [
+        { assetId: "101", symbol: "AKBNK.E", name: "Akbank", sectorName: "Bankacılık", weightPercentage: 5 },
+        { assetId: "102", symbol: "ASELS.E", name: "Aselsan", sectorName: "Savunma", weightPercentage: 5 },
+        { assetId: "103", symbol: "GARAN.E", name: "Garanti", sectorName: "Bankacılık", weightPercentage: 5 },
+        { assetId: "104", symbol: "THYAO.E", name: "THY", sectorName: "Ulaştırma", weightPercentage: 5 },
+      ],
+    })
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleHeldKeep("101"))
+    act(() => result.current.toggleHeldKeep("102"))
+    act(() => result.current.toggleHeldKeep("103"))
+    await waitFor(() => expect(result.current.keepCount).toBe(3))
+
+    act(() => result.current.toggleHeldKeep("104"))
+
+    expect(result.current.keepCount).toBe(3)
+    expect(result.current.selection["104"]).toBeUndefined()
+  })
+
+  it("B panelindeki Çıkar en fazla 3 ile sınırlıdır ve C panelini etkilemez", async () => {
+    optimizationApiMocks.fetchOptimizationFundPositions.mockReset().mockResolvedValue({
+      ...snapshot(),
+      positions: [
+        { assetId: "101", symbol: "AKBNK.E", name: "Akbank", sectorName: "Bankacılık", weightPercentage: 5 },
+        { assetId: "102", symbol: "ASELS.E", name: "Aselsan", sectorName: "Savunma", weightPercentage: 5 },
+        { assetId: "103", symbol: "GARAN.E", name: "Garanti", sectorName: "Bankacılık", weightPercentage: 5 },
+        { assetId: "104", symbol: "THYAO.E", name: "THY", sectorName: "Ulaştırma", weightPercentage: 5 },
+      ],
+    })
+    optimizationApiMocks.fetchInvestmentUniverse.mockReset().mockResolvedValue([
+      { assetCode: "MGROS", name: "Migros", sectorName: "Perakende Ticaret" },
+    ])
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleHeldExclude("101"))
+    act(() => result.current.toggleHeldExclude("102"))
+    act(() => result.current.toggleHeldExclude("103"))
+    await waitFor(() => expect(result.current.heldExcludeCount).toBe(3))
+
+    act(() => result.current.toggleHeldExclude("104"))
+    expect(result.current.heldExcludeCount).toBe(3)
+    expect(result.current.excludedHeldAssetIds.has("104")).toBe(false)
+
+    act(() => result.current.toggleSelection("MGROS", "EXCLUDE"))
+    expect(result.current.universeExcludeCount).toBe(1)
+    expect(result.current.selection["MGROS"]).toBe("EXCLUDE")
+  })
+
+  it("C panelindeki Hariç Tut en fazla 3 ile sınırlıdır ve B panelini etkilemez", async () => {
+    optimizationApiMocks.fetchInvestmentUniverse.mockReset().mockResolvedValue([
+      { assetCode: "MGROS", name: "Migros", sectorName: "Perakende Ticaret" },
+      { assetCode: "TTKOM", name: "Türk Telekom", sectorName: "Telekomünikasyon" },
+      { assetCode: "BIMAS", name: "BİM", sectorName: "Perakende Ticaret" },
+      { assetCode: "EREGL", name: "Ereğli Demir Çelik", sectorName: "Ana Metal Sanayi" },
+    ])
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleSelection("MGROS", "EXCLUDE"))
+    act(() => result.current.toggleSelection("TTKOM", "EXCLUDE"))
+    act(() => result.current.toggleSelection("BIMAS", "EXCLUDE"))
+    await waitFor(() => expect(result.current.universeExcludeCount).toBe(3))
+
+    act(() => result.current.toggleSelection("EREGL", "EXCLUDE"))
+    expect(result.current.universeExcludeCount).toBe(3)
+    expect(result.current.selection["EREGL"]).toBeUndefined()
+
+    act(() => result.current.toggleHeldExclude("101"))
+    expect(result.current.heldExcludeCount).toBe(1)
+  })
+
+  it("zorunlu eklenecek hisseler en fazla 3 ile sınırlıdır", async () => {
+    optimizationApiMocks.fetchInvestmentUniverse.mockReset().mockResolvedValue([
+      { assetCode: "MGROS", name: "Migros", sectorName: "Perakende Ticaret" },
+      { assetCode: "TTKOM", name: "Türk Telekom", sectorName: "Telekomünikasyon" },
+      { assetCode: "BIMAS", name: "BİM", sectorName: "Perakende Ticaret" },
+      { assetCode: "EREGL", name: "Ereğli Demir Çelik", sectorName: "Ana Metal Sanayi" },
+    ])
+
+    const { result } = renderHook(() => useOptimizationForm())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => result.current.toggleSelection("MGROS", "FORCE_ADD"))
+    act(() => result.current.toggleSelection("TTKOM", "FORCE_ADD"))
+    act(() => result.current.toggleSelection("BIMAS", "FORCE_ADD"))
+    await waitFor(() => expect(result.current.forceAddCount).toBe(3))
+
+    act(() => result.current.toggleSelection("EREGL", "FORCE_ADD"))
+
+    expect(result.current.forceAddCount).toBe(3)
+    expect(result.current.selection["EREGL"]).toBeUndefined()
+  })
+
   it("gönderime hazır olmadığında submit isteği göndermez", async () => {
     const { result } = renderHook(() => useOptimizationForm())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
