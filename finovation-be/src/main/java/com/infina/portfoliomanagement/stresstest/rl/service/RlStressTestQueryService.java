@@ -102,6 +102,42 @@ public class RlStressTestQueryService {
         );
     }
 
+    @Transactional
+    public void delete(
+            String actorUsername,
+            UUID testId
+    ) {
+        User actor = getUser(actorUsername);
+
+        RlStressTest stressTest = stressTestRepository
+                .findByPublicIdAndUserId(
+                        testId,
+                        actor.getId()
+                )
+                .orElseThrow(() ->
+                        new BaseException(
+                                ErrorCode.STRESS_TEST_NOT_FOUND
+                        )
+                );
+
+        List<RlStressTestDay> days =
+                dayRepository.findAllByStressTestIdOrderByDayNumberAsc(
+                        stressTest.getId()
+                );
+
+        for (RlStressTestDay day : days) {
+            weightRepository.deleteAllByDayId(
+                    day.getId()
+            );
+        }
+
+        dayRepository.deleteAllByStressTestId(
+                stressTest.getId()
+        );
+
+        stressTestRepository.delete(stressTest);
+    }
+
     private User getUser(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() ->

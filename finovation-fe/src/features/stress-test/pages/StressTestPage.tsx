@@ -16,6 +16,7 @@ import type {
 } from "@/features/stress-test/model/stressTestSchemas"
 import styles from "@/features/stress-test/styles/StressTestPage.module.css"
 import Logo from "@/shared/ui/Logo"
+import StressTestModeTabs from "@/features/stress-test/components/StressTestModeTabs"
 
 export default function StressTestPage() {
     const {
@@ -112,6 +113,8 @@ export default function StressTestPage() {
     return (
         <main className={styles.page} aria-busy={isLoading}>
             <div className={styles.shell}>
+                <StressTestModeTabs />
+
                 <header className={styles.header}>
                     <div className={styles.brandBlock}>
                         <Logo variant="dark" size="small" />

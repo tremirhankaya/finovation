@@ -11,4 +11,6 @@ public interface RlStressTestDayWeightRepository
     List<RlStressTestDayWeight> findAllByDayId(
             Long dayId
     );
+
+    void deleteAllByDayId(Long dayId);
 }

@@ -16,6 +16,8 @@ import org.springframework.web.client.RestClientResponseException;
 @Component
 public class HttpRlInferenceClient implements RlInferenceClient {
 
+    private static final String API_KEY_HEADER = "X-API-Key";
+
     private final RestClient restClient;
     private final RlProperties properties;
 
@@ -29,8 +31,18 @@ public class HttpRlInferenceClient implements RlInferenceClient {
     @Override
     public RlInferenceResponse run(RlInferenceRequest request) {
         try {
-            return restClient.post()
-                    .uri(properties.inferencePath())
+            RestClient.RequestBodySpec requestSpec = restClient.post()
+                    .uri(properties.inferencePath());
+
+            if (properties.apiKey() != null
+                    && !properties.apiKey().isBlank()) {
+                requestSpec.header(
+                        API_KEY_HEADER,
+                        properties.apiKey()
+                );
+            }
+
+            return requestSpec
                     .body(request)
                     .retrieve()
                     .body(RlInferenceResponse.class);

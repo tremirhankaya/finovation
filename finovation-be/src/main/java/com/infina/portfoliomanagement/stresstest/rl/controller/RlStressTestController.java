@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import com.infina.portfoliomanagement.stresstest.rl.dto.response.RlPortfolioCompatibilityResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class RlStressTestController {
 
     private final RlStressTestService rlStressTestService;
     private final RlStressTestQueryService queryService;
+    private final RlStressTestQueryService rlStressTestQueryService;
 
     @PostMapping
     public ResponseEntity<RlInferenceResponse> run(
@@ -36,6 +38,18 @@ public class RlStressTestController {
                         userDetails.getUsername(),
                         request.fundId(),
                         request.scenarioCode()
+                )
+        );
+    }
+    @GetMapping("/compatibility/{fundId}")
+    public ResponseEntity<RlPortfolioCompatibilityResponse> checkCompatibility(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID fundId
+    ) {
+        return ResponseEntity.ok(
+                rlStressTestService.checkCompatibility(
+                        userDetails.getUsername(),
+                        fundId
                 )
         );
     }
@@ -62,5 +76,17 @@ public class RlStressTestController {
                         testId
                 )
         );
+    }
+    @DeleteMapping("/{testId}")
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID testId
+    ) {
+        rlStressTestQueryService.delete(
+                userDetails.getUsername(),
+                testId
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }

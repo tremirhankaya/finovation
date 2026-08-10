@@ -164,3 +164,4 @@ rl:
   base-url: ${RL_BASE_URL:http://localhost:8000}
   inference-path: /api/v1/rl/inference
   model: PPO_ADAPTIVE_RECOVERY
+  api-key: ${AI_ENGINE_API_KEY:}

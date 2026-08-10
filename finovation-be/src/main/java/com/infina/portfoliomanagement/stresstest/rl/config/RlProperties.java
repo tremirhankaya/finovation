@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record RlProperties(
         String baseUrl,
         String inferencePath,
-        String model
+        String model,
+        String apiKey
 ) {
 }

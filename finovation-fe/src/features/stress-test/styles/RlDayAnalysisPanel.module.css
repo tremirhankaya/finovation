@@ -1,0 +1,161 @@
+.grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.card {
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgb(15 45 82 / 6%);
+}
+
+.eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: #0d9488;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.card h2 {
+    margin: 0 0 18px;
+    color: #0f2d52;
+    font-size: 1rem;
+}
+
+.list {
+    display: grid;
+    gap: 10px;
+}
+
+.empty {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.decisionRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.decisionRow > div {
+    display: grid;
+    gap: 3px;
+}
+
+.decisionRow strong {
+    color: #0f2d52;
+    font-size: 0.85rem;
+}
+
+.decisionRow span {
+    color: #94a3b8;
+    font-size: 0.72rem;
+}
+
+.decisionRow b {
+    white-space: nowrap;
+    font-size: 0.82rem;
+}
+
+.positive {
+    color: #0d9488;
+}
+
+.negative {
+    color: #dc2626;
+}
+
+.allocationRow {
+    display: grid;
+    gap: 6px;
+}
+
+.allocationLabel {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.allocationLabel span {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.allocationLabel strong {
+    color: #0f2d52;
+    font-size: 0.78rem;
+}
+
+.track {
+    height: 8px;
+    overflow: hidden;
+    background: #eef3f7;
+    border-radius: 999px;
+}
+
+.fill {
+    height: 100%;
+    background: #0d9488;
+    border-radius: inherit;
+    transition: width 200ms ease;
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+.changeGroups {
+    display: grid;
+    gap: 18px;
+}
+
+.changeGroup {
+    display: grid;
+    gap: 10px;
+}
+
+.changeGroupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.changeGroupHeader span {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.changeGroupHeader strong {
+    min-width: 24px;
+    padding: 3px 7px;
+
+    color: #0f2d52;
+    background: #eef3f7;
+
+    border-radius: 999px;
+
+    text-align: center;
+    font-size: 0.72rem;
+}
+
+.weightTransition {
+    color: #64748b !important;
+    font-size: 0.75rem !important;
+    font-weight: 600;
+}

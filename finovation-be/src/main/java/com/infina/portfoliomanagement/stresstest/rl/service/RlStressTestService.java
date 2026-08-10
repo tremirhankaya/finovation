@@ -13,7 +13,7 @@ import com.infina.portfoliomanagement.stresstest.rl.validation.RlPortfolioValida
 import com.infina.portfoliomanagement.user.entity.User;
 import com.infina.portfoliomanagement.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
-
+import com.infina.portfoliomanagement.stresstest.rl.dto.response.RlPortfolioCompatibilityResponse;
 import java.util.UUID;
 
 @Service
@@ -88,5 +88,37 @@ public class RlStressTestService {
         );
 
         return response;
+    }
+    public RlPortfolioCompatibilityResponse checkCompatibility(
+            String actorUsername,
+            UUID fundId
+    ) {
+        User actor = userRepository.findByUsername(actorUsername)
+                .orElseThrow(() ->
+                        new BaseException(ErrorCode.USER_NOT_FOUND)
+                );
+
+        RlPortfolioData portfolio =
+                rlPortfolioService.load(
+                        fundId,
+                        actor.getId()
+                );
+
+        try {
+            portfolioValidator.validate(
+                    portfolio.positions()
+            );
+
+            return new RlPortfolioCompatibilityResponse(
+                    true,
+                    "Portfolio is compatible with the RL stress test model."
+            );
+
+        } catch (BaseException exception) {
+            return new RlPortfolioCompatibilityResponse(
+                    false,
+                    "Portfolio is not compatible with the RL stress test model."
+            );
+        }
     }
 }

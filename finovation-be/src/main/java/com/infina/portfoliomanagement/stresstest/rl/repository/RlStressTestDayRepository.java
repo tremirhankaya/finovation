@@ -11,4 +11,6 @@ public interface RlStressTestDayRepository
     List<RlStressTestDay> findAllByStressTestIdOrderByDayNumberAsc(
             Long stressTestId
     );
+
+    void deleteAllByStressTestId(Long stressTestId);
 }

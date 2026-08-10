@@ -1,0 +1,96 @@
+.wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.wrapper svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 12px;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.legend i {
+    display: inline-block;
+    width: 24px;
+    height: 3px;
+    border-radius: 999px;
+}
+
+.rlLegend {
+    background: #0d9488;
+}
+
+.passiveLegend {
+    background: #94a3b8;
+}
+
+.tooltip {
+    position: absolute;
+    top: 52px;
+    right: 20px;
+
+    display: grid;
+    gap: 6px;
+
+    min-width: 190px;
+    padding: 12px 14px;
+
+    background: rgb(255 255 255 / 95%);
+    border: 1px solid #dfe7ef;
+    border-radius: 12px;
+
+    box-shadow: 0 10px 30px rgb(15 45 82 / 10%);
+
+    pointer-events: none;
+}
+
+.tooltip strong {
+    margin-bottom: 3px;
+    color: #0f2d52;
+    font-size: 0.82rem;
+}
+
+.tooltip span {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+
+    color: #64748b;
+    font-size: 0.76rem;
+}
+
+.tooltip b {
+    color: #334155;
+}
+
+.emptyState {
+    padding: 32px;
+    color: #94a3b8;
+    text-align: center;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+}
+
+@media (max-width: 700px) {
+    .tooltip {
+        position: static;
+        margin-top: 12px;
+    }
+}

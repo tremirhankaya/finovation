@@ -13,8 +13,7 @@ import java.util.stream.Collectors;
 @Component
 public class RlPortfolioValidator {
 
-    private static final String CASH_TPP = "CASH_TPP";
-
+    private static final String CASH_TPP = "TPP1G";
     private static final Set<String> SUPPORTED_ASSETS = Set.of(
             "GARAN.E",
             "AKBNK.E",
@@ -84,9 +83,11 @@ public class RlPortfolioValidator {
                 .filter(position -> CASH_TPP.equals(position.assetCode()))
                 .map(StressPortfolioPosition::weight)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "CASH_TPP is required."
-                ));
+                .orElseThrow(() ->
+                        new BaseException(
+                                ErrorCode.STRESS_RL_PORTFOLIO_INVALID
+                        )
+                );
 
         if (tppWeight.compareTo(MIN_TPP_WEIGHT) < 0
                 || tppWeight.compareTo(MAX_TPP_WEIGHT) > 0) {
