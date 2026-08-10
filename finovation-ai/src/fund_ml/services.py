@@ -19,6 +19,7 @@ class EngineBundles:
     beta: pd.Series
     covariance_daily: pd.DataFrame
     sectors: pd.Series
+    sector_names: pd.Series
 
     @classmethod
     def load(cls, root: Path) -> "EngineBundles":
@@ -44,6 +45,7 @@ class EngineBundles:
         if len(master) != 58 or master["instrument_id"].nunique() != 58:
             raise RuntimeError("Instrument master does not contain exact core 58")
         sectors = master.set_index("instrument_id")["sector_code"].sort_index()
+        sector_names = master.set_index("instrument_id")["sector_name"].sort_index()
         beta = beta_frame.set_index("instrument_id")["universe58_beta"].sort_index()
         covariance_daily = covariance.pivot(
             index="instrument_id_i", columns="instrument_id_j", values="covariance_daily"
@@ -58,6 +60,7 @@ class EngineBundles:
             beta,
             covariance_daily,
             sectors,
+            sector_names,
         )
         bundle.validate()
         return bundle
@@ -88,6 +91,8 @@ class EngineBundles:
                 raise RuntimeError(f"Hard q50 differentiation gate failed at {horizon}M")
         if set(self.universe) != set(self.beta.index):
             raise RuntimeError("Beta universe mismatch")
+        if set(self.universe) != set(self.sector_names.index):
+            raise RuntimeError("Sector-name universe mismatch")
         if self.covariance_daily.shape != (58, 58):
             raise RuntimeError("Covariance shape mismatch")
         if set(self.universe) != set(self.covariance_daily.index):
