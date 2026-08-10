@@ -91,13 +91,21 @@ export default function OptimizationFormPage() {
             <h1>{headerTitle}</h1>
             <p className={styles.subtitle}>{headerSubtitle}</p>
           </div>
-          {form.step === 2 && (
+          {form.step === 2 ? (
             <button
               type="button"
               className={styles.changeFundButton}
               onClick={form.goToFundSelection}
             >
               Fon Değiştir
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.changeFundButton}
+              onClick={() => navigate("/optimization-requests/logs")}
+            >
+              İşlem Loglarını Gör
             </button>
           )}
         </header>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import PortfolioDonutComparison from "@/features/optimization/components/PortfolioDonutComparison"
 import {
@@ -20,6 +20,9 @@ function formatChange(value: number): string {
   return "—"
 }
 
+const TOTAL_WEIGHT_TARGET = 100
+const TOTAL_WEIGHT_TOLERANCE = 0.5
+
 const ALL_SECTORS_VALUE = ""
 
 type SortColumn = "currentWeight" | "finalWeight" | "delta"
@@ -31,12 +34,70 @@ type ComparisonRow = {
   delta: number
 }
 
+type EditableFinalWeightCellProps = {
+  assetCode: string
+  finalWeight: number
+  manuallyOverridden: boolean
+  onFinalWeightChange?: (assetCode: string, value: number) => void
+  onResetFinalWeight?: (assetCode: string) => void
+}
+
+function EditableFinalWeightCell({
+  assetCode,
+  finalWeight,
+  manuallyOverridden,
+  onFinalWeightChange,
+  onResetFinalWeight,
+}: EditableFinalWeightCellProps) {
+  const [isFocused, setIsFocused] = useState(false)
+  const [draft, setDraft] = useState(() => finalWeight.toFixed(1))
+
+  useEffect(() => {
+    if (!isFocused) setDraft(finalWeight.toFixed(1))
+  }, [finalWeight, isFocused])
+
+  return (
+    <div className={styles.finalWeightCell}>
+      <input
+        type="number"
+        step="0.1"
+        min="0"
+        max="100"
+        value={draft}
+        onFocus={() => setIsFocused(true)}
+        onChange={(event) => {
+          setDraft(event.target.value)
+          const parsed = Number(event.target.value)
+          if (!Number.isNaN(parsed)) {
+            onFinalWeightChange?.(assetCode, parsed)
+          }
+        }}
+        onBlur={() => {
+          setIsFocused(false)
+          setDraft(finalWeight.toFixed(1))
+        }}
+        aria-label={`${assetCode} final ağırlığı`}
+      />
+      {manuallyOverridden && (
+        <button
+          type="button"
+          className={styles.resetOverrideButton}
+          onClick={() => onResetFinalWeight?.(assetCode)}
+        >
+          Manuel · Sıfırla
+        </button>
+      )}
+    </div>
+  )
+}
+
 export type AssetComparisonPanelProps = {
   assets: OptimizationResultAsset[]
   fundName: string
   editable?: boolean
   onFinalWeightChange?: (assetCode: string, value: number) => void
   onResetFinalWeight?: (assetCode: string) => void
+  onResetAllFinalWeights?: () => void
 }
 
 export default function AssetComparisonPanel({
@@ -45,6 +106,7 @@ export default function AssetComparisonPanel({
   editable = false,
   onFinalWeightChange,
   onResetFinalWeight,
+  onResetAllFinalWeights,
 }: AssetComparisonPanelProps) {
   const [activeCategory, setActiveCategory] = useState<ResultCategoryKey>("ALL")
   const [view, setView] = useState<"table" | "chart">("table")
@@ -74,7 +136,11 @@ export default function AssetComparisonPanel({
       )
       .map((asset) => {
         const finalWeight = asset.finalWeight ?? asset.proposedWeight
-        return { asset, finalWeight, delta: finalWeight - asset.currentWeight }
+        return {
+          asset,
+          finalWeight,
+          delta: Math.round(finalWeight) - Math.round(asset.currentWeight),
+        }
       })
 
     if (!sortColumn) return filtered
@@ -120,6 +186,9 @@ export default function AssetComparisonPanel({
     (sum, asset) => sum + (asset.finalWeight ?? asset.proposedWeight),
     0,
   )
+  const proposedTotalValid =
+    Math.abs(proposedTotal - TOTAL_WEIGHT_TARGET) <= TOTAL_WEIGHT_TOLERANCE
+  const hasManualOverrides = assets.some((asset) => asset.manuallyOverridden)
 
   return (
     <section className={styles.panel}>
@@ -133,25 +202,36 @@ export default function AssetComparisonPanel({
             Varlık bazlı dağılım karşılaştırması · {fundName}
           </p>
         </div>
-        <div className={styles.viewToggle} role="group" aria-label="Görünüm">
-          <button
-            type="button"
-            className={
-              view === "table" ? styles.viewToggleButtonActive : styles.viewToggleButton
-            }
-            onClick={() => setView("table")}
-          >
-            Tablo
-          </button>
-          <button
-            type="button"
-            className={
-              view === "chart" ? styles.viewToggleButtonActive : styles.viewToggleButton
-            }
-            onClick={() => setView("chart")}
-          >
-            Grafik
-          </button>
+        <div className={styles.comparisonHeaderActions}>
+          {editable && hasManualOverrides && (
+            <button
+              type="button"
+              className={styles.resetAllOverridesButton}
+              onClick={onResetAllFinalWeights}
+            >
+              Tümünü Sıfırla
+            </button>
+          )}
+          <div className={styles.viewToggle} role="group" aria-label="Görünüm">
+            <button
+              type="button"
+              className={
+                view === "table" ? styles.viewToggleButtonActive : styles.viewToggleButton
+              }
+              onClick={() => setView("table")}
+            >
+              Tablo
+            </button>
+            <button
+              type="button"
+              className={
+                view === "chart" ? styles.viewToggleButtonActive : styles.viewToggleButton
+              }
+              onClick={() => setView("chart")}
+            >
+              Grafik
+            </button>
+          </div>
         </div>
       </div>
 
@@ -246,31 +326,13 @@ export default function AssetComparisonPanel({
                     <td>{formatWeight(asset.currentWeight)}</td>
                     <td>
                       {editable ? (
-                        <div className={styles.finalWeightCell}>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={finalWeight}
-                            onChange={(event) =>
-                              onFinalWeightChange?.(
-                                asset.assetCode,
-                                Number(event.target.value),
-                              )
-                            }
-                            aria-label={`${asset.assetCode} final ağırlığı`}
-                          />
-                          {asset.manuallyOverridden && (
-                            <button
-                              type="button"
-                              className={styles.resetOverrideButton}
-                              onClick={() =>
-                                onResetFinalWeight?.(asset.assetCode)
-                              }
-                            >
-                              Manuel · Sıfırla
-                            </button>
-                          )}
-                        </div>
+                        <EditableFinalWeightCell
+                          assetCode={asset.assetCode}
+                          finalWeight={finalWeight}
+                          manuallyOverridden={asset.manuallyOverridden}
+                          onFinalWeightChange={onFinalWeightChange}
+                          onResetFinalWeight={onResetFinalWeight}
+                        />
                       ) : (
                         <strong>{formatWeight(finalWeight)}</strong>
                       )}
@@ -295,7 +357,20 @@ export default function AssetComparisonPanel({
                 <td colSpan={2}>TOPLAM</td>
                 <td>{formatWeight(currentTotal)}</td>
                 <td>
-                  <strong>{formatWeight(proposedTotal)}</strong>
+                  <strong
+                    className={
+                      editable && !proposedTotalValid
+                        ? styles.totalWeightInvalid
+                        : undefined
+                    }
+                  >
+                    {formatWeight(proposedTotal)}
+                  </strong>
+                  {editable && !proposedTotalValid && (
+                    <span className={styles.totalWeightWarning}>
+                      Toplam %100 olmalı
+                    </span>
+                  )}
                 </td>
                 <td
                   className={

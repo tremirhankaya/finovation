@@ -13,6 +13,7 @@ import {
 } from "@/features/optimization/lib/optimizationMetricsEvaluation"
 import { buildConstraintMetricInput } from "@/features/optimization/lib/optimizationConstraintMetricInput"
 import { buildCriteriaRows } from "@/features/optimization/lib/optimizationCriteriaRows"
+import { buildResultCategories } from "@/features/optimization/lib/optimizationResultCategories"
 import { buildRiskMetricsSnapshots } from "@/features/optimization/lib/optimizationRiskMetricsInput"
 import { getOptimizationErrorMessage } from "@/features/optimization/lib/optimizationError"
 import type {
@@ -115,16 +116,28 @@ export function useOptimizationResultReview(requestId: number) {
     )
   }, [])
 
-  const summary = useMemo(
-    () => ({
-      increasedCount: assets.filter((asset) => asset.actionType === "INCREASE")
-        .length,
-      decreasedCount: assets.filter((asset) => asset.actionType === "DECREASE")
-        .length,
-      keptCount: assets.filter((asset) => asset.actionType === "KEEP").length,
+  const resetAllFinalWeights = useCallback(() => {
+    setAssets((current) =>
+      current.map((asset) =>
+        asset.manuallyOverridden
+          ? { ...asset, finalWeight: null, manuallyOverridden: false }
+          : asset,
+      ),
+    )
+  }, [])
+
+  const summary = useMemo(() => {
+    const categories = buildResultCategories(assets)
+    const countFor = (key: string) =>
+      categories.find((category) => category.key === key)?.count ?? 0
+    return {
+      increasedCount: countFor("INCREASED"),
+      decreasedCount: countFor("DECREASED"),
+      keptCount: countFor("LOCKED"),
       overriddenCount: assets.filter((asset) => asset.manuallyOverridden)
         .length,
-    }),
+    }
+  },
     [assets],
   )
 
@@ -178,6 +191,7 @@ export function useOptimizationResultReview(requestId: number) {
       setSubmitErrorMessage("")
 
       try {
+        let updatedRequest: OptimizationRequestResponse
         if (decision === "approve") {
           const weightOverrides = assets
             .filter(
@@ -187,10 +201,14 @@ export function useOptimizationResultReview(requestId: number) {
               assetCode: asset.assetCode,
               finalWeight: asset.finalWeight as number,
             }))
-          await approveOptimizationRequest(requestId, weightOverrides)
+          updatedRequest = await approveOptimizationRequest(
+            requestId,
+            weightOverrides,
+          )
         } else {
-          await rejectOptimizationRequest(requestId)
+          updatedRequest = await rejectOptimizationRequest(requestId)
         }
+        setRequest(updatedRequest)
         setDecidedAs(decision)
       } catch (error) {
         setSubmitErrorMessage(getOptimizationErrorMessage(error))
@@ -216,6 +234,7 @@ export function useOptimizationResultReview(requestId: number) {
     assets,
     setFinalWeight,
     resetFinalWeight,
+    resetAllFinalWeights,
     summary,
     isSubmitting,
     submitErrorMessage,

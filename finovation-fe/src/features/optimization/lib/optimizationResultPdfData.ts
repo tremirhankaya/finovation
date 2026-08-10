@@ -3,6 +3,7 @@ import {
   fetchOptimizationResult,
 } from "@/features/optimization/api/optimizationApi"
 import { buildConstraintMetricInput } from "@/features/optimization/lib/optimizationConstraintMetricInput"
+import { buildCriteriaRows } from "@/features/optimization/lib/optimizationCriteriaRows"
 import {
   evaluateConstraintMetrics,
   evaluateInfoMetrics,
@@ -34,20 +35,20 @@ export async function loadOptimizationResultPdfInput(
   const { current, proposed } = buildRiskMetricsSnapshots(result.metrics)
   const infoMetrics = evaluateInfoMetrics(current, proposed, riskProfile)
 
+  const criteriaRows = buildCriteriaRows(
+    assets,
+    constraintMetrics,
+    infoMetrics,
+    request.tppMinWeight,
+    request.tppMaxWeight,
+    request.stockCountMin,
+    request.stockCountMax,
+  )
+
   return {
     fundName,
     request,
     assets,
-    summary: {
-      increasedCount: assets.filter((asset) => asset.actionType === "INCREASE")
-        .length,
-      decreasedCount: assets.filter((asset) => asset.actionType === "DECREASE")
-        .length,
-      keptCount: assets.filter((asset) => asset.actionType === "KEEP").length,
-      overriddenCount: assets.filter((asset) => asset.manuallyOverridden)
-        .length,
-    },
-    constraintMetrics,
-    infoMetrics,
+    criteriaRows,
   }
 }

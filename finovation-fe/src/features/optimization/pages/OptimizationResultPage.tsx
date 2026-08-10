@@ -1,13 +1,76 @@
 import { useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
 
-import { useAuth } from "@/features/auth/context/AuthContext"
 import AssetComparisonPanel from "@/features/optimization/components/AssetComparisonPanel"
 import OptimizationWizardSteps from "@/features/optimization/components/OptimizationWizardSteps"
 import PortfolioCriteriaScreen from "@/features/optimization/components/PortfolioCriteriaScreen"
 import { useOptimizationResultReview } from "@/features/optimization/hooks/useOptimizationResultReview"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
+
+const ICON_PROPS = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.75,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+}
+
+function LayersIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <polygon points="12 3 3 8 12 13 21 8 12 3" />
+      <polyline points="3 16 12 21 21 16" />
+      <polyline points="3 12 12 17 21 12" />
+    </svg>
+  )
+}
+
+function SparklesIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <path d="M11 3l1.6 4.8L17 9l-4.4 1.5L11 15l-1.6-4.5L5 9l4.4-1.2L11 3z" />
+      <path d="M18.5 14.5l.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9.9-2.5z" />
+    </svg>
+  )
+}
+
+function PencilIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  )
+}
+
+function BadgeCheckIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.2l2.2 2.2 4.8-4.8" />
+    </svg>
+  )
+}
+
+function UserIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4.2 3.8-6.5 8-6.5s8 2.3 8 6.5" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.2" />
+      <path d="M16 3.2v4M8 3.2v4M3.5 10h17" />
+    </svg>
+  )
+}
 
 function equitySnapshot(
   assets: OptimizationResultAsset[],
@@ -38,7 +101,6 @@ export default function OptimizationResultPage() {
   const params = useParams<{ requestId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useAuth()
   const requestId = Number(params.requestId)
   const review = useOptimizationResultReview(requestId)
   const fundName = (location.state as { fundName?: string } | null)?.fundName
@@ -47,7 +109,6 @@ export default function OptimizationResultPage() {
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [subView, setSubView] = useState<ResultSubView>("comparison")
   const [isEditingWeights, setIsEditingWeights] = useState(false)
-  const [decidedAt] = useState(() => new Date())
 
   const exportPdf = async () => {
     if (!review.request) return
@@ -60,9 +121,7 @@ export default function OptimizationResultPage() {
         fundName: resolvedFundName,
         request: review.request,
         assets: review.assets,
-        summary: review.summary,
-        constraintMetrics: review.constraintMetrics,
-        infoMetrics: review.infoMetrics,
+        criteriaRows: review.criteriaRows,
       })
     } finally {
       setIsExportingPdf(false)
@@ -80,9 +139,7 @@ export default function OptimizationResultPage() {
         fundName: resolvedFundName,
         request: review.request,
         assets: review.assets,
-        summary: review.summary,
-        constraintMetrics: review.constraintMetrics,
-        infoMetrics: review.infoMetrics,
+        criteriaRows: review.criteriaRows,
       })
     } finally {
       setIsExportingExcel(false)
@@ -149,7 +206,13 @@ export default function OptimizationResultPage() {
       review.assets,
       (asset) => asset.finalWeight ?? asset.proposedWeight,
     )
-    const actorName = user ? `${user.firstName} ${user.lastName}` : "—"
+    const actorName =
+      review.request?.decidedByDisplayName ??
+      review.request?.decidedByUsername ??
+      "—"
+    const decidedAt = review.request?.updatedAt
+      ? new Date(review.request.updatedAt)
+      : null
 
     return (
       <main className={styles.page}>
@@ -157,7 +220,8 @@ export default function OptimizationResultPage() {
           <header className={styles.header}>
             <h1>Optimizasyon Tamamlandı</h1>
             <p className={styles.subtitle}>
-              {resolvedFundName} · {formatDateTime(decidedAt)}
+              {resolvedFundName}
+              {decidedAt ? ` · ${formatDateTime(decidedAt)}` : ""}
             </p>
           </header>
 
@@ -181,38 +245,80 @@ export default function OptimizationResultPage() {
             </h2>
             <div className={styles.successInfoGrid}>
               <div className={styles.successInfoItem}>
-                <span>Optimizasyon öncesi ağırlıklar</span>
-                <strong>
-                  {before.count} hisse · %{before.total.toFixed(0)}
-                </strong>
+                <span
+                  className={`${styles.successInfoIcon} ${styles.successInfoIconSlate}`}
+                >
+                  <LayersIcon />
+                </span>
+                <div>
+                  <span>Optimizasyon öncesi ağırlıklar</span>
+                  <strong>
+                    {before.count} hisse · %{before.total.toFixed(0)}
+                  </strong>
+                </div>
               </div>
               <div className={styles.successInfoItem}>
-                <span>Modelin önerdiği ağırlıklar</span>
-                <strong>
-                  {proposed.count} hisse · %{proposed.total.toFixed(0)}
-                </strong>
+                <span
+                  className={`${styles.successInfoIcon} ${styles.successInfoIconIndigo}`}
+                >
+                  <SparklesIcon />
+                </span>
+                <div>
+                  <span>Modelin önerdiği ağırlıklar</span>
+                  <strong>
+                    {proposed.count} hisse · %{proposed.total.toFixed(0)}
+                  </strong>
+                </div>
               </div>
               <div className={styles.successInfoItem}>
-                <span>Manuel değişiklik</span>
-                <strong>
-                  {review.summary.overriddenCount > 0
-                    ? `${review.summary.overriddenCount} hisse manuel değiştirildi`
-                    : "Manuel değişiklik yapılmadı"}
-                </strong>
+                <span
+                  className={`${styles.successInfoIcon} ${styles.successInfoIconAmber}`}
+                >
+                  <PencilIcon />
+                </span>
+                <div>
+                  <span>Manuel değişiklik</span>
+                  <strong>
+                    {review.summary.overriddenCount > 0
+                      ? `${review.summary.overriddenCount} hisse manuel değiştirildi`
+                      : "Manuel değişiklik yapılmadı"}
+                  </strong>
+                </div>
               </div>
               <div className={styles.successInfoItem}>
-                <span>Onaylanan nihai ağırlıklar</span>
-                <strong>
-                  {final.count} hisse · %{final.total.toFixed(0)}
-                </strong>
+                <span
+                  className={`${styles.successInfoIcon} ${styles.successInfoIconTeal}`}
+                >
+                  <BadgeCheckIcon />
+                </span>
+                <div>
+                  <span>Onaylanan nihai ağırlıklar</span>
+                  <strong>
+                    {final.count} hisse · %{final.total.toFixed(0)}
+                  </strong>
+                </div>
               </div>
               <div className={styles.successInfoItem}>
-                <span>İşlemi yapan kullanıcı</span>
-                <strong>{actorName}</strong>
+                <span
+                  className={`${styles.successInfoIcon} ${styles.successInfoIconNavy}`}
+                >
+                  <UserIcon />
+                </span>
+                <div>
+                  <span>İşlemi yapan kullanıcı</span>
+                  <strong>{actorName}</strong>
+                </div>
               </div>
               <div className={styles.successInfoItem}>
-                <span>Tarih ve saat</span>
-                <strong>{formatDateTime(decidedAt)}</strong>
+                <span
+                  className={`${styles.successInfoIcon} ${styles.successInfoIconSlate}`}
+                >
+                  <CalendarIcon />
+                </span>
+                <div>
+                  <span>Tarih ve saat</span>
+                  <strong>{decidedAt ? formatDateTime(decidedAt) : "—"}</strong>
+                </div>
               </div>
             </div>
             <p className={styles.successNote}>
@@ -229,13 +335,6 @@ export default function OptimizationResultPage() {
               onClick={() => navigate("/fund-monitoring")}
             >
               Fon İzlemeye Git
-            </button>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => navigate("/optimization-requests/logs")}
-            >
-              İşlem Loglarını Gör
             </button>
             <button
               type="button"
@@ -293,6 +392,7 @@ export default function OptimizationResultPage() {
               editable={isEditingWeights}
               onFinalWeightChange={review.setFinalWeight}
               onResetFinalWeight={review.resetFinalWeight}
+              onResetAllFinalWeights={review.resetAllFinalWeights}
             />
 
             <div className={styles.criteriaActions}>

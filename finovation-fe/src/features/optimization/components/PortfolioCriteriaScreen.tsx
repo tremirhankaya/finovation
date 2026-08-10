@@ -1,6 +1,11 @@
-import { useMemo, useState } from "react"
+import { Fragment, useMemo, useState } from "react"
 
-import type { CriteriaRow } from "@/features/optimization/lib/optimizationCriteriaRows"
+import {
+  CRITERIA_STATUS_LABELS,
+  formatCriteriaDelta,
+  formatCriteriaValue,
+  type CriteriaRow,
+} from "@/features/optimization/lib/optimizationCriteriaRows"
 import { sortRationaleAssetsBySector } from "@/features/optimization/lib/optimizationRationaleSectors"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
@@ -11,45 +16,6 @@ function rationaleDotClass(
   if (actionType === "INCREASE") return styles.rationaleDotUp
   if (actionType === "DECREASE") return styles.rationaleDotDown
   return styles.rationaleDotFlat
-}
-
-function formatValue(value: number | null, unit: CriteriaRow["unit"]): string {
-  if (value == null) return "—"
-  if (unit === "PERCENT") return `%${value.toFixed(0)}`
-  if (unit === "COUNT") return `${Math.round(value)}`
-  return value.toFixed(2)
-}
-
-function formatDelta(
-  currentValue: number | null,
-  proposedValue: number | null,
-  unit: CriteriaRow["unit"],
-): { text: string; direction: "up" | "down" | "flat" } {
-  if (currentValue == null || proposedValue == null) {
-    return { text: "—", direction: "flat" }
-  }
-  const delta = proposedValue - currentValue
-  const rounded = unit === "RATIO" ? delta : Math.round(delta)
-  if (Math.abs(rounded) < (unit === "RATIO" ? 0.005 : 0.5)) {
-    return { text: "—", direction: "flat" }
-  }
-  const formatted =
-    unit === "PERCENT"
-      ? `%${Math.abs(rounded).toFixed(0)}`
-      : unit === "COUNT"
-        ? `${Math.abs(rounded)}`
-        : Math.abs(rounded).toFixed(2)
-  return delta > 0
-    ? { text: `+${formatted}`, direction: "up" }
-    : { text: `-${formatted}`, direction: "down" }
-}
-
-const STATUS_LABELS: Record<CriteriaRow["status"], string> = {
-  GREEN: "Uyumlu",
-  AMBER: "Sınıra Yakın",
-  RED: "İhlal Var",
-  NEUTRAL: "Bilgi",
-  GRAY: "Kontrol Edilemedi",
 }
 
 export type PortfolioCriteriaScreenProps = {
@@ -143,7 +109,7 @@ export default function PortfolioCriteriaScreen({
           Portföy Kriterleri Karşılaştırması
         </p>
 
-        <table className={styles.comparisonTable}>
+        <table className={`${styles.comparisonTable} ${styles.criteriaTable}`}>
           <thead>
             <tr>
               <th>Kriter</th>
@@ -154,45 +120,51 @@ export default function PortfolioCriteriaScreen({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
-              const delta = formatDelta(
+            {rows.map((row, index) => {
+              const delta = formatCriteriaDelta(
                 row.currentValue,
                 row.proposedValue,
                 row.unit,
               )
+              const isFirstMetricRow =
+                row.unit === "RATIO" && rows[index - 1]?.unit !== "RATIO"
+
               return (
-                <tr key={row.key}>
-                  <td>{row.label}</td>
-                  <td>{formatValue(row.currentValue, row.unit)}</td>
-                  <td>
-                    <strong>{formatValue(row.proposedValue, row.unit)}</strong>
-                  </td>
-                  <td
-                    className={
-                      delta.direction === "up"
-                        ? styles.changePositive
-                        : delta.direction === "down"
-                          ? styles.changeNegative
-                          : undefined
-                    }
-                  >
-                    {delta.text}
-                  </td>
-                  <td>
-                    <span className={styles.criteriaStatusCell}>
-                      <span
-                        className={`${styles.metricDot} ${styles[`metricDot${row.status}`]}`}
-                        aria-hidden="true"
-                      />
-                      <span
-                        className={`${styles.metricStatus} ${styles[`metricStatus${row.status}`]}`}
-                      >
-                        {STATUS_LABELS[row.status]}
+                <Fragment key={row.key}>
+                  {isFirstMetricRow && (
+                    <tr className={styles.criteriaSectionDivider}>
+                      <td colSpan={5}>Risk ve Getiri Metrikleri</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td>{row.label}</td>
+                    <td>{formatCriteriaValue(row.currentValue, row.unit)}</td>
+                    <td>
+                      <strong>
+                        {formatCriteriaValue(row.proposedValue, row.unit)}
+                      </strong>
+                    </td>
+                    <td className={styles[`metricStatus${row.status}`]}>
+                      {delta.text}
+                    </td>
+                    <td>
+                      <span className={styles.criteriaStatusCell}>
+                        <span
+                          className={`${styles.metricDot} ${styles[`metricDot${row.status}`]}`}
+                          aria-hidden="true"
+                        />
+                        <span
+                          className={`${styles.metricStatus} ${styles[`metricStatus${row.status}`]}`}
+                        >
+                          {CRITERIA_STATUS_LABELS[row.status]}
+                        </span>
                       </span>
-                    </span>
-                    <p className={styles.criteriaStatusDetail}>{row.detail}</p>
-                  </td>
-                </tr>
+                      <p className={styles.criteriaStatusDetail}>
+                        {row.detail}
+                      </p>
+                    </td>
+                  </tr>
+                </Fragment>
               )
             })}
           </tbody>

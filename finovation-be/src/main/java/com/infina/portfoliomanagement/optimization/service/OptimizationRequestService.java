@@ -433,6 +433,7 @@ public class OptimizationRequestService {
         optimizationResultRepository.save(result);
 
         request.setStatus(RequestStatus.APPROVED);
+        request.setDecidedBy(actor);
         request.setUpdatedAt(now);
         OptimizationRequest saved = saveRequest(request);
 
@@ -546,6 +547,7 @@ public class OptimizationRequestService {
         assertStatusIn(request, RequestStatus.COMPLETED);
 
         request.setStatus(RequestStatus.REJECTED);
+        request.setDecidedBy(actor);
         request.setUpdatedAt(LocalDateTime.now(clock));
         OptimizationRequest saved = saveRequest(request);
 
@@ -578,6 +580,9 @@ public class OptimizationRequestService {
 
             request.setStatus(RequestStatus.COMPLETED);
             request.setModelVersion(engineResult.snapshotId());
+            if (engineResult.systemDate() != null) {
+                request.setDataTimestamp(LocalDate.parse(engineResult.systemDate()).atStartOfDay());
+            }
             request.setCompletedAt(LocalDateTime.now(clock));
             request.setUpdatedAt(LocalDateTime.now(clock));
             OptimizationRequest saved = saveRequest(request);
@@ -1104,6 +1109,7 @@ public class OptimizationRequestService {
 
     private OptimizationRequestResponse toResponse(OptimizationRequest request) {
         User requestedBy = request.getRequestedBy();
+        User decidedBy = request.getDecidedBy();
         Map<OptimizationConstraintCode, RequestConstraintTarget> targetsByCode =
                 resolveConstraintTargetsByCode(request);
 
@@ -1119,6 +1125,11 @@ public class OptimizationRequestService {
                 request.getModelVersion(),
                 requestedBy != null ? requestedBy.getId() : null,
                 requestedBy != null ? requestedBy.getUsername() : null,
+                decidedBy != null ? decidedBy.getId() : null,
+                decidedBy != null ? decidedBy.getUsername() : null,
+                decidedBy != null
+                        ? (decidedBy.getFirstName() + " " + decidedBy.getLastName())
+                        : null,
                 request.getRiskProfile(),
                 request.getStatus(),
                 request.getMaxAdditions(),

@@ -253,6 +253,7 @@ class OptimizationRequestServiceTest {
 
         assertThat(request.getStatus()).isEqualTo(RequestStatus.COMPLETED);
         assertThat(request.getModelVersion()).isEqualTo("FROZEN_2025-05-29_V3");
+        assertThat(request.getDataTimestamp()).isEqualTo(LocalDate.of(2025, 5, 29).atStartOfDay());
 
         ArgumentCaptor<List<OptimizationResultAsset>> captor = ArgumentCaptor.forClass(List.class);
         verify(optimizationResultAssetRepository).saveAll(captor.capture());
@@ -428,6 +429,8 @@ class OptimizationRequestServiceTest {
                 .id(7L)
                 .role(Role.ADMIN)
                 .username(ACTOR_USERNAME)
+                .firstName("Sefa")
+                .lastName("Ecir")
                 .build();
 
         OptimizationRequest request = OptimizationRequest.builder()
@@ -510,6 +513,10 @@ class OptimizationRequestServiceTest {
 
         assertThat(response.status()).isEqualTo(RequestStatus.APPROVED);
         assertThat(request.getStatus()).isEqualTo(RequestStatus.APPROVED);
+        assertThat(request.getDecidedBy()).isEqualTo(actor);
+        assertThat(response.decidedByUserId()).isEqualTo(7L);
+        assertThat(response.decidedByUsername()).isEqualTo(ACTOR_USERNAME);
+        assertThat(response.decidedByDisplayName()).isEqualTo("Sefa Ecir");
 
         assertThat(akbnk.getFinalWeight()).isEqualByComparingTo("0.40");
         assertThat(akbnk.isManuallyOverridden()).isTrue();
@@ -606,6 +613,43 @@ class OptimizationRequestServiceTest {
 
         assertThat(request.getStatus()).isEqualTo(RequestStatus.COMPLETED);
         verifyNoInteractions(fundDraftRepository, fundPortfolioRepository, fundPositionRepository);
+    }
+
+    @Test
+    void reject_stampsDecidedByWithActor() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.ADMIN)
+                .username(ACTOR_USERNAME)
+                .firstName("Sefa")
+                .lastName("Ecir")
+                .build();
+
+        OptimizationRequest request = OptimizationRequest.builder()
+                .id(REQUEST_ID)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.COMPLETED)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+        when(optimizationRequestRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OptimizationRequestResponse response = service.reject(ACTOR_USERNAME, REQUEST_ID);
+
+        assertThat(response.status()).isEqualTo(RequestStatus.REJECTED);
+        assertThat(request.getStatus()).isEqualTo(RequestStatus.REJECTED);
+        assertThat(request.getDecidedBy()).isEqualTo(actor);
+        assertThat(response.decidedByUserId()).isEqualTo(7L);
+        assertThat(response.decidedByUsername()).isEqualTo(ACTOR_USERNAME);
+        assertThat(response.decidedByDisplayName()).isEqualTo("Sefa Ecir");
     }
 
     @Test

@@ -55,6 +55,10 @@ function renderPage() {
           path="/optimization-requests/:requestId/running"
           element={<div>Çalıştırma ekranı</div>}
         />
+        <Route
+          path="/optimization-requests/logs"
+          element={<div>Loglar ekranı</div>}
+        />
       </Routes>
     </MemoryRouter>,
   )
@@ -283,5 +287,38 @@ describe("OptimizationFormPage", () => {
         screen.getByRole("button", { name: "Optimizasyona Başla" }),
       ).toBeInTheDocument(),
     )
+  })
+
+  it("1. adımda İşlem Loglarını Gör butonu loglar ekranına götürür", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "İşlem Loglarını Gör" }),
+      ).toBeInTheDocument(),
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "İşlem Loglarını Gör" }),
+    )
+
+    await waitFor(() =>
+      expect(screen.getByText("Loglar ekranı")).toBeInTheDocument(),
+    )
+  })
+
+  it("2. adımda İşlem Loglarını Gör butonu görünmez, Fon Değiştir görünür", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await continueToPreferencesStep(user)
+
+    expect(
+      screen.queryByRole("button", { name: "İşlem Loglarını Gör" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Fon Değiştir" }),
+    ).toBeInTheDocument()
   })
 })

@@ -35,6 +35,10 @@ public class OptimizationRequest {
     @JoinColumn(name = "requested_by_user_id", nullable = false)
     private User requestedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "decided_by_user_id")
+    private User decidedBy;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "risk_profile", nullable = false, length = 15)
     private RiskProfile riskProfile;

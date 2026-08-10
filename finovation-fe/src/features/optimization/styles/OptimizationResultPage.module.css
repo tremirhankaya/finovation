@@ -53,8 +53,7 @@
   color: var(--color-navy-950);
   font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .panelEyebrowDot {
@@ -567,10 +566,10 @@
 
 .successBanner {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 18px;
-  background: #f0fdfa;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #f0fdfa, #ecfeff);
   border: 1px solid #99f6e4;
   border-radius: 14px;
 }
@@ -578,7 +577,7 @@
 .successBanner strong {
   display: block;
   color: var(--color-navy-950);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .successBanner p {
@@ -592,37 +591,85 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   color: #fff;
   background: var(--color-teal-600);
   border-radius: 999px;
-  font-size: 0.8rem;
+  box-shadow: 0 0 0 5px rgba(13, 148, 136, 0.12);
+  font-size: 0.92rem;
   font-weight: 800;
 }
 
 .successInfoGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px 24px;
-  padding: 4px 0 8px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 18px 24px;
+  padding: 6px 0 10px;
 }
 
 .successInfoItem {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.successInfoItem span {
+.successInfoIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.successInfoIcon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.successInfoIconSlate {
   color: var(--color-slate-500);
-  font-size: 0.72rem;
+  background: #f1f5f9;
+}
+
+.successInfoIconIndigo {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.successInfoIconAmber {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.successInfoIconTeal {
+  color: var(--color-teal-700);
+  background: #f0fdfa;
+}
+
+.successInfoIconNavy {
+  color: var(--color-navy-950);
+  background: #eef1f6;
+}
+
+.successInfoItem > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.successInfoItem > div > span {
+  color: var(--color-slate-500);
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-.successInfoItem strong {
+.successInfoItem > div > strong {
   color: var(--color-navy-950);
   font-size: 0.86rem;
   font-weight: 800;
@@ -766,6 +813,29 @@
   flex-wrap: wrap;
 }
 
+.comparisonHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.resetAllOverridesButton {
+  padding: 0;
+  color: var(--color-teal-700);
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-fast);
+}
+
+.resetAllOverridesButton:hover {
+  color: #115e59;
+}
+
 .viewToggle {
   display: flex;
   flex: none;
@@ -864,6 +934,20 @@
   border-bottom: none;
 }
 
+.totalWeightInvalid {
+  color: var(--color-red-800);
+}
+
+.totalWeightWarning {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-red-800);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 .donutSection {
   display: flex;
   flex-direction: column;
@@ -885,6 +969,12 @@
   background: #fff;
   border: 1px solid #e9edf2;
   border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 28px -20px rgba(15, 23, 42, 0.22);
+  transition: box-shadow 200ms ease;
+}
+
+.donutCard:hover {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 36px -18px rgba(15, 23, 42, 0.28);
 }
 
 .donutCardHeader {
@@ -960,9 +1050,15 @@
 
 .donutSlice {
   cursor: pointer;
+  stroke-linecap: round;
   transition:
-    opacity 150ms ease,
-    stroke-width 150ms ease;
+    opacity 200ms ease,
+    stroke-width 200ms ease,
+    filter 200ms ease;
+}
+
+.donutSliceActive {
+  filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 1px currentColor);
 }
 
 .sectorRow,
@@ -984,11 +1080,20 @@
 
 .sectorSwatch {
   display: inline-block;
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   margin-right: 8px;
-  border-radius: 3px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.14);
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
   vertical-align: middle;
+  transition: box-shadow 150ms ease;
+}
+
+.sectorRow:hover .sectorSwatch,
+.sectorRowDimmed:hover .sectorSwatch {
+  box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.22);
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 22%, transparent);
 }
 
 .criteriaExportButtons {
@@ -1004,17 +1109,55 @@
   font-weight: 800;
 }
 
+.criteriaTable th:nth-child(2),
+.criteriaTable th:nth-child(3),
+.criteriaTable th:nth-child(4),
+.criteriaTable td:nth-child(2),
+.criteriaTable td:nth-child(3),
+.criteriaTable td:nth-child(4) {
+  text-align: right;
+}
+
+.criteriaTable td {
+  padding: 13px 10px;
+}
+
+.criteriaTable tbody tr:nth-child(even) td {
+  background: #fafbfc;
+}
+
+.criteriaTable tbody tr:hover td {
+  background: #f1f5f9;
+}
+
+.criteriaSectionDivider td {
+  padding: 12px 10px;
+  color: var(--color-navy-950);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: left;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.criteriaTable tbody tr:nth-child(even).criteriaSectionDivider td,
+.criteriaTable tbody tr.criteriaSectionDivider:hover td {
+  background: #f1f5f9;
+}
+
 .criteriaStatusCell {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
 }
 
 .criteriaStatusDetail {
-  margin: 3px 0 0;
+  margin: 4px 0 0;
   color: var(--color-slate-500);
   font-size: 0.7rem;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .criteriaActions {
