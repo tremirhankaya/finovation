@@ -3,7 +3,6 @@ package com.infina.portfoliomanagement.fund.service;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
-import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.ArchivedFundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
@@ -20,6 +19,7 @@ import com.infina.portfoliomanagement.fund.dto.analysis.FundEngineCreateResponse
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAssetDto;
+import com.infina.portfoliomanagement.fund.dto.analysis.UpdateWorkingPortfolioRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
 import com.infina.portfoliomanagement.fund.entity.FundAssetPreference;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
@@ -27,6 +27,7 @@ import com.infina.portfoliomanagement.fund.entity.ModelRun;
 import com.infina.portfoliomanagement.fund.enums.FundAssetPreferenceType;
 import com.infina.portfoliomanagement.fund.enums.FundCurrency;
 import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
 import com.infina.portfoliomanagement.fund.enums.FundDesignSteps;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
@@ -47,11 +48,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -80,7 +81,7 @@ public class FundDraftService {
     private final FundAssetPreferenceRepository fundAssetPreferenceRepository;
     private final AssetRepository assetRepository;
     private final EquityDetailRepository equityDetailRepository;
-    private final FinancialTimeProvider financialTime;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public FundDraftInitResponse getInit(
@@ -129,6 +130,7 @@ public class FundDraftService {
                 limits.aboveThresholdSumMax(),
                 limits.maxAssetPreferences(),
                 null,
+                null,
                 null
         );
     }
@@ -165,7 +167,8 @@ public class FundDraftService {
                 limits.aboveThresholdSumMax(),
                 limits.maxAssetPreferences(),
                 draft,
-                loadModelUniverse()
+                loadModelUniverse(),
+                null
         );
     }
 
@@ -201,7 +204,8 @@ public class FundDraftService {
                 limits.aboveThresholdSumMax(),
                 limits.maxAssetPreferences(),
                 draft,
-                loadModelUniverse()
+                loadModelUniverse(),
+                getWorkingPortfolio(actorUsername, draftId)
         );
     }
 
@@ -237,7 +241,8 @@ public class FundDraftService {
                 limits.aboveThresholdSumMax(),
                 limits.maxAssetPreferences(),
                 draft,
-                null
+                null,
+                getWorkingPortfolio(actorUsername, draftId)
         );
     }
 
@@ -273,7 +278,8 @@ public class FundDraftService {
                 limits.aboveThresholdSumMax(),
                 limits.maxAssetPreferences(),
                 draft,
-                loadModelUniverse()
+                loadModelUniverse(),
+                null
         );
     }
 
@@ -300,6 +306,7 @@ public class FundDraftService {
                 limits.aboveThresholdPct(),
                 limits.aboveThresholdSumMax(),
                 limits.maxAssetPreferences(),
+                null,
                 null,
                 null
         );
@@ -354,7 +361,7 @@ public class FundDraftService {
                 limits
         );
 
-        LocalDateTime now = financialTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         FundDraft draft = FundDraft.newDraft(
                 request.name().trim(),
                 request.initialPortfolioSize(),
@@ -375,6 +382,19 @@ public class FundDraftService {
     }
 
     @Transactional(readOnly = true)
+    public List<FundDraftSummaryResponse> listInProgressDrafts(String actorUsername) {
+        User actor = requireActor(actorUsername);
+        return fundDraftRepository
+                .findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
+                        FundDraftStatus.IN_PROGRESS,
+                        actor.getId()
+                )
+                .stream()
+                .map(FundDraftSummaryResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public FundDraftPageResponse searchDrafts(
             String actorUsername,
             FundDraftSearchCriteria criteria
@@ -386,7 +406,7 @@ public class FundDraftService {
         PageRequest pageRequest = PageRequest.of(
                 criteria.page(),
                 criteria.size(),
-                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
+                criteria.toSort()
         );
 
         Page<FundDraft> drafts = fundDraftRepository.findAll(
@@ -434,7 +454,7 @@ public class FundDraftService {
                 limits.maxAssetPreferences()
         );
 
-        LocalDateTime now = financialTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         draft.setManagementApproach(request.managementApproach());
         draft.setTppMinPct(request.tppMinPct().shortValue());
         draft.setTppMaxPct(request.tppMaxPct().shortValue());
@@ -520,7 +540,7 @@ public class FundDraftService {
         FundDraftAnalysisStateResponse state =
                 fundAnalysisPersistenceService.selectProposal(draft, fingerprint, rank);
         advanceCurrentStep(draft, FundDesignSteps.EDIT);
-        draft.setUpdatedAt(financialTime.now());
+        draft.setUpdatedAt(LocalDateTime.now(clock));
         fundDraftRepository.save(draft);
         return state;
     }
@@ -545,7 +565,7 @@ public class FundDraftService {
                 limits
         );
         advanceCurrentStep(draft, FundDesignSteps.EDIT);
-        draft.setUpdatedAt(financialTime.now());
+        draft.setUpdatedAt(LocalDateTime.now(clock));
         fundDraftRepository.save(draft);
         return response;
     }
@@ -728,7 +748,7 @@ public class FundDraftService {
 
         draft.setStatus(FundDraftStatus.COMPLETED);
         advanceCurrentStep(draft, FundDesignSteps.APPROVAL);
-        draft.setUpdatedAt(financialTime.now());
+        draft.setUpdatedAt(LocalDateTime.now(clock));
 
         FundDraft saved = fundDraftRepository.save(draft);
         log.info("Fund draft {} completed by {}", saved.getPublicId(), actorUsername);
@@ -738,13 +758,98 @@ public class FundDraftService {
 
     @Transactional
     public void archiveDraft(String actorUsername, UUID draftId) {
+        User actor = requireActor(actorUsername);
         FundDraft draft = requireOwnedDraft(actorUsername, draftId);
 
         draft.setDeleted(true);
+        draft.setDeletedByUserId(actor.getId());
         draft.setUpdatedAt(LocalDateTime.now(clock));
         fundDraftRepository.save(draft);
 
         log.info("Fund draft {} archived by {}", draftId, actorUsername);
+    }
+
+    @Transactional
+    public void updatePinStatus(String actorUsername, UUID draftId, boolean pinned) {
+        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
+        draft.setPinned(pinned);
+        draft.setUpdatedAt(LocalDateTime.now(clock));
+        fundDraftRepository.save(draft);
+    }
+
+    @Transactional
+    public FundDraftResponse cloneDeletedDraft(String actorUsername, UUID draftId) {
+        User actor = requireActor(actorUsername);
+
+        FundDraft deletedDraft = fundDraftRepository.findByPublicId(draftId)
+                .orElseThrow(() -> new BaseException(ErrorCode.FUND_DRAFT_NOT_FOUND));
+
+        if (!deletedDraft.isDeleted() || !deletedDraft.getCreatedByUserId().equals(actor.getId())) {
+            throw new BaseException(ErrorCode.FUND_DRAFT_NOT_FOUND);
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        
+        FundDraft newDraft = FundDraft.builder()
+                .publicId(UUID.randomUUID())
+                .name(deletedDraft.getName())
+                .fundType(deletedDraft.getFundType())
+                .currencyCode(deletedDraft.getCurrencyCode())
+                .initialPortfolioSize(deletedDraft.getInitialPortfolioSize())
+                .unitPrice(deletedDraft.getUnitPrice())
+                .managementApproach(deletedDraft.getManagementApproach())
+                .liquidityTargetPct(deletedDraft.getLiquidityTargetPct())
+                .horizon(deletedDraft.getHorizon())
+                .tppMinPct(deletedDraft.getTppMinPct())
+                .tppMaxPct(deletedDraft.getTppMaxPct())
+                .preferredTppPct(deletedDraft.getPreferredTppPct())
+                .minStockCount(deletedDraft.getMinStockCount())
+                .maxStockCount(deletedDraft.getMaxStockCount())
+                .equityMinPct(deletedDraft.getEquityMinPct())
+                .equityMaxPct(deletedDraft.getEquityMaxPct())
+                .singleStockMaxPct(deletedDraft.getSingleStockMaxPct())
+                .status(FundDraftStatus.IN_PROGRESS)
+                .designMode(FundDesignMode.MANUAL)
+                .deleted(false)
+                .pinned(false)
+                .currentStep((short) FundDesignSteps.EDIT)
+                .createdByUserId(actor.getId())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        fundDraftRepository.save(newDraft);
+
+        List<FundAssetPreference> oldPrefs = fundAssetPreferenceRepository.findAllByFundDraftId(deletedDraft.getId());
+        if (!oldPrefs.isEmpty()) {
+            List<FundAssetPreference> newPrefs = oldPrefs.stream().map(p -> FundAssetPreference.builder()
+                    .fundDraftId(newDraft.getId())
+                    .assetId(p.getAssetId())
+                    .preferenceType(p.getPreferenceType())
+                    .createdAt(now)
+                    .build()).toList();
+            fundAssetPreferenceRepository.saveAll(newPrefs);
+        }
+
+        try {
+            WorkingPortfolioResponse oldWorking = fundAnalysisPersistenceService.getWorking(deletedDraft);
+            if (oldWorking != null && oldWorking.assets() != null && !oldWorking.assets().isEmpty()) {
+                List<FundModelAssetDto> mappedAssets = oldWorking.assets().stream()
+                        .map(a -> new FundModelAssetDto(
+                                a.assetCode(),
+                                a.weight().multiply(BigDecimal.valueOf(100)), // Map decimal back to % for DB
+                                a.aiNote()
+                        ))
+                        .toList();
+                
+                FundProperties limits = fundDesignProfileService.getLimits(newDraft.getFundType());
+                fundAnalysisPersistenceService.replaceWorking(newDraft, mappedAssets, limits);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to clone working portfolio for draft {}", draftId, e);
+        }
+
+        return toResponse(newDraft);
     }
 
     @Transactional(readOnly = true)
