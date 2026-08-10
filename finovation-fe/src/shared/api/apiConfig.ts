@@ -106,6 +106,14 @@ export function getFundDraftUrl(draftId: string): string {
   return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}`
 }
 
+export function getArchivedFundDraftsUrl(): string {
+  return `${getFundDraftsUrl()}/archived`
+}
+
+export function getFundDraftRestorationUrl(draftId: string): string {
+  return `${getFundDraftsUrl()}/${encodeURIComponent(draftId)}/restoration`
+}
+
 export function getFundDraftCompletionUrl(draftId: string): string {
   return buildUrl(`${API_PATHS.fundDrafts}/${draftId}/completion`)
 }
