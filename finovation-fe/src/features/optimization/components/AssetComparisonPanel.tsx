@@ -20,6 +20,17 @@ function formatChange(value: number): string {
   return "—"
 }
 
+const ALL_SECTORS_VALUE = ""
+
+type SortColumn = "currentWeight" | "finalWeight" | "delta"
+type SortDirection = "asc" | "desc"
+
+type ComparisonRow = {
+  asset: OptimizationResultAsset
+  finalWeight: number
+  delta: number
+}
+
 export type AssetComparisonPanelProps = {
   assets: OptimizationResultAsset[]
   fundName: string
@@ -37,12 +48,72 @@ export default function AssetComparisonPanel({
 }: AssetComparisonPanelProps) {
   const [activeCategory, setActiveCategory] = useState<ResultCategoryKey>("ALL")
   const [view, setView] = useState<"table" | "chart">("table")
+  const [sectorFilter, setSectorFilter] = useState(ALL_SECTORS_VALUE)
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
 
   const categories = useMemo(() => buildResultCategories(assets), [assets])
-  const visibleAssets = useMemo(
-    () => assets.filter((asset) => matchesCategory(asset, activeCategory)),
-    [assets, activeCategory],
+
+  const sectorOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          assets
+            .map((asset) => asset.sectorName)
+            .filter((sectorName): sectorName is string => Boolean(sectorName)),
+        ),
+      ).sort((a, b) => a.localeCompare(b, "tr-TR")),
+    [assets],
   )
+
+  const rows = useMemo<ComparisonRow[]>(() => {
+    const filtered = assets
+      .filter((asset) => matchesCategory(asset, activeCategory))
+      .filter(
+        (asset) => !sectorFilter || asset.sectorName === sectorFilter,
+      )
+      .map((asset) => {
+        const finalWeight = asset.finalWeight ?? asset.proposedWeight
+        return { asset, finalWeight, delta: finalWeight - asset.currentWeight }
+      })
+
+    if (!sortColumn) return filtered
+
+    const directionFactor = sortDirection === "asc" ? 1 : -1
+    return [...filtered].sort((a, b) => {
+      const aValue =
+        sortColumn === "currentWeight"
+          ? a.asset.currentWeight
+          : sortColumn === "finalWeight"
+            ? a.finalWeight
+            : a.delta
+      const bValue =
+        sortColumn === "currentWeight"
+          ? b.asset.currentWeight
+          : sortColumn === "finalWeight"
+            ? b.finalWeight
+            : b.delta
+      return (aValue - bValue) * directionFactor
+    })
+  }, [assets, activeCategory, sectorFilter, sortColumn, sortDirection])
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection((direction) => (direction === "asc" ? "desc" : "asc"))
+    } else {
+      setSortColumn(column)
+      setSortDirection("asc")
+    }
+  }
+
+  const sortIndicator = (column: SortColumn) => {
+    if (sortColumn !== column) return null
+    return (
+      <span className={styles.sortIndicator} aria-hidden="true">
+        {sortDirection === "asc" ? "▲" : "▼"}
+      </span>
+    )
+  }
 
   const currentTotal = assets.reduce((sum, asset) => sum + asset.currentWeight, 0)
   const proposedTotal = assets.reduce(
@@ -109,17 +180,55 @@ export default function AssetComparisonPanel({
             <thead>
               <tr>
                 <th>Hisse</th>
-                <th>Sektör</th>
-                <th>Mevcut Ağırlık</th>
-                <th>Optimize Edilmiş</th>
-                <th>Değişim</th>
+                <th>
+                  <select
+                    className={styles.sectorHeaderFilter}
+                    value={sectorFilter}
+                    onChange={(event) => setSectorFilter(event.target.value)}
+                    aria-label="Sektöre göre filtrele"
+                  >
+                    <option value={ALL_SECTORS_VALUE}>Sektör</option>
+                    {sectorOptions.map((sectorName) => (
+                      <option key={sectorName} value={sectorName}>
+                        {sectorName}
+                      </option>
+                    ))}
+                  </select>
+                </th>
+                <th>
+                  <button
+                    type="button"
+                    className={styles.sortableHeaderButton}
+                    onClick={() => handleSort("currentWeight")}
+                  >
+                    Mevcut Ağırlık
+                    {sortIndicator("currentWeight")}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    type="button"
+                    className={styles.sortableHeaderButton}
+                    onClick={() => handleSort("finalWeight")}
+                  >
+                    Optimize Edilmiş
+                    {sortIndicator("finalWeight")}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    type="button"
+                    className={styles.sortableHeaderButton}
+                    onClick={() => handleSort("delta")}
+                  >
+                    Değişim
+                    {sortIndicator("delta")}
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {visibleAssets.map((asset) => {
-                const finalWeight = asset.finalWeight ?? asset.proposedWeight
-                const delta = finalWeight - asset.currentWeight
-
+              {rows.map(({ asset, finalWeight, delta }) => {
                 return (
                   <tr key={asset.assetCode}>
                     <td>

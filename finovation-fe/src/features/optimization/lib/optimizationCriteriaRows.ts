@@ -19,6 +19,7 @@ export type CriteriaRow = {
 }
 
 const CONSTRAINT_UNITS: Record<ConstraintMetric["key"], CriteriaRow["unit"]> = {
+  TOTAL_PORTFOLIO_WEIGHT: "PERCENT",
   TOTAL_EQUITY_WEIGHT: "PERCENT",
   TPP_WEIGHT: "PERCENT",
   STOCK_COUNT: "COUNT",
@@ -30,6 +31,7 @@ const CONSTRAINT_INPUT_KEYS: Record<
   ConstraintMetric["key"],
   keyof ConstraintMetricInput
 > = {
+  TOTAL_PORTFOLIO_WEIGHT: "totalPortfolioWeight",
   TOTAL_EQUITY_WEIGHT: "totalEquityWeight",
   TPP_WEIGHT: "tppWeight",
   STOCK_COUNT: "stockCount",

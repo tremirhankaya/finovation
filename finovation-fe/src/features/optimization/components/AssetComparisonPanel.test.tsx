@@ -136,4 +136,52 @@ describe("AssetComparisonPanel", () => {
     expect(screen.getByText("Mevcut Portföy")).toBeInTheDocument()
     expect(screen.getByText("Optimize Edilmiş Portföy")).toBeInTheDocument()
   })
+
+  it("sektör filtresiyle sadece seçilen sektördeki hisseleri gösterir", async () => {
+    const user = userEvent.setup()
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    await user.selectOptions(
+      screen.getByLabelText("Sektöre göre filtrele"),
+      "Savunma",
+    )
+
+    expect(screen.getByText("ASELS")).toBeInTheDocument()
+    expect(screen.queryByText("AKBNK")).not.toBeInTheDocument()
+    expect(screen.queryByText("THYAO")).not.toBeInTheDocument()
+  })
+
+  it("Mevcut Ağırlık başlığına tıklayınca artan, tekrar tıklayınca azalan sıralar", async () => {
+    const user = userEvent.setup()
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    const bodyRows = () => screen.getAllByRole("row").slice(1, -1)
+
+    await user.click(
+      screen.getByRole("button", { name: /Mevcut Ağırlık/ }),
+    )
+    let rows = bodyRows()
+    expect(rows[0]?.textContent).toContain("THYAO")
+    expect(rows[1]?.textContent).toContain("ASELS")
+    expect(rows[2]?.textContent).toContain("AKBNK")
+
+    await user.click(
+      screen.getByRole("button", { name: /Mevcut Ağırlık/ }),
+    )
+    rows = bodyRows()
+    expect(rows[0]?.textContent).toContain("AKBNK")
+    expect(rows[1]?.textContent).toContain("ASELS")
+    expect(rows[2]?.textContent).toContain("THYAO")
+  })
+
+  it("Değişim başlığına tıklayınca değişim değerine göre sıralar", async () => {
+    const user = userEvent.setup()
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    await user.click(screen.getByRole("button", { name: /Değişim/ }))
+
+    const rows = screen.getAllByRole("row").slice(1, -1)
+    expect(rows[0]?.textContent).toContain("ASELS")
+    expect(rows[rows.length - 1]?.textContent).toContain("AKBNK")
+  })
 })

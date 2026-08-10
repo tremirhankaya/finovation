@@ -178,7 +178,7 @@ describe("useOptimizationResultReview", () => {
     const { result } = renderHook(() => useOptimizationResultReview(1))
     await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
 
-    act(() => result.current.setFinalWeight("STK0", 6))
+    act(() => result.current.setFinalWeight("STK0", 5.5))
 
     await act(async () => {
       await result.current.decide("approve")
@@ -186,7 +186,7 @@ describe("useOptimizationResultReview", () => {
 
     expect(
       optimizationApiMocks.approveOptimizationRequest,
-    ).toHaveBeenCalledWith(1, [{ assetCode: "STK0", finalWeight: 6 }])
+    ).toHaveBeenCalledWith(1, [{ assetCode: "STK0", finalWeight: 5.5 }])
   })
 
   it("decide('reject') başarılı olduğunda decidedAs'ı 'reject' yapar", async () => {
@@ -225,7 +225,7 @@ describe("useOptimizationResultReview", () => {
     const { result } = renderHook(() => useOptimizationResultReview(1))
     await waitFor(() => expect(result.current.isLoadingRequest).toBe(false))
 
-    expect(result.current.constraintMetrics.length).toBe(5)
+    expect(result.current.constraintMetrics.length).toBe(6)
     expect(result.current.infoMetrics.length).toBe(9)
     expect(result.current.isApprovalBlocked).toBe(false)
   })

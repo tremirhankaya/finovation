@@ -5,12 +5,12 @@ import styles from "@/features/optimization/styles/OptimizationRunningPage.modul
 const STEPS = [
   "Mevcut fon dağılımı alınıyor",
   "Sabit tutulacak hisseler ve ağırlıkları kilitleniyor",
-  "Eklenmek istenen hisseler aday / zorunlu olarak işaretleniyor",
-  "58 hisselik yatırım evreni değerlendiriliyor",
+  "Eklenmek ve çıkarılmak istenen hisseler zorunlu olarak işaretleniyor",
+  "Yatırım evreni değerlendiriliyor",
   "Optimizasyon yaklaşımı ve vade modele iletiliyor",
   "TPP ağırlık aralığı uygulanıyor",
   "Hisse sayısı sınırları uygulanıyor",
-  "Tek hisse, sektör ve korelasyon sınırları uygulanıyor",
+  "İzahname kuralları uygulanıyor",
   "Optimize edilmiş portföy dağılımı üretiliyor",
   "Model gerekçeleri oluşturuluyor",
 ] as const

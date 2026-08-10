@@ -24,6 +24,7 @@ describe("buildConstraintMetricInput", () => {
   it("asset yokken tüm alanları null döner", () => {
     const result = buildConstraintMetricInput([], 5, 15, 16, 30)
 
+    expect(result.totalPortfolioWeight).toBeNull()
     expect(result.totalEquityWeight).toBeNull()
     expect(result.tppWeight).toBeNull()
     expect(result.stockCount).toBeNull()
@@ -49,6 +50,7 @@ describe("buildConstraintMetricInput", () => {
 
     expect(result.totalEquityWeight).toBe(85)
     expect(result.tppWeight).toBe(15)
+    expect(result.totalPortfolioWeight).toBe(100)
     expect(result.stockCount).toBe(2)
     expect(result.maxSingleStockWeight).toBe(45)
     expect(result.maxSectorConcentration).toBe(45)
@@ -70,6 +72,24 @@ describe("buildConstraintMetricInput", () => {
 
     expect(result.totalEquityWeight).toBe(30)
     expect(result.tppWeight).toBe(70)
+    expect(result.totalPortfolioWeight).toBe(100)
+  })
+
+  it("manuel düzenleme toplamı %100'den saptırırsa totalPortfolioWeight de yansıtır", () => {
+    const assets = [
+      asset({ proposedWeight: 40, finalWeight: 30 }),
+      asset({
+        assetCode: "TPP1G",
+        assetType: "TPP",
+        sectorName: null,
+        proposedWeight: 60,
+        finalWeight: 60,
+      }),
+    ]
+
+    const result = buildConstraintMetricInput(assets, 5, 15, 16, 30)
+
+    expect(result.totalPortfolioWeight).toBe(90)
   })
 
   it("ağırlığı sıfırlanan (çıkarılan) hisseleri hisse sayısına katmaz", () => {

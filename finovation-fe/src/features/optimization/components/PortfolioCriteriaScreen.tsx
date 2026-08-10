@@ -1,8 +1,17 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import type { CriteriaRow } from "@/features/optimization/lib/optimizationCriteriaRows"
+import { sortRationaleAssetsBySector } from "@/features/optimization/lib/optimizationRationaleSectors"
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
+
+function rationaleDotClass(
+  actionType: OptimizationResultAsset["actionType"],
+): string {
+  if (actionType === "INCREASE") return styles.rationaleDotUp
+  if (actionType === "DECREASE") return styles.rationaleDotDown
+  return styles.rationaleDotFlat
+}
 
 function formatValue(value: number | null, unit: CriteriaRow["unit"]): string {
   if (value == null) return "—"
@@ -75,6 +84,26 @@ export default function PortfolioCriteriaScreen({
   onReject,
 }: PortfolioCriteriaScreenProps) {
   const [confirmingReject, setConfirmingReject] = useState(false)
+  const [expandedAssetCodes, setExpandedAssetCodes] = useState<Set<string>>(
+    new Set(),
+  )
+
+  const toggleRationaleCard = (assetCode: string) => {
+    setExpandedAssetCodes((current) => {
+      const next = new Set(current)
+      if (next.has(assetCode)) {
+        next.delete(assetCode)
+      } else {
+        next.add(assetCode)
+      }
+      return next
+    })
+  }
+
+  const sortedRationaleAssets = useMemo(
+    () => sortRationaleAssetsBySector(rationaleAssets),
+    [rationaleAssets],
+  )
 
   return (
     <div className={styles.main}>
@@ -170,21 +199,50 @@ export default function PortfolioCriteriaScreen({
         </table>
       </section>
 
-      {rationaleAssets.length > 0 && (
+      {sortedRationaleAssets.length > 0 && (
         <section className={styles.panel}>
           <h2 className={styles.panelEyebrow}>
             <span className={styles.panelEyebrowDot} aria-hidden="true" />
             Model Gerekçeleri
           </h2>
           <div className={styles.rationaleGrid}>
-            {rationaleAssets.map((asset) => (
-              <div key={asset.assetCode} className={styles.rationaleCard}>
-                <span className={styles.rationaleAssetCode}>
-                  {asset.assetCode}
-                </span>
-                <p className={styles.rationaleText}>{asset.rationale}</p>
-              </div>
-            ))}
+            {sortedRationaleAssets.map((asset) => {
+              const isExpanded = expandedAssetCodes.has(asset.assetCode)
+              return (
+                <div
+                  key={asset.assetCode}
+                  className={`${styles.rationaleCard} ${isExpanded ? styles.rationaleCardExpanded : ""}`}
+                >
+                  <div className={styles.rationaleCardHeader}>
+                    <span className={styles.rationaleCardName}>
+                      <span
+                        className={`${styles.rationaleDot} ${rationaleDotClass(asset.actionType)}`}
+                        aria-hidden="true"
+                      />
+                      {asset.assetCode}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.rationaleCardToggle}
+                      onClick={() => toggleRationaleCard(asset.assetCode)}
+                      aria-expanded={isExpanded}
+                      aria-label={
+                        isExpanded
+                          ? `${asset.assetCode} gerekçesini gizle`
+                          : `${asset.assetCode} gerekçesini göster`
+                      }
+                    >
+                      {isExpanded ? "▲" : "▼"}
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <p className={styles.rationaleCardText}>
+                      {asset.rationale}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </section>
       )}

@@ -11,8 +11,9 @@ import type {
 } from "@/features/optimization/model/optimizationMetricsEvaluation.types"
 
 const BASE_CONSTRAINT_INPUT: ConstraintMetricInput = {
+  totalPortfolioWeight: 100,
   totalEquityWeight: 90,
-  tppWeight: 9,
+  tppWeight: 10,
   tppUserMin: 5,
   tppUserMax: 15,
   stockCount: 22,
@@ -30,6 +31,48 @@ function findMetric(
   if (!metric) throw new Error(`metric not found: ${key}`)
   return metric
 }
+
+describe("evaluateConstraintMetrics — toplam portföy ağırlığı", () => {
+  it("%100'e ±0.5 puan içindeyse yeşil", () => {
+    const metrics = evaluateConstraintMetrics({
+      ...BASE_CONSTRAINT_INPUT,
+      totalPortfolioWeight: 99.6,
+    })
+    expect(findMetric(metrics, "TOTAL_PORTFOLIO_WEIGHT").status).toBe("GREEN")
+  })
+
+  it("%100'den 0.5 puandan fazla saparsa kırmızı", () => {
+    const metrics = evaluateConstraintMetrics({
+      ...BASE_CONSTRAINT_INPUT,
+      totalPortfolioWeight: 98,
+    })
+    expect(findMetric(metrics, "TOTAL_PORTFOLIO_WEIGHT").status).toBe("RED")
+  })
+
+  it("%100'ü aşarsa da kırmızı", () => {
+    const metrics = evaluateConstraintMetrics({
+      ...BASE_CONSTRAINT_INPUT,
+      totalPortfolioWeight: 101.5,
+    })
+    expect(findMetric(metrics, "TOTAL_PORTFOLIO_WEIGHT").status).toBe("RED")
+  })
+
+  it("değer null ise gri döner", () => {
+    const metrics = evaluateConstraintMetrics({
+      ...BASE_CONSTRAINT_INPUT,
+      totalPortfolioWeight: null,
+    })
+    expect(findMetric(metrics, "TOTAL_PORTFOLIO_WEIGHT").status).toBe("GRAY")
+  })
+
+  it("toplam %100'den saparsa onayı engeller", () => {
+    const metrics = evaluateConstraintMetrics({
+      ...BASE_CONSTRAINT_INPUT,
+      totalPortfolioWeight: 97,
+    })
+    expect(isApprovalBlockedByConstraints(metrics)).toBe(true)
+  })
+})
 
 describe("evaluateConstraintMetrics — toplam hisse ağırlığı", () => {
   it("86-94 arası yeşil", () => {

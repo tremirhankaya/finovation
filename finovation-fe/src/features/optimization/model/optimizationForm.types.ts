@@ -28,4 +28,5 @@ export type ComplianceRow = {
   label: string
   status: ComplianceRowStatus
   detail: string
+  locked?: boolean
 }
