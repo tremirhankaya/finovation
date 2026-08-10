@@ -1,0 +1,84 @@
+{
+  "schema_version": "BIST_STRESS_RL_API_V1",
+  "external_tpp_symbol": "CASH_TPP",
+  "internal_tpp_symbol": "TPP_ON",
+  "data_root": "data/rl_stress",
+  "data_files": {
+    "equity_prices": {
+      "file": "equity_prices.parquet",
+      "sha256": "43a6ce05c66dcd658eaa4511eb4f4288ae467aeb32b3f16280c8c68b26b6b82b"
+    },
+    "fx_daily": {
+      "file": "fx_daily.parquet",
+      "sha256": "00afa1deb7dd41647c1253b1f6a462241ca28717464b617e319b01580d3f5cdf"
+    },
+    "instrument_master": {
+      "file": "instrument_master.parquet",
+      "sha256": "697911f1528e8345c9363b3d57bff3c952dc0128ecba8d77b29f2412fa51eba5"
+    },
+    "tpp_overnight": {
+      "file": "tpp_overnight_observed.parquet",
+      "sha256": "fef0e062118c4f6a2b98fc553db011e74a1c751bffcca63ad9fe1afba5c49ff3"
+    },
+    "trading_calendar": {
+      "file": "trading_calendar.parquet",
+      "sha256": "1b8b5ebc440fc2c2b07e56bb3504fe709635eac1cc936b53b9bfcfeb9f176f61"
+    }
+  },
+  "scenarios": {
+    "SCENARIO_1_2025_03_17": {
+      "family": "S1",
+      "start_date": "2025-03-17",
+      "end_date": "2025-05-05",
+      "expected_trading_days": 32
+    },
+    "SCENARIO_2_2025_08_26": {
+      "family": "S2",
+      "start_date": "2025-08-26",
+      "end_date": "2025-10-17",
+      "expected_trading_days": 39
+    }
+  },
+  "models": {
+    "PPO_MARKET_BASELINE": {
+      "model_file": "artifacts/rl_stress/models/PPO_MARKET_BASELINE/model.zip",
+      "config_file": "artifacts/rl_stress/models/PPO_MARKET_BASELINE/config.yaml",
+      "model_sha256": "b08159d42361bc1885739152dfa832601dd661e95548daf31d6cf8c8c0b4a8b2",
+      "config_sha256": "a188b675e7e7f030754689cb83cf43f4ac80108c132946da053a73b253f4d312",
+      "seed": 42,
+      "state_dimension": 233,
+      "action_dimension": 18,
+      "release_status": "PILOT"
+    },
+    "PPO_STRESS_CONTEXT": {
+      "model_file": "artifacts/rl_stress/models/PPO_STRESS_CONTEXT/model.zip",
+      "config_file": "artifacts/rl_stress/models/PPO_STRESS_CONTEXT/config.yaml",
+      "model_sha256": "2366f70166b69921d61bd7fb5eb3c46ba4c62fd319c3aa5a95e3ab51daa8090e",
+      "config_sha256": "c10409d7566d0ec7e39a723fc5ee64a581efee99f0cc6fc9ec79e6953e359ad2",
+      "seed": 42,
+      "state_dimension": 245,
+      "action_dimension": 18,
+      "release_status": "FINAL"
+    },
+    "PPO_ASSET_IMPACT": {
+      "model_file": "artifacts/rl_stress/models/PPO_ASSET_IMPACT/model.zip",
+      "config_file": "artifacts/rl_stress/models/PPO_ASSET_IMPACT/config.yaml",
+      "model_sha256": "5f67752c6e8d8febaa986e7d8c24e18b78575343079f0a28ab51fcb88eda4b80",
+      "config_sha256": "a587e59c7db0853a25d1fb0726fdd9cb67845f2b1aea0ae90aa276b9474bb536",
+      "seed": 42,
+      "state_dimension": 277,
+      "action_dimension": 18,
+      "release_status": "RESEARCH"
+    },
+    "PPO_ADAPTIVE_RECOVERY": {
+      "model_file": "artifacts/rl_stress/models/PPO_ADAPTIVE_RECOVERY/model.zip",
+      "config_file": "artifacts/rl_stress/models/PPO_ADAPTIVE_RECOVERY/config.yaml",
+      "model_sha256": "2ee53790521b08c481e80f16406e8b2e59f87fa456b3f6823142bc4206cb6a3d",
+      "config_sha256": "fe195d98c1fb86885bb939047a16b29a49fb4b9a117d0d78fcaf52c4cfe7e920",
+      "seed": 271828,
+      "state_dimension": 293,
+      "action_dimension": 18,
+      "release_status": "FINAL_CANDIDATE"
+    }
+  }
+}
