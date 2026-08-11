@@ -34,7 +34,7 @@ public class FundPosition {
     @Column(name = "weight", nullable = false, precision = 9, scale = 6)
     private BigDecimal weight;
 
-    @Column(name = "ai_note", length = 200)
+    @Column(name = "ai_note", columnDefinition = "NVARCHAR(MAX)")
     private String aiNote;
 
     @Column(name = "created_at", nullable = false)
