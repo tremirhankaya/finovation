@@ -122,7 +122,7 @@ class FundDraftServiceTest {
                 fundAssetPreferenceRepository,
                 assetRepository,
                 equityDetailRepository,
-                Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC)
+                financialTime(Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC))
         );
 
         actor = User.builder()

@@ -27,7 +27,6 @@ import {
 import type { ArchivedFundDraft } from "@/features/fund-design/model/fundDraftSchemas"
 import Button from "@/shared/ui/Button"
 import FormAlert from "@/shared/ui/FormAlert"
-import Logo from "@/shared/ui/Logo"
 import styles from "@/features/fund-design/styles/FundManagementPage.module.css"
 
 const TOTAL_WIZARD_STEPS = 6
@@ -315,13 +314,9 @@ export default function FundManagementPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.brandBlock}>
-          <Logo variant="dark" size="small" />
-
-          <div className={styles.titleBlock}>
-            <h1>Fon Yönetimi</h1>
-            <p>PORTFÖY TASARIM MERKEZİ</p>
-          </div>
+        <div className={styles.titleBlock}>
+          <h1>Fon Yönetimi</h1>
+          <p>PORTFÖY TASARIM MERKEZİ</p>
         </div>
 
         <div>
