@@ -38,9 +38,9 @@
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
   border-radius: 999px;
   font-size: 0.74rem;
   font-weight: 700;
@@ -50,7 +50,7 @@
 .connectionBadge > span {
   width: 8px;
   height: 8px;
-  background: #f59e0b;
+  background: #14b8a6;
   border-radius: 50%;
 }
 
@@ -103,45 +103,74 @@
   justify-content: space-between;
   gap: 22px;
   margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .toolbar h2 {
   margin: 0;
+  color: #0f172a;
   font-size: 1.05rem;
 }
 
 .toolbar p {
   margin: 5px 0 0;
-  color: #94a3b8;
+  color: #64748b;
   font-size: 0.76rem;
 }
 
 .filters {
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .filters label {
   display: grid;
-  gap: 5px;
-  color: #64748b;
-  font-size: 0.68rem;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
 .filters select,
 .filters input {
-  min-height: 38px;
-  padding: 0 11px;
-  color: #94a3b8;
-  background: #f8fafc;
-  border: 1px solid #dbe4ea;
+  min-height: 40px;
+  padding: 0 12px;
+  color: #0f172a;
+  background: #fff;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
+  font: inherit;
+  transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease,
+          background 0.15s ease;
+}
+
+.filters select {
+  min-width: 155px;
+  cursor: pointer;
+}
+
+.filters select:hover,
+.filters input:hover {
+  border-color: #94a3b8;
+}
+
+.filters select:focus,
+.filters input:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 12%);
+}
+
+.filters input::placeholder {
+  color: #94a3b8;
 }
 
 .searchField input {
-  width: 210px;
+  width: 220px;
 }
 
 .terminal {
@@ -149,7 +178,9 @@
   background: #07111f;
   border: 1px solid #17263b;
   border-radius: 12px;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  box-shadow:
+          inset 0 1px 0 rgb(255 255 255 / 4%),
+          0 8px 24px rgb(15 23 42 / 10%);
 }
 
 .terminalHead {
@@ -192,7 +223,10 @@
 }
 
 .terminalBody {
-  min-height: 390px;
+  min-height: 360px;
+  max-height: 520px;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 16px;
   color: #cbd5e1;
   font: 0.74rem/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -200,13 +234,34 @@
 
 .terminalBody > p {
   display: grid;
-  grid-template-columns: 90px 48px 100px 1fr;
-  gap: 10px;
-  margin: 0 0 3px;
+  grid-template-columns: 82px 58px 110px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 1px solid rgb(148 163 184 / 6%);
+}
+
+.terminalBody > p:last-child {
+  border-bottom: 0;
+}
+
+.terminalBody > p > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .terminalBody time {
   color: #64748b;
+}
+
+.levelTRACE {
+  color: #94a3b8;
+}
+
+.levelDEBUG {
+  color: #a78bfa;
 }
 
 .levelINFO {
@@ -215,6 +270,14 @@
 
 .levelWARN {
   color: #fbbf24;
+}
+
+.levelERROR {
+  color: #f87171;
+}
+
+.levelUNKNOWN {
+  color: #94a3b8;
 }
 
 .service {
@@ -243,6 +306,23 @@
   margin: 5px 0 0;
 }
 
+.terminalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminalBody::-webkit-scrollbar-track {
+  background: #0b1726;
+}
+
+.terminalBody::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+.terminalBody::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
 @media (max-width: 980px) {
   .toolbar,
   .filters {
@@ -250,6 +330,11 @@
     flex-direction: column;
   }
 
+  .filters {
+    width: 100%;
+  }
+
+  .filters select,
   .searchField input {
     width: 100%;
   }
@@ -270,7 +355,7 @@
   }
 
   .terminalBody > p {
-    grid-template-columns: 76px 42px 1fr;
+    grid-template-columns: 70px 50px 1fr;
   }
 
   .terminalBody > p > span:last-child {
