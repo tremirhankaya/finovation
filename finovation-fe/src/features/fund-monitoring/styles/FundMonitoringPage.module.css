@@ -527,6 +527,51 @@
   text-align: right;
 }
 
+.holdingsSortButton {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 2px;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.holdingsHead span:last-child .holdingsSortButton {
+  margin-left: auto;
+}
+
+.holdingsSortButton:hover,
+.holdingsSortButton:focus-visible {
+  color: #0d9488;
+  background: #ecfdf9;
+  outline: none;
+}
+
+.sortDirection {
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.sortPriority {
+  display: inline-grid;
+  width: 15px;
+  height: 15px;
+  place-items: center;
+  color: #fff;
+  font-size: 0.58rem;
+  line-height: 1;
+  background: #0d9488;
+  border-radius: 999px;
+}
+
 .holdingRow {
   min-height: 61px;
   padding: 9px 4px;
@@ -588,49 +633,6 @@
 .donutWrap svg {
   display: block;
   width: 100%;
-}
-
-.donutChart {
-  position: relative;
-}
-
-.donutChart circle[tabindex] {
-  cursor: pointer;
-  transition: stroke-width 120ms ease, opacity 120ms ease;
-}
-
-.donutChart circle[tabindex]:focus-visible {
-  outline: none;
-  filter: drop-shadow(0 0 3px rgb(13 148 136 / 50%));
-}
-
-.sectorHoverDetail {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  width: 92px;
-  color: #64748b;
-  font-size: 0.67rem;
-  line-height: 1.25;
-  text-align: center;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-
-.sectorHoverDetail strong {
-  overflow: hidden;
-  color: #0f2d52;
-  font-size: 0.7rem;
-  text-overflow: ellipsis;
-}
-
-.sectorHoverDetail span {
-  margin-top: 3px;
-  color: #0d9488;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.75rem;
-  font-weight: 800;
 }
 
 .sectorLegend {

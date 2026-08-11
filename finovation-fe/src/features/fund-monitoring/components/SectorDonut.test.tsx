@@ -21,13 +21,18 @@ describe("SectorDonut", () => {
     render(<SectorDonut allocations={ALLOCATIONS} />)
 
     const technologySlice = screen.getByLabelText("Teknoloji: %42,5")
+    const transportationSlice = screen.getByLabelText("Ulaştırma: %57,5")
     fireEvent.pointerEnter(technologySlice)
 
     expect(screen.getByRole("status")).toHaveTextContent("Teknoloji")
     expect(screen.getByRole("status")).toHaveTextContent("%42,5")
+    expect(technologySlice).toHaveAttribute("stroke-width", "32")
+    expect(transportationSlice).toHaveAttribute("opacity", "0.3")
 
     fireEvent.pointerLeave(technologySlice)
     expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    expect(technologySlice).toHaveAttribute("stroke-width", "22")
+    expect(transportationSlice).toHaveAttribute("opacity", "1")
   })
 
   it("klavye odağında da dilim bilgisini gösterir", () => {
