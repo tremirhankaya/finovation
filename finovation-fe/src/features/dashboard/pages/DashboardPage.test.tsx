@@ -144,7 +144,7 @@ describe("DashboardPage", () => {
     )
     expect(screen.getByRole("link", { name: "Taslaklar" })).toHaveAttribute(
       "href",
-      "/fund-design/create",
+      "/fund-design?tab=drafts",
     )
   })
 

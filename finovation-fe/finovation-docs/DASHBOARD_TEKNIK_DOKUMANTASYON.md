@@ -77,8 +77,8 @@ gösterilir. Grafik için mevcut `PriceTrendChart`, formatlama için fon izleme 
 
 Aktif fonlar ve devam eden taslaklar ayrı listelerde, en fazla üçer satırla gösterilir. Panelde iki ayrı detay bağlantısı vardır:
 
-- Aktif fonlar: `/fund-design/active`
-- Taslaklar: `/fund-design/create`
+- Aktif fonlar: `/fund-design`
+- Taslaklar: `/fund-design?tab=drafts`
 
 #### Optimizasyon
 
@@ -190,6 +190,7 @@ Aggregation seviyesinde ortak transaction kullanılmaz. Her mevcut modül servis
 - Quick Action ve fon/taslak route'ları
 - Fon seçimi ve manuel yenileme
 - Eski monitoring yanıtının yeni fon seçimini ezmemesi
+- Taslak sekmesine doğrudan bağlantı ve URL ile sekme senkronizasyonu
 - Yeni bir optimizasyon devam ederken KPI'nın güncel durumu göstermesi
 - Aggregation response şema doğrulaması
 - `unavailableSections` hata eşlemesi
