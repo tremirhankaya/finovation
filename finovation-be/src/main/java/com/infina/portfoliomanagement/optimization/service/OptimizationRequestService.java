@@ -69,6 +69,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -398,6 +399,55 @@ public class OptimizationRequestService {
 
         return requests.stream()
                 .filter(request -> LOG_VISIBLE_STATUSES.contains(request.getStatus()))
+                .map(request -> toLogEntryResponse(request, fundNamesById))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OptimizationLogEntryResponse> listDashboardLogs(String actorUsername) {
+        User actor = resolveActor(actorUsername);
+
+        OptimizationRequest latestRequest = actor.getRole() == Role.ADMIN
+                ? optimizationRequestRepository.findFirstByOrderByCreatedAtDescIdDesc().orElse(null)
+                : optimizationRequestRepository
+                        .findFirstByRequestedByIdOrderByCreatedAtDescIdDesc(actor.getId())
+                        .orElse(null);
+        OptimizationRequest latestResultRequest = actor.getRole() == Role.ADMIN
+                ? optimizationRequestRepository
+                        .findFirstByStatusInOrderByCreatedAtDescIdDesc(RESULT_AVAILABLE_STATUSES)
+                        .orElse(null)
+                : optimizationRequestRepository
+                        .findFirstByRequestedByIdAndStatusInOrderByCreatedAtDescIdDesc(
+                                actor.getId(),
+                                RESULT_AVAILABLE_STATUSES
+                        )
+                        .orElse(null);
+
+        Map<Long, OptimizationRequest> uniqueRequests = new LinkedHashMap<>();
+        if (latestRequest != null) uniqueRequests.put(latestRequest.getId(), latestRequest);
+        if (latestResultRequest != null) {
+            uniqueRequests.put(latestResultRequest.getId(), latestResultRequest);
+        }
+        List<OptimizationRequest> requests = uniqueRequests.values().stream()
+                .sorted(Comparator
+                        .comparing(OptimizationRequest::getCreatedAt)
+                        .reversed()
+                        .thenComparing(OptimizationRequest::getId, Comparator.reverseOrder()))
+                .toList();
+        if (requests.isEmpty()) return List.of();
+
+        Map<UUID, String> fundNamesById = fundDraftRepository
+                .findAllByPublicIdIn(
+                        requests.stream().map(OptimizationRequest::getFundId).distinct().toList()
+                )
+                .stream()
+                .collect(Collectors.toMap(
+                        FundDraft::getPublicId,
+                        FundDraft::getName,
+                        (left, right) -> left
+                ));
+
+        return requests.stream()
                 .map(request -> toLogEntryResponse(request, fundNamesById))
                 .toList();
     }
