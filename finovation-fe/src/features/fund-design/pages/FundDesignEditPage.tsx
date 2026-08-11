@@ -432,10 +432,10 @@ export default function FundDesignEditPage() {
   }
 
   function adjustWeightByStep(currentWeight: number, direction: 1 | -1) {
-    // Artı/eksi kontrolü kullanıcı için onda bir puanla ilerler. Mevcut hassas
-    // değer korunur; butona basıldığında ise okunabilir 0,1'lik kademeye oturur.
-    const snapped = Math.round(currentWeight * 10) / 10
-    return Math.max(0, Math.min(100, Math.round((snapped + direction * 0.1) * 10) / 10))
+    return Math.max(
+      0,
+      Math.min(100, Math.round((currentWeight + direction * 0.1) * 100) / 100),
+    )
   }
 
   function requestDeleteSingle(index: number) {

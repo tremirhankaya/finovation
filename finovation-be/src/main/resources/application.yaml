@@ -44,7 +44,7 @@ springdoc:
     tags-sorter: alpha
 
 financial-time:
-  simulation-enabled: ${FINANCIAL_TIME_SIMULATION_ENABLED:false}
+  simulation-enabled: ${FINANCIAL_TIME_SIMULATION_ENABLED:true}
   system-anchor-date: ${FINANCIAL_TIME_SYSTEM_ANCHOR_DATE:2026-08-10}
   financial-anchor-date: ${FINANCIAL_TIME_FINANCIAL_ANCHOR_DATE:2025-05-29}
   zone: ${FINANCIAL_TIME_ZONE:Europe/Istanbul}
