@@ -3,6 +3,7 @@ package com.infina.portfoliomanagement.fund.service;
 import com.infina.portfoliomanagement.common.enums.AssetType;
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.fund.config.FundProperties;
 import com.infina.portfoliomanagement.fund.dto.ArchivedFundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
@@ -53,7 +54,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -82,7 +82,7 @@ public class FundDraftService {
     private final FundAssetPreferenceRepository fundAssetPreferenceRepository;
     private final AssetRepository assetRepository;
     private final EquityDetailRepository equityDetailRepository;
-    private final Clock clock;
+    private final FinancialTimeProvider financialTime;
 
     @Transactional(readOnly = true)
     public FundDraftInitResponse getInit(
@@ -377,7 +377,7 @@ public class FundDraftService {
                 limits
         );
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         FundDraft draft = FundDraft.newDraft(
                 request.name().trim(),
                 request.initialPortfolioSize(),
@@ -480,7 +480,7 @@ public class FundDraftService {
                 limits.maxAssetPreferences()
         );
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         draft.setManagementApproach(request.managementApproach());
         draft.setTppMinPct(request.tppMinPct().shortValue());
         draft.setTppMaxPct(request.tppMaxPct().shortValue());
@@ -566,7 +566,7 @@ public class FundDraftService {
         FundDraftAnalysisStateResponse state =
                 fundAnalysisPersistenceService.selectProposal(draft, fingerprint, rank);
         advanceCurrentStep(draft, FundDesignSteps.EDIT);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
         fundDraftRepository.save(draft);
         return state;
     }
@@ -596,7 +596,7 @@ public class FundDraftService {
                 limits
         );
         advanceCurrentStep(draft, FundDesignSteps.EDIT);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
         fundDraftRepository.save(draft);
         return response;
     }
@@ -779,7 +779,7 @@ public class FundDraftService {
 
         draft.setStatus(FundDraftStatus.COMPLETED);
         advanceCurrentStep(draft, FundDesignSteps.APPROVAL);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
 
         FundDraft saved = fundDraftRepository.save(draft);
         log.info("Fund draft {} completed by {}", saved.getPublicId(), actorUsername);
@@ -795,7 +795,7 @@ public class FundDraftService {
         draft.setDeleted(true);
         draft.setDeletedByUserId(actor.getId());
         draft.setPinned(false);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
         fundDraftRepository.save(draft);
 
         log.info("Fund draft {} archived by {}", draftId, actorUsername);
@@ -805,7 +805,7 @@ public class FundDraftService {
     public void updatePinStatus(String actorUsername, UUID draftId, boolean pinned) {
         FundDraft draft = requireOwnedDraft(actorUsername, draftId);
         draft.setPinned(pinned);
-        draft.setUpdatedAt(LocalDateTime.now(clock));
+        draft.setUpdatedAt(financialTime.now());
         fundDraftRepository.save(draft);
     }
 
@@ -829,7 +829,7 @@ public class FundDraftService {
                 cloneLimits
         );
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = financialTime.now();
         
         FundDraft newDraft = FundDraft.builder()
                 .publicId(UUID.randomUUID())
