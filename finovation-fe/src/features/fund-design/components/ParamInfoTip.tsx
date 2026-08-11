@@ -55,7 +55,18 @@ export default function ParamInfoTip({ label, children }: ParamInfoTipProps) {
   }, [open])
 
   return (
-    <div className={styles.root} ref={rootRef}>
+    <div
+      className={styles.root}
+      ref={rootRef}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setOpen(false)
+        }
+      }}
+    >
       <button
         type="button"
         className={[styles.trigger, open ? styles.triggerOpen : ""]
@@ -68,11 +79,16 @@ export default function ParamInfoTip({ label, children }: ParamInfoTipProps) {
       >
         <InfoIcon />
       </button>
-      {open ? (
-        <div id={tipId} className={styles.panel} role="note">
-          {children}
-        </div>
-      ) : null}
+      <div
+        id={tipId}
+        className={[styles.panel, open ? styles.panelOpen : ""]
+          .filter(Boolean)
+          .join(" ")}
+        role="tooltip"
+        aria-hidden={!open}
+      >
+        {children}
+      </div>
     </div>
   )
 }

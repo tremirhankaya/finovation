@@ -5,7 +5,7 @@
 }
 
 .header {
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.35rem;
 }
 
 .retry {
@@ -25,22 +25,24 @@
 }
 
 .sectionTitle {
-  margin: 0;
+  margin: 0.35rem 0 0;
   color: #0f1f3c;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-.introLead {
-  margin: 0.55rem 0 0;
-  color: #0f1f3c;
-  font-size: 0.95rem;
-  font-weight: 700;
+.eyebrow,
+.cardKicker {
+  display: inline-flex;
+  color: #118b75;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
 }
 
 .intro {
-  margin: 0.25rem 0 0;
+  margin: 0.45rem 0 0;
   max-width: 42rem;
   color: #6b7c8c;
   font-size: 0.875rem;
@@ -67,13 +69,29 @@
   border: 1px solid #e5edf1;
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 8px 24px rgba(15, 32, 64, 0.04);
+  box-shadow: 0 12px 28px rgba(15, 32, 64, 0.045);
 }
 
 .formCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow: hidden;
+  border-color: #dcebea;
+  background: linear-gradient(145deg, #ffffff 0%, #fbfefd 100%);
+  animation: startSurfaceEnter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.formCard::before {
+  position: absolute;
+  top: 0;
+  left: 1.25rem;
+  right: 1.25rem;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, #2ec4a7, #8be2d2);
+  content: "";
 }
 
 .formCardHeader {
@@ -85,7 +103,7 @@
 }
 
 .formCardHeader .blockTitle {
-  margin: 0;
+  margin: 0.25rem 0 0;
 }
 
 .currencyBadge {
@@ -93,8 +111,8 @@
   padding: 0.3rem 0.65rem;
   border-radius: 999px;
   border: 1px solid #d7e4e8;
-  background: #f3f8f8;
-  color: #3d5363;
+  background: #effaf7;
+  color: #167d6a;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -217,10 +235,33 @@
 }
 
 .universeIntro {
-  margin: -0.35rem 0 1rem;
+  margin: 0.35rem 0 0;
   color: #6b7c8c;
   font-size: 0.8125rem;
   line-height: 1.45;
+}
+
+.universeHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.universeHeader .blockTitle {
+  margin: 0.25rem 0 0;
+}
+
+.universeBadge {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #dcebea;
+  border-radius: 999px;
+  color: #167d6a;
+  background: #f3fbf8;
+  font-size: 0.6875rem;
+  font-weight: 700;
 }
 
 .universeTiles {
@@ -236,7 +277,20 @@
   padding: 0.9rem 0.95rem;
   border: 1px solid #e5edf1;
   border-radius: 14px;
-  background: #f8fbfb;
+  background: linear-gradient(135deg, #fbfefd, #f5fbfa);
+  transition: transform 180ms ease, border-color 180ms ease,
+    box-shadow 180ms ease;
+  animation: startSurfaceEnter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.universeTile:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.universeTile:hover {
+  border-color: #bce7dd;
+  box-shadow: 0 8px 16px rgba(22, 125, 106, 0.08);
+  transform: translateY(-2px);
 }
 
 .universeIcon {
@@ -268,6 +322,17 @@
 .actions {
   display: flex;
   justify-content: flex-end;
+}
+
+@keyframes startSurfaceEnter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .continue {
@@ -406,6 +471,13 @@
   height: 100%;
   border-radius: 999px;
   transition: width 0.25s ease, background-color 0.25s ease;
+  transform-origin: left center;
+  animation: prospectusBarEnter 0.85s 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes prospectusBarEnter {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 .fillOk {
@@ -422,6 +494,17 @@
 
 .fillInfo {
   background: #b0bcc7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressBarFill {
+    animation: none;
+  }
+
+  .formCard,
+  .universeTile {
+    animation: none;
+  }
 }
 
 .immutableTag {
@@ -542,5 +625,9 @@
 
   .continue {
     width: 100%;
+  }
+
+  .universeHeader {
+    align-items: flex-start;
   }
 }

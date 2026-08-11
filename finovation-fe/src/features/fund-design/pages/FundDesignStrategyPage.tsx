@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ComponentType } from "react"
 import { useNavigate, useParams } from "react-router"
 
 import DualRangeSlider from "@/features/fund-design/components/DualRangeSlider"
 import AssetPreferencePicker from "@/features/fund-design/components/AssetPreferencePicker"
 import FundDesignLayout from "@/features/fund-design/components/FundDesignLayout"
+import FundDesignProgressRail from "@/features/fund-design/components/FundDesignProgressRail"
 import ParamInfoTip from "@/features/fund-design/components/ParamInfoTip"
 import ProspectusRulesPanel from "@/features/fund-design/components/ProspectusRulesPanel"
 import {
@@ -28,7 +29,13 @@ import styles from "@/features/fund-design/styles/FundDesignStrategyPage.module.
 
 function AttackIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8" />
       <circle cx="12" cy="12" r="3.5" fill="currentColor" />
     </svg>
@@ -37,7 +44,13 @@ function AttackIcon() {
 
 function BalancedIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M12 4v16M5 9h14M7.5 9 5 14h5M16.5 9 19 14h-5"
         stroke="currentColor"
@@ -51,7 +64,13 @@ function BalancedIcon() {
 
 function ProtectiveIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M12 3.5 19 7v5.2c0 4.2-2.8 7.4-7 8.8-4.2-1.4-7-4.6-7-8.8V7l7-3.5Z"
         stroke="currentColor"
@@ -62,11 +81,31 @@ function ProtectiveIcon() {
   )
 }
 
-const APPROACH_ICONS = {
+function CustomIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3" />
+      <path d="M1 14h6M9 8h6M17 16h6" />
+    </svg>
+  )
+}
+
+const APPROACH_ICONS: Record<ManagementApproachCode, ComponentType> = {
   ATTACK: AttackIcon,
   BALANCED: BalancedIcon,
   PROTECTIVE: ProtectiveIcon,
-} as const
+  CUSTOM: CustomIcon,
+}
 
 const SAVE_ERROR_FALLBACK = "Portföy kuralları kaydedilemedi"
 const AUTOSAVE_DELAY_MS = 800
@@ -100,8 +139,7 @@ function flushPortfolioRulesKeepalive(
       body: JSON.stringify(payload),
       keepalive: true,
     })
-  } catch {
-  }
+  } catch {}
 }
 
 export default function FundDesignStrategyPage() {
@@ -110,6 +148,7 @@ export default function FundDesignStrategyPage() {
   const {
     init,
     error: initError,
+    isLoading,
     reload: reloadInit,
   } = useFundDraftInit({ page: "STRATEGY", draftId })
 
@@ -396,7 +435,7 @@ export default function FundDesignStrategyPage() {
   const stockGap = init?.minStockCountRange ?? 5
 
   return (
-    <FundDesignLayout step={2}>
+    <FundDesignLayout step={2} isLoading={isLoading}>
       <section className={styles.panel}>
         <header className={styles.header}>
           <h2 className={styles.sectionTitle}>Portföy Kuralları</h2>
@@ -412,11 +451,7 @@ export default function FundDesignStrategyPage() {
         {initError && (
           <FormAlert>
             {initError}
-            <button
-              className={styles.retry}
-              type="button"
-              onClick={reloadInit}
-            >
+            <button className={styles.retry} type="button" onClick={reloadInit}>
               Tekrar dene
             </button>
           </FormAlert>
@@ -433,7 +468,9 @@ export default function FundDesignStrategyPage() {
                 role="radiogroup"
                 aria-label="Yönetim yaklaşımı"
               >
-                {MANAGEMENT_APPROACHES.map((option) => {
+                {MANAGEMENT_APPROACHES.filter(
+                  (option) => option.code !== "CUSTOM",
+                ).map((option) => {
                   const Icon = APPROACH_ICONS[option.code]
                   const selected = option.code === approach
 
@@ -455,7 +492,9 @@ export default function FundDesignStrategyPage() {
                         <Icon />
                       </span>
                       <p className={styles.approachLabel}>{option.label}</p>
-                      <p className={styles.approachText}>{option.description}</p>
+                      <p className={styles.approachText}>
+                        {option.description}
+                      </p>
                     </button>
                   )
                 })}
@@ -475,9 +514,10 @@ export default function FundDesignStrategyPage() {
                     </span>
                     <div className={styles.paramHeadingActions}>
                       <ParamInfoTip label="Hedef Likidite Oranı">
-                        Belirlediğiniz aralık, portföyün tutabileceği likidite
-                        (TPP) bandıdır. Modeliniz bu aralık içinde kalmak
-                        koşuluyla farklı değerlere gidebilir.
+                        Bu aralık, portföyün Takas Para Piyasası (TPP) gibi
+                        likit varlıklarda tutacağı payı belirler. Daha yüksek
+                        oran, nakde dönüş esnekliğini artırır; daha düşük oran
+                        ise hisse senetleri için daha fazla alan bırakır.
                       </ParamInfoTip>
                       <button
                         type="button"
@@ -490,7 +530,8 @@ export default function FundDesignStrategyPage() {
                     </div>
                   </div>
                   <p className={styles.paramCaption}>
-                    {selectedApproach.label}: %{selectedApproach.defaultLiquidityMinPct}
+                    {selectedApproach.label}: %
+                    {selectedApproach.defaultLiquidityMinPct}
                     –%{selectedApproach.defaultLiquidityMaxPct}
                   </p>
                   <DualRangeSlider
@@ -513,14 +554,16 @@ export default function FundDesignStrategyPage() {
                       Hisse Sayısı
                     </span>
                     <ParamInfoTip label="Hisse Sayısı">
-                      Portföyde bulunabilecek hisse adedi aralığını belirler.
-                      Yönetim yaklaşımına göre varsayılan aralık önerilir;
-                      izahname sınırları içinde değiştirebilir.
+                      Bu aralık, portföyde yer alacak hisse adedini belirler.
+                      Daha fazla hisse çeşitlendirmeyi artırabilir; daha az
+                      hisse ise seçilen hisselerin portföy üzerindeki etkisini
+                      yükseltir. Seçiminiz izahname sınırları içinde kalır.
                     </ParamInfoTip>
                   </div>
                   <p className={styles.paramCaption}>
-                    {selectedApproach.label}: {selectedApproach.defaultMinStockCount}
-                    –{selectedApproach.defaultMaxStockCount}
+                    {selectedApproach.label}:{" "}
+                    {selectedApproach.defaultMinStockCount}–
+                    {selectedApproach.defaultMaxStockCount}
                   </p>
                   <DualRangeSlider
                     id="stock-count"
@@ -535,7 +578,10 @@ export default function FundDesignStrategyPage() {
                       setMinStockCount(min)
                       setMaxStockCount(max)
                       setForcedAssetCodes((current) =>
-                        current.slice(0, Math.min(init?.maxAssetPreferences ?? 3, min)),
+                        current.slice(
+                          0,
+                          Math.min(init?.maxAssetPreferences ?? 3, min),
+                        ),
                       )
                     }}
                   />
@@ -547,8 +593,10 @@ export default function FundDesignStrategyPage() {
                       Sektör Ağırlığı Üst Limiti
                     </span>
                     <ParamInfoTip label="Sektör Ağırlığı Üst Limiti">
-                      Tek bir sektöre verilebilecek azami ağırlık izahname ile
-                      sabittir ve bu ekrandan değiştirilemez.
+                      Tek bir sektöre ayrılabilecek en yüksek portföy payıdır.
+                      Sektör yoğunlaşması riskini sınırlamak için izahname
+                      tarafından sabitlenir; bu nedenle bu ekrandan
+                      değiştirilemez.
                     </ParamInfoTip>
                   </div>
                   <p className={styles.paramCaption}>
@@ -570,9 +618,8 @@ export default function FundDesignStrategyPage() {
                 excludedCodes={excludedAssetCodes}
                 minStockCount={minStockCount}
                 maxAssetPreferences={init?.maxAssetPreferences ?? 3}
-                universe={
-                  init?.page === "STRATEGY" ? init.modelUniverse : []
-                }
+                universe={init?.page === "STRATEGY" ? init.modelUniverse : []}
+                sectors={init?.page === "STRATEGY" ? init.modelUniverseSectors : []}
                 disabled={!init || !isReady}
                 onForcedChange={(codes) => {
                   markDirty()
@@ -606,7 +653,10 @@ export default function FundDesignStrategyPage() {
             </div>
           </div>
 
-          <ProspectusRulesPanel init={init} />
+          <aside className={styles.sideColumn}>
+            <ProspectusRulesPanel init={init} />
+            <FundDesignProgressRail currentStep={2} />
+          </aside>
         </div>
       </section>
     </FundDesignLayout>

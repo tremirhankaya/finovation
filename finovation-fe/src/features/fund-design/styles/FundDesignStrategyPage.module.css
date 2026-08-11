@@ -60,12 +60,22 @@
   gap: 1rem;
 }
 
+.sideColumn {
+  position: sticky;
+  top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-self: start;
+}
+
 .card {
   padding: 1.2rem 1.25rem;
   border: 1px solid #e5edf1;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 8px 24px rgba(15, 32, 64, 0.04);
+  animation: sectionReveal 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .blockTitle {
@@ -95,11 +105,19 @@
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
-    background 0.15s ease;
+    background 0.15s ease,
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: approachReveal 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+.approachCard:nth-child(2) { animation-delay: 0.07s; }
+.approachCard:nth-child(3) { animation-delay: 0.14s; }
+.approachCard:nth-child(4) { animation-delay: 0.21s; }
 
 .approachCard:hover {
   border-color: #c9ddd8;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(15, 32, 64, 0.08);
 }
 
 .approachCardSelected {
@@ -109,19 +127,26 @@
 }
 
 .approachIcon {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.35rem;
   height: 2.35rem;
-  border-radius: 999px;
+  border: 1px solid rgba(46, 196, 167, 0.12);
+  border-radius: 13px;
   color: #1a9e86;
-  background: #e7f6f2;
+  background: radial-gradient(circle at 30% 25%, #ffffff 0%, #e7f6f2 62%);
+  box-shadow: 0 4px 10px rgba(26, 158, 134, 0.1);
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
+
+.approachCard:hover .approachIcon { transform: rotate(-4deg) scale(1.08); }
 
 .approachCardSelected .approachIcon {
   color: #fff;
   background: #2ec4a7;
+  box-shadow: 0 7px 16px rgba(46, 196, 167, 0.3);
 }
 
 .approachLabel {
@@ -149,6 +174,20 @@
   flex-direction: column;
   gap: 0.45rem;
   min-width: 0;
+  padding: 0.85rem 0.9rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(247, 251, 251, 0.9), #fff);
+  animation: paramReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.paramField:nth-child(2) { animation-delay: 0.1s; }
+.paramField:nth-child(3) { animation-delay: 0.2s; }
+
+.paramField:hover {
+  border-color: #e0edeb;
+  box-shadow: 0 8px 20px rgba(15, 32, 64, 0.04);
 }
 
 .paramHeading {
@@ -214,6 +253,21 @@
   background: #f3f6f8;
   font-size: 0.9375rem;
   font-weight: 600;
+}
+
+@keyframes sectionReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes approachReveal {
+  from { opacity: 0; transform: translateY(9px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes paramReveal {
+  from { opacity: 0; transform: translateX(-7px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .actions {
@@ -288,4 +342,8 @@
   }
 }
 
-
+@media (prefers-reduced-motion: reduce) {
+  .card, .approachCard, .paramField { animation: none; }
+  .approachCard, .approachIcon { transition: none; }
+  .approachCard:hover { transform: none; }
+}

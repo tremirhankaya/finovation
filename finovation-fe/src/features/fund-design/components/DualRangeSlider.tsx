@@ -120,7 +120,9 @@ export default function DualRangeSlider({
       return
     }
     if (next < min || next > max) {
-      setLiveHint(`İzin verilen aralık: ${formatBound(min)} – ${formatBound(max)}`)
+      setLiveHint(
+        `İzin verilen aralık: ${formatBound(min)} – ${formatBound(max)}`,
+      )
       return
     }
     if (valueMax - next < gap) {
@@ -138,7 +140,9 @@ export default function DualRangeSlider({
       return
     }
     if (next < min || next > max) {
-      setLiveHint(`İzin verilen aralık: ${formatBound(min)} – ${formatBound(max)}`)
+      setLiveHint(
+        `İzin verilen aralık: ${formatBound(min)} – ${formatBound(max)}`,
+      )
       return
     }
     if (next - valueMin < gap) {
@@ -172,7 +176,11 @@ export default function DualRangeSlider({
       }
     }
 
-    if (nextValueMin < min || nextValueMax > max || nextValueMax - nextValueMin < gap) {
+    if (
+      nextValueMin < min ||
+      nextValueMax > max ||
+      nextValueMax - nextValueMin < gap
+    ) {
       setMinDraft(String(valueMin))
       pulseFeedback("min", "rejected")
       return
@@ -210,7 +218,11 @@ export default function DualRangeSlider({
       }
     }
 
-    if (nextValueMin < min || nextValueMax > max || nextValueMax - nextValueMin < gap) {
+    if (
+      nextValueMin < min ||
+      nextValueMax > max ||
+      nextValueMax - nextValueMin < gap
+    ) {
       setMaxDraft(String(valueMax))
       pulseFeedback("max", "rejected")
       return

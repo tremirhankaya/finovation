@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -74,7 +80,9 @@ describe("StartFundDraftPage", () => {
     renderPage()
 
     expect(await screen.findByText("Portföy Büyüklüğü")).toBeInTheDocument()
-    expect(screen.getByText("1.000.000 – 100.000.000.000 TL")).toBeInTheDocument()
+    expect(
+      screen.getByText("1.000.000 – 100.000.000.000 TL"),
+    ).toBeInTheDocument()
     expect(screen.getByText("Fon Pay Fiyatı")).toBeInTheDocument()
     expect(screen.getByText("1 – 1000 TL")).toBeInTheDocument()
   })
@@ -99,9 +107,7 @@ describe("StartFundDraftPage", () => {
     const unitInput = await screen.findByLabelText("Fon Pay Fiyatı *")
     fireEvent.change(unitInput, { target: { value: "99999" } })
 
-    const unitRule = within(panel)
-      .getByText("Fon Pay Fiyatı")
-      .closest("li")
+    const unitRule = within(panel).getByText("Fon Pay Fiyatı").closest("li")
     expect(unitRule).not.toBeNull()
     expect(unitRule!.querySelector("[class*='dotBad']")).not.toBeNull()
   })
@@ -115,9 +121,7 @@ describe("StartFundDraftPage", () => {
 
     await fillValidForm(user)
     expect(screen.getByText("TRY")).toBeInTheDocument()
-    expect(
-      screen.getByLabelText(/Portföy Büyüklüğü/),
-    ).toHaveValue("1.000.000")
+    expect(screen.getByLabelText(/Portföy Büyüklüğü/)).toHaveValue("1.000.000")
     await user.click(screen.getByRole("button", { name: "İleri →" }))
 
     await waitFor(() => {

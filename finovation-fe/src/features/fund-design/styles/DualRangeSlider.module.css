@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 0.55rem;
   width: 100%;
+  animation: sliderReveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .header {
@@ -40,7 +41,8 @@
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
-    background 0.15s ease;
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .valueFieldActive {
@@ -173,11 +175,14 @@
 }
 
 .track {
-  background: #e6eef2;
+  background: linear-gradient(90deg, #e7eef1, #f2f6f7);
+  box-shadow: inset 0 1px 1px rgba(15, 32, 64, 0.06);
 }
 
 .range {
-  background: #2ec4a7;
+  background: linear-gradient(90deg, #22b99c, #43cfb4);
+  box-shadow: 0 1px 5px rgba(46, 196, 167, 0.3);
+  transition: left 0.32s cubic-bezier(0.16, 1, 0.3, 1), right 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .input {
@@ -195,25 +200,31 @@
 
 .input::-webkit-slider-thumb {
   appearance: none;
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1.05rem;
+  height: 1.05rem;
   border: 2px solid #fff;
   border-radius: 999px;
   background: #2ec4a7;
-  box-shadow: 0 1px 4px rgba(15, 32, 64, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(26, 158, 134, 0.55),
+    0 2px 5px rgba(15, 32, 64, 0.16);
   pointer-events: auto;
   cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
 }
 
 .input::-moz-range-thumb {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1.05rem;
+  height: 1.05rem;
   border: 2px solid #fff;
   border-radius: 999px;
   background: #2ec4a7;
-  box-shadow: 0 1px 4px rgba(15, 32, 64, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(26, 158, 134, 0.55),
+    0 2px 5px rgba(15, 32, 64, 0.16);
   pointer-events: auto;
   cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
 }
 
 .input::-webkit-slider-runnable-track {
@@ -239,9 +250,37 @@
   opacity: 0.7;
 }
 
+.input:focus-visible::-webkit-slider-thumb,
+.input:active::-webkit-slider-thumb {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 1px rgba(26, 158, 134, 0.65),
+    0 2px 6px rgba(15, 32, 64, 0.18),
+    0 0 0 4px rgba(46, 196, 167, 0.18);
+}
+
+.input:focus-visible::-moz-range-thumb,
+.input:active::-moz-range-thumb {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 1px rgba(26, 158, 134, 0.65),
+    0 2px 6px rgba(15, 32, 64, 0.18),
+    0 0 0 4px rgba(46, 196, 167, 0.18);
+}
+
 .meta {
   display: flex;
   justify-content: space-between;
   color: #8a97a6;
   font-size: 0.6875rem;
+}
+
+@keyframes sliderReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root { animation: none; }
+  .range { transition: none; }
 }
