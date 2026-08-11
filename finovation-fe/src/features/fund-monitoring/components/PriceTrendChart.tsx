@@ -7,6 +7,7 @@ type PriceTrendChartProps = {
   points: PricePoint[]
   fundName?: string
   currency: string
+  valueMode?: "PRICE" | "INDEX"
 }
 
 type ChartPoint = PricePoint & {
@@ -102,6 +103,7 @@ export default function PriceTrendChart({
   points,
   fundName,
   currency,
+  valueMode = "PRICE",
 }: PriceTrendChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -150,7 +152,9 @@ export default function PriceTrendChart({
         role="img"
         aria-label={
           hasData
-            ? `${fundName ?? "Seçili fon"} pay fiyatı değişim grafiği`
+            ? `${fundName ?? "Seçili fon"} ${
+                valueMode === "PRICE" ? "pay fiyatı" : "backtest endeksi"
+              } değişim grafiği`
             : "Fon seçilmediği için pay fiyatı verisi bulunmuyor"
         }
         onPointerMove={handlePointerMove}
@@ -277,7 +281,9 @@ export default function PriceTrendChart({
                 {formatTooltipDate(activePoint.date)}
               </text>
               <text x="10" y="38" fill="#fff" fontSize="12" fontWeight="700">
-                Pay fiyatı: {formatSharePrice(activePoint.value, currency)}
+                {valueMode === "PRICE"
+                  ? `Pay fiyatı: ${formatSharePrice(activePoint.value, currency)}`
+                  : `Endeks: ${axisPriceFormatter.format(activePoint.value)}`}
               </text>
             </g>
           </g>

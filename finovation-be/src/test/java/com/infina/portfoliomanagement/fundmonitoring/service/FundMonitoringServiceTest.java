@@ -83,6 +83,8 @@ class FundMonitoringServiceTest {
     @Mock
     private FundValuationCalculator valuationCalculator;
     @Mock
+    private FundRebalanceService fundRebalanceService;
+    @Mock
     private FundBenchmarkService benchmarkService;
     @Mock
     private SimilarFundService similarFundService;
@@ -103,6 +105,7 @@ class FundMonitoringServiceTest {
                 valuationProviderRegistry,
                 classificationProviderRegistry,
                 valuationCalculator,
+                fundRebalanceService,
                 new FundMetricCalculator(),
                 benchmarkService,
                 similarFundService,
@@ -156,7 +159,14 @@ class FundMonitoringServiceTest {
                 eq(Map.of()),
                 any(LocalDate.class)
         )).thenReturn(valuation("100", "110"));
-        when(valuationCalculator.calculateAroundInception(
+        when(valuationCalculator.calculate(
+                eq(selectedFund),
+                eq(List.of()),
+                eq(List.of()),
+                eq(Map.of()),
+                any(LocalDate.class)
+        )).thenReturn(valuation("100", "130"));
+        when(valuationCalculator.calculate(
                 eq(otherFund),
                 eq(List.of()),
                 eq(List.of()),
@@ -183,6 +193,8 @@ class FundMonitoringServiceTest {
                 selectedFund.getPublicId()
         );
 
+        assertThat(response.currentSharePrice()).isEqualByComparingTo("110");
+        assertThat(response.backtestCurrentValue()).isEqualByComparingTo("1.3");
         assertThat(response.comparisonAssets())
                 .extracting(
                         FundComparisonAssetResponse::name,
@@ -191,7 +203,7 @@ class FundMonitoringServiceTest {
                         item -> item.returns().size()
                 )
                 .containsExactly(
-                        tuple("Atlas Fonu", new BigDecimal("10.0000"), true, 8),
+                        tuple("Atlas Fonu", new BigDecimal("30.0000"), true, 8),
                         tuple("Nova Fonu", new BigDecimal("20.0000"), true, 8)
                 );
     }

@@ -20,6 +20,7 @@ import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundSummaryResponse;
 import com.infina.portfoliomanagement.fundmonitoring.service.FundBenchmarkService.BenchmarkSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.model.AssetMonitoringProfile;
+import com.infina.portfoliomanagement.fundmonitoring.model.FundRebalanceSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
 import com.infina.portfoliomanagement.fundmonitoring.model.ValuedFundPosition;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,6 +66,7 @@ public class FundMonitoringService {
     private final AssetValuationProviderRegistry valuationProviderRegistry;
     private final AssetClassificationProviderRegistry classificationProviderRegistry;
     private final FundValuationCalculator valuationCalculator;
+    private final FundRebalanceService fundRebalanceService;
     private final FundMetricCalculator metricCalculator;
     private final FundBenchmarkService benchmarkService;
     private final SimilarFundService similarFundService;
@@ -108,15 +111,16 @@ public class FundMonitoringService {
         LocalDate today = financialTime.currentDate();
         FundMonitoringCalculation calculation = calculateFund(fund, today);
         List<Asset> assets = calculation.assets();
-        FundValuationResult valuation = calculation.valuation();
+        FundValuationResult trackingValuation = calculation.trackingValuation();
+        FundValuationResult backtestValuation = calculation.backtestValuation();
 
         Map<Long, AssetMonitoringProfile> profilesByAssetId =
                 classificationProviderRegistry.loadProfiles(assets);
 
-        List<FundPositionResponse> positions = positions(valuation, profilesByAssetId);
-        List<SectorAllocationResponse> sectors = sectors(valuation, profilesByAssetId);
+        List<FundPositionResponse> positions = positions(trackingValuation, profilesByAssetId);
+        List<SectorAllocationResponse> sectors = sectors(trackingValuation, profilesByAssetId);
 
-        BigDecimal liquidityRatio = valuation.positions().stream()
+        BigDecimal liquidityRatio = trackingValuation.positions().stream()
                 .filter(position -> requireProfile(
                         profilesByAssetId,
                         position.asset().getId()
@@ -124,46 +128,58 @@ public class FundMonitoringService {
                 .map(ValuedFundPosition::currentWeightPercentage)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(4, RoundingMode.HALF_UP);
-        List<FundValuationPoint> points = valuation.points();
-        FundValuationPoint latest = valuation.latestPoint();
-        BenchmarkSnapshot benchmarks = benchmarkService.load(latest.date());
+        List<FundValuationPoint> trackingPoints = trackingValuation.points();
+        FundValuationPoint trackingLatest = trackingValuation.latestPoint();
+        List<FundValuationPoint> backtestPoints = backtestValuation.points();
+        FundValuationPoint backtestLatest = backtestValuation.latestPoint();
+        List<FundValuationPoint> annualBacktestPoints = valuationPointsSince(
+                backtestPoints,
+                backtestLatest.date().minusYears(1)
+        );
+        BenchmarkSnapshot benchmarks = benchmarkService.load(backtestLatest.date());
         BigDecimal annualRiskFreeRate = riskFreeRateProvider.annualRate(
-                latest.date()
+                backtestLatest.date()
         );
 
         log.info(
                 "Fund monitoring snapshot calculated for fund {} at {} with {} valuation point(s)",
                 fund.getPublicId(),
-                latest.date(),
-                points.size()
+                trackingLatest.date(),
+                trackingPoints.size()
         );
 
         return new FundMonitoringResponse(
                 FundSummaryResponse.from(fund),
-                latest.date(),
+                trackingLatest.date(),
                 fund.getCurrencyCode(),
-                valuation.outstandingShares(),
-                latest.sharePrice(),
-                metricCalculator.dailyChange(points),
-                priceHistory(points, latest.date()),
+                trackingValuation.outstandingShares(),
+                trackingLatest.sharePrice(),
+                metricCalculator.dailyChange(trackingPoints),
+                priceHistory(trackingPoints, trackingLatest.date()),
+                normalizedBacktestHistory(backtestPoints, backtestLatest.date()),
+                normalizedBacktestValue(
+                        annualBacktestPoints.getFirst(),
+                        annualBacktestPoints.getLast()
+                ),
+                metricCalculator.dailyChange(backtestPoints),
                 benchmarks.benchmarkDefinition(),
                 metricCalculator.technicalIndicators(
-                        points,
+                        backtestPoints,
                         benchmarks.benchmarkValues(),
                         annualRiskFreeRate,
                         liquidityRatio
                 ),
-                metricCalculator.periodReturns(points, latest.date()),
+                metricCalculator.periodReturns(backtestPoints, backtestLatest.date()),
                 positions,
                 sectors,
                 comparisonAssets(
                         fund,
-                        valuation,
+                        backtestValuation,
                         actor.getId(),
                         today,
                         similarFundService.comparisonAssets(
                                 fund.getFundType(),
-                                latest.date()
+                                backtestLatest.date()
                         ),
                         benchmarks.comparisonAssets()
                 )
@@ -236,28 +252,75 @@ public class FundMonitoringService {
         FundPortfolio workingPortfolio = requireWorkingPortfolio(fund);
         List<FundPosition> portfolioPositions = fundPositionRepository
                 .findAllByFundPortfolioIdOrderByWeightDesc(workingPortfolio.getId());
-        List<Long> assetIds = portfolioPositions.stream()
-                .map(FundPosition::getAssetId)
-                .toList();
-        List<Asset> assets = assetRepository.findAllById(assetIds);
-        assertAllAssetsFound(assets, new HashSet<>(assetIds).size());
-
         LocalDate historyStart = today.minusYears(1)
                 .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS);
+        List<FundRebalanceSnapshot> snapshots = relevantSnapshots(
+                fundRebalanceService.loadSnapshots(fund, today.atTime(LocalTime.MAX)),
+                historyStart
+        );
+        List<Long> assetIds = portfolioPositions.stream()
+                .map(FundPosition::getAssetId)
+                .distinct()
+                .collect(Collectors.toCollection(ArrayList::new));
+        snapshots.stream()
+                .flatMap(snapshot -> snapshot.positions().stream())
+                .map(FundRebalanceSnapshot.Position::assetId)
+                .filter(assetId -> !assetIds.contains(assetId))
+                .forEach(assetIds::add);
+        List<Asset> assets = assetRepository.findAllById(assetIds);
+        assertAllAssetsFound(assets, assetIds.size());
+
         Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
                 valuationProviderRegistry.loadUnitValues(
                         assets,
                         historyStart,
                         today
                 );
-        FundValuationResult valuation = valuationCalculator.calculateAroundInception(
+        FundValuationResult trackingValuation;
+        if (snapshots.isEmpty()) {
+            trackingValuation = valuationCalculator.calculateAroundInception(
+                    fund,
+                    portfolioPositions,
+                    assets,
+                    unitValuesByAsset,
+                    historyStart
+            );
+        } else {
+            trackingValuation = valuationCalculator.calculateWithRebalances(
+                    fund,
+                    snapshots,
+                    assets,
+                    unitValuesByAsset,
+                    historyStart
+            );
+        }
+        FundValuationResult backtestValuation = valuationCalculator.calculate(
                 fund,
                 portfolioPositions,
                 assets,
                 unitValuesByAsset,
                 historyStart
         );
-        return new FundMonitoringCalculation(valuation, assets);
+        return new FundMonitoringCalculation(trackingValuation, backtestValuation, assets);
+    }
+
+    private List<FundRebalanceSnapshot> relevantSnapshots(
+            List<FundRebalanceSnapshot> snapshots,
+            LocalDate historyStart
+    ) {
+        if (snapshots.isEmpty()) {
+            return snapshots;
+        }
+
+        List<FundRebalanceSnapshot> relevant = new ArrayList<>();
+        snapshots.stream()
+                .filter(snapshot -> snapshot.effectiveAt().toLocalDate().isBefore(historyStart))
+                .reduce((first, second) -> second)
+                .ifPresent(relevant::add);
+        snapshots.stream()
+                .filter(snapshot -> !snapshot.effectiveAt().toLocalDate().isBefore(historyStart))
+                .forEach(relevant::add);
+        return List.copyOf(relevant);
     }
 
     @Transactional(readOnly = true)
@@ -337,7 +400,7 @@ public class FundMonitoringService {
 
             FundValuationResult valuation = null;
             try {
-                valuation = calculateFund(fund, today).valuation();
+                valuation = calculateBacktest(fund, today);
             } catch (BaseException exception) {
                 if (exception.getErrorCode()
                         != ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE) {
@@ -354,6 +417,33 @@ public class FundMonitoringService {
         assets.addAll(similarFundAssets);
 
         return List.copyOf(assets);
+    }
+
+    private FundValuationResult calculateBacktest(
+            FundDraft fund,
+            LocalDate today
+    ) {
+        FundPortfolio workingPortfolio = requireWorkingPortfolio(fund);
+        List<FundPosition> positions = fundPositionRepository
+                .findAllByFundPortfolioIdOrderByWeightDesc(workingPortfolio.getId());
+        List<Long> assetIds = positions.stream()
+                .map(FundPosition::getAssetId)
+                .distinct()
+                .toList();
+        List<Asset> assets = assetRepository.findAllById(assetIds);
+        assertAllAssetsFound(assets, assetIds.size());
+
+        LocalDate historyStart = today.minusYears(1)
+                .minusDays(ANNUAL_HISTORY_LOOKBACK_BUFFER_DAYS);
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> valuesByAsset =
+                valuationProviderRegistry.loadUnitValues(assets, historyStart, today);
+        return valuationCalculator.calculate(
+                fund,
+                positions,
+                assets,
+                valuesByAsset,
+                historyStart
+        );
     }
 
     private FundComparisonAssetResponse comparisonAsset(
@@ -458,6 +548,53 @@ public class FundMonitoringService {
         return history;
     }
 
+    private Map<String, List<PricePointResponse>> normalizedBacktestHistory(
+            List<FundValuationPoint> points,
+            LocalDate asOfDate
+    ) {
+        Map<String, List<PricePointResponse>> history = new LinkedHashMap<>();
+        history.put("1W", normalizedPointsSince(points, asOfDate.minusWeeks(1)));
+        history.put("1M", normalizedPointsSince(points, asOfDate.minusMonths(1)));
+        history.put("3M", normalizedPointsSince(points, asOfDate.minusMonths(3)));
+        history.put("6M", normalizedPointsSince(points, asOfDate.minusMonths(6)));
+        history.put("1Y", normalizedPointsSince(points, asOfDate.minusYears(1)));
+        return history;
+    }
+
+    private List<PricePointResponse> normalizedPointsSince(
+            List<FundValuationPoint> points,
+            LocalDate startDate
+    ) {
+        List<FundValuationPoint> visiblePoints = valuationPointsSince(points, startDate);
+        FundValuationPoint base = visiblePoints.getFirst();
+        return visiblePoints.stream()
+                .map(point -> new PricePointResponse(
+                        point.date(),
+                        normalizedBacktestValue(base, point)
+                ))
+                .toList();
+    }
+
+    private List<FundValuationPoint> valuationPointsSince(
+            List<FundValuationPoint> points,
+            LocalDate startDate
+    ) {
+        return points.stream()
+                .filter(point -> !point.date().isBefore(startDate))
+                .toList();
+    }
+
+    private BigDecimal normalizedBacktestValue(
+            FundValuationPoint base,
+            FundValuationPoint point
+    ) {
+        return point.sharePrice().divide(
+                base.sharePrice(),
+                8,
+                RoundingMode.HALF_UP
+        );
+    }
+
     private List<PricePointResponse> pointsSince(
             List<FundValuationPoint> points,
             LocalDate startDate
@@ -494,7 +631,8 @@ public class FundMonitoringService {
     }
 
     private record FundMonitoringCalculation(
-            FundValuationResult valuation,
+            FundValuationResult trackingValuation,
+            FundValuationResult backtestValuation,
             List<Asset> assets
     ) {
     }
