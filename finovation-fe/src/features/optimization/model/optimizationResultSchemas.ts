@@ -16,6 +16,7 @@ export const optimizationResultAssetSchema = z.object({
   actionType: resultActionTypeSchema,
   manuallyOverridden: z.boolean(),
   rationale: z.string().nullable(),
+  userLocked: z.boolean(),
 })
 
 export const optimizationResultMetricSchema = z.object({

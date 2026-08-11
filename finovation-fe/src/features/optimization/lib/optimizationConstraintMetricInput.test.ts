@@ -16,6 +16,7 @@ function asset(overrides: Partial<OptimizationResultAsset>): OptimizationResultA
     actionType: "KEEP",
     manuallyOverridden: false,
     rationale: null,
+    userLocked: false,
     ...overrides,
   }
 }

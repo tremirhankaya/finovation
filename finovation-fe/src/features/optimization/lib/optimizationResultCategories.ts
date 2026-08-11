@@ -31,7 +31,7 @@ function getRoundedDelta(asset: OptimizationResultAsset): number {
 }
 
 function isLocked(asset: OptimizationResultAsset): boolean {
-  return asset.actionType === "KEEP"
+  return asset.userLocked
 }
 
 export function matchesCategory(
