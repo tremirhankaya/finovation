@@ -40,6 +40,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Service
@@ -136,7 +138,25 @@ public class FundMonitoringService {
                 backtestPoints,
                 backtestLatest.date().minusYears(1)
         );
-        BenchmarkSnapshot benchmarks = benchmarkService.load(backtestLatest.date());
+        BenchmarkSnapshot benchmarks;
+        List<FundComparisonAssetResponse> similarFundAssets;
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            CompletableFuture<BenchmarkSnapshot> benchmarkFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> benchmarkService.load(backtestLatest.date()),
+                            executor
+                    );
+            CompletableFuture<List<FundComparisonAssetResponse>> similarFundsFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> similarFundService.comparisonAssets(
+                                    fund.getFundType(),
+                                    backtestLatest.date()
+                            ),
+                            executor
+                    );
+            benchmarks = benchmarkFuture.join();
+            similarFundAssets = similarFundsFuture.join();
+        }
         BigDecimal annualRiskFreeRate = riskFreeRateProvider.annualRate(
                 backtestLatest.date()
         );
@@ -174,10 +194,7 @@ public class FundMonitoringService {
                         backtestValuation,
                         actor.getId(),
                         today,
-                        similarFundService.comparisonAssets(
-                                fund.getFundType(),
-                                backtestLatest.date()
-                        ),
+                        similarFundAssets,
                         benchmarks.comparisonAssets()
                 )
         );

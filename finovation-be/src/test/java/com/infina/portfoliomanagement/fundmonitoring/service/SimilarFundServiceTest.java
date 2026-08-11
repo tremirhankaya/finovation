@@ -12,14 +12,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,16 +51,23 @@ class SimilarFundServiceTest {
 
     @Mock
     private SimilarFundApi similarFundApi;
+    @Mock
+    private Clock clock;
 
     private SimilarFundService service;
+    private AtomicReference<Instant> currentTime;
 
     @BeforeEach
     void setUp() {
-        service = new SimilarFundService(similarFundApi);
+        currentTime = new AtomicReference<>(
+                Instant.parse("2026-08-11T08:00:00Z")
+        );
+        when(clock.instant()).thenAnswer(invocation -> currentTime.get());
+        service = new SimilarFundService(similarFundApi, clock);
     }
 
     @Test
-    void comparisonAssets_mapsInfinaFundPeriodsToFrontendPeriods() {
+    void comparisonAssets_mapsPeriodsAndRefreshesCacheAfterThirtyMinutes() {
         FundProfileRecord profile = new FundProfileRecord(
                 List.of(
                         "P1W",
@@ -104,6 +117,19 @@ class SimilarFundServiceTest {
                                 8
                         )
                 );
+
+        assertThat(service.comparisonAssets(
+                FundType.EQUITY_INTENSIVE,
+                AS_OF_DATE
+        )).isSameAs(assets);
+        verify(similarFundApi).fetchComparisons(PEER_CODES, AS_OF_DATE);
+
+        currentTime.updateAndGet(time -> time.plus(Duration.ofMinutes(31)));
+        assertThat(service.comparisonAssets(
+                FundType.EQUITY_INTENSIVE,
+                AS_OF_DATE
+        )).isNotSameAs(assets);
+        verify(similarFundApi, times(2)).fetchComparisons(PEER_CODES, AS_OF_DATE);
     }
 
     @Test
