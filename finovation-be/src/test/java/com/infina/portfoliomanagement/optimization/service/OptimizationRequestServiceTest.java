@@ -891,6 +891,17 @@ class OptimizationRequestServiceTest {
         when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
         when(optimizationRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
 
+        AssetPreference keepAkbnk = AssetPreference.builder()
+                .id(1L)
+                .request(request)
+                .assetCode("AKBNK.E")
+                .preferenceType(AssetPreferenceType.KEEP)
+                .active(true)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+        when(assetPreferenceRepository.findAllByRequestId(REQUEST_ID)).thenReturn(List.of(keepAkbnk));
+
         OptimizationResult result = OptimizationResult.builder()
                 .id(555L)
                 .request(request)
@@ -942,6 +953,10 @@ class OptimizationRequestServiceTest {
                 .build();
         when(assetRepository.findAllByAssetCodeIn(List.of("AKBNK.E", "TPP1G")))
                 .thenReturn(List.of(akbnkAsset, tppAsset));
+        when(assetRepository.findAllByAssetCodeIn(List.of("AKBNK.E")))
+                .thenReturn(List.of(akbnkAsset));
+        when(assetRepository.findAllByAssetTypeAndActiveTrueOrderByAssetCodeAsc(AssetType.TPP))
+                .thenReturn(List.of(tppAsset));
 
         Sector bankingSector = Sector.builder().id(1L).sectorCode("S1").name("Bankacılık").build();
         EquityDetail akbnkDetail = EquityDetail.builder()
@@ -979,6 +994,7 @@ class OptimizationRequestServiceTest {
         assertThat(akbnkResponse.finalWeight()).isEqualByComparingTo("40");
         assertThat(akbnkResponse.changeAmount()).isEqualByComparingTo("-5");
         assertThat(akbnkResponse.manuallyOverridden()).isTrue();
+        assertThat(akbnkResponse.userLocked()).isTrue();
 
         OptimizationResultAssetResponse tppResponse = response.assets().stream()
                 .filter(asset -> asset.assetCode().equals("TPP1G"))
@@ -987,6 +1003,7 @@ class OptimizationRequestServiceTest {
         assertThat(tppResponse.name()).isEqualTo("TPP1G");
         assertThat(tppResponse.sectorName()).isNull();
         assertThat(tppResponse.finalWeight()).isNull();
+        assertThat(tppResponse.userLocked()).isFalse();
 
         assertThat(response.metrics()).hasSize(1);
         assertThat(response.metrics().getFirst().key()).isEqualTo("BETA");

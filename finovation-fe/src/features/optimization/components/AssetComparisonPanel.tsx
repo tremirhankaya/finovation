@@ -143,24 +143,28 @@ export default function AssetComparisonPanel({
         }
       })
 
-    if (!sortColumn) return filtered
+    const sorted = sortColumn
+      ? [...filtered].sort((a, b) => {
+          const directionFactor = sortDirection === "asc" ? 1 : -1
+          const aValue =
+            sortColumn === "currentWeight"
+              ? a.asset.currentWeight
+              : sortColumn === "finalWeight"
+                ? a.finalWeight
+                : a.delta
+          const bValue =
+            sortColumn === "currentWeight"
+              ? b.asset.currentWeight
+              : sortColumn === "finalWeight"
+                ? b.finalWeight
+                : b.delta
+          return (aValue - bValue) * directionFactor
+        })
+      : filtered
 
-    const directionFactor = sortDirection === "asc" ? 1 : -1
-    return [...filtered].sort((a, b) => {
-      const aValue =
-        sortColumn === "currentWeight"
-          ? a.asset.currentWeight
-          : sortColumn === "finalWeight"
-            ? a.finalWeight
-            : a.delta
-      const bValue =
-        sortColumn === "currentWeight"
-          ? b.asset.currentWeight
-          : sortColumn === "finalWeight"
-            ? b.finalWeight
-            : b.delta
-      return (aValue - bValue) * directionFactor
-    })
+    const equities = sorted.filter((row) => row.asset.assetType !== "TPP")
+    const tpp = sorted.filter((row) => row.asset.assetType === "TPP")
+    return [...equities, ...tpp]
   }, [assets, activeCategory, sectorFilter, sortColumn, sortDirection])
 
   const handleSort = (column: SortColumn) => {
@@ -259,7 +263,7 @@ export default function AssetComparisonPanel({
           <table className={styles.comparisonTable}>
             <thead>
               <tr>
-                <th>Hisse</th>
+                <th>Varlık</th>
                 <th>
                   <select
                     className={styles.sectorHeaderFilter}
@@ -314,7 +318,7 @@ export default function AssetComparisonPanel({
                     <td>
                       <span className={styles.assetName}>
                         {asset.assetCode}
-                        {asset.actionType === "KEEP" && (
+                        {asset.userLocked && (
                           <span className={styles.assetLockedBadge}>SABİT</span>
                         )}
                       </span>

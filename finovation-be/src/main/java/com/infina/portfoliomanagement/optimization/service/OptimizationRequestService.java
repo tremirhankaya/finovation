@@ -290,8 +290,14 @@ public class OptimizationRequestService {
                         (left, right) -> left
                 ));
 
+        Set<String> userLockedAssetCodes = new HashSet<>(
+                resolveAssetCodesByPreferenceType(request, AssetPreferenceType.KEEP)
+        );
+
         List<OptimizationResultAssetResponse> assets = resultAssets.stream()
-                .map(resultAsset -> toResultAssetResponse(resultAsset, assetsByCode, detailByAssetId))
+                .map(resultAsset -> toResultAssetResponse(
+                        resultAsset, assetsByCode, detailByAssetId, userLockedAssetCodes
+                ))
                 .toList();
 
         List<OptimizationResultMetricResponse> metrics = optimizationResultMetricRepository
@@ -310,7 +316,8 @@ public class OptimizationRequestService {
     private OptimizationResultAssetResponse toResultAssetResponse(
             OptimizationResultAsset resultAsset,
             Map<String, Asset> assetsByCode,
-            Map<Long, EquityDetail> detailByAssetId
+            Map<Long, EquityDetail> detailByAssetId,
+            Set<String> userLockedAssetCodes
     ) {
         Asset asset = assetsByCode.get(resultAsset.getAssetCode());
         EquityDetail detail = asset != null ? detailByAssetId.get(asset.getId()) : null;
@@ -327,7 +334,8 @@ public class OptimizationRequestService {
                 toPercentage(resultAsset.getChangeAmount()),
                 resultAsset.getActionType(),
                 resultAsset.isManuallyOverridden(),
-                resultAsset.getRationale()
+                resultAsset.getRationale(),
+                userLockedAssetCodes.contains(resultAsset.getAssetCode())
         );
     }
 
@@ -906,6 +914,10 @@ public class OptimizationRequestService {
                 .filter(AssetPreference::isActive)
                 .filter(preference -> preference.getPreferenceType() == preferenceType)
                 .toList();
+
+        if (preferences.isEmpty()) {
+            return List.of();
+        }
 
         Map<String, String> canonicalByRaw = resolveCanonicalAssetCodes(
                 preferences.stream().map(AssetPreference::getAssetCode).toList()

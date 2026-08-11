@@ -20,6 +20,7 @@ function asset(
     actionType: "KEEP",
     manuallyOverridden: false,
     rationale: null,
+    userLocked: false,
     ...overrides,
   }
 }

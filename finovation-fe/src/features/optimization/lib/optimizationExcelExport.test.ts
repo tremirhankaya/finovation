@@ -44,6 +44,7 @@ const ASSETS: OptimizationResultAsset[] = [
     actionType: "DECREASE",
     manuallyOverridden: false,
     rationale: "Sektör yoğunlaşmasını azaltmak için düşürüldü.",
+    userLocked: false,
   },
   {
     assetCode: "YKBNK",
@@ -57,6 +58,7 @@ const ASSETS: OptimizationResultAsset[] = [
     actionType: "INCREASE",
     manuallyOverridden: false,
     rationale: null,
+    userLocked: false,
   },
   {
     assetCode: "TPP1G",
@@ -70,6 +72,7 @@ const ASSETS: OptimizationResultAsset[] = [
     actionType: "INCREASE",
     manuallyOverridden: false,
     rationale: null,
+    userLocked: false,
   },
 ]
 
@@ -155,6 +158,7 @@ describe("buildOptimizationResultExcel", () => {
         actionType: "DECREASE",
         manuallyOverridden: true,
         rationale: null,
+        userLocked: false,
       },
     ]
 
@@ -187,6 +191,7 @@ describe("buildOptimizationResultExcel", () => {
         actionType: "DECREASE",
         manuallyOverridden: true,
         rationale: null,
+        userLocked: false,
       },
     ]
 
@@ -371,6 +376,7 @@ describe("buildOptimizationResultExcel", () => {
         actionType: "INCREASE",
         manuallyOverridden: false,
         rationale: null,
+        userLocked: false,
       },
     ]
 

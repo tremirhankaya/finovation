@@ -9,6 +9,70 @@ import { useOptimizationResultReview } from "@/features/optimization/hooks/useOp
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
 
+const ICON_PROPS = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.75,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+}
+
+function LayersIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <polygon points="12 3 3 8 12 13 21 8 12 3" />
+      <polyline points="3 16 12 21 21 16" />
+      <polyline points="3 12 12 17 21 12" />
+    </svg>
+  )
+}
+
+function SparklesIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <path d="M11 3l1.6 4.8L17 9l-4.4 1.5L11 15l-1.6-4.5L5 9l4.4-1.2L11 3z" />
+      <path d="M18.5 14.5l.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9.9-2.5z" />
+    </svg>
+  )
+}
+
+function PencilIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  )
+}
+
+function BadgeCheckIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.2l2.2 2.2 4.8-4.8" />
+    </svg>
+  )
+}
+
+function UserIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4.2 3.8-6.5 8-6.5s8 2.3 8 6.5" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg {...ICON_PROPS} aria-hidden="true">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.2" />
+      <path d="M16 3.2v4M8 3.2v4M3.5 10h17" />
+    </svg>
+  )
+}
+
 function equitySnapshot(
   assets: OptimizationResultAsset[],
   pickWeight: (asset: OptimizationResultAsset) => number,
@@ -22,11 +86,8 @@ function equitySnapshot(
   }
 }
 
-function formatDateTime(date: Date): string {
+function formatTime(date: Date): string {
   return date.toLocaleString("tr-TR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   })
@@ -133,7 +194,7 @@ export default function OptimizationResultPage() {
             <h1>Optimizasyon Reddedildi</h1>
             <p className={styles.subtitle}>
               {resolvedFundName}
-              {decidedAt ? ` · ${formatDateTime(decidedAt)}` : ""}
+              {decidedAt ? ` · ${formatTime(decidedAt)}` : ""}
             </p>
             <p className={styles.successLead} role="status">
               Optimizasyon sonucu reddedildi, fon üzerinde bir değişiklik
@@ -148,6 +209,11 @@ export default function OptimizationResultPage() {
             </h2>
             <div className={styles.metricCardGrid}>
               <div className={styles.metricCard}>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconNavy}`}
+                >
+                  <UserIcon />
+                </span>
                 <span className={styles.metricCardLabel}>
                   İşlemi yapan kullanıcı
                 </span>
@@ -159,16 +225,26 @@ export default function OptimizationResultPage() {
                 </p>
               </div>
               <div className={styles.metricCard}>
-                <span className={styles.metricCardLabel}>Tarih ve saat</span>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconSlate}`}
+                >
+                  <CalendarIcon />
+                </span>
+                <span className={styles.metricCardLabel}>Saat</span>
                 <strong className={styles.metricCardValue}>
-                  {decidedAt ? formatDateTime(decidedAt) : "—"}
+                  {decidedAt ? formatTime(decidedAt) : "—"}
                 </strong>
                 <p className={styles.metricCardDescription}>
-                  Reddin gerçekleştiği tarih ve saattir.
+                  Reddin gerçekleştiği saattir.
                 </p>
               </div>
               {review.request?.rejectionReason && (
                 <div className={styles.metricCard}>
+                  <span
+                    className={`${styles.metricCardIcon} ${styles.metricCardIconAmber}`}
+                  >
+                    <PencilIcon />
+                  </span>
                   <span className={styles.metricCardLabel}>
                     Red gerekçesi
                   </span>
@@ -228,7 +304,7 @@ export default function OptimizationResultPage() {
             <h1>Optimizasyon Tamamlandı</h1>
             <p className={styles.subtitle}>
               {resolvedFundName}
-              {decidedAt ? ` · ${formatDateTime(decidedAt)}` : ""}
+              {decidedAt ? ` · ${formatTime(decidedAt)}` : ""}
             </p>
             <p className={styles.successLead} role="status">
               Fon portföyünüz başarıyla güncellendi. Onaylanan optimizasyon
@@ -243,6 +319,11 @@ export default function OptimizationResultPage() {
             </h2>
             <div className={styles.metricCardGrid}>
               <div className={styles.metricCard}>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconSlate}`}
+                >
+                  <LayersIcon />
+                </span>
                 <span className={styles.metricCardLabel}>
                   Optimizasyon öncesi ağırlıklar
                 </span>
@@ -254,6 +335,11 @@ export default function OptimizationResultPage() {
                 </p>
               </div>
               <div className={styles.metricCard}>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconIndigo}`}
+                >
+                  <SparklesIcon />
+                </span>
                 <span className={styles.metricCardLabel}>
                   Modelin önerdiği ağırlıklar
                 </span>
@@ -266,6 +352,11 @@ export default function OptimizationResultPage() {
                 </p>
               </div>
               <div className={styles.metricCard}>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconAmber}`}
+                >
+                  <PencilIcon />
+                </span>
                 <span className={styles.metricCardLabel}>
                   Manuel değişiklik
                 </span>
@@ -280,6 +371,11 @@ export default function OptimizationResultPage() {
                 </p>
               </div>
               <div className={styles.metricCard}>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconTeal}`}
+                >
+                  <BadgeCheckIcon />
+                </span>
                 <span className={styles.metricCardLabel}>
                   Onaylanan nihai ağırlıklar
                 </span>
@@ -291,6 +387,11 @@ export default function OptimizationResultPage() {
                 </p>
               </div>
               <div className={styles.metricCard}>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconNavy}`}
+                >
+                  <UserIcon />
+                </span>
                 <span className={styles.metricCardLabel}>
                   İşlemi yapan kullanıcı
                 </span>
@@ -302,12 +403,17 @@ export default function OptimizationResultPage() {
                 </p>
               </div>
               <div className={styles.metricCard}>
-                <span className={styles.metricCardLabel}>Tarih ve saat</span>
+                <span
+                  className={`${styles.metricCardIcon} ${styles.metricCardIconSlate}`}
+                >
+                  <CalendarIcon />
+                </span>
+                <span className={styles.metricCardLabel}>Saat</span>
                 <strong className={styles.metricCardValue}>
-                  {decidedAt ? formatDateTime(decidedAt) : "—"}
+                  {decidedAt ? formatTime(decidedAt) : "—"}
                 </strong>
                 <p className={styles.metricCardDescription}>
-                  Onayın gerçekleştiği tarih ve saattir.
+                  Onayın gerçekleştiği saattir.
                 </p>
               </div>
             </div>

@@ -16,6 +16,7 @@ public record OptimizationResultAssetResponse(
         BigDecimal changeAmount,
         ResultActionType actionType,
         boolean manuallyOverridden,
-        String rationale
+        String rationale,
+        boolean userLocked
 ) {
 }
