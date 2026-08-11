@@ -15,7 +15,7 @@ public record FundModelAssetDto(
 
         @JsonProperty("weight")
         @NotNull
-        @DecimalMin("0")
+        @DecimalMin(value = "0", inclusive = false)
         @DecimalMax("100")
         BigDecimal weight,
 

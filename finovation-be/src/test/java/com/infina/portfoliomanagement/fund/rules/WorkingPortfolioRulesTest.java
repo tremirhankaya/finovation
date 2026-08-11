@@ -82,6 +82,20 @@ class WorkingPortfolioRulesTest {
     }
 
     @Test
+    void zeroWeightEquities_doNotCountTowardsMinimumStockCount() {
+        List<FundPositionResponse> positions = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            positions.add(equity("STOCK" + i + ".E", "10", "SEKTOR" + i));
+        }
+        positions.add(equity("ZERO.E", "0", "SEKTOR0"));
+        positions.add(tpp("10"));
+
+        assertThat(WorkingPortfolioRules.validate(positions, LIMITS))
+                .extracting(RuleViolation::code)
+                .contains(ConstraintCode.MIN_STOCK_COUNT);
+    }
+
+    @Test
     void equityBelowMinimum_reportsEquityMin() {
         List<FundPositionResponse> positions = new ArrayList<>();
         for (int i = 0; i < 15; i++) {

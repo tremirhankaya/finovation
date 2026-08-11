@@ -492,7 +492,7 @@ export default function FundDesignApprovalPage() {
           <div className={styles.card}>
             <FundLoader message="Özet hazırlanıyor..." />
           </div>
-        ) : (
+        ) : approvalInit ? (
           <>
             {/* TASLAK OZETI - horizontal summary */}
             <div className={[styles.card, styles.summaryCard].join(" ")}>
@@ -866,6 +866,12 @@ export default function FundDesignApprovalPage() {
               </Button>
             </div>
           </>
+        ) : (
+          <div className={styles.card}>
+            <FormAlert>
+              Onay özeti yüklenemedi. Lütfen sayfayı yenileyip tekrar deneyin.
+            </FormAlert>
+          </div>
         )}
       </section>
     </FundDesignLayout>
