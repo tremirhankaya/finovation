@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class SimilarFundService {
 
+    private static final Duration CACHE_TTL = Duration.ofMinutes(30);
     private static final String FUND_BENCHMARK_TYPE = "Fund";
     private static final Map<FundType, List<String>> PEER_CODES = peerCodes();
     private static final Map<String, ComparisonPeriod> SOURCE_PERIODS = Map.of(
@@ -57,7 +61,8 @@ public class SimilarFundService {
     );
 
     private final SimilarFundApi similarFundApi;
-    private final Map<ComparisonCacheKey, List<FundComparisonAssetResponse>> cache =
+    private final Clock clock;
+    private final Map<ComparisonCacheKey, CachedComparison> cache =
             new ConcurrentHashMap<>();
     private final Object cacheMonitor = new Object();
 
@@ -71,15 +76,17 @@ public class SimilarFundService {
         }
 
         ComparisonCacheKey cacheKey = new ComparisonCacheKey(fundType, asOfDate);
-        List<FundComparisonAssetResponse> cached = cache.get(cacheKey);
-        if (cached != null) {
-            return cached;
+        Instant now = clock.instant();
+        CachedComparison cached = cache.get(cacheKey);
+        if (isCacheValid(cached, now)) {
+            return cached.assets();
         }
 
         synchronized (cacheMonitor) {
+            now = clock.instant();
             cached = cache.get(cacheKey);
-            if (cached != null) {
-                return cached;
+            if (isCacheValid(cached, now)) {
+                return cached.assets();
             }
 
             try {
@@ -89,7 +96,13 @@ public class SimilarFundService {
                         .orElseGet(List::of);
                 if (!assets.isEmpty()) {
                     cache.keySet().removeIf(key -> !key.asOfDate().equals(asOfDate));
-                    cache.put(cacheKey, assets);
+                    cache.put(
+                            cacheKey,
+                            new CachedComparison(
+                                    assets,
+                                    clock.instant().plus(CACHE_TTL)
+                            )
+                    );
                 }
                 return assets;
             } catch (BaseException | RestClientException
@@ -101,6 +114,10 @@ public class SimilarFundService {
                 return List.of();
             }
         }
+    }
+
+    private boolean isCacheValid(CachedComparison cached, Instant now) {
+        return cached != null && now.isBefore(cached.expiresAt());
     }
 
     private List<FundComparisonAssetResponse> comparisonAssets(
@@ -194,5 +211,11 @@ public class SimilarFundService {
     }
 
     private record ComparisonCacheKey(FundType fundType, LocalDate asOfDate) {
+    }
+
+    private record CachedComparison(
+            List<FundComparisonAssetResponse> assets,
+            Instant expiresAt
+    ) {
     }
 }

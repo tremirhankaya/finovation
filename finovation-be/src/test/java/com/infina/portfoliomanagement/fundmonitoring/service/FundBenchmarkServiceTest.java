@@ -12,17 +12,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,19 +44,27 @@ class FundBenchmarkServiceTest {
 
     @Mock
     private BenchmarkPriceApi benchmarkPriceApi;
+    @Mock
+    private Clock clock;
 
     private FundBenchmarkService service;
+    private AtomicReference<Instant> currentTime;
 
     @BeforeEach
     void setUp() {
+        currentTime = new AtomicReference<>(
+                Instant.parse("2026-08-11T08:00:00Z")
+        );
+        when(clock.instant()).thenAnswer(invocation -> currentTime.get());
         service = new FundBenchmarkService(
                 benchmarkPriceApi,
-                new FundMetricCalculator()
+                new FundMetricCalculator(),
+                clock
         );
     }
 
     @Test
-    void comparisonAssets_buildsNinetyTenCompositeBenchmark() {
+    void load_buildsCompositeBenchmarkAndRefreshesCacheAfterThirtyMinutes() {
         when(benchmarkPriceApi.fetchIndexRange(
                 "XU030",
                 FROM_DATE,
@@ -187,6 +200,14 @@ class FundBenchmarkServiceTest {
 
         assertThat(service.load(AS_OF_DATE)).isSameAs(snapshot);
         verify(benchmarkPriceApi).fetchIndexRange(
+                "XU030",
+                FROM_DATE,
+                AS_OF_DATE
+        );
+
+        currentTime.updateAndGet(time -> time.plus(Duration.ofMinutes(31)));
+        assertThat(service.load(AS_OF_DATE)).isNotSameAs(snapshot);
+        verify(benchmarkPriceApi, times(2)).fetchIndexRange(
                 "XU030",
                 FROM_DATE,
                 AS_OF_DATE
