@@ -17,6 +17,9 @@ import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -46,30 +49,48 @@ public class FundBenchmarkService {
     private static final BigDecimal BIST_100_WEIGHT = new BigDecimal("0.90");
     private static final BigDecimal REPO_GROSS_WEIGHT = new BigDecimal("0.10");
     private static final BigDecimal COMPOSITE_BASE_VALUE = new BigDecimal("100");
+    private static final Duration CACHE_TTL = Duration.ofMinutes(30);
 
     private final BenchmarkPriceApi benchmarkPriceApi;
     private final FundMetricCalculator metricCalculator;
+    private final Clock clock;
     private final Object cacheMonitor = new Object();
     private volatile CachedBenchmark cachedBenchmark;
 
     public BenchmarkSnapshot load(LocalDate asOfDate) {
+        Instant now = clock.instant();
         CachedBenchmark cached = cachedBenchmark;
-        if (cached != null && cached.asOfDate().equals(asOfDate)) {
+        if (isCacheValid(cached, asOfDate, now)) {
             return cached.snapshot();
         }
 
         synchronized (cacheMonitor) {
+            now = clock.instant();
             cached = cachedBenchmark;
-            if (cached != null && cached.asOfDate().equals(asOfDate)) {
+            if (isCacheValid(cached, asOfDate, now)) {
                 return cached.snapshot();
             }
 
             BenchmarkSnapshot snapshot = loadFresh(asOfDate);
             if (!snapshot.benchmarkValues().isEmpty()) {
-                cachedBenchmark = new CachedBenchmark(asOfDate, snapshot);
+                cachedBenchmark = new CachedBenchmark(
+                        asOfDate,
+                        snapshot,
+                        clock.instant().plus(CACHE_TTL)
+                );
             }
             return snapshot;
         }
+    }
+
+    private boolean isCacheValid(
+            CachedBenchmark cached,
+            LocalDate asOfDate,
+            Instant now
+    ) {
+        return cached != null
+                && cached.asOfDate().equals(asOfDate)
+                && now.isBefore(cached.expiresAt());
     }
 
     private BenchmarkSnapshot loadFresh(LocalDate asOfDate) {
@@ -409,7 +430,8 @@ public class FundBenchmarkService {
 
     private record CachedBenchmark(
             LocalDate asOfDate,
-            BenchmarkSnapshot snapshot
+            BenchmarkSnapshot snapshot,
+            Instant expiresAt
     ) {
     }
 }
