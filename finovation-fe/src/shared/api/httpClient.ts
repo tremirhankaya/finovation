@@ -17,6 +17,7 @@ type RequestOptions = {
   body?: unknown
   requiresAuth?: boolean
   signal?: AbortSignal
+  timeoutMs?: number
 }
 
 type RefreshResponseBody = {
@@ -42,12 +43,13 @@ export function invalidateAuthSession(): void {
 async function fetchWithTimeout(
   url: string,
   init: RequestInit,
+  timeoutMs = REQUEST_TIMEOUT_MS,
 ): Promise<Response> {
   const controller = new AbortController()
   const onCallerAbort = () => controller.abort(init.signal?.reason)
   const timeoutId = window.setTimeout(
     () => controller.abort(),
-    REQUEST_TIMEOUT_MS,
+    timeoutMs,
   )
 
   if (init.signal?.aborted) {
@@ -163,7 +165,7 @@ async function rawSend(
     headers: buildHeaders(options),
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: options.signal,
-  })
+  }, options.timeoutMs)
 }
 
 async function send(url: string, options: RequestOptions): Promise<Response> {
