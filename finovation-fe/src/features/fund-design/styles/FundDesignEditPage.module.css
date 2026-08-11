@@ -6,6 +6,7 @@
 
 .header {
   margin-bottom: 0.25rem;
+  animation: editSurfaceEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .sectionTitle {
@@ -35,6 +36,10 @@
   .grid {
     grid-template-columns: 1fr;
   }
+
+  .sideColumn {
+    position: static;
+  }
 }
 
 .mainColumn {
@@ -43,6 +48,14 @@
   gap: 1.25rem;
   min-width: 0;
   max-width: 100%;
+}
+
+.sideColumn {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
 }
 
 .summaryBar {
@@ -54,14 +67,29 @@
   border-radius: 16px;
   background: linear-gradient(135deg, #f4fbf7 0%, #ffffff 100%);
   box-shadow: 0 4px 14px rgba(15, 32, 64, 0.03);
+  animation: editSurfaceEnter 0.42s 0.04s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .totalWeightCard {
+  position: relative;
+  overflow: hidden;
   padding: 1.25rem 1.5rem;
   background: #ffffff;
   border: 1px solid #e8eef2;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(15, 32, 64, 0.02);
+  animation: editSurfaceEnter 0.42s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.totalWeightCard::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4.5rem;
+  height: 3px;
+  border-radius: 0 0 999px 0;
+  content: "";
+  background: #2ec4a7;
 }
 
 .totalWeightHeader {
@@ -105,6 +133,8 @@
   padding-right: 1.25rem;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
   min-width: 3rem;
+  transform-origin: left center;
+  animation: totalWeightReveal 1.05s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .totalWeightInnerPct {
@@ -113,6 +143,7 @@
   font-weight: 800;
   letter-spacing: 0.02em;
   text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  animation: totalWeightLabelEnter 0.32s 0.72s ease-out both;
 }
 
 .totalWeightFillOk { background: #2ec4a7; }
@@ -120,11 +151,17 @@
 .totalWeightFillBad { background: #c62828; }
 
 .summaryCardItem {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   padding-left: 0.75rem;
   border-left: 3px solid #2ec4a7;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.summaryCardItem:hover {
+  transform: translateY(-2px);
 }
 
 .summaryCardItem:nth-child(2) {
@@ -166,6 +203,7 @@
   border-radius: 18px;
   background: #ffffff;
   box-shadow: 0 8px 24px rgba(15, 32, 64, 0.04);
+  animation: editSurfaceEnter 0.46s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .toolbar {
@@ -190,6 +228,7 @@
   margin-top: 0.75rem;
   margin-bottom: 0.5rem;
   flex-wrap: wrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .toolbarLeft {
@@ -393,6 +432,7 @@
   box-shadow: 0 10px 25px rgba(15, 32, 64, 0.12);
   z-index: 150;
   padding: 0.3rem 0;
+  animation: floatingMenuEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .customFilterMenuHeader {
@@ -728,6 +768,12 @@
 .table tbody tr {
   animation: rowFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+.table tbody tr:nth-child(2) { animation-delay: 0.025s; }
+.table tbody tr:nth-child(3) { animation-delay: 0.05s; }
+.table tbody tr:nth-child(4) { animation-delay: 0.075s; }
+.table tbody tr:nth-child(5) { animation-delay: 0.1s; }
+.table tbody tr:nth-child(n + 6) { animation-delay: 0.125s; }
 
 .table tr:hover td {
   background: #f8fcfa;
@@ -1065,6 +1111,21 @@
   animation: rowPulse 2.5s ease-out forwards;
 }
 
+@keyframes editSurfaceEnter {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes totalWeightReveal {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes totalWeightLabelEnter {
+  from { opacity: 0; transform: translateX(-0.35rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .autocompleteDropdown {
   position: absolute;
   top: calc(100% + 4px);
@@ -1076,6 +1137,7 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
   z-index: 100;
   overflow: hidden;
+  animation: floatingMenuEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .autocompleteItem {
@@ -1329,6 +1391,25 @@
   background: #e6f9f5;
 }
 
+.manualOpenListBtn {
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border-style: solid;
+  border-color: #2ec4a7;
+  border-radius: 10px;
+  background: #2ec4a7;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 8px 16px rgba(46, 196, 167, 0.2);
+}
+
+.manualOpenListBtn:hover {
+  border-color: #24aa91;
+  background: #24aa91;
+  transform: translateY(-1px);
+}
+
 .openListIcon {
   font-size: 0.95rem;
   font-weight: 800;
@@ -1345,6 +1426,33 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: editOverlayEnter 0.2s ease-out both;
+}
+
+/* Manuel tasarımda seçici, karartılmış bir modal değil odaklı bir çalışma
+   yüzeyi gibi davranır. */
+.manualAssetOverlay {
+  align-items: flex-start;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: #f8fafc;
+  backdrop-filter: none;
+}
+
+/* Manuel akışta onay penceresi koyu gri bir perde açmaz; kullanıcının
+   portföy bağlamı görünür kalırken pencere yine tıklamaları güvenle yakalar. */
+.manualConfirmationOverlay {
+  background: rgba(248, 250, 252, 0.86);
+  backdrop-filter: none;
+}
+
+/* Geniş ekranda ana işlem alanı soldaki liste sütunudur. Onayı tüm pencere
+   yerine bu sütunun ortasına hizalarız; yan izahname panelinin üstüne gelmez. */
+@media (min-width: 1241px) {
+  .manualConfirmationOverlay {
+    box-sizing: border-box;
+    padding-right: clamp(0px, 11.5vw, 235px);
+  }
 }
 
 .modalContent {
@@ -1353,10 +1461,111 @@
   padding: 1.5rem;
   width: 90%;
   max-width: 600px;
-  max-height: 80vh;
+  height: min(720px, calc(100vh - 2.5rem));
+  max-height: calc(100vh - 2.5rem);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  animation: editModalEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.manualAssetModal {
+  width: min(100%, 1240px);
+  max-width: 1240px;
+  height: min(760px, calc(100vh - 3rem));
+  max-height: calc(100vh - 3rem);
+  margin: 0 auto;
+  border: 1px solid #e3edf0;
+  box-shadow: 0 18px 48px rgba(15, 32, 64, 0.1);
+}
+
+.modalWorkArea {
+  display: contents;
+}
+
+.manualAssetModal .modalWorkArea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  column-gap: 1.25rem;
+  row-gap: 0.65rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.manualAssetModal .modalSearchBox,
+.manualAssetModal .manualFilterBar,
+.manualAssetModal .modalList,
+.manualAssetModal .modalFooter {
+  grid-column: 1;
+}
+
+.manualAssetModal .modalSearchBox {
+  margin: 0;
+}
+
+.manualAssetModal .manualFilterBar {
+  margin: 0;
+}
+
+.manualAssetModal .modalList {
+  min-height: 0;
+}
+
+.manualAssetModal .modalFooter {
+  margin-top: 0;
+}
+
+.manualRulesPreview {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.85rem;
+  border: 1px solid #dcebe8;
+  border-radius: 12px;
+  background: linear-gradient(155deg, #f3fcfa 0%, #ffffff 36%);
+}
+
+.manualRulesEyebrow {
+  margin: 0;
+  color: #117b68;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.manualRulesDescription {
+  margin: 0.35rem 0 0.85rem;
+  color: #64748b;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.manualRulesPreview > aside {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+@keyframes floatingMenuEnter {
+  from { opacity: 0; transform: translateY(-0.3rem) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes editOverlayEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes editModalEnter {
+  from { opacity: 0; transform: translateY(0.8rem) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modalHeader {
@@ -1386,6 +1595,58 @@
   margin-bottom: 1rem;
 }
 
+.manualFilterBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: -0.25rem 0 0.85rem;
+}
+
+.manualFilterLabel {
+  margin-right: 0.1rem;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.manualFilterChip,
+.manualClearFilters {
+  min-height: 28px;
+  border: 1px solid #d7e4e8;
+  border-radius: 999px;
+  background: #fff;
+  color: #4b6170;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease,
+    color 160ms ease;
+}
+
+.manualFilterChip {
+  padding: 0 0.65rem;
+}
+
+.manualFilterChip:hover,
+.manualFilterChipActive {
+  border-color: #76d8c6;
+  background: #edfbf7;
+  color: #117b68;
+}
+
+.manualClearFilters {
+  padding: 0 0.3rem;
+  border-color: transparent;
+  background: transparent;
+  color: #64748b;
+}
+
+.manualClearFilters:hover {
+  color: #0f7664;
+  text-decoration: underline;
+}
+
 .modalSearchInput {
   width: 100%;
   padding: 0.65rem 0.85rem;
@@ -1406,6 +1667,31 @@
   flex-direction: column;
   gap: 0.5rem;
   padding-right: 0.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.modalListControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.1rem 0.15rem 0.55rem;
+}
+
+.modalSelectAllLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modalResultCount {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .modalListItem {
@@ -1416,11 +1702,17 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   gap: 1rem;
+  min-height: 60px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease,
+    transform 160ms ease;
 }
 
 .modalListItem:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
+  transform: translateX(2px);
 }
 
 .inputError {
@@ -1466,6 +1758,50 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.modalSelectPrompt {
+  color: #0f9d83;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-0.2rem);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.modalListItem:hover .modalSelectPrompt {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.manualAssetList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 0.5rem;
+  padding-bottom: 0.2rem;
+}
+
+.manualAssetList .modalListControls {
+  grid-column: 1 / -1;
+}
+
+.manualAssetList .modalListItem {
+  min-height: 52px;
+  padding: 0.65rem 0.85rem;
+}
+
+.manualAssetList .modalAssetInfo {
+  gap: 0.75rem;
+}
+
+.manualAssetList .modalAssetCode {
+  min-width: 0;
+}
+
+.manualAssetList .modalAssetDesc {
+  min-width: 0;
 }
 
 .modalAddBtn {
@@ -1517,6 +1853,7 @@
   padding: 0.15rem 0.45rem;
   border: 1.5px solid #2ec4a7;
   border-radius: 8px;
+  cursor: text;
 }
 
 .modalWeightInput {
@@ -1537,6 +1874,35 @@
   padding-top: 1rem;
   margin-top: 1rem;
   border-top: 1px solid #e2e8f0;
+  flex: 0 0 auto;
+  gap: 1rem;
+}
+
+@media (max-width: 680px) {
+  .manualAssetOverlay {
+    padding: 0.75rem;
+  }
+
+  .manualAssetModal {
+    width: 100%;
+    height: calc(100vh - 1.5rem);
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .manualAssetList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manualAssetModal .modalWorkArea {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  }
+
+  .manualRulesPreview {
+    grid-column: 1;
+    grid-row: auto;
+    max-height: 220px;
+  }
 }
 
 .modalBatchSubmitBtn {
@@ -1648,4 +2014,22 @@
 }
 .floatingDeleteBtn:hover {
   background: #dc2626;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .summaryBar,
+  .totalWeightCard,
+  .totalWeightThickFill,
+  .totalWeightInnerPct,
+  .tableCard,
+  .table tbody tr {
+    animation: none;
+  }
+
+  .summaryCardItem,
+  .table td,
+  .metricChip {
+    transition: none;
+  }
 }

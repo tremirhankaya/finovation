@@ -5,7 +5,52 @@
 }
 
 .header {
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.3rem;
+  animation: analysisEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: #168c76;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.statusBadge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #c6ebe0;
+  border-radius: 999px;
+  color: #13745f;
+  background: #effbf7;
+  box-shadow: 0 5px 14px rgba(46, 196, 167, 0.12);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.statusBadge i {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 50%;
+  background: #2ec4a7;
+  box-shadow: 0 0 0 0 rgba(46, 196, 167, 0.5);
+  animation: statusPulse 1.6s ease-in-out infinite;
+}
+
+.statusBadgeComplete i {
+  animation: none;
 }
 
 .sectionTitle {
@@ -68,14 +113,39 @@
   box-shadow: 0 8px 24px rgba(15, 32, 64, 0.04);
 }
 
+.analysisCard {
+  position: relative;
+  overflow: hidden;
+  animation: analysisEnter 0.5s 0.06s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.analysisCard::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  content: "";
+  background: linear-gradient(90deg, #2ec4a7, #66dcc1 48%, rgba(102, 220, 193, 0));
+}
+
 .analysisGrid {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  gap: 1.5rem 2rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
 }
 
 .stagesColumn .columnTitle {
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.stagesColumn {
+  display: flex;
+  flex-direction: column;
+  padding: 0.9rem;
+  border: 1px solid #e1efec;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #f7fdfb 0%, #ffffff 78%);
 }
 
 .columnTitle {
@@ -90,6 +160,7 @@
   flex-direction: column;
   gap: 0.35rem;
   margin-bottom: 0.9rem;
+  padding-left: 0.1rem;
 }
 
 .fundMeta {
@@ -113,22 +184,39 @@
 }
 
 .stageList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.stagesColumn {
+  container-type: inline-size;
+}
+
+.stageItem:not(:last-child)::before {
+  position: absolute;
+  top: 0.76rem;
+  left: 1.8rem;
+  width: calc(100% - 0.7rem);
+  height: 1px;
+  content: "";
+  background: #dce8e7;
+}
+
 .stageItem {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 0.7rem;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.48rem;
+  min-width: 0;
   color: #8a97a6;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: color 0.25s ease;
+  transition: color 0.25s ease, transform 0.25s ease;
 }
 
 .stageIcon {
@@ -160,6 +248,12 @@
   background: #2ec4a7;
 }
 
+.stageDone:not(:last-child)::before {
+  background: #8be2ce;
+  transform-origin: left center;
+  animation: stageConnectorReveal 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .stageActive {
   color: #0f1f3c;
   font-weight: 600;
@@ -173,13 +267,53 @@
   animation: pulseActive 1.2s ease-in-out infinite;
 }
 
+.stageActive { transform: translateY(-0.15rem); }
+
 .stagePending .stageIcon {
   border-style: dashed;
   border-color: #c9d4dc;
 }
 
 .stageLabel {
+  min-height: 2.2em;
+  padding-right: 0.45rem;
+  font-size: 0.72rem;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Sağdaki kural paneli yüzünden geniş ekranlarda bile analiz alanı
+   daralabiliyor. Viewport yerine kendi alanına göre iki satıra geçer. */
+@container (max-width: 44rem) {
+  .stageList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 1rem;
+  }
+
+  .stageItem:not(:last-child)::before {
+    display: block;
+  }
+
+  /* Üçlü satırın sonundan ikinci satıra çizgi çekmeyiz. */
+  .stageItem:nth-child(3)::before {
+    display: none;
+  }
+}
+
+@container (max-width: 28rem) {
+  .stageList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stageItem:nth-child(3)::before {
+    display: block;
+  }
+
+  /* İkili satırların sonundan alt satıra çizgi çekmeyiz. */
+  .stageItem:nth-child(2)::before,
+  .stageItem:nth-child(4)::before {
+    display: none;
+  }
 }
 
 .prefGrid {
@@ -196,8 +330,21 @@
   padding: 0.7rem 0.75rem;
   border: 1px solid #e5edf1;
   border-radius: 12px;
-  background: #fbfcfd;
+  background: linear-gradient(145deg, #ffffff, #f7fafb);
+  box-shadow: 0 2px 6px rgba(15, 32, 64, 0.018);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  animation: tileEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+.prefTile:hover {
+  border-color: #cce7e0;
+  box-shadow: 0 8px 16px rgba(15, 32, 64, 0.06);
+  transform: translateY(-2px);
+}
+
+.prefGrid .prefTile:nth-child(2) { animation-delay: 0.05s; }
+.prefGrid .prefTile:nth-child(3) { animation-delay: 0.1s; }
+.prefGrid .prefTile:nth-child(4) { animation-delay: 0.15s; }
 
 .prefTileLocked {
   border-color: #e8ecf0;
@@ -254,6 +401,7 @@
   margin-top: 1.35rem;
   padding-top: 1.1rem;
   border-top: 1px solid #eef3f6;
+  animation: analysisEnter 0.45s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .progressHeader {
@@ -277,6 +425,7 @@
 }
 
 .progressTrack {
+  position: relative;
   height: 10px;
   overflow: hidden;
   border-radius: 999px;
@@ -284,10 +433,20 @@
 }
 
 .progressFill {
+  position: relative;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #2ec4a7 0%, #3dd4b0 100%);
   transition: width 0.55s ease;
+}
+
+.progressFill::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.52) 50%, transparent 80%);
+  transform: translateX(-120%);
+  animation: progressShimmer 2.4s ease-in-out infinite;
 }
 
 .progressNote {
@@ -358,6 +517,31 @@
   }
 }
 
+@keyframes analysisEnter {
+  from { opacity: 0; transform: translateY(0.55rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tileEnter {
+  from { opacity: 0; transform: translateY(0.4rem) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 196, 167, 0.48); }
+  50% { box-shadow: 0 0 0 5px rgba(46, 196, 167, 0); }
+}
+
+@keyframes stageConnectorReveal {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes progressShimmer {
+  0%, 35% { transform: translateX(-120%); }
+  70%, 100% { transform: translateX(120%); }
+}
+
 @media (max-width: 960px) {
   .grid {
     grid-template-columns: 1fr;
@@ -365,10 +549,12 @@
 }
 
 @media (max-width: 720px) {
-  .analysisGrid {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
+  .stageList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 1rem;
   }
+
+  .stageItem:not(:last-child)::before { display: none; }
 
   .prefGrid {
     grid-template-columns: 1fr 1fr;
@@ -376,6 +562,15 @@
 }
 
 @media (max-width: 560px) {
+  .titleRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stageList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .actions {
     flex-direction: column-reverse;
   }
@@ -383,5 +578,25 @@
   .back,
   .continue {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .analysisCard,
+  .prefTile,
+  .progressBlock,
+  .statusBadge i,
+  .progressFill::after {
+    animation: none;
+  }
+
+  .prefTile,
+  .stageItem {
+    transition: none;
+  }
+
+  .stageDone:not(:last-child)::before {
+    animation: none;
   }
 }
