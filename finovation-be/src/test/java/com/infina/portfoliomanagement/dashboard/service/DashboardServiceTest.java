@@ -13,7 +13,7 @@ import com.infina.portfoliomanagement.optimization.dto.OptimizationResultRespons
 import com.infina.portfoliomanagement.optimization.enums.RequestStatus;
 import com.infina.portfoliomanagement.optimization.service.OptimizationRequestService;
 import com.infina.portfoliomanagement.stresstest.dto.response.StressTestHistoryResponse;
-import com.infina.portfoliomanagement.stresstest.service.StressTestService;
+import com.infina.portfoliomanagement.stresstest.service.StressTestQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +44,7 @@ class DashboardServiceTest {
     @Mock
     private OptimizationRequestService optimizationRequestService;
     @Mock
-    private StressTestService stressTestService;
+    private StressTestQueryService stressTestQueryService;
     @Mock
     private FinancialTimeProvider financialTime;
 
@@ -56,7 +56,7 @@ class DashboardServiceTest {
                 fundMonitoringService,
                 fundDraftService,
                 optimizationRequestService,
-                stressTestService,
+                stressTestQueryService,
                 financialTime
         );
     }
@@ -96,7 +96,7 @@ class DashboardServiceTest {
                 .thenReturn(List.of(runningLog, completedLog));
         when(optimizationRequestService.getResult(USERNAME, 11L))
                 .thenReturn(optimizationResult);
-        when(stressTestService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
+        when(stressTestQueryService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
         when(financialTime.currentDate()).thenReturn(businessDate);
 
         var response = service.getSummary(USERNAME);
@@ -118,7 +118,7 @@ class DashboardServiceTest {
         when(fundMonitoringService.listFunds(USERNAME, null)).thenReturn(List.of());
         when(fundDraftService.listInProgressDrafts(USERNAME)).thenReturn(List.of());
         when(optimizationRequestService.listLogs(USERNAME)).thenReturn(List.of(runningLog));
-        when(stressTestService.getHistory(USERNAME)).thenReturn(List.of());
+        when(stressTestQueryService.getHistory(USERNAME)).thenReturn(List.of());
 
         var response = service.getSummary(USERNAME);
 
@@ -142,7 +142,7 @@ class DashboardServiceTest {
                 .thenThrow(new IllegalStateException("fund data unavailable"));
         when(fundDraftService.listInProgressDrafts(USERNAME)).thenReturn(List.of());
         when(optimizationRequestService.listLogs(USERNAME)).thenReturn(List.of());
-        when(stressTestService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
+        when(stressTestQueryService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
 
         var response = service.getSummary(USERNAME);
 
