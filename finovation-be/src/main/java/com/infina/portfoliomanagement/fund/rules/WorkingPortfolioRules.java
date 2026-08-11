@@ -193,6 +193,7 @@ public final class WorkingPortfolioRules {
     ) {
         return positions.stream()
                 .filter(position -> position.assetType() == assetType)
+                .filter(position -> position.weight() != null && position.weight().signum() > 0)
                 .toList();
     }
 
