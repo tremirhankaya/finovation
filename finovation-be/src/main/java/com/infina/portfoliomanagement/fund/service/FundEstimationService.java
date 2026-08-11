@@ -84,7 +84,7 @@ public class FundEstimationService {
         Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset =
                 valuationProviderRegistry.loadUnitValues(assets, startDate, today);
 
-        FundValuationResult valuation = valuationCalculator.calculate(
+        FundValuationResult valuation = valuationCalculator.calculateHistoricalEstimate(
                 draft,
                 positions,
                 assets,

@@ -76,6 +76,29 @@ public class FundValuationCalculator {
         );
     }
 
+    /**
+     * Values a newly composed portfolio against the available historical window.
+     * This is used for estimated risk metrics before the fund has a real inception
+     * history of its own.
+     */
+    public FundValuationResult calculateHistoricalEstimate(
+            FundDraft fund,
+            List<FundPosition> positions,
+            List<Asset> assets,
+            Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
+            LocalDate historyStartDate
+    ) {
+        return calculate(
+                fund,
+                positions,
+                assets,
+                unitValuesByAsset,
+                historyStartDate,
+                historyStartDate,
+                QuantityAnchor.EARLIEST_DATE
+        );
+    }
+
     private FundValuationResult calculate(
             FundDraft fund,
             List<FundPosition> positions,

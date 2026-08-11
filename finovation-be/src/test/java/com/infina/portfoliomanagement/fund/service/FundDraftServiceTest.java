@@ -10,6 +10,7 @@ import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPortfolioRulesRequest;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
 import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
@@ -458,6 +459,22 @@ class FundDraftServiceTest {
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verifyNoInteractions(fundDraftRepository);
+    }
+
+    @Test
+    void completeManualDraft_selectsItsWorkingPortfolioForDownstreamAnalysis() {
+        FundDraft draft = existingDraft(7L);
+        draft.setDesignMode(FundDesignMode.MANUAL);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicId(draft.getPublicId())).thenReturn(Optional.of(draft));
+        when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
+        when(fundDraftRepository.save(any(FundDraft.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        fundDraftService.completeDraft("user1", draft.getPublicId());
+
+        verify(fundAnalysisPersistenceService).assertWorkingPortfolioIsCompliant(draft, limits);
+        verify(fundAnalysisPersistenceService).selectManualWorkingPortfolio(draft);
+        assertThat(draft.getStatus()).isEqualTo(FundDraftStatus.COMPLETED);
     }
 
     private CreateFundDraftRequest request(String initialPortfolioSize, String unitPrice) {

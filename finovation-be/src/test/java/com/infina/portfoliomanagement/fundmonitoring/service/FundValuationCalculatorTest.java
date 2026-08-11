@@ -135,6 +135,31 @@ class FundValuationCalculatorTest {
     }
 
     @Test
+    void historicalEstimate_usesTheHistoricalWindowInsteadOfTheNewFundCreationDate() {
+        List<FundPosition> positions = List.of(
+                position(firstAsset.getId(), "50"),
+                position(secondAsset.getId(), "50")
+        );
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValues = Map.of(
+                firstAsset.getId(), values("10", "11", "12"),
+                secondAsset.getId(), values("20", "20", "20")
+        );
+        fund.setCreatedAt(INCEPTION_DATE.plusDays(30).atStartOfDay());
+
+        var result = calculator.calculateHistoricalEstimate(
+                fund,
+                positions,
+                List.of(firstAsset, secondAsset),
+                unitValues,
+                INCEPTION_DATE
+        );
+
+        assertThat(result.points()).hasSize(3);
+        assertThat(result.points().getFirst().date()).isEqualTo(INCEPTION_DATE);
+        assertThat(result.latestPoint().date()).isEqualTo(INCEPTION_DATE.plusDays(2));
+    }
+
+    @Test
     void datesWithoutAllAssetPrices_areExcludedFromFundSeries() {
         List<FundPosition> positions = List.of(
                 position(firstAsset.getId(), "50"),

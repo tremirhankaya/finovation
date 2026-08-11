@@ -776,6 +776,9 @@ public class FundDraftService {
 
         FundProperties limits = fundDesignProfileService.getLimits(draft.getFundType());
         fundAnalysisPersistenceService.assertWorkingPortfolioIsCompliant(draft, limits);
+        if (draft.getDesignMode() == FundDesignMode.MANUAL) {
+            fundAnalysisPersistenceService.selectManualWorkingPortfolio(draft);
+        }
 
         draft.setStatus(FundDraftStatus.COMPLETED);
         advanceCurrentStep(draft, FundDesignSteps.APPROVAL);
