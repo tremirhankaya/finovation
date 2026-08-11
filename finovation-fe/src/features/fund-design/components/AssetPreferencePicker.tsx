@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 
 import type { ModelUniverseAsset } from "@/features/fund-design/model/fundDraftSchemas"
 import styles from "@/features/fund-design/styles/AssetPreferencePicker.module.css"
-import Dialog from "@/shared/ui/Dialog"
 
 type Props = {
   forcedCodes: string[]
@@ -10,6 +10,7 @@ type Props = {
   minStockCount: number
   maxAssetPreferences: number
   universe: ModelUniverseAsset[]
+  sectors: string[]
   disabled?: boolean
   onForcedChange: (codes: string[]) => void
   onExcludedChange: (codes: string[]) => void
@@ -66,7 +67,7 @@ function ActionButtons({
         }
         onClick={() => (isForced ? onRemoveForced(code) : onAddForced(code))}
       >
-        Zorunlu
+        {isForced ? "Portföye eklendi" : "Portföye ekle"}
       </button>
       <button
         type="button"
@@ -86,7 +87,7 @@ function ActionButtons({
           isExcluded ? onRemoveExcluded(code) : onAddExcluded(code)
         }
       >
-        Hariç
+        {isExcluded ? "Hariç tutuldu" : "Hariç tut"}
       </button>
     </div>
   )
@@ -98,6 +99,7 @@ export default function AssetPreferencePicker({
   minStockCount,
   maxAssetPreferences,
   universe,
+  sectors,
   disabled = false,
   onForcedChange,
   onExcludedChange,
@@ -105,32 +107,25 @@ export default function AssetPreferencePicker({
   const [listOpen, setListOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [listQuery, setListQuery] = useState("")
+  const [listSectors, setListSectors] = useState<string[]>([])
+  const [isSectorFilterOpen, setIsSectorFilterOpen] = useState(false)
 
   const forcedLimit = Math.min(maxAssetPreferences, Math.max(1, minStockCount))
   const excludedLimit = maxAssetPreferences
   const status: UniverseStatus = disabled ? "idle" : "ready"
 
-  const searchMatches = useMemo(() => {
-    const q = query.trim().toLocaleUpperCase("tr-TR")
-    if (!q || status !== "ready") return []
-    return universe
-      .filter((asset) => {
-        const code = asset.assetCode.toLocaleUpperCase("tr-TR")
-        const name = asset.displayName.toLocaleUpperCase("tr-TR")
-        return code.includes(q) || name.includes(q)
-      })
-      .slice(0, 8)
-  }, [universe, query, status])
-
   const listFiltered = useMemo(() => {
     const q = listQuery.trim().toLocaleUpperCase("tr-TR")
-    if (!q) return universe
     return universe.filter((asset) => {
       const code = asset.assetCode.toLocaleUpperCase("tr-TR")
       const name = asset.displayName.toLocaleUpperCase("tr-TR")
-      return code.includes(q) || name.includes(q)
+      const matchesQuery = !q || code.includes(q) || name.includes(q)
+      const matchesSector =
+        listSectors.length === 0 ||
+        (asset.sectorName ? listSectors.includes(asset.sectorName) : false)
+      return matchesQuery && matchesSector
     })
-  }, [universe, listQuery])
+  }, [universe, listQuery, listSectors])
 
   const forcedSet = useMemo(() => new Set(forcedCodes), [forcedCodes])
   const excludedSet = useMemo(() => new Set(excludedCodes), [excludedCodes])
@@ -172,14 +167,17 @@ export default function AssetPreferencePicker({
     setQuery("")
   }
 
-  function openList() {
+  function openList(initialQuery = "") {
     if (disabled) return
-    setListQuery("")
+    setListQuery(initialQuery)
+    setListSectors([])
+    setIsSectorFilterOpen(false)
     setListOpen(true)
   }
 
   function closeList() {
     setListOpen(false)
+    setQuery("")
   }
 
   const hasSelections = forcedCodes.length > 0 || excludedCodes.length > 0
@@ -189,8 +187,8 @@ export default function AssetPreferencePicker({
     <div className={styles.wrap}>
       <p className={styles.hint}>
         İsteğe bağlı. Kod veya şirket adıyla arayıp ekleyin. Tüm listeyi görmek
-        için hisseleri listeleyin. Her listede en fazla{" "}
-        {maxAssetPreferences} hisse.
+        için hisseleri listeleyin. Her listede en fazla {maxAssetPreferences}{" "}
+        hisse.
       </p>
 
       <div className={styles.summaryCountsRow}>
@@ -214,66 +212,47 @@ export default function AssetPreferencePicker({
             type="button"
             className={styles.openBtn}
             disabled={disabled || status !== "ready"}
-            onClick={openList}
+            onClick={() => openList()}
           >
             Hisseleri listele
           </button>
         </div>
       </div>
 
-      <label className={styles.searchField} htmlFor="asset-pref-search">
-        <span className={styles.searchLabel}>Hisse ara</span>
-        <input
-          id="asset-pref-search"
-          className={styles.searchInput}
-          type="search"
-          placeholder="Örn. THYAO veya Anadolu Efes…"
-          value={query}
-          disabled={!searchEnabled}
-          onChange={(event) => setQuery(event.target.value)}
-          autoComplete="off"
-        />
-      </label>
+      <div className={styles.quickSearch}>
+        <label className={styles.searchField} htmlFor="asset-pref-search">
+          <span className={styles.searchLabel}>Hisse ara</span>
+          <input
+            id="asset-pref-search"
+            className={styles.searchInput}
+            type="search"
+            placeholder="Örn. THYAO veya Anadolu Efes…"
+            value={query}
+            disabled={!searchEnabled}
+            onChange={(event) => {
+              const nextQuery = event.target.value
+              setQuery(nextQuery)
+              setListQuery(nextQuery)
+              if (nextQuery.trim()) setListOpen(true)
+            }}
+            onFocus={() => {
+              if (query.trim()) setListOpen(true)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && query.trim()) {
+                event.preventDefault()
+                setListOpen(true)
+              }
+            }}
+            autoComplete="off"
+          />
+        </label>
+      </div>
 
       {status === "ready" && universe.length === 0 ? (
         <p className={styles.statusMsg} role="status">
           Model evreninde hisse bulunamadı.
         </p>
-      ) : null}
-
-      {query.trim() && status === "ready" && universe.length > 0 ? (
-        <ul className={styles.results} role="listbox" aria-label="Arama sonuçları">
-          {searchMatches.length === 0 ? (
-            <li className={styles.emptyResult}>Eşleşen hisse yok</li>
-          ) : (
-            searchMatches.map((asset) => {
-              const isForced = forcedSet.has(asset.assetCode)
-              const isExcluded = excludedSet.has(asset.assetCode)
-              return (
-                <li key={asset.assetCode} className={styles.resultRow}>
-                  <div className={styles.resultMeta}>
-                    <span className={styles.resultCode}>{asset.assetCode}</span>
-                    <span className={styles.resultName}>{asset.displayName}</span>
-                  </div>
-                  <ActionButtons
-                    code={asset.assetCode}
-                    isForced={isForced}
-                    isExcluded={isExcluded}
-                    disabled={disabled}
-                    forceLimitReached={forceLimitReached}
-                    excludeLimitReached={excludeLimitReached}
-                    forcedLimit={forcedLimit}
-                    excludedLimit={excludedLimit}
-                    onAddForced={addForced}
-                    onRemoveForced={removeForced}
-                    onAddExcluded={addExcluded}
-                    onRemoveExcluded={removeExcluded}
-                  />
-                </li>
-              )
-            })
-          )}
-        </ul>
       ) : null}
 
       {hasSelections ? (
@@ -287,7 +266,7 @@ export default function AssetPreferencePicker({
               onClick={() => removeForced(code)}
               aria-label={`${code} zorunlu listesinden çıkar`}
             >
-              <span>{labelFor(universe, code)}</span>
+              <span>Zorunlu: {labelFor(universe, code)}</span>
               <span aria-hidden="true">×</span>
             </button>
           ))}
@@ -300,7 +279,7 @@ export default function AssetPreferencePicker({
               onClick={() => removeExcluded(code)}
               aria-label={`${code} hariç listesinden çıkar`}
             >
-              <span>{labelFor(universe, code)}</span>
+              <span>Hariç: {labelFor(universe, code)}</span>
               <span aria-hidden="true">×</span>
             </button>
           ))}
@@ -309,12 +288,21 @@ export default function AssetPreferencePicker({
         <p className={styles.listEmpty}>Henüz hisse tercihi yok</p>
       )}
 
-      <Dialog
-        open={listOpen}
-        onClose={closeList}
-        labelledBy="asset-pref-dialog-title"
-        describedBy="asset-pref-dialog-desc"
+      {listOpen &&
+        createPortal(
+          <div
+            className={styles.dialogOverlay}
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeList()
+            }}
+          >
+      <section
         className={styles.dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="asset-pref-dialog-title"
+        aria-describedby="asset-pref-dialog-desc"
       >
         <header className={styles.dialogHeader}>
           <div>
@@ -337,7 +325,10 @@ export default function AssetPreferencePicker({
         </header>
 
         <div className={styles.dialogToolbar}>
-          <label className={styles.searchField} htmlFor="asset-pref-list-filter">
+          <label
+            className={styles.searchField}
+            htmlFor="asset-pref-list-filter"
+          >
             <span className={styles.searchLabel}>Listede filtrele</span>
             <input
               id="asset-pref-list-filter"
@@ -349,6 +340,45 @@ export default function AssetPreferencePicker({
               autoComplete="off"
             />
           </label>
+          <div className={styles.sectorField}>
+            <span className={styles.searchLabel}>Sektör</span>
+            <button
+              type="button"
+              className={[styles.sectorFilterButton, listSectors.length > 0 ? styles.sectorFilterButtonActive : ""].filter(Boolean).join(" ")}
+              aria-expanded={isSectorFilterOpen}
+              onClick={() => setIsSectorFilterOpen((current) => !current)}
+            >
+              <span>{listSectors.length === 0 ? "Tüm sektörler" : `${listSectors.length} sektör seçildi`}</span>
+              <span aria-hidden="true">⌄</span>
+            </button>
+            {isSectorFilterOpen ? (
+              <div className={styles.sectorMenu}>
+                <button
+                  type="button"
+                  className={styles.allSectorsButton}
+                  onClick={() => setListSectors([])}
+                >
+                  ✓ Tüm sektörler (sıfırla)
+                </button>
+                <div className={styles.sectorMenuDivider} />
+                <div className={styles.sectorOptions}>
+                  {sectors.map((sector) => {
+                    const checked = listSectors.includes(sector)
+                    return (
+                      <label key={sector} className={styles.sectorOption}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => setListSectors((current) => checked ? current.filter((item) => item !== sector) : [...current, sector])}
+                        />
+                        <span>{sector}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
           <p className={styles.toolbarMeta}>
             Zorunlu {forcedCodes.length}/{forcedLimit}
             <span className={styles.summaryDot}>·</span>
@@ -372,11 +402,15 @@ export default function AssetPreferencePicker({
         </div>
 
         {listFiltered.length === 0 ? (
-          <p className={styles.statusMsg} role="status">
+          <p className={[styles.statusMsg, styles.emptyListState].join(" ")} role="status">
             Eşleşen hisse yok.
           </p>
         ) : (
-          <ul className={styles.assetList} aria-label="Hisse listesi">
+          <ul
+            key={`${listQuery}-${listSectors.join("|")}`}
+            className={styles.assetList}
+            aria-label="Hisse listesi"
+          >
             {listFiltered.map((asset) => {
               const isForced = forcedSet.has(asset.assetCode)
               const isExcluded = excludedSet.has(asset.assetCode)
@@ -384,7 +418,9 @@ export default function AssetPreferencePicker({
                 <li key={asset.assetCode} className={styles.assetRow}>
                   <div className={styles.resultMeta}>
                     <span className={styles.resultCode}>{asset.assetCode}</span>
-                    <span className={styles.resultName}>{asset.displayName}</span>
+                    <span className={styles.resultName}>
+                      {asset.displayName}
+                    </span>
                   </div>
                   <ActionButtons
                     code={asset.assetCode}
@@ -411,7 +447,10 @@ export default function AssetPreferencePicker({
             Tamam
           </button>
         </footer>
-      </Dialog>
+      </section>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

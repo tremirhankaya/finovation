@@ -15,6 +15,8 @@ import {
   type HoldingSlice,
   type ProposalSummary,
 } from "@/features/fund-design/lib/proposalSummary"
+import { FundLoader } from "@/shared/ui/FundLoader"
+import DonutChart from "@/shared/ui/DonutChart"
 import Button from "@/shared/ui/Button"
 import FormAlert from "@/shared/ui/FormAlert"
 import styles from "@/features/fund-design/styles/FundDesignAlternativesPage.module.css"
@@ -58,166 +60,21 @@ type ViewMode = "pie" | "table"
 
 type SliceMeta = HoldingSlice & {
   color: string
-  startAngle: number
-  endAngle: number
 }
 
 function formatPct(value: number): string {
   return `%${value.toLocaleString("tr-TR", {
-    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
-    maximumFractionDigits: 1,
+    maximumFractionDigits: 2,
   })}`
 }
 
-function polar(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = ((angleDeg - 90) * Math.PI) / 180
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
-}
-
-function donutPath(
-  cx: number,
-  cy: number,
-  outerR: number,
-  innerR: number,
-  startAngle: number,
-  endAngle: number,
-): string {
-  const sweep = Math.max(0.01, endAngle - startAngle)
-  const end = startAngle + sweep
-  const largeArc = sweep > 180 ? 1 : 0
-  const o1 = polar(cx, cy, outerR, startAngle)
-  const o2 = polar(cx, cy, outerR, end)
-  const i1 = polar(cx, cy, innerR, end)
-  const i2 = polar(cx, cy, innerR, startAngle)
-  return [
-    `M ${o1.x} ${o1.y}`,
-    `A ${outerR} ${outerR} 0 ${largeArc} 1 ${o2.x} ${o2.y}`,
-    `L ${i1.x} ${i1.y}`,
-    `A ${innerR} ${innerR} 0 ${largeArc} 0 ${i2.x} ${i2.y}`,
-    "Z",
-  ].join(" ")
-}
-
 function buildSliceMeta(slices: HoldingSlice[]): SliceMeta[] {
-  const total = slices.reduce((sum, slice) => sum + slice.weightPct, 0) || 1
-  let cursor = 0
   return slices.map((slice, index) => {
-    const span = (slice.weightPct / total) * 360
-    const startAngle = cursor
-    const endAngle = cursor + span
-    cursor = endAngle
     return {
       ...slice,
       color: colorForIndex(index, slice.code),
-      startAngle,
-      endAngle,
     }
   })
-}
-
-type InteractivePieProps = {
-  slices: HoldingSlice[]
-  activeCode: string | null
-  onActiveChange: (code: string | null) => void
-}
-
-function InteractivePie({
-  slices,
-  activeCode,
-  onActiveChange,
-}: InteractivePieProps) {
-  const meta = useMemo(() => buildSliceMeta(slices), [slices])
-  const active = meta.find((slice) => slice.code === activeCode) ?? null
-  const size = 208
-  const cx = size / 2
-  const cy = size / 2
-  const outerR = 94
-  const innerR = 54
-
-  return (
-    <div className={styles.pieWrap}>
-      <svg
-        className={styles.pieSvg}
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        role="img"
-        aria-label="Portföy dağılımı"
-      >
-        {meta.map((slice) => {
-          const isActive = activeCode === slice.code
-          const isDimmed = activeCode != null && !isActive
-          return (
-            <path
-              key={slice.code}
-              d={donutPath(
-                cx,
-                cy,
-                outerR,
-                innerR,
-                slice.startAngle,
-                slice.endAngle,
-              )}
-              fill={slice.color}
-              className={[
-                styles.pieSlice,
-                isActive ? styles.pieSliceActive : "",
-                isDimmed ? styles.pieSliceDimmed : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              onMouseEnter={() => onActiveChange(slice.code)}
-            />
-          )
-        })}
-        <circle cx={cx} cy={cy} r={innerR - 1} className={styles.pieCenter} />
-        <text
-          x={cx}
-          y={cy - 8}
-          textAnchor="middle"
-          className={styles.pieCenterLabel}
-        >
-          {active ? active.code : "Portföy"}
-        </text>
-        <text
-          x={cx}
-          y={cy + 14}
-          textAnchor="middle"
-          className={styles.pieCenterValue}
-        >
-          {active ? formatPct(active.weightPct) : `${slices.length} kalem`}
-        </text>
-      </svg>
-
-      <div
-        className={[
-          styles.pieTooltip,
-          active ? styles.pieTooltipVisible : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        aria-hidden={!active}
-      >
-        {active ? (
-          <>
-            <span
-              className={styles.tooltipSwatch}
-              style={{ background: active.color }}
-            />
-            <div className={styles.tooltipBody}>
-              <p className={styles.tooltipCode}>{active.code}</p>
-              <p className={styles.tooltipWeight}>
-                Ağırlık {formatPct(active.weightPct)}
-              </p>
-              {active.note ? (
-                <p className={styles.tooltipNote}>{active.note}</p>
-              ) : null}
-            </div>
-          </>
-        ) : null}
-      </div>
-    </div>
-  )
 }
 
 type ProposalCardProps = {
@@ -278,11 +135,22 @@ function ProposalCard({
         <div
           className={styles.pieBlock}
           onMouseLeave={() => setActiveCode(null)}
+          // Dilime fareyle tıklandığında tarayıcının SVG odak çerçevesi
+          // görünmesin; klavye odağı ve kart seçimi ise korunur.
+          onPointerDownCapture={(event) => event.preventDefault()}
         >
-          <InteractivePie
-            slices={summary.chartSlices}
-            activeCode={activeCode}
-            onActiveChange={setActiveCode}
+          <DonutChart
+            slices={sliceMeta.map((slice) => ({
+              id: slice.code,
+              label: slice.code,
+              value: slice.weightPct,
+              color: slice.color,
+              description: slice.note ?? undefined,
+            }))}
+            ariaLabel={`${summary.title} portföy dağılımı`}
+            formatValue={formatPct}
+            highlightedSliceId={activeCode}
+            onHighlightChange={setActiveCode}
           />
           <ul className={styles.legendList}>
             {sliceMeta.map((slice) => {
@@ -351,7 +219,11 @@ function ProposalCard({
 export default function FundDesignAlternativesPage() {
   const navigate = useNavigate()
   const { draftId } = useParams<{ draftId: string }>()
-  const { init, error: initError, reload: reloadInit } = useFundDraftInit({
+  const {
+    init,
+    error: initError,
+    reload: reloadInit,
+  } = useFundDraftInit({
     page: "ALTERNATIVES",
     draftId,
   })
@@ -404,17 +276,10 @@ export default function FundDesignAlternativesPage() {
     return () => controller.abort()
   }, [draftId])
 
-  async function handleSelect(rank: number) {
+  function handleSelect(rank: number) {
+    if (selectedRank === rank) return
     setSelectedRank(rank)
-    if (!draftId) return
     setFormError("")
-    try {
-      await selectFundDraftProposal(draftId, rank)
-    } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Öneri seçilemedi",
-      )
-    }
   }
 
   async function handleContinue() {
@@ -425,9 +290,7 @@ export default function FundDesignAlternativesPage() {
       await selectFundDraftProposal(draftId, selectedRank)
       void navigate(`/fund-design/${draftId}/edit`)
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Öneri seçilemedi",
-      )
+      setFormError(error instanceof Error ? error.message : "Öneri seçilemedi")
     } finally {
       setIsSaving(false)
     }
@@ -439,14 +302,15 @@ export default function FundDesignAlternativesPage() {
   )
 
   return (
-    <FundDesignLayout step={4}>
+    <FundDesignLayout step={4} isLoading={isLoading}>
       <section className={styles.panel}>
         <header className={styles.header}>
           <h2 className={styles.sectionTitle}>4. Portföy Alternatifleri</h2>
           <p className={styles.introLead}>Model önerileri</p>
           <p className={styles.intro}>
             Pasta dilimine gelince hisse ve ağırlık görünür. Bir öneri seçip
-            kaydedin.
+            kaydedin; sonraki ekranda dilerseniz seçiminizi değiştirebilir ve
+            portföy üzerinde düzenleme yapabilirsiniz.
           </p>
         </header>
 
@@ -463,13 +327,16 @@ export default function FundDesignAlternativesPage() {
         <div className={styles.grid}>
           <div className={styles.mainColumn}>
             {isLoading ? (
-              <p className={styles.loading}>Öneriler yükleniyor…</p>
+              <FundLoader message="Öneriler yükleniyor..." />
             ) : summaries.length === 0 ? (
               <p className={styles.loading}>Gösterilecek öneri bulunamadı.</p>
             ) : (
               <>
                 <div className={styles.chartToolbar}>
-                  <p className={styles.chartToolbarLabel}>Görünüm</p>
+                  <div>
+                    <p className={styles.chartToolbarLabel}>Portföy dağılımı</p>
+                    <p className={styles.chartToolbarHint}>Önerileri inceleyin ve seçmek için karta tıklayın.</p>
+                  </div>
                   <div
                     className={styles.viewToggle}
                     role="group"

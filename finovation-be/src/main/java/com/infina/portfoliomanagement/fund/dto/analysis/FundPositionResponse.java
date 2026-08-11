@@ -9,6 +9,9 @@ public record FundPositionResponse(
         @JsonProperty("asset_code")
         String assetCode,
 
+        @JsonProperty("display_name")
+        String displayName,
+
         @JsonProperty("weight")
         BigDecimal weight,
 

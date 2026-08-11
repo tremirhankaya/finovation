@@ -49,6 +49,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   FUND_005: "Fon tasarım profili bulunamadı.",
   FUND_006: "Fon pay fiyatı izin verilen aralığın dışında.",
   FUND_007: "Fon adı geçersiz.",
+  FUND_007_A: "Bu isimde bir fon zaten bulunmaktadır. Lütfen farklı bir isim seçin.",
   FUND_008: "Portföy kuralları izin verilen sınırların dışında.",
   FUND_009: "AI analizi için önce portföy kurallarını kaydedin.",
   FUND_010: "Model evreninde kullanılabilir hisse bulunamadı.",

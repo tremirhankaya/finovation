@@ -396,3 +396,253 @@
   font-size: 0.9375rem;
   text-align: center;
 }
+
+/* ── Final review surface ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0 0.7rem;
+  animation: approvalEnter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 0.38rem;
+  color: #148b73;
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #10213f;
+  font-size: 1.58rem;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.intro {
+  max-width: 44rem;
+  margin: 0.42rem 0 0;
+  color: #65778c;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.reviewState {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(15, 32, 64, 0.06);
+}
+
+.reviewStateOk { border-color: #c9ece2; background: #f1fcf8; color: #126e5b; }
+.reviewStateAlert { border-color: #fde0c6; background: #fff9f2; color: #ad561a; }
+
+.reviewStateIcon {
+  display: none;
+}
+
+.reviewState strong,
+.reviewState small { display: block; }
+.reviewState strong { font-size: 0.78rem; line-height: 1.25; }
+.reviewState small { margin-top: 0.12rem; color: #75869a; font-size: 0.68rem; }
+
+.card {
+  border-color: #e2ecef;
+  box-shadow: 0 12px 30px rgba(15, 32, 64, 0.045);
+  animation: approvalEnter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.summaryCard {
+  position: relative;
+  overflow: hidden;
+  border-color: #d8ece8;
+  background: linear-gradient(130deg, #ffffff 0%, #fbfefd 68%, #f2fbf8 100%);
+}
+
+.summaryCard::after {
+  position: absolute;
+  top: 0;
+  left: 1.5rem;
+  width: 5.2rem;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, #2ec4a7, #9ae5d5);
+  content: "";
+}
+
+.rulesCard { animation-delay: 60ms; }
+.preferencesCard { animation-delay: 110ms; }
+
+.cardTitle {
+  position: relative;
+  gap: 0;
+  padding-left: 0.8rem;
+  margin-bottom: 1rem;
+  color: #253752;
+  font-size: 0.72rem;
+}
+
+.cardTitle::before {
+  position: absolute;
+  top: 0.1rem;
+  bottom: 0.1rem;
+  left: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: #2ec4a7;
+  content: "";
+}
+
+.titleIcon {
+  display: none;
+}
+
+.summaryGrid {
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.65rem;
+  padding-bottom: 1.15rem;
+}
+
+.summaryItem {
+  display: block;
+  min-width: 0;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid rgba(221, 233, 237, 0.9);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.76);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.summaryItem:hover {
+  border-color: #bce8de;
+  box-shadow: 0 9px 18px rgba(15, 110, 92, 0.08);
+  transform: translateY(-2px);
+}
+
+.summaryIconBox {
+  display: none;
+}
+
+.summaryTextBox { display: block; min-width: 0; }
+.summaryLabel { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; }
+.summaryValue { display: block; overflow: hidden; margin-top: 0.34rem; font-size: 0.96rem; text-overflow: ellipsis; white-space: nowrap; }
+.createdAt { margin-top: 0.9rem; font-size: 0.75rem; }
+
+.ruleTable thead { background: #f7fafb; }
+.thLeft, .thRight { padding-top: 0.58rem; padding-bottom: 0.58rem; }
+.ruleTable tbody tr { transition: background-color 160ms ease; }
+.ruleTable tbody tr:hover { background: #fbfefd; }
+.tdLabel { font-weight: 650; }
+.tdRange { color: #71839a; font-weight: 600; }
+.valueText { margin-bottom: 0.38rem; }
+
+.bar { height: 0.42rem; background: #ecf2f4; }
+.barFill {
+  position: relative;
+  transform-origin: left center;
+  animation: approvalBarFill 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.barFill::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45));
+  content: "";
+}
+.statusBadge { padding: 0.28rem 0.62rem; font-weight: 750; }
+.badgeOk { background: #eafbf4; color: #128461; }
+.dot { width: 0.58rem; height: 0.58rem; margin-right: 0.6rem; box-shadow: 0 0 0 4px rgba(46, 196, 167, 0.09); }
+
+.assetCardsRow { gap: 0.75rem; }
+.assetCard { position: relative; overflow: hidden; border-radius: 14px; }
+.assetCardOk { border-color: #ccefe3; background: linear-gradient(135deg, #effcf6, #fbfffd); }
+.assetCardWarn { border-color: #fde0ba; background: linear-gradient(135deg, #fff9ef, #fffefd); }
+.assetRatio { padding: 0.25rem 0.5rem; border-radius: 999px; background: rgba(255,255,255,.7); font-size: 0.82rem; }
+.chip { border-radius: 999px; }
+
+.confirmCard {
+  border-color: #bfe9df;
+  background: linear-gradient(115deg, #effcf7, #ffffff 70%);
+  box-shadow: 0 12px 26px rgba(46, 196, 167, 0.08);
+  animation: approvalEnter 460ms 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.confirmTitle { font-size: 1rem; }
+.confirmCheckRow { padding: 0.65rem 0.75rem; border: 1px solid #d5eee7; border-radius: 10px; background: rgba(255,255,255,.66); transition: border-color 160ms ease, background-color 160ms ease; }
+.confirmCheckRow:hover { border-color: #8bdcc9; background: #fff; }
+.confirmCheckRow:has(.confirmCheckbox:checked) {
+  border-color: #71d7c3;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(46, 196, 167, 0.09);
+  animation: confirmationAccepted 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.confirmCheckbox {
+  appearance: none;
+  position: relative;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid #a9cfc6;
+  border-radius: 5px;
+  background: #fff;
+  transition: background-color 180ms ease, border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.confirmCheckbox:checked {
+  border-color: #2ec4a7;
+  background-color: #2ec4a7;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.1 8.1 6.5 11.3 12.9 4.8' fill='none' stroke='white' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  animation: checkboxConfirm 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.confirmCheckbox:focus-visible { outline: 2px solid #138e76; outline-offset: 3px; }
+.footer { padding: 0.25rem 0 1rem; }
+
+@keyframes approvalEnter {
+  from { opacity: 0; transform: translateY(0.55rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes approvalBarFill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes checkboxConfirm {
+  0% { transform: scale(0.78); }
+  65% { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+
+@keyframes confirmationAccepted {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(0.18rem); }
+  100% { transform: translateX(0); }
+}
+
+@media (max-width: 700px) {
+  .header { align-items: flex-start; flex-direction: column; }
+  .summaryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ruleTable { min-width: 620px; }
+  .rulesCard, .preferencesCard { overflow-x: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header, .card, .confirmCard, .barFill, .confirmCheckRow:has(.confirmCheckbox:checked), .confirmCheckbox:checked { animation: none; }
+  .summaryItem { transition: none; }
+}

@@ -1,0 +1,364 @@
+.panel {
+  position: relative;
+  padding: 1.35rem 1.35rem 1.5rem;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background-color: #0f1f3c; /* Kurumsal Lacivert */
+  transform-origin: top;
+  animation: slideBar 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes slideBar {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.status {
+  margin: 0;
+  padding: 1.35rem;
+  color: #8695a4;
+  font-size: 0.8125rem;
+}
+
+.metrics {
+  display: flex;
+  gap: 2.25rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.35rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid #eef3f6;
+}
+
+.metric dt {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.metric dd {
+  margin: 0.15rem 0 0;
+  color: #0f1f3c;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  gap: 2.75rem;
+  align-items: start;
+}
+
+.holdings {
+  min-width: 0;
+  padding-left: 2.75rem;
+  border-left: 1px solid #eef3f6;
+}
+
+@media (max-width: 900px) {
+  .content {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .holdings {
+    padding-left: 0;
+    padding-top: 1.5rem;
+    border-left: none;
+    border-top: 1px solid #eef3f6;
+  }
+}
+
+.blockTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  color: #55687d;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.blockCount {
+  color: #a3b1bd;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.allocation {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 1.5rem;
+  min-width: 0;
+  align-content: start;
+}
+
+.allocation .blockTitle {
+  grid-column: 1 / -1;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendItem {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  transition: opacity 0.16s ease;
+  cursor: default;
+}
+
+.legendItemDimmed {
+  opacity: 0.34;
+}
+
+.relatedLinks {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+  grid-column: 1 / -1;
+  margin-top: 1.35rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid #eef3f6;
+}
+
+.relatedTile {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #eef3f6;
+  border-radius: 12px;
+  background: #ffffff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease,
+    box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.relatedTile:hover {
+  border-color: #bdeee2;
+  background: #f8fdfc;
+  box-shadow: 0 4px 14px rgba(15, 32, 64, 0.06);
+  transform: translateY(-1px);
+}
+
+.relatedTile:focus-visible {
+  outline: 2px solid #2ec4a7;
+  outline-offset: 2px;
+}
+
+.relatedIcon {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #eafaf5;
+  color: #0e8f76;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.relatedIcon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.relatedTile:hover .relatedIcon {
+  background: #2ec4a7;
+  color: #ffffff;
+}
+
+.relatedDivider {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: #e7eef2;
+}
+
+.pdfTile {
+  border-color: #bdeee2;
+  background: #f7fdfa;
+}
+
+.pdfTile:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.relatedText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.relatedLabel {
+  color: #0f1f3c;
+  font-size: 0.78125rem;
+  font-weight: 700;
+}
+
+.relatedHint {
+  color: #8695a4;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .relatedTile,
+  .relatedTile:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.legendLabel {
+  overflow: hidden;
+  color: #55687d;
+  font-size: 0.78125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendValue {
+  color: #0f1f3c;
+  font-size: 0.78125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.holdingList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.holding {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: opacity 0.16s ease;
+}
+
+.holdingMain {
+  display: grid;
+  grid-template-columns: 8px 72px minmax(0, 1fr) 52px auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.holdingDimmed {
+  opacity: 0.34;
+}
+
+.sectorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.holdingAmount {
+  min-width: 88px;
+  color: #6b7c8c;
+  font-size: 0.71875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.holdingCode {
+  color: #3d5163;
+  font-size: 0.78125rem;
+  font-weight: 600;
+}
+
+.holdingTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: #f1f5f8;
+  overflow: hidden;
+}
+
+.holdingFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #2ec4a7;
+  transform-origin: left center;
+  animation: growBar 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes growBar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holdingFill {
+    animation: none;
+  }
+}
+
+.holdingFillTpp {
+  background: #e0a458;
+}
+
+.holdingWeight {
+  color: #0f1f3c;
+  font-size: 0.78125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.holdingCodeHoverable {
+  cursor: help;
+  border-bottom: 1px dashed #aebed0;
+  padding-bottom: 1px;
+}
+
+.holdingCodeHoverable:hover {
+  border-bottom-color: #6b7c8c;
+}

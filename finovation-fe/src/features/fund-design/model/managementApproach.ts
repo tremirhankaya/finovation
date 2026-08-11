@@ -1,4 +1,4 @@
-export type ManagementApproachCode = "ATTACK" | "BALANCED" | "PROTECTIVE"
+export type ManagementApproachCode = "ATTACK" | "BALANCED" | "PROTECTIVE" | "CUSTOM"
 
 export type ManagementApproachOption = {
   code: ManagementApproachCode
@@ -15,8 +15,7 @@ export const MANAGEMENT_APPROACHES: ManagementApproachOption[] = [
   {
     code: "PROTECTIVE",
     label: "Korumacı",
-    description:
-      "Düşük risk profili ile sermaye korumasına öncelik verir.",
+    description: "Düşük risk profili ile sermaye korumasına öncelik verir.",
     defaultLiquidityMinPct: 10,
     defaultLiquidityMaxPct: 15,
     defaultPreferredLiquidityPct: 12,
@@ -44,6 +43,16 @@ export const MANAGEMENT_APPROACHES: ManagementApproachOption[] = [
     defaultPreferredLiquidityPct: 8,
     defaultMinStockCount: 25,
     defaultMaxStockCount: 30,
+  },
+  {
+    code: "CUSTOM",
+    label: "Özel",
+    description: "Kullanıcı tarafından manuel olarak tasarlanan fon modeli.",
+    defaultLiquidityMinPct: 0,
+    defaultLiquidityMaxPct: 100,
+    defaultPreferredLiquidityPct: 10,
+    defaultMinStockCount: 1,
+    defaultMaxStockCount: 100,
   },
 ]
 

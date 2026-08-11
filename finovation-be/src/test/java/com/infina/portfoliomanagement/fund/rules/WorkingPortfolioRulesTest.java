@@ -143,6 +143,7 @@ class WorkingPortfolioRulesTest {
     private static FundPositionResponse equity(String code, String weight, String sector) {
         return new FundPositionResponse(
                 code,
+                code,
                 new BigDecimal(weight),
                 null,
                 sector,
@@ -152,6 +153,7 @@ class WorkingPortfolioRulesTest {
 
     private static FundPositionResponse tpp(String weight) {
         return new FundPositionResponse(
+                "TPP",
                 "TPP",
                 new BigDecimal(weight),
                 null,

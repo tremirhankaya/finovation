@@ -122,7 +122,7 @@ class FundDraftServiceTest {
                 fundAssetPreferenceRepository,
                 assetRepository,
                 equityDetailRepository,
-                financialTime(Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC))
+                Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC)
         );
 
         actor = User.builder()
@@ -287,7 +287,7 @@ class FundDraftServiceTest {
 
         assertThatThrownBy(() -> fundDraftService.createDraft(
                 "user1",
-                new CreateFundDraftRequest("Fon 2", MIN_SIZE, MIN_UNIT_PRICE)
+                new CreateFundDraftRequest("Fon 2", MIN_SIZE, MIN_UNIT_PRICE, null)
         ))
                 .isInstanceOf(BaseException.class)
                 .extracting(ex -> ((BaseException) ex).getErrorCode())
@@ -464,7 +464,8 @@ class FundDraftServiceTest {
         return new CreateFundDraftRequest(
                 "Finovation Hisse Senedi Fonu",
                 new BigDecimal(initialPortfolioSize),
-                new BigDecimal(unitPrice)
+                new BigDecimal(unitPrice),
+                null
         );
     }
 

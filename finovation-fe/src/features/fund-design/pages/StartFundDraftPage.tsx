@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 
 import { createFundDraft } from "@/features/fund-design/api/fundDraftApi"
 import FundDesignLayout from "@/features/fund-design/components/FundDesignLayout"
@@ -15,7 +15,10 @@ import {
   isUnitPriceReady,
   parseUnitPrice,
 } from "@/features/fund-design/lib/unitPrice"
-import { isFundNameReady, validateFundName } from "@/features/fund-design/lib/fundName"
+import {
+  isFundNameReady,
+  validateFundName,
+} from "@/features/fund-design/lib/fundName"
 import Button from "@/shared/ui/Button"
 import FormAlert from "@/shared/ui/FormAlert"
 import TextField from "@/shared/ui/TextField"
@@ -81,9 +84,13 @@ function LiquidityIcon() {
 
 export default function StartFundDraftPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const designMode =
+    searchParams.get("mode") === "MANUAL" ? "MANUAL" : "AI_ASSISTED"
   const {
     init,
     error: initError,
+    isLoading,
     reload: reloadInit,
   } = useFundDraftInit({ page: "START" })
   const startInit = init?.page === "START" ? init : null
@@ -93,19 +100,18 @@ export default function StartFundDraftPage() {
   const [unitPriceInput, setUnitPriceInput] = useState("")
   const [portfolioSizeError, setPortfolioSizeError] = useState("")
   const [unitPriceError, setUnitPriceError] = useState("")
-  const [portfolioFeedback, setPortfolioFeedback] = useState<
-    "idle" | "rejected"
-  >("idle")
-  const [unitPriceFeedback, setUnitPriceFeedback] = useState<
-    "idle" | "rejected"
-  >("idle")
+  const [portfolioFeedback, setPortfolioFeedback] =
+    useState<"idle" | "rejected">("idle")
+  const [unitPriceFeedback, setUnitPriceFeedback] =
+    useState<"idle" | "rejected">("idle")
   const [formError, setFormError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (!startInit) return
-    setPortfolioSizeInput((current) =>
-      current || formatPortfolioSize(startInit.minInitialPortfolioSize),
+    setPortfolioSizeInput(
+      (current) =>
+        current || formatPortfolioSize(startInit.minInitialPortfolioSize),
     )
     setUnitPriceInput((current) => current || formatUnitPrice("1"))
   }, [startInit])
@@ -176,7 +182,12 @@ export default function StartFundDraftPage() {
 
     const portfolioSize = parsePortfolioSize(portfolioSizeInput)
     const unitPrice = parseUnitPrice(unitPriceInput)
-    if (!canContinue || !startInit || portfolioSize == null || unitPrice == null) {
+    if (
+      !canContinue ||
+      !startInit ||
+      portfolioSize == null ||
+      unitPrice == null
+    ) {
       return
     }
 
@@ -191,8 +202,13 @@ export default function StartFundDraftPage() {
         name: fundName.trim(),
         initialPortfolioSize: portfolioSize,
         unitPrice,
+        designMode,
       })
-      await navigate(`/fund-design/${draft.draftId}/strategy`)
+      await navigate(
+        designMode === "MANUAL"
+          ? `/fund-design/${draft.draftId}/edit`
+          : `/fund-design/${draft.draftId}/strategy`,
+      )
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : CREATE_ERROR_FALLBACK,
@@ -203,14 +219,14 @@ export default function StartFundDraftPage() {
   }
 
   return (
-    <FundDesignLayout step={1}>
+    <FundDesignLayout step={1} designMode={designMode} isLoading={isLoading}>
       <section className={styles.panel}>
         <header className={styles.header}>
-          <h2 className={styles.sectionTitle}>1. Taslağı Başlat</h2>
-          <p className={styles.introLead}>Fon Tasarımı</p>
+          <span className={styles.eyebrow}>FON TASARIMI · ADIM 1</span>
+          <h2 className={styles.sectionTitle}>Fonunuzu oluşturmaya başlayın</h2>
           <p className={styles.intro}>
-            Yeni fon oluşturmak için temel bilgileri girin ve tasarım sürecini
-            başlatın.
+            Temel bilgileri girin; tasarım akışında portföyünüzü adım adım
+            şekillendirin.
           </p>
         </header>
 
@@ -218,11 +234,7 @@ export default function StartFundDraftPage() {
         {initError && (
           <FormAlert>
             {initError}
-            <button
-              className={styles.retry}
-              type="button"
-              onClick={reloadInit}
-            >
+            <button className={styles.retry} type="button" onClick={reloadInit}>
               Tekrar dene
             </button>
           </FormAlert>
@@ -236,8 +248,14 @@ export default function StartFundDraftPage() {
               onSubmit={(event) => void handleSubmit(event)}
             >
               <div className={styles.formCardHeader}>
-                <h3 className={styles.blockTitle}>Fon Bilgileri</h3>
-                <span className={styles.currencyBadge} title="Para birimi sistem tarafından atanır">
+                <div>
+                  <span className={styles.cardKicker}>TEMEL BİLGİLER</span>
+                  <h3 className={styles.blockTitle}>Fon Bilgileri</h3>
+                </div>
+                <span
+                  className={styles.currencyBadge}
+                  title="Para birimi sistem tarafından atanır"
+                >
                   {startInit?.defaultCurrency ?? "TRY"}
                 </span>
               </div>
@@ -278,7 +296,9 @@ export default function StartFundDraftPage() {
                         ? styles.inputRejected
                         : ""
                     }
-                    onBlur={() => validatePortfolioSizeField(portfolioSizeInput)}
+                    onBlur={() =>
+                      validatePortfolioSizeField(portfolioSizeInput)
+                    }
                     onChange={(value) => {
                       const next = formatPortfolioSize(value)
                       setPortfolioSizeInput(next)
@@ -320,14 +340,22 @@ export default function StartFundDraftPage() {
               </div>
             </form>
 
-            <section className={styles.universeCard} aria-labelledby="universe-title">
-              <h3 id="universe-title" className={styles.blockTitle}>
-                Yatırım Evreni
-              </h3>
-              <p className={styles.universeIntro}>
-                Tanımlı hisse evreni ve kısa vadeli likidite bileşeni
-                kullanılacaktır.
-              </p>
+            <section
+              className={styles.universeCard}
+              aria-labelledby="universe-title"
+            >
+              <div className={styles.universeHeader}>
+                <div>
+                  <span className={styles.cardKicker}>MODEL EVRENİ</span>
+                  <h3 id="universe-title" className={styles.blockTitle}>
+                    Yatırım Evreni
+                  </h3>
+                  <p className={styles.universeIntro}>
+                    Tasarımda kullanılacak varlık türleri.
+                  </p>
+                </div>
+                <span className={styles.universeBadge}>2 bileşen</span>
+              </div>
               <div className={styles.universeTiles}>
                 <article className={styles.universeTile}>
                   <span className={styles.universeIcon}>

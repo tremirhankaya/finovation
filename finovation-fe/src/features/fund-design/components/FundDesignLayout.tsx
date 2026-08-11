@@ -1,9 +1,10 @@
 import type { ReactNode } from "react"
 import { useNavigate, useParams } from "react-router"
 
+import FundDesignSkeleton from "@/features/fund-design/components/FundDesignSkeleton"
 import styles from "@/features/fund-design/styles/FundDesignLayout.module.css"
 
-const STEPS = [
+const AI_STEPS = [
   "Taslağı Başlat",
   "Strateji",
   "AI Analizi",
@@ -13,7 +14,16 @@ const STEPS = [
   "Tamamlandı",
 ] as const
 
-function pathForStep(stepNumber: number, draftId: string | undefined): string | null {
+const MANUAL_STEPS = ["Taslağı Başlat", "Portföy", "Onay"] as const
+
+const MANUAL_INTERNAL_STEPS = [1, 5, 6] as const
+
+const COMPLETED_STEP = 7
+
+function pathForStep(
+  stepNumber: number,
+  draftId: string | undefined,
+): string | null {
   switch (stepNumber) {
     case 1:
       return "/fund-design/new"
@@ -37,71 +47,93 @@ function pathForStep(stepNumber: number, draftId: string | undefined): string | 
 type FundDesignLayoutProps = {
   step: number
   wide?: boolean
+  designMode?: "AI_ASSISTED" | "MANUAL"
+  isLoading?: boolean
   children: ReactNode
 }
 
 export default function FundDesignLayout({
   step,
   wide = false,
+  designMode = "AI_ASSISTED",
+  isLoading = false,
   children,
 }: FundDesignLayoutProps) {
   const navigate = useNavigate()
   const { draftId } = useParams<{ draftId: string }>()
-  const currentLabel = STEPS[step - 1] ?? STEPS[0]
+  const isManual = designMode === "MANUAL"
+  const stepsList = isManual ? MANUAL_STEPS : AI_STEPS
+  const isManualCompleted = isManual && step === COMPLETED_STEP
 
+  const manualIndex = MANUAL_INTERNAL_STEPS.indexOf(
+    step as (typeof MANUAL_INTERNAL_STEPS)[number],
+  )
+  const visualStep = isManual
+    ? manualIndex === -1
+      ? stepsList.length
+      : manualIndex + 1
+    : step
   return (
-    <div className={[styles.page, wide && styles.pageWide].filter(Boolean).join(" ")}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>AI Destekli Fon Tasarımı</h1>
-        <p className={styles.subtitle}>
-          Adım {step} / {STEPS.length} - {currentLabel}
-        </p>
-      </header>
+    <div
+      className={[styles.page, wide && styles.pageWide]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {!isLoading && (
+        <div className={styles.navigationRow}>
+          <ol className={styles.steps} data-fund-design-steps>
+            {stepsList.map((label, index) => {
+              const visualStepNumber = index + 1
+              const internalStepNumber = isManual
+                ? MANUAL_INTERNAL_STEPS[index]
+                : visualStepNumber
+              const isCurrent =
+                !isManualCompleted && visualStepNumber === visualStep
+              const isDone = isManualCompleted || visualStepNumber < visualStep
+              const isFinalized = step === COMPLETED_STEP
+              const targetPath = pathForStep(internalStepNumber, draftId)
+              const canNavigate = isDone && targetPath != null && !isFinalized
 
-      <ol className={styles.steps}>
-        {STEPS.map((label, index) => {
-          const stepNumber = index + 1
-          const isCurrent = stepNumber === step
-          const isDone = stepNumber < step
-          const targetPath = pathForStep(stepNumber, draftId)
-          const canNavigate = isDone && targetPath != null
-
-          return (
-            <li
-              key={label}
-              className={[
-                styles.step,
-                isCurrent && styles.stepCurrent,
-                isDone && styles.stepDone,
-                canNavigate && styles.stepClickable,
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              aria-current={isCurrent ? "step" : undefined}
-            >
-              {canNavigate ? (
-                <button
-                  type="button"
-                  className={styles.stepButton}
-                  title={`${label} adımına dön`}
-                  aria-label={`${label} adımına dön`}
-                  onClick={() => void navigate(targetPath)}
+              return (
+                <li
+                  key={label}
+                  className={[
+                    styles.step,
+                    isCurrent && styles.stepCurrent,
+                    isDone && styles.stepDone,
+                    canNavigate && styles.stepClickable,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-current={isCurrent ? "step" : undefined}
                 >
-                  <span className={styles.stepIndex}>{stepNumber}</span>
-                  <span className={styles.stepLabel}>{label}</span>
-                </button>
-              ) : (
-                <>
-                  <span className={styles.stepIndex}>{stepNumber}</span>
-                  <span className={styles.stepLabel}>{label}</span>
-                </>
-              )}
-            </li>
-          )
-        })}
-      </ol>
+                  {canNavigate ? (
+                    <button
+                      type="button"
+                      className={styles.stepButton}
+                      title={`${label} adımına dön`}
+                      aria-label={`${label} adımına dön`}
+                      onClick={() => void navigate(targetPath)}
+                    >
+                      <span className={styles.stepIndex}>{visualStepNumber}</span>
+                      <span className={styles.stepLabel}>{label}</span>
+                    </button>
+                  ) : (
+                    <>
+                      <span className={styles.stepIndex}>{visualStepNumber}</span>
+                      <span className={styles.stepLabel}>{label}</span>
+                    </>
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      )}
 
-      {children}
+      <div className={styles.content}>
+        {isLoading ? <FundDesignSkeleton step={step} /> : children}
+      </div>
     </div>
   )
 }

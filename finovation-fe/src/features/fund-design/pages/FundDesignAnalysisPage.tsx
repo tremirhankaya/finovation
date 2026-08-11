@@ -99,7 +99,13 @@ function formatCountRange(
 
 function CheckIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M5 12.5 10 17.5 19 7"
         stroke="currentColor"
@@ -113,7 +119,13 @@ function CheckIcon() {
 
 function ActiveIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M13 2 4 14h7l-1 8 10-14h-7l1-6Z"
         stroke="currentColor"
@@ -126,7 +138,11 @@ function ActiveIcon() {
 
 type StageStatus = "done" | "active" | "pending"
 
-function stageStatus(index: number, activeIndex: number, complete: boolean): StageStatus {
+function stageStatus(
+  index: number,
+  activeIndex: number,
+  complete: boolean,
+): StageStatus {
   if (complete || index < activeIndex) return "done"
   if (index === activeIndex) return "active"
   return "pending"
@@ -162,7 +178,12 @@ function PrefTile({ label, value, hint, locked = false }: PrefTileProps) {
 export default function FundDesignAnalysisPage() {
   const navigate = useNavigate()
   const { draftId } = useParams<{ draftId: string }>()
-  const { init, error: initError, reload: reloadInit } = useFundDraftInit({
+  const {
+    init,
+    error: initError,
+    isLoading,
+    reload: reloadInit,
+  } = useFundDraftInit({
     page: "ANALYSIS",
     draftId,
   })
@@ -306,11 +327,29 @@ export default function FundDesignAnalysisPage() {
     : null
 
   return (
-    <FundDesignLayout step={3}>
+    <FundDesignLayout step={3} isLoading={isLoading}>
       <section className={styles.panel}>
         <header className={styles.header}>
-          <h2 className={styles.sectionTitle}>3. AI Analizi</h2>
-          <p className={styles.introLead}>Strateji tercihlerine göre model çalışıyor</p>
+          <div className={styles.titleRow}>
+            <div>
+              <p className={styles.eyebrow}>AI destekli analiz</p>
+              <h2 className={styles.sectionTitle}>3. AI Analizi</h2>
+            </div>
+            <span
+              className={[
+                styles.statusBadge,
+                analysisComplete ? styles.statusBadgeComplete : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <i aria-hidden="true" />
+              {analysisComplete ? "Analiz tamamlandı" : "Model çalışıyor"}
+            </span>
+          </div>
+          <p className={styles.introLead}>
+            Strateji tercihlerine göre model çalışıyor
+          </p>
           <p className={styles.intro}>
             Kaydettiğiniz portföy kuralları modele iletiliyor; analiz bitince
             alternatif önerilere geçebilirsiniz.
@@ -320,7 +359,11 @@ export default function FundDesignAnalysisPage() {
         {formError ? (
           <FormAlert>
             {formError}
-            <button className={styles.retry} type="button" onClick={handleRetry}>
+            <button
+              className={styles.retry}
+              type="button"
+              onClick={handleRetry}
+            >
               Tekrar dene
             </button>
           </FormAlert>
@@ -336,7 +379,7 @@ export default function FundDesignAnalysisPage() {
 
         <div className={styles.grid}>
           <div className={styles.mainColumn}>
-            <section className={styles.card} aria-label="AI analiz durumu">
+            <section className={[styles.card, styles.analysisCard].join(" ")} aria-label="AI analiz durumu">
               <div className={styles.analysisGrid}>
                 <div className={styles.stagesColumn}>
                   <h3 className={styles.columnTitle}>Analiz Aşaması</h3>
@@ -378,12 +421,16 @@ export default function FundDesignAnalysisPage() {
                     <h3 className={styles.columnTitle}>Kullanılan Tercihler</h3>
                     {prefs.fundName ? (
                       <p className={styles.fundMeta}>
-                        <span className={styles.fundName}>{prefs.fundName}</span>
+                        <span className={styles.fundName}>
+                          {prefs.fundName}
+                        </span>
                         <span className={styles.metaDot} aria-hidden="true">
                           ·
                         </span>
                         <span>
-                          {analysisDate ? formatAnalysisDate(analysisDate) : "—"}
+                          {analysisDate
+                            ? formatAnalysisDate(analysisDate)
+                            : "—"}
                         </span>
                       </p>
                     ) : (
@@ -393,9 +440,16 @@ export default function FundDesignAnalysisPage() {
                     )}
                   </div>
 
-                  <div className={styles.prefGrid} aria-label="Strateji tercihleri">
+                  <div
+                    className={styles.prefGrid}
+                    aria-label="Strateji tercihleri"
+                  >
                     <PrefTile label="Yönetim Yaklaşımı" value={approachLabel} />
-                    <PrefTile label="TPP Aralığı" value={tppValue} hint={tppHint} />
+                    <PrefTile
+                      label="TPP Aralığı"
+                      value={tppValue}
+                      hint={tppHint}
+                    />
                     <PrefTile
                       label="Hisse Sayısı"
                       value={formatCountRange(
@@ -407,7 +461,9 @@ export default function FundDesignAnalysisPage() {
                       <PrefTile
                         label="Zorunlu Hisseler"
                         value={prefs.forcedAssetCodes
-                          .map((code) => assetLabelForCode(analysisModelUniverse, code))
+                          .map((code) =>
+                            assetLabelForCode(analysisModelUniverse, code),
+                          )
                           .join(", ")}
                       />
                     ) : null}
@@ -415,7 +471,9 @@ export default function FundDesignAnalysisPage() {
                       <PrefTile
                         label="Hariç Tutulanlar"
                         value={prefs.excludedAssetCodes
-                          .map((code) => assetLabelForCode(analysisModelUniverse, code))
+                          .map((code) =>
+                            assetLabelForCode(analysisModelUniverse, code),
+                          )
                           .join(", ")}
                       />
                     ) : null}
@@ -435,8 +493,12 @@ export default function FundDesignAnalysisPage() {
                       locked
                       label="Tek Hisse Ağırlığı"
                       value={
-                        init?.minSingleStockMaxPct != null && singleStockMax != null
-                          ? formatPctRange(init.minSingleStockMaxPct, singleStockMax)
+                        init?.minSingleStockMaxPct != null &&
+                        singleStockMax != null
+                          ? formatPctRange(
+                              init.minSingleStockMaxPct,
+                              singleStockMax,
+                            )
                           : formatPct(singleStockMax)
                       }
                     />

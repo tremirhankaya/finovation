@@ -33,7 +33,9 @@ function toPct(weight: number): number {
   return Math.round(weight * 10) / 10
 }
 
-export function summarizeProposal(proposal: FundModelProposal): ProposalSummary {
+export function summarizeProposal(
+  proposal: FundModelProposal,
+): ProposalSummary {
   const equities = proposal.assets.filter((asset) => !isTpp(asset))
   const tpp = proposal.assets.find((asset) => isTpp(asset))
 

@@ -8,8 +8,7 @@ import AuthProvider from "@/features/auth/context/AuthProvider"
 import LoginPage from "@/features/auth/pages/LoginPage"
 import DashboardPage from "@/features/dashboard/pages/DashboardPage"
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage"
-import FundDraftsPage from "@/features/fund-design/pages/FundDraftsPage"
-import FundActivePage from "@/features/fund-design/pages/FundActivePage"
+import FundManagementPage from "@/features/fund-design/pages/FundManagementPage"
 import StartFundDraftPage from "@/features/fund-design/pages/StartFundDraftPage"
 import FundDesignStrategyPage from "@/features/fund-design/pages/FundDesignStrategyPage"
 import FundDesignAnalysisPage from "@/features/fund-design/pages/FundDesignAnalysisPage"
@@ -77,9 +76,7 @@ export default function App() {
                         }
                     >
                         <Route path="/dashboard" element={<DashboardPage />} />
-                        <Route path="/fund-design" element={<Navigate to="/fund-design/create" replace />} />
-                        <Route path="/fund-design/create" element={<FundDraftsPage />} />
-                        <Route path="/fund-design/active" element={<FundActivePage />} />
+                        <Route path="/fund-design" element={<FundManagementPage />} />
                         <Route path="/fund-design/new" element={<StartFundDraftPage />} />
                         <Route
                             path="/fund-design/:draftId/strategy"

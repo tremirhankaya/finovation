@@ -13,7 +13,10 @@ const fundDraftInitMocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@/features/fund-design/api/fundDraftApi", () => fundDraftApiMocks)
-vi.mock("@/features/fund-design/hooks/useFundDraftInit", () => fundDraftInitMocks)
+vi.mock(
+  "@/features/fund-design/hooks/useFundDraftInit",
+  () => fundDraftInitMocks,
+)
 
 import FundDesignEditPage from "@/features/fund-design/pages/FundDesignEditPage"
 
@@ -60,7 +63,10 @@ function renderPage() {
   return render(
     <MemoryRouter initialEntries={[`/fund-design/${DRAFT_ID}/edit`]}>
       <Routes>
-        <Route path="/fund-design/:draftId/edit" element={<FundDesignEditPage />} />
+        <Route
+          path="/fund-design/:draftId/edit"
+          element={<FundDesignEditPage />}
+        />
       </Routes>
     </MemoryRouter>,
   )
@@ -106,15 +112,15 @@ describe("FundDesignEditPage", () => {
 
     renderPage()
 
-    await waitFor(() =>
-      expect(screen.getByText("AKBNK")).toBeInTheDocument(),
-    )
+    await waitFor(() => expect(screen.getByText("AKBNK")).toBeInTheDocument())
 
     const checkboxes = screen.getAllByRole("checkbox")
     await user.click(checkboxes[1])
     await user.click(checkboxes[2])
 
-    await user.click(screen.getByRole("button", { name: "Portföyden Çıkar (2)" }))
+    await user.click(
+      screen.getByRole("button", { name: "Portföyden Çıkar (2)" }),
+    )
 
     expect(screen.getByText("AKBNK · Akbank")).toBeInTheDocument()
     expect(screen.getByText("GARAN · Garanti Bankası")).toBeInTheDocument()

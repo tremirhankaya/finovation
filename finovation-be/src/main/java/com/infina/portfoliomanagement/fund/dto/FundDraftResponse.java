@@ -4,6 +4,8 @@ package com.infina.portfoliomanagement.fund.dto;
 
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
+
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 
 import com.infina.portfoliomanagement.fund.enums.FundType;
@@ -69,6 +71,10 @@ public record FundDraftResponse(
         Integer currentStep,
 
         FundDraftStatus status,
+
+        FundDesignMode designMode,
+
+        boolean pinned,
 
         LocalDateTime createdAt,
 
@@ -139,6 +145,10 @@ public record FundDraftResponse(
                 .currentStep(draft.getCurrentStep() == null ? null : draft.getCurrentStep().intValue())
 
                 .status(draft.getStatus())
+
+                .designMode(draft.getDesignMode())
+
+                .pinned(draft.isPinned())
 
                 .createdAt(draft.getCreatedAt())
 

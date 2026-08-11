@@ -28,7 +28,8 @@ export function formatUnitPrice(raw: string): string {
 
   const [whole = "", fraction] = normalized.split(",")
   const wholeDigits = whole.replace(/\D/g, "").replace(/^0+(?=\d)/, "")
-  const safeWhole = wholeDigits || (fraction != null || normalized.endsWith(",") ? "0" : "")
+  const safeWhole =
+    wholeDigits || (fraction != null || normalized.endsWith(",") ? "0" : "")
 
   if (!safeWhole && fraction == null) return ""
 

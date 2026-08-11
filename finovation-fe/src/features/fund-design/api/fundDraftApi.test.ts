@@ -87,16 +87,19 @@ describe("fundDraftApi", () => {
       maxStockCount: 30,
     })
 
-    await updateFundDraftPortfolioRules("11111111-1111-1111-1111-111111111111", {
-      managementApproach: "PROTECTIVE",
-      tppMinPct: 5,
-      tppMaxPct: 10,
-      preferredTppPct: 8,
-      minStockCount: 25,
-      maxStockCount: 30,
-      excludedAssetCodes: ["MGROS"],
-      forcedAssetCodes: ["THYAO"],
-    })
+    await updateFundDraftPortfolioRules(
+      "11111111-1111-1111-1111-111111111111",
+      {
+        managementApproach: "PROTECTIVE",
+        tppMinPct: 5,
+        tppMaxPct: 10,
+        preferredTppPct: 8,
+        minStockCount: 25,
+        maxStockCount: 30,
+        excludedAssetCodes: ["MGROS"],
+        forcedAssetCodes: ["THYAO"],
+      },
+    )
 
     expect(httpMocks.apiFetch).toHaveBeenCalledWith(
       "/api/v1/fund-drafts/11111111-1111-1111-1111-111111111111/portfolio-rules",

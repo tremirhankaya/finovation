@@ -1,6 +1,7 @@
 package com.infina.portfoliomanagement.fund.entity;
 
 import com.infina.portfoliomanagement.fund.enums.FundCurrency;
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
 import com.infina.portfoliomanagement.fund.enums.FundDesignSteps;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
@@ -8,6 +9,7 @@ import com.infina.portfoliomanagement.fund.enums.InvestmentHorizon;
 import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "fund_drafts")
+@SQLRestriction("is_deleted = 0")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -92,6 +95,19 @@ public class FundDraft {
     @Column(name = "current_step", nullable = false)
     private Short currentStep;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "design_mode", nullable = false, length = 20)
+    private FundDesignMode designMode;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean deleted;
+
+    @Column(name = "is_pinned", nullable = false)
+    private boolean pinned;
+
+    @Column(name = "deleted_by_user_id")
+    private Long deletedByUserId;
+
     @Column(name = "created_by_user_id", nullable = false)
     private Long createdByUserId;
 
@@ -105,6 +121,7 @@ public class FundDraft {
             String name,
             BigDecimal initialPortfolioSize,
             BigDecimal unitPrice,
+            FundDesignMode designMode,
             Long createdByUserId,
             LocalDateTime now
     ) {
@@ -116,10 +133,20 @@ public class FundDraft {
                 .initialPortfolioSize(initialPortfolioSize)
                 .unitPrice(unitPrice)
                 .status(FundDraftStatus.IN_PROGRESS)
-                .currentStep((short) FundDesignSteps.STRATEGY)
+                .designMode(designMode)
+                .deleted(false)
+                .pinned(false)
+                .currentStep((short) firstStepFor(designMode))
                 .createdByUserId(createdByUserId)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
+    }
+
+    private static int firstStepFor(FundDesignMode designMode) {
+        if (designMode == FundDesignMode.MANUAL) {
+            return FundDesignSteps.EDIT;
+        }
+        return FundDesignSteps.STRATEGY;
     }
 }

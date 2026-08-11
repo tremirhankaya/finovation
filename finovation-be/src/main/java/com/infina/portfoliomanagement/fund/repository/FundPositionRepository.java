@@ -20,6 +20,7 @@ public interface FundPositionRepository extends JpaRepository<FundPosition, Long
     @Query("""
             SELECT new com.infina.portfoliomanagement.fund.dto.analysis.FundPositionResponse(
                 fp.asset.assetCode,
+                fp.asset.displayName,
                 fp.weight,
                 fp.aiNote,
                 s.name,

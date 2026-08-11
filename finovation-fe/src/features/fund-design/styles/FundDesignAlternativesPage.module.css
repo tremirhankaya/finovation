@@ -6,6 +6,7 @@
 
 .header {
   margin-bottom: 0.15rem;
+  animation: alternativesEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .sectionTitle {
@@ -36,13 +37,23 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #e2eeec;
+  border-radius: 14px;
+  background: linear-gradient(105deg, #f8fcfb, #fff);
 }
 
 .chartToolbarLabel {
   margin: 0;
-  color: #6b7c8c;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  color: #18344a;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.chartToolbarHint {
+  margin: 0.18rem 0 0;
+  color: #7a8a99;
+  font-size: 0.7rem;
 }
 
 .viewToggle {
@@ -111,9 +122,11 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  animation: alternativesEnter 0.48s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .proposalCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -144,9 +157,23 @@
 
 .proposalSelected {
   border-color: #2ec4a7;
+  background:
+    linear-gradient(180deg, #eefbf7 0%, #fff 43%),
+    #fff;
   box-shadow:
     0 0 0 3px rgba(46, 196, 167, 0.16),
     0 12px 28px rgba(15, 32, 64, 0.07);
+}
+
+.proposalSelected::before {
+  position: absolute;
+  top: -1px;
+  left: 1.15rem;
+  width: 3.5rem;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  content: "";
+  background: #2ec4a7;
 }
 
 .proposalHeader {
@@ -184,6 +211,7 @@
   white-space: nowrap;
 }
 
+
 .metricRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -194,7 +222,14 @@
   padding: 0.7rem 0.8rem;
   border: 1px solid #e8eef2;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.proposalCard:hover .metricChip {
+  border-color: #d5e8e3;
+  box-shadow: 0 5px 10px rgba(15, 32, 64, 0.035);
+  transform: translateY(-1px);
 }
 
 .metricLabel {
@@ -216,6 +251,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  animation: viewContentEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .pieWrap {
@@ -235,7 +271,14 @@
 .pieSlice {
   cursor: pointer;
   outline: none;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
   transition: opacity 0.12s ease;
+}
+
+.pieSliceEntered {
+  animation: pieSliceReveal 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .pieSliceActive {
@@ -244,6 +287,17 @@
 
 .pieSliceDimmed {
   opacity: 0.4;
+}
+
+@keyframes pieSliceReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.12);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .pieCenter {
@@ -321,6 +375,16 @@
   line-height: 1.35;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .pieSlice {
+    opacity: 1;
+  }
+
+  .pieSliceEntered {
+    animation: none;
+  }
+}
+
 .legendList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -381,6 +445,8 @@
   overflow: auto;
   border: 1px solid #eef3f6;
   border-radius: 12px;
+  background: #fff;
+  animation: viewContentEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .holdingsTable {
@@ -436,11 +502,36 @@
   border-bottom: 0;
 }
 
+.holdingsTable tbody tr {
+  animation: tableRowEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.holdingsTable tbody tr:nth-child(2) { animation-delay: 0.035s; }
+.holdingsTable tbody tr:nth-child(3) { animation-delay: 0.07s; }
+.holdingsTable tbody tr:nth-child(4) { animation-delay: 0.105s; }
+.holdingsTable tbody tr:nth-child(5) { animation-delay: 0.14s; }
+.holdingsTable tbody tr:nth-child(n + 6) { animation-delay: 0.175s; }
+
 .tableCodeCell {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   font-weight: 600;
+}
+
+@keyframes viewContentEnter {
+  from { opacity: 0; transform: translateY(0.45rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes alternativesEnter {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tableRowEnter {
+  from { opacity: 0; transform: translateX(-0.3rem); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .actions {
@@ -511,5 +602,15 @@
   .back,
   .continue {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pieBlock,
+  .tableWrap,
+  .holdingsTable tbody tr,
+  .header,
+  .proposalGrid {
+    animation: none;
   }
 }
