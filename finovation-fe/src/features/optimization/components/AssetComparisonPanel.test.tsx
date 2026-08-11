@@ -18,6 +18,7 @@ const ASSETS: OptimizationResultAsset[] = [
     actionType: "INCREASE",
     manuallyOverridden: false,
     rationale: "Güçlü kazanç büyümesi.",
+    userLocked: false,
   },
   {
     assetCode: "ASELS",
@@ -31,6 +32,7 @@ const ASSETS: OptimizationResultAsset[] = [
     actionType: "DECREASE",
     manuallyOverridden: true,
     rationale: "Sektör yoğunlaşma limiti.",
+    userLocked: false,
   },
   {
     assetCode: "THYAO",
@@ -44,6 +46,7 @@ const ASSETS: OptimizationResultAsset[] = [
     actionType: "KEEP",
     manuallyOverridden: false,
     rationale: null,
+    userLocked: true,
   },
 ]
 
@@ -60,6 +63,7 @@ const ROUNDING_MISMATCH_ASSETS: OptimizationResultAsset[] = [
     actionType: "INCREASE",
     manuallyOverridden: false,
     rationale: "Model içi küçük yeniden dengeleme.",
+    userLocked: false,
   },
   {
     assetCode: "HALKB",
@@ -73,6 +77,7 @@ const ROUNDING_MISMATCH_ASSETS: OptimizationResultAsset[] = [
     actionType: "KEEP",
     manuallyOverridden: false,
     rationale: null,
+    userLocked: true,
   },
 ]
 
@@ -90,6 +95,42 @@ describe("AssetComparisonPanel", () => {
     render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
 
     expect(screen.getByText("SABİT")).toBeInTheDocument()
+  })
+
+  it("actionType KEEP olsa da kullanıcı Koru ile seçmediyse SABİT rozeti göstermez", () => {
+    const notUserLockedButUnchanged: OptimizationResultAsset[] = [
+      {
+        assetCode: "EREGL",
+        name: "Ereğli Demir Çelik",
+        sectorName: "Ana Metal Sanayi",
+        assetType: "EQUITY",
+        currentWeight: 4,
+        proposedWeight: 4,
+        finalWeight: null,
+        changeAmount: 0,
+        actionType: "KEEP",
+        manuallyOverridden: false,
+        rationale: null,
+        userLocked: false,
+      },
+    ]
+
+    render(
+      <AssetComparisonPanel
+        assets={notUserLockedButUnchanged}
+        fundName="Test Fonu"
+      />,
+    )
+
+    expect(screen.queryByText("SABİT")).not.toBeInTheDocument()
+  })
+
+  it("varlık başlığı Hisse değil Varlık yazar", () => {
+    render(<AssetComparisonPanel assets={ASSETS} fundName="Test Fonu" />)
+
+    expect(
+      screen.getByRole("columnheader", { name: "Varlık" }),
+    ).toBeInTheDocument()
   })
 
   it("filtre çipleri ile listeyi daraltır", async () => {
@@ -164,6 +205,7 @@ describe("AssetComparisonPanel", () => {
         actionType: "INCREASE",
         manuallyOverridden: false,
         rationale: null,
+        userLocked: false,
       },
     ]
 
@@ -342,6 +384,38 @@ describe("AssetComparisonPanel", () => {
     expect(screen.queryByText("THYAO")).not.toBeInTheDocument()
   })
 
+  it("kullanıcı Koru ile seçmediği ama ağırlığı değişmeyen hisse Değişmeyenler'de görünür, Sabit Kalanlar'da görünmez", async () => {
+    const user = userEvent.setup()
+    const notUserLockedButUnchanged: OptimizationResultAsset[] = [
+      {
+        assetCode: "EREGL",
+        name: "Ereğli Demir Çelik",
+        sectorName: "Ana Metal Sanayi",
+        assetType: "EQUITY",
+        currentWeight: 4,
+        proposedWeight: 4,
+        finalWeight: null,
+        changeAmount: 0,
+        actionType: "KEEP",
+        manuallyOverridden: false,
+        rationale: null,
+        userLocked: false,
+      },
+    ]
+    render(
+      <AssetComparisonPanel
+        assets={notUserLockedButUnchanged}
+        fundName="Test Fonu"
+      />,
+    )
+
+    await user.click(screen.getByRole("tab", { name: /Değişmeyenler/ }))
+    expect(screen.getByText("EREGL")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("tab", { name: /Sabit Kalanlar/ }))
+    expect(screen.queryByText("EREGL")).not.toBeInTheDocument()
+  })
+
   it("görünen ağırlığı değişmeyen hisse actionType INCREASE olsa bile Değişmeyenler'de görünür", async () => {
     const user = userEvent.setup()
     render(
@@ -375,6 +449,38 @@ describe("AssetComparisonPanel", () => {
 
     await user.click(screen.getByRole("tab", { name: /Sabit Kalanlar/ }))
     expect(screen.getByText("HALKB")).toBeInTheDocument()
+  })
+
+  it("TPP varlığı sıralamadan bağımsız olarak her zaman listenin en altında görünür", async () => {
+    const user = userEvent.setup()
+    const assetsWithTpp: OptimizationResultAsset[] = [
+      {
+        assetCode: "TPP1G",
+        name: "TPP",
+        sectorName: null,
+        assetType: "TPP",
+        currentWeight: 12,
+        proposedWeight: 10,
+        finalWeight: null,
+        changeAmount: -2,
+        actionType: "DECREASE",
+        manuallyOverridden: false,
+        rationale: null,
+        userLocked: false,
+      },
+      ...ASSETS,
+    ]
+
+    render(<AssetComparisonPanel assets={assetsWithTpp} fundName="Test Fonu" />)
+
+    const bodyRows = () => screen.getAllByRole("row").slice(1, -1)
+    expect(bodyRows().at(-1)?.textContent).toContain("TPP1G")
+
+    await user.click(screen.getByRole("button", { name: /Mevcut Ağırlık/ }))
+    expect(bodyRows().at(-1)?.textContent).toContain("TPP1G")
+
+    await user.click(screen.getByRole("button", { name: /Değişim/ }))
+    expect(bodyRows().at(-1)?.textContent).toContain("TPP1G")
   })
 
   it("Değişim başlığına tıklayınca değişim değerine göre sıralar", async () => {

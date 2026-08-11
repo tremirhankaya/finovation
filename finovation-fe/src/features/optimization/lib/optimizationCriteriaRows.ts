@@ -16,6 +16,7 @@ export type CriteriaRow = {
   status: CriteriaRowStatus
   detail: string
   unit: "PERCENT" | "COUNT" | "RATIO"
+  description?: string
 }
 
 export const CRITERIA_STATUS_LABELS: Record<CriteriaRowStatus, string> = {
@@ -126,6 +127,7 @@ export function buildCriteriaRows(
     status: metric.status,
     detail: metric.detail,
     unit: "RATIO",
+    description: metric.description,
   }))
 
   return [...constraintRows, ...infoRows]

@@ -618,6 +618,47 @@
   border-radius: 12px;
 }
 
+.metricCardIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+
+.metricCardIcon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.metricCardIconSlate {
+  color: var(--color-slate-500);
+  background: #f1f5f9;
+}
+
+.metricCardIconIndigo {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.metricCardIconAmber {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.metricCardIconTeal {
+  color: var(--color-teal-700);
+  background: #f0fdfa;
+}
+
+.metricCardIconNavy {
+  color: var(--color-navy-950);
+  background: #eef1f6;
+}
+
 .metricCardLabel {
   display: block;
   color: var(--color-navy-950);
@@ -972,13 +1013,21 @@
 .donutSvg {
   width: 200px;
   height: 200px;
+  overflow: visible;
+  filter: drop-shadow(0 8px 16px rgba(15, 32, 64, 0.1));
+}
+
+.donutCenter {
+  fill: #fff;
+  pointer-events: none;
 }
 
 .donutCenterValue {
   fill: var(--color-navy-950);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 .donutCenterLabel {
@@ -987,51 +1036,80 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-}
-
-.donutCenterHover {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  height: 100%;
-  padding: 0 4px;
-  text-align: center;
-}
-
-.donutCenterHoverName {
-  overflow: hidden;
-  display: -webkit-box;
-  color: var(--color-slate-500);
-  font-size: 8px;
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  text-overflow: ellipsis;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.donutCenterHoverValue {
-  color: var(--color-navy-950);
-  font-size: 20px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 .donutSlice {
   cursor: pointer;
-  stroke-linecap: round;
+  outline: none;
   transition:
-    opacity 200ms ease,
-    stroke-width 200ms ease,
-    filter 200ms ease;
+    opacity 150ms ease,
+    filter 150ms ease;
 }
 
 .donutSliceActive {
-  filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 1px currentColor);
+  filter: brightness(1.05);
+}
+
+.donutSliceDimmed {
+  opacity: 0.4;
+}
+
+.donutLegendList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px 12px;
+  margin: 0;
+  padding: 14px 4px 0;
+  border-top: 1px solid #eef3f6;
+  list-style: none;
+}
+
+.donutLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: var(--color-slate-500);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    opacity 150ms ease;
+}
+
+.donutLegendItemActive {
+  background: rgba(46, 196, 167, 0.1);
+}
+
+.donutLegendItemDimmed {
+  opacity: 0.45;
+}
+
+.donutLegendSwatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.donutLegendCode {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-navy-950);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donutLegendPct {
+  flex: 0 0 auto;
+  color: var(--color-slate-500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .sectorRow,
@@ -1131,6 +1209,69 @@
   color: var(--color-slate-500);
   font-size: 0.7rem;
   line-height: 1.45;
+}
+
+.criteriaLabelCell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.indicatorHelp {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.indicatorHelp button {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  place-items: center;
+  color: #0d9488;
+  background: #ecfdf5;
+  border: 1px solid #99f6e4;
+  border-radius: 50%;
+  font-size: 0.67rem;
+  font-weight: 900;
+  cursor: help;
+}
+
+.indicatorHelp button:focus-visible {
+  outline: 3px solid rgb(13 148 136 / 25%);
+  outline-offset: 2px;
+}
+
+.indicatorHelp [role="tooltip"] {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  width: min(260px, 72vw);
+  padding: 9px 11px;
+  visibility: hidden;
+  color: #f8fafc;
+  background: #0f2d52;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 18%);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.indicatorHelp:hover [role="tooltip"],
+.indicatorHelp:focus-within [role="tooltip"] {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .criteriaActions {
