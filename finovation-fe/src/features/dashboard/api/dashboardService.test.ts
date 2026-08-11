@@ -33,6 +33,7 @@ const DASHBOARD_RESPONSE = {
       inceptionDate: "2026-08-01",
     },
   ],
+  draftCount: 1,
   drafts: [
     {
       draftId: "22222222-2222-4222-8222-222222222222",
@@ -108,6 +109,7 @@ describe("dashboardService", () => {
       },
     ])
     expect(response.data.businessDate).toBe("2025-05-29")
+    expect(response.data.draftCount).toBe(1)
     expect(response.data.drafts).toHaveLength(1)
     expect(response.data.drafts[0]?.name).toBe("İsimsiz Fon Taslağı")
     expect(response.data.optimizationLogs).toHaveLength(1)

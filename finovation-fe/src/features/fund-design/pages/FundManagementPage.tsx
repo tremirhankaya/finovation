@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 
 import {
   archiveFundDraft,
@@ -42,6 +42,21 @@ const DEFAULT_SORT: SortState = { field: "CREATED_AT", direction: "DESC" }
 const DRAFT_SORT: SortState = { field: "UPDATED_AT", direction: "DESC" }
 
 type Tab = "FUNDS" | "DRAFTS" | "ARCHIVE"
+
+const TAB_QUERY_VALUES: Record<Tab, string> = {
+  FUNDS: "funds",
+  DRAFTS: "drafts",
+  ARCHIVE: "archive",
+}
+
+function tabFromSearchParams(searchParams: URLSearchParams): Tab {
+  const requestedTab = searchParams.get("tab")
+  return (
+    (Object.keys(TAB_QUERY_VALUES) as Tab[]).find(
+      (tab) => TAB_QUERY_VALUES[tab] === requestedTab,
+    ) ?? "FUNDS"
+  )
+}
 
 const TAB_LABELS: Record<Tab, string> = {
   FUNDS: "Fonlar",
@@ -116,15 +131,18 @@ function formatMoney(value: number | null | undefined): string {
 
 export default function FundManagementPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = tabFromSearchParams(searchParams)
 
-  const [tab, setTab] = useState<Tab>("FUNDS")
   const [query, setQuery] = useState("")
   const [approach, setApproach] = useState<ManagementApproachCode | "">("")
   const [designMode, setDesignMode] = useState<"AI_ASSISTED" | "MANUAL" | "">(
     "",
   )
   const [pageIndex, setPageIndex] = useState(0)
-  const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
+  const [sort, setSort] = useState<SortState>(() =>
+    tab === "DRAFTS" ? DRAFT_SORT : DEFAULT_SORT,
+  )
 
   const [funds, setFunds] = useState<FundDraftSummary[]>([])
   const [totalPages, setTotalPages] = useState(0)
@@ -148,6 +166,13 @@ export default function FundManagementPage() {
   const [reloadKey, setReloadKey] = useState(0)
 
   const reload = useCallback(() => setReloadKey((key) => key + 1), [])
+
+  useEffect(() => {
+    setPageIndex(0)
+    setExpandedDraftId(null)
+    hasInitializedExpansion.current = false
+    setSort(tab === "DRAFTS" ? DRAFT_SORT : DEFAULT_SORT)
+  }, [tab])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -216,14 +241,20 @@ export default function FundManagementPage() {
     void (async () => {
       try {
         const [drafts, funds, archivedData] = await Promise.all([
-          searchFundDrafts({ status: "IN_PROGRESS", size: PAGE_SIZE }, controller.signal).catch(() => null),
-          searchFundDrafts({ status: "COMPLETED", size: 1 }, controller.signal).catch(() => null),
+          searchFundDrafts(
+            { status: "IN_PROGRESS", size: PAGE_SIZE },
+            controller.signal,
+          ).catch(() => null),
+          searchFundDrafts(
+            { status: "COMPLETED", size: 1 },
+            controller.signal,
+          ).catch(() => null),
           listArchivedFundDrafts(controller.signal).catch(() => null),
         ])
         if (controller.signal.aborted) return
-        
+
         if (drafts) {
-            setDraftCount(drafts.totalElements)
+          setDraftCount(drafts.totalElements)
         }
         if (funds) {
           setFundsCount(funds.totalElements)
@@ -240,7 +271,18 @@ export default function FundManagementPage() {
   }, [reloadKey])
 
   function changeTab(nextTab: Tab) {
-    setTab(nextTab)
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        if (nextTab === "FUNDS") {
+          next.delete("tab")
+        } else {
+          next.set("tab", TAB_QUERY_VALUES[nextTab])
+        }
+        return next
+      },
+      { replace: true },
+    )
     setPageIndex(0)
     setExpandedDraftId(null)
     hasInitializedExpansion.current = false
@@ -947,22 +989,12 @@ function FundRow({
         <td>
           <div className={styles.designModeCell}>
             {item.designMode === "AI_ASSISTED" && (
-              <span
-                className={[
-                  styles.badge,
-                  styles.badgeAi,
-                ].join(" ")}
-              >
+              <span className={[styles.badge, styles.badgeAi].join(" ")}>
                 AI Destekli
               </span>
             )}
             {item.designMode === "MANUAL" && (
-              <span
-                className={[
-                  styles.badge,
-                  styles.badgeManual,
-                ].join(" ")}
-              >
+              <span className={[styles.badge, styles.badgeManual].join(" ")}>
                 Kullanıcı Tasarımı
               </span>
             )}
