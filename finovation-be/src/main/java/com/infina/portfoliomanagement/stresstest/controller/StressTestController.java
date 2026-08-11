@@ -2,7 +2,10 @@ package com.infina.portfoliomanagement.stresstest.controller;
 
 import com.infina.portfoliomanagement.stresstest.controller.docs.StressTestControllerDocs;
 import com.infina.portfoliomanagement.stresstest.dto.request.RunStressTestRequest;
-import com.infina.portfoliomanagement.stresstest.dto.response.*;
+import com.infina.portfoliomanagement.stresstest.dto.response.RunStressTestResponse;
+import com.infina.portfoliomanagement.stresstest.dto.response.StressTestDetailResponse;
+import com.infina.portfoliomanagement.stresstest.dto.response.StressTestHistoryResponse;
+import com.infina.portfoliomanagement.stresstest.service.StressTestQueryService;
 import com.infina.portfoliomanagement.stresstest.service.StressTestService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -23,6 +26,7 @@ import java.util.UUID;
 public class StressTestController implements StressTestControllerDocs {
 
     private final StressTestService stressTestService;
+    private final StressTestQueryService stressTestQueryService;
 
     @Override
     @PostMapping
@@ -47,7 +51,9 @@ public class StressTestController implements StressTestControllerDocs {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         return ResponseEntity.ok(
-                stressTestService.getHistory(userDetails.getUsername())
+                stressTestQueryService.getHistory(
+                        userDetails.getUsername()
+                )
         );
     }
 
@@ -58,7 +64,7 @@ public class StressTestController implements StressTestControllerDocs {
             @PathVariable UUID testId
     ) {
         return ResponseEntity.ok(
-                stressTestService.getDetail(
+                stressTestQueryService.getDetail(
                         userDetails.getUsername(),
                         testId
                 )
@@ -71,65 +77,10 @@ public class StressTestController implements StressTestControllerDocs {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID testId
     ) {
-        stressTestService.deleteStressTest(
+        stressTestQueryService.deleteStressTest(
                 userDetails.getUsername(),
                 testId
         );
-
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/{testId}/path/{assetCode}")
-    public StressTestAssetPathResponse getAssetPath(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID testId,
-            @PathVariable String assetCode
-    ) {
-        return stressTestService.getAssetPath(
-                userDetails.getUsername(),
-                testId,
-                assetCode
-        );
-    }
-
-    @GetMapping("/{testId}/sectors")
-    public List<StressTestSectorImpactResponse> getSectorImpacts(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID testId
-    ) {
-        return stressTestService.getSectorImpacts(
-                userDetails.getUsername(),
-                testId
-        );
-    }
-    @GetMapping("/{testId}/portfolio-path")
-    public StressTestPortfolioPathResponse getPortfolioPath(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID testId
-    ) {
-        return stressTestService.getPortfolioPath(
-                userDetails.getUsername(),
-                testId
-        );
-    }
-    @GetMapping("/{testId}/risk-metrics")
-    public StressTestRiskMetricsResponse getRiskMetrics(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID testId
-    ) {
-        return stressTestService.getRiskMetrics(
-                userDetails.getUsername(),
-                testId
-        );
-    }
-    @GetMapping("/{testId}/sector-paths")
-    public List<StressTestSectorPathResponse> getSectorPaths(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID testId
-    ) {
-        return stressTestService.getSectorPaths(
-                userDetails.getUsername(),
-                testId
-        );
     }
 }

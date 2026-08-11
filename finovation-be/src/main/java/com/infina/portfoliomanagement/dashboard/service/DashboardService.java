@@ -11,7 +11,7 @@ import com.infina.portfoliomanagement.optimization.dto.OptimizationLogEntryRespo
 import com.infina.portfoliomanagement.optimization.dto.OptimizationResultResponse;
 import com.infina.portfoliomanagement.optimization.service.OptimizationRequestService;
 import com.infina.portfoliomanagement.stresstest.dto.response.StressTestHistoryResponse;
-import com.infina.portfoliomanagement.stresstest.service.StressTestService;
+import com.infina.portfoliomanagement.stresstest.service.StressTestQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ public class DashboardService {
     private final FundMonitoringService fundMonitoringService;
     private final FundDraftService fundDraftService;
     private final OptimizationRequestService optimizationRequestService;
-    private final StressTestService stressTestService;
+    private final StressTestQueryService stressTestQueryService;
     private final FinancialTimeProvider financialTime;
 
     public DashboardSummaryResponse getSummary(String actorUsername) {
@@ -69,7 +69,7 @@ public class DashboardService {
                 .orElse(null);
         List<StressTestHistoryResponse> stressTests = loadSection(
                 UnavailableSection.STRESS_TESTS,
-                () -> stressTestService.getHistory(actorUsername),
+                () -> stressTestQueryService.getHistory(actorUsername),
                 List.of(),
                 unavailableSections
         );
