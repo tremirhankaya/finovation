@@ -13,20 +13,6 @@ from fund_ml.services import EngineBundles
 
 CASH = "CASH_TPP"
 
-REASON_TEXT = {
-    "TPP_ONE_DAY_CARRY": "TPP ağırlığı, onaylı tek-günlük faiz carry hesabıyla değerlendirildi.",
-    "PORTFOLIO_RISK_BUFFER": "TPP, hisse kovaryansı taşımayan likidite ve risk tamponudur.",
-    "MANDATORY_ASSET": "Bu hisse kullanıcı tarafından zorunlu tutuldu.",
-    "LOCKED_EXACT_WEIGHT": "Bu varlığın mevcut ağırlığı tam olarak korundu.",
-    "HIGH_MODEL_UTILITY": "Hissenin olasılıksal getiri ve downside bileşimi üst çeyrektedir.",
-    "RELATIVE_RANK_SUPPORT": "Hissenin göreli seçim sinyali evrenin üst çeyrektedir.",
-    "DIVERSIFICATION_AND_CONSTRAINT_FIT": "Pozisyon çeşitlendirme ve hard kısıt uyumu için seçildi.",
-    "WEIGHT_INCREASED": "Ağırlık mevcut portföye göre artırıldı.",
-    "WEIGHT_DECREASED": "Ağırlık mevcut portföye göre azaltıldı.",
-    "WEIGHT_UNCHANGED": "Ağırlık mevcut portföyle aynı kaldı.",
-}
-
-
 class PortfolioError(ValueError):
     pass
 
@@ -444,47 +430,210 @@ class PortfolioEngine:
         if beta_cap is not None and solved.universe58_beta > beta_cap + tolerance:
             raise RuntimeError("Solved beta cap violation")
 
-    def _reason_codes(
+    def _reason_details(
         self,
         solved: SolvedPortfolio,
         signals: pd.DataFrame,
         mandatory: set[str] | None = None,
         locked: set[str] | None = None,
-        current: dict[str, float] | None = None,
-    ) -> dict[str, list[str]]:
+        tpp_bounds: tuple[float, float] | None = None,
+        beta_cap: float | None = None,
+    ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
         mandatory = mandatory or set()
         locked = locked or set()
-        current = current or {}
         lookup = signals.set_index("instrument_id")
-        utility_cut = float(signals["selection_utility"].quantile(0.75))
-        rank_cut = float(signals["rank_percentile"].quantile(0.75))
-        reasons: dict[str, list[str]] = {}
-        for asset, weight in solved.weights.items():
-            codes: list[str] = []
+        utility_percentile = signals["selection_utility"].rank(
+            pct=True, method="average"
+        )
+        utility_percentile.index = signals["instrument_id"]
+
+        selected_signal = lookup.loc[solved.selected]
+        stock_weights = np.asarray(
+            [solved.weights[asset] for asset in solved.selected], dtype=float
+        )
+        covariance = self.bundles.covariance_for(solved.selected, solved.horizon)
+        marginal_risk = pd.Series(
+            covariance @ stock_weights,
+            index=solved.selected,
+            dtype=float,
+        )
+        low_risk_cut = float(marginal_risk.quantile(0.30))
+        selected_beta = selected_signal["universe58_beta"].astype(float)
+        low_beta_cut = float(selected_beta.quantile(0.30))
+        nonzero_sector_exposures = [
+            exposure for exposure in solved.sector_exposures.values() if exposure > 0.0
+        ]
+        sector_exposure_median = float(np.median(nonzero_sector_exposures))
+
+        stock_min = float(self.policy["stock_min"])
+        stock_max = float(self.policy["stock_max"])
+        sector_max = float(self.policy["sector_max"])
+        large_total_max = float(self.policy["large_position_total_max_exclusive"])
+        tpp_low, tpp_high = tpp_bounds or (
+            float(self.policy["tpp_min"]),
+            float(self.policy["tpp_max"]),
+        )
+        active_tolerance = 2e-5
+        near_tolerance = 1e-3
+
+        reason_codes: dict[str, list[str]] = {}
+        reason_texts: dict[str, list[str]] = {}
+
+        def add(asset: str, code: str, text: str) -> None:
+            if len(reason_codes[asset]) >= 3:
+                return
+            reason_codes[asset].append(code)
+            reason_texts[asset].append(text)
+
+        for asset in solved.weights:
+            reason_codes[asset] = []
+            reason_texts[asset] = []
             if asset == CASH:
-                codes.extend(["TPP_ONE_DAY_CARRY", "PORTFOLIO_RISK_BUFFER"])
-            else:
-                row = lookup.loc[asset]
-                if asset in mandatory:
-                    codes.append("MANDATORY_ASSET")
-                if asset in locked:
-                    codes.append("LOCKED_EXACT_WEIGHT")
-                if float(row["selection_utility"]) >= utility_cut:
-                    codes.append("HIGH_MODEL_UTILITY")
-                if float(row["rank_percentile"]) >= rank_cut:
-                    codes.append("RELATIVE_RANK_SUPPORT")
-                if not codes:
-                    codes.append("DIVERSIFICATION_AND_CONSTRAINT_FIT")
-            if asset in current:
-                delta = weight - current[asset]
-                if delta > 1e-7:
-                    codes.append("WEIGHT_INCREASED")
-                elif delta < -1e-7:
-                    codes.append("WEIGHT_DECREASED")
+                carry = float(np.expm1(self.bundles.tpp_log_carry(solved.horizon)))
+                add(
+                    asset,
+                    "TPP_CARRY_INCLUDED",
+                    f"TPP için {solved.horizon} aylık birikimli getiri yaklaşık "
+                    f"{self._format_percent(carry)} hesaplandı.",
+                )
+                tpp_weight = solved.weights[CASH]
+                if abs(tpp_weight - tpp_low) <= active_tolerance:
+                    add(
+                        asset,
+                        "TPP_MIN_BOUND_ACTIVE",
+                        "TPP ağırlığı, kullanıcının seçtiği aralığın alt sınırında: "
+                        f"{self._format_percent(tpp_low)}.",
+                    )
+                elif abs(tpp_weight - tpp_high) <= active_tolerance:
+                    add(
+                        asset,
+                        "TPP_MAX_BOUND_ACTIVE",
+                        "TPP ağırlığı, kullanıcının seçtiği aralığın üst sınırında: "
+                        f"{self._format_percent(tpp_high)}.",
+                    )
                 else:
-                    codes.append("WEIGHT_UNCHANGED")
-            reasons[asset] = codes
-        return reasons
+                    add(
+                        asset,
+                        "TPP_RANGE_ALLOCATION",
+                        "TPP ağırlığı, kullanıcının seçtiği aralık içinde "
+                        f"{self._format_percent(tpp_weight)} oldu.",
+                    )
+                continue
+
+            row = lookup.loc[asset]
+            if asset in mandatory:
+                add(
+                    asset,
+                    "MANDATORY_ASSET",
+                    "Kullanıcı bu hissenin portföyde bulunmasını istedi.",
+                )
+            if asset in locked:
+                add(
+                    asset,
+                    "LOCKED_EXACT_WEIGHT",
+                    "Kullanıcı bu hissenin ağırlığını "
+                    f"{self._format_percent(solved.weights[asset])} olarak sabitledi.",
+                )
+
+            rank_percentile = float(row["rank_percentile"])
+            rank_position = int(row["rank_position"])
+            central_return = float(np.expm1(float(row["q50"])))
+            if rank_percentile >= 0.90:
+                add(
+                    asset,
+                    "MODEL_RANK_TOP_10",
+                    f"{solved.horizon} aylık görünümde 58 hisse arasında {rank_position}. sırada; "
+                    f"ana senaryo {self._format_percent(central_return)}.",
+                )
+            elif rank_percentile >= 0.75:
+                add(
+                    asset,
+                    "MODEL_RANK_TOP_25",
+                    f"{solved.horizon} aylık görünümde 58 hisse arasında {rank_position}. sırada; "
+                    f"ana senaryo {self._format_percent(central_return)}.",
+                )
+            elif float(utility_percentile.loc[asset]) >= 0.50:
+                add(
+                    asset,
+                    "POSITIVE_MODEL_SUPPORT",
+                    f"Modelin {solved.horizon} aylık ana senaryosunda getiri yaklaşık "
+                    f"{self._format_percent(central_return)}.",
+                )
+            else:
+                add(
+                    asset,
+                    "PORTFOLIO_RULE_FIT",
+                    "Getiri tahmini üst grupta olmasa da risk ve dağılım kurallarına uyduğu için seçildi.",
+                )
+
+            weight = solved.weights[asset]
+            sector = str(row["sector_code"])
+            sector_label = str(self.bundles.sector_names.loc[asset]).title()
+            sector_exposure = solved.sector_exposures[sector]
+            if abs(weight - stock_min) <= active_tolerance:
+                add(
+                    asset,
+                    "MIN_WEIGHT_BOUND_ACTIVE",
+                    "Bu hisseye kuralların izin verdiği en düşük ağırlık verildi: "
+                    f"{self._format_percent(stock_min)}.",
+                )
+            elif abs(weight - stock_max) <= active_tolerance:
+                add(
+                    asset,
+                    "MAX_WEIGHT_BOUND_ACTIVE",
+                    f"Bu hisse {self._format_percent(stock_max)} üst sınırına ulaştığı için "
+                    "daha fazla ağırlık verilemedi.",
+                )
+            elif sector_exposure >= sector_max - near_tolerance:
+                add(
+                    asset,
+                    "SECTOR_CAP_ACTIVE",
+                    f"{sector_label} toplamı {self._format_percent(sector_exposure)} ile "
+                    "sektör sınırına yakın.",
+                )
+            elif (
+                asset in solved.large_position_assets
+                and solved.large_position_total_weight >= large_total_max - near_tolerance
+            ):
+                add(
+                    asset,
+                    "LARGE_POSITION_CAP_ACTIVE",
+                    "Yüksek ağırlıklı hisselerin toplamı %40 sınırına yakın olduğu için dağılım sınırlandı.",
+                )
+            elif (
+                beta_cap is not None
+                and solved.universe58_beta >= beta_cap - near_tolerance
+                and float(row["universe58_beta"]) <= solved.universe58_beta
+            ):
+                add(
+                    asset,
+                    "BETA_LIMIT_SUPPORT",
+                    "Düşük piyasa duyarlılığı, portföyün belirlenen beta sınırında kalmasını destekliyor.",
+                )
+            elif float(marginal_risk.loc[asset]) <= low_risk_cut:
+                add(
+                    asset,
+                    "LOW_PORTFOLIO_RISK_CONTRIBUTION",
+                    "Bu hisse, portföyün toplam riskini seçilen hisselerin çoğundan daha az artırıyor.",
+                )
+            elif float(row["universe58_beta"]) <= low_beta_cut:
+                add(
+                    asset,
+                    "LOW_BETA_SUPPORT",
+                    "Bu hisse, piyasa hareketlerine seçilen hisselerin çoğundan daha az duyarlı.",
+                )
+            elif sector_exposure <= sector_exposure_median + 1e-12:
+                add(
+                    asset,
+                    "SECTOR_DIVERSIFICATION_SUPPORT",
+                    "Bu hisse, portföyün farklı sektörlere dağılmasına yardımcı oluyor.",
+                )
+
+        return reason_codes, reason_texts
+
+    @staticmethod
+    def _format_percent(value: float) -> str:
+        return f"%{value * 100:.2f}".replace(".", ",")
 
     def _serialize(
         self,
@@ -493,9 +642,18 @@ class PortfolioEngine:
         mandatory: set[str] | None = None,
         locked: set[str] | None = None,
         current: dict[str, float] | None = None,
+        tpp_bounds: tuple[float, float] | None = None,
+        beta_cap: float | None = None,
     ) -> dict[str, Any]:
         weights = dict(sorted(solved.weights.items()))
-        reason_codes = self._reason_codes(solved, signals, mandatory, locked, current)
+        reason_codes, reason_texts = self._reason_details(
+            solved,
+            signals,
+            mandatory,
+            locked,
+            tpp_bounds,
+            beta_cap,
+        )
         return {
             "objective_id": solved.objective_id,
             "horizon": f"{solved.horizon}M",
@@ -515,10 +673,7 @@ class PortfolioEngine:
             "weight_semantics": "CONTINUOUS_DECIMAL_NOT_INTEGER_PERCENT",
             "objective_value": solved.objective_value,
             "reason_codes": reason_codes,
-            "reason_texts": {
-                asset: [REASON_TEXT[code] for code in codes]
-                for asset, codes in reason_codes.items()
-            },
+            "reason_texts": reason_texts,
             "solution_class": "DETERMINISTIC_HEURISTIC_LOCAL_SEARCH_NOT_GLOBAL_OPTIMUM",
         }
 
@@ -630,7 +785,15 @@ class PortfolioEngine:
                 if challenger.objective_value <= best.objective_value + 1e-12:
                     break
                 best = challenger
-            alternatives.append(self._serialize(best, signals, mandatory=mandatory))
+            alternatives.append(
+                self._serialize(
+                    best,
+                    signals,
+                    mandatory=mandatory,
+                    tpp_bounds=(tpp_min, tpp_max),
+                    beta_cap=beta_cap,
+                )
+            )
         return {
             "request_id": request.get("request_id"),
             "mode": "CREATE",
@@ -750,23 +913,6 @@ class PortfolioEngine:
                 "excluded removals exceed max_removals: "
                 f"required {len(forced_removals)}, limit {max_removals}"
             )
-        if forced_additions and delta_limit + 1e-12 < float(self.policy["stock_min"]):
-            raise PortfolioError(
-                "mandatory new asset cannot satisfy max_weight_change_per_asset: "
-                f"minimum new weight is {float(self.policy['stock_min']):.6f}, "
-                f"delta limit is {delta_limit:.6f}"
-            )
-        blocked_removals = sorted(
-            asset
-            for asset in forced_removals
-            if current[asset] > delta_limit + 1e-12
-        )
-        if blocked_removals:
-            raise PortfolioError(
-                "excluded current asset cannot be removed within "
-                "max_weight_change_per_asset: "
-                f"{blocked_removals}"
-            )
         available_universe = set(self.bundles.universe).difference(excluded)
         if len(available_universe) < min_count:
             raise PortfolioError(
@@ -785,7 +931,6 @@ class PortfolioEngine:
                     if asset not in locked_stocks
                     and asset not in mandatory
                     and asset not in forced_removals
-                    and current[asset] <= delta_limit + 1e-12
                 ],
                 key=lambda asset: (float(lookup.loc[asset]), asset),
             )
@@ -826,7 +971,7 @@ class PortfolioEngine:
                         else:
                             bounds[asset] = (
                                 float(self.policy["stock_min"]),
-                                min(float(self.policy["stock_max"]), delta_limit),
+                                float(self.policy["stock_max"]),
                             )
                     if CASH in locked:
                         bounds[CASH] = (locked[CASH], locked[CASH])
@@ -862,6 +1007,8 @@ class PortfolioEngine:
                 mandatory=mandatory,
                 locked=set(locked),
                 current=current,
+                tpp_bounds=(tpp_min, tpp_max),
+                beta_cap=beta_cap,
             )
             proposed = best.weights
             all_assets = set(current) | set(proposed)
@@ -877,8 +1024,12 @@ class PortfolioEngine:
                 raise RuntimeError("Solved portfolio omits mandatory assets")
             if excluded.intersection(best.selected):
                 raise RuntimeError("Solved portfolio contains excluded assets")
-            if any(abs(value) > delta_limit + 2e-7 for value in deltas.values()):
-                raise RuntimeError("Solved per-asset delta exceeds request")
+            retained_delta_assets = current_stocks.intersection(best.selected) | {CASH}
+            if any(
+                abs(deltas[asset]) > delta_limit + 2e-7
+                for asset in retained_delta_assets
+            ):
+                raise RuntimeError("Solved retained-asset delta exceeds request")
             result.update(
                 {
                     "deltas": deltas,

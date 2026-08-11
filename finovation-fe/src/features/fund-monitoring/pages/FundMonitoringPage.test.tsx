@@ -126,6 +126,15 @@ const READY_PROPS: FundMonitoringViewProps = {
 }
 
 describe("FundMonitoringView", () => {
+  it("uygulama kabuğundaki marka logosunu sayfa başlığında tekrarlamaz", () => {
+    render(<FundMonitoringView {...READY_PROPS} />)
+
+    expect(
+      screen.getByRole("heading", { name: "Fon İzleme ve Performans" }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Finovation")).not.toBeInTheDocument()
+  })
+
   it("fon yok durumunda bütün izleme bölümlerini boş iskeletle gösterir", () => {
     render(<FundMonitoringView funds={[]} selectedFundId="" snapshot={null} />)
 

@@ -210,4 +210,15 @@ describe("buildComplianceRows", () => {
     const overallRow = rows.find((row) => row.key === "overall")
     expect(overallRow?.status).toBe("UYUMSUZ")
   })
+
+  it("çıkarılan mevcut hisse sayısı 3'ü aşarsa UYUMSUZ verir", () => {
+    const rows = buildComplianceRows({
+      ...VALID_INPUT,
+      heldExcludedAssetCount: 4,
+    })
+
+    const row = rows.find((row) => row.key === "forced-excluded-assets")
+    expect(row?.status).toBe("UYUMSUZ")
+    expect(isComplianceReady(rows)).toBe(false)
+  })
 })

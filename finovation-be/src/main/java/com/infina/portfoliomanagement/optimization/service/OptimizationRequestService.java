@@ -65,6 +65,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -73,6 +74,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -92,7 +94,7 @@ public class OptimizationRequestService {
     private static final BigDecimal FORCE_ADD_MINIMUM_WEIGHT = new BigDecimal("3");
     private static final BigDecimal PERCENT_TO_FRACTION_DIVISOR = BigDecimal.valueOf(100);
     private static final BigDecimal MAX_WEIGHT_CHANGE_PER_ASSET_DEFAULT = new BigDecimal("0.03");
-    private static final int MAX_REMOVALS_DEFAULT = 2;
+    private static final int MAX_REMOVALS_DEFAULT = 3;
     private static final BigDecimal PORTFOLIO_SUM_TOLERANCE = new BigDecimal("0.000001");
     private static final String CASH_TPP_CODE = "CASH_TPP";
     private static final Set<RequestStatus> LOG_VISIBLE_STATUSES = Set.of(
@@ -390,6 +392,14 @@ public class OptimizationRequestService {
                 .toList();
     }
 
+    private static String displayName(User user) {
+        if (user == null) return null;
+        String combined = Stream.of(user.getFirstName(), user.getLastName())
+                .filter(part -> part != null && !part.isBlank())
+                .collect(Collectors.joining(" "));
+        return combined.isBlank() ? null : combined;
+    }
+
     private OptimizationLogEntryResponse toLogEntryResponse(
             OptimizationRequest request,
             Map<UUID, String> fundNamesById
@@ -401,14 +411,10 @@ public class OptimizationRequestService {
                 request.getFundId(),
                 fundNamesById.getOrDefault(request.getFundId(), "—"),
                 requestedBy != null ? requestedBy.getUsername() : null,
-                requestedBy != null
-                        ? (requestedBy.getFirstName() + " " + requestedBy.getLastName())
-                        : null,
+                displayName(requestedBy),
                 decidedBy != null ? decidedBy.getId() : null,
                 decidedBy != null ? decidedBy.getUsername() : null,
-                decidedBy != null
-                        ? (decidedBy.getFirstName() + " " + decidedBy.getLastName())
-                        : null,
+                displayName(decidedBy),
                 request.getStatus(),
                 request.getErrorMessage(),
                 request.getRejectionReason(),
@@ -599,7 +605,15 @@ public class OptimizationRequestService {
             request.setStatus(RequestStatus.COMPLETED);
             request.setModelVersion(engineResult.snapshotId());
             if (engineResult.systemDate() != null) {
-                request.setDataTimestamp(LocalDate.parse(engineResult.systemDate()).atStartOfDay());
+                try {
+                    request.setDataTimestamp(LocalDate.parse(engineResult.systemDate()).atStartOfDay());
+                } catch (DateTimeParseException e) {
+                    log.warn(
+                            "Optimization request {} received an unparseable engine systemDate '{}'",
+                            requestId,
+                            engineResult.systemDate()
+                    );
+                }
             }
             request.setCompletedAt(financialTime.now());
             request.setUpdatedAt(financialTime.now());
@@ -646,6 +660,8 @@ public class OptimizationRequestService {
         List<String> mandatoryAssets = resolveAssetCodesByPreferenceType(request, AssetPreferenceType.FORCE_ADD);
         List<String> excludedAssets = resolveAssetCodesByPreferenceType(request, AssetPreferenceType.EXCLUDE);
 
+        assertExcludedHeldAssetsWithinRemovalLimit(currentPortfolio, excludedAssets);
+
         return new OptimizationEngineRequest(
                 request.getId().toString(),
                 resolveHorizon(request.getRiskProfile()),
@@ -662,6 +678,23 @@ public class OptimizationRequestService {
                 MAX_REMOVALS_DEFAULT,
                 null
         );
+    }
+
+    private void assertExcludedHeldAssetsWithinRemovalLimit(
+            Map<String, BigDecimal> currentPortfolio,
+            List<String> excludedAssets
+    ) {
+        long heldExclusionCount = excludedAssets.stream()
+                .filter(currentPortfolio::containsKey)
+                .count();
+
+        if (heldExclusionCount > MAX_REMOVALS_DEFAULT) {
+            throw new BaseException(
+                    ErrorCode.OPT_MAX_REMOVALS_EXCEEDED,
+                    "Excluded currently-held assets (" + heldExclusionCount + ") exceed the maximum "
+                            + "removals allowed per optimization (" + MAX_REMOVALS_DEFAULT + ")"
+            );
+        }
     }
 
     private EngineAlternative selectAlternative(OptimizationEngineResult engineResult, RiskProfile riskProfile) {
@@ -1143,14 +1176,10 @@ public class OptimizationRequestService {
                 request.getModelVersion(),
                 requestedBy != null ? requestedBy.getId() : null,
                 requestedBy != null ? requestedBy.getUsername() : null,
-                requestedBy != null
-                        ? (requestedBy.getFirstName() + " " + requestedBy.getLastName())
-                        : null,
+                displayName(requestedBy),
                 decidedBy != null ? decidedBy.getId() : null,
                 decidedBy != null ? decidedBy.getUsername() : null,
-                decidedBy != null
-                        ? (decidedBy.getFirstName() + " " + decidedBy.getLastName())
-                        : null,
+                displayName(decidedBy),
                 request.getRiskProfile(),
                 request.getStatus(),
                 request.getMaxAdditions(),

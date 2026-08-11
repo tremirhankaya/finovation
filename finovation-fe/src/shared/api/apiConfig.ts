@@ -264,3 +264,26 @@ export function getStressTestSectorPathsUrl(
 ): string {
   return `${getStressTestUrl(testId)}/sector-paths`
 }
+export function getRlStressTestsUrl(): string {
+  return `${getStressTestsUrl()}/rl`
+}
+
+export function getRlStressTestCompatibilityUrl(
+    fundId: string,
+): string {
+  return `${getRlStressTestsUrl()}/compatibility/${encodeURIComponent(fundId)}`
+}
+export function getRlStressTestHistoryUrl(): string {
+  return `${getRlStressTestsUrl()}/history`
+}
+
+export function getRlStressTestDetailUrl(
+    testId: string,
+): string {
+  return `${getRlStressTestsUrl()}/${encodeURIComponent(testId)}`
+}
+export function getRlStressTestDeleteUrl(
+    testId: string,
+): string {
+  return `${getRlStressTestsUrl()}/${encodeURIComponent(testId)}`
+}
