@@ -127,6 +127,19 @@ export default function AssetPreferencePicker({
     })
   }, [universe, listQuery, listSectors])
 
+  const quickSearchResults = useMemo(() => {
+    const q = query.trim().toLocaleUpperCase("tr-TR")
+    if (!q) return []
+
+    return universe
+      .filter((asset) => {
+        const code = asset.assetCode.toLocaleUpperCase("tr-TR")
+        const name = asset.displayName.toLocaleUpperCase("tr-TR")
+        return code.includes(q) || name.includes(q)
+      })
+      .slice(0, 6)
+  }, [query, universe])
+
   const forcedSet = useMemo(() => new Set(forcedCodes), [forcedCodes])
   const excludedSet = useMemo(() => new Set(excludedCodes), [excludedCodes])
   const forceLimitReached = forcedCodes.length >= forcedLimit
@@ -230,23 +243,47 @@ export default function AssetPreferencePicker({
             value={query}
             disabled={!searchEnabled}
             onChange={(event) => {
-              const nextQuery = event.target.value
-              setQuery(nextQuery)
-              setListQuery(nextQuery)
-              if (nextQuery.trim()) setListOpen(true)
-            }}
-            onFocus={() => {
-              if (query.trim()) setListOpen(true)
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && query.trim()) {
-                event.preventDefault()
-                setListOpen(true)
-              }
+              setQuery(event.target.value)
             }}
             autoComplete="off"
           />
         </label>
+        {query.trim() ? (
+          <ul className={styles.results} aria-label="Hisse arama sonuçları">
+            {quickSearchResults.length === 0 ? (
+              <li className={styles.emptyResult}>Eşleşen hisse yok.</li>
+            ) : (
+              quickSearchResults.map((asset) => {
+                const isForced = forcedSet.has(asset.assetCode)
+                const isExcluded = excludedSet.has(asset.assetCode)
+                return (
+                  <li key={asset.assetCode} className={styles.resultRow}>
+                    <div className={styles.resultMeta}>
+                      <span className={styles.resultCode}>{asset.assetCode}</span>
+                      <span className={styles.resultName}>
+                        {asset.displayName}
+                      </span>
+                    </div>
+                    <ActionButtons
+                      code={asset.assetCode}
+                      isForced={isForced}
+                      isExcluded={isExcluded}
+                      disabled={disabled}
+                      forceLimitReached={forceLimitReached}
+                      excludeLimitReached={excludeLimitReached}
+                      forcedLimit={forcedLimit}
+                      excludedLimit={excludedLimit}
+                      onAddForced={addForced}
+                      onRemoveForced={removeForced}
+                      onAddExcluded={addExcluded}
+                      onRemoveExcluded={removeExcluded}
+                    />
+                  </li>
+                )
+              })
+            )}
+          </ul>
+        ) : null}
       </div>
 
       {status === "ready" && universe.length === 0 ? (

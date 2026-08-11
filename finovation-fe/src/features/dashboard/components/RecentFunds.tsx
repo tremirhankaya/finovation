@@ -53,7 +53,7 @@ export default function RecentFunds({
           <h2>Fonlar ve taslaklar</h2>
         </div>
         <div className={styles.headerLinks}>
-          <Link className={styles.headerLink} to="/fund-design/active">
+          <Link className={styles.headerLink} to="/fund-design">
             Aktif fonlar
           </Link>
           <Link className={styles.headerLink} to="/fund-design/create">
@@ -81,7 +81,7 @@ export default function RecentFunds({
               <div className={styles.compactList}>
                 {funds.slice(0, 3).map((fund) => (
                   <Link
-                    to={`/fund-design/${fund.id}/completed`}
+                    to="/fund-design"
                     className={styles.compactRow}
                     key={fund.id}
                   >

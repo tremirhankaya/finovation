@@ -139,7 +139,7 @@ describe("DashboardPage", () => {
     ).toHaveAttribute("href", "/optimization-requests/new")
     expect(screen.getByRole("link", { name: "Aktif fonlar" })).toHaveAttribute(
       "href",
-      "/fund-design/active",
+      "/fund-design",
     )
     expect(screen.getByRole("link", { name: "Taslaklar" })).toHaveAttribute(
       "href",
