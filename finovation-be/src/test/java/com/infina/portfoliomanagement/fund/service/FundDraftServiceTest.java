@@ -143,6 +143,31 @@ class FundDraftServiceTest {
     }
 
     @Test
+    void getDashboardDrafts_returnsTotalCountAndOnlyThreeMostRecentDrafts() {
+        List<FundDraft> recentDrafts = List.of(
+                dashboardDraft("Birinci Taslak", 3),
+                dashboardDraft("İkinci Taslak", 4),
+                dashboardDraft("Üçüncü Taslak", 5)
+        );
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.countByStatusAndCreatedByUserId(
+                FundDraftStatus.IN_PROGRESS,
+                7L
+        )).thenReturn(8L);
+        when(fundDraftRepository
+                .findTop3ByStatusAndCreatedByUserIdOrderByUpdatedAtDescIdDesc(
+                        FundDraftStatus.IN_PROGRESS,
+                        7L
+                )).thenReturn(recentDrafts);
+
+        var response = fundDraftService.getDashboardDrafts("user1");
+
+        assertThat(response.totalCount()).isEqualTo(8);
+        assertThat(response.recentDrafts()).extracting(item -> item.name())
+                .containsExactly("Birinci Taslak", "İkinci Taslak", "Üçüncü Taslak");
+    }
+
+    @Test
     void validRequest_createsDraftWithSystemAssignedDefaults() {
         when(fundDesignProfileService.getLimits(FundType.EQUITY_INTENSIVE)).thenReturn(limits);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(actor));
@@ -475,6 +500,19 @@ class FundDraftServiceTest {
         verify(fundAnalysisPersistenceService).assertWorkingPortfolioIsCompliant(draft, limits);
         verify(fundAnalysisPersistenceService).selectManualWorkingPortfolio(draft);
         assertThat(draft.getStatus()).isEqualTo(FundDraftStatus.COMPLETED);
+    }
+
+    private FundDraft dashboardDraft(String name, int step) {
+        LocalDateTime now = LocalDateTime.ofInstant(FIXED_INSTANT, ZoneOffset.UTC);
+        return FundDraft.builder()
+                .publicId(UUID.randomUUID())
+                .name(name)
+                .status(FundDraftStatus.IN_PROGRESS)
+                .currentStep((short) step)
+                .createdByUserId(actor.getId())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 
     private CreateFundDraftRequest request(String initialPortfolioSize, String unitPrice) {

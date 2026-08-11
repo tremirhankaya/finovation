@@ -87,9 +87,9 @@ export default function OptimizationFormPage() {
     <main className={styles.page}>
       <div className={styles.wizardShell}>
         <header className={styles.header}>
-          <div>
+          <div className={styles.titleBlock}>
             <h1>{headerTitle}</h1>
-            <p className={styles.subtitle}>{headerSubtitle}</p>
+            <p>{headerSubtitle}</p>
           </div>
           {form.step === 2 ? (
             <button

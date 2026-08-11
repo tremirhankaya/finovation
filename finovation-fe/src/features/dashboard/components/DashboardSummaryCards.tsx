@@ -61,6 +61,7 @@ type DashboardSummaryCardsProps = {
   latestStressTest?: StressTestHistoryResponse
   errors: DashboardSectionErrors
   isLoading: boolean
+  isMonitoringLoading: boolean
 }
 
 export default function DashboardSummaryCards({
@@ -72,6 +73,7 @@ export default function DashboardSummaryCards({
   latestStressTest,
   errors,
   isLoading,
+  isMonitoringLoading,
 }: DashboardSummaryCardsProps) {
   const oneMonthReturn = snapshot?.periodReturns.find(
     (item) => item.period === "1M",
@@ -107,6 +109,7 @@ export default function DashboardSummaryCards({
       label: "Seçili Fon · 1A Getiri",
       value:
         isLoading ||
+        isMonitoringLoading ||
         errors.funds ||
         errors.monitoring ||
         oneMonthReturn === undefined
@@ -115,7 +118,9 @@ export default function DashboardSummaryCards({
       detail:
         errors.funds || errors.monitoring
           ? "Veri alınamadı"
-          : (snapshot?.fund.name ?? "Aktif fon seçilmedi"),
+          : isMonitoringLoading
+            ? "Fon performansı yükleniyor"
+            : (snapshot?.fund.name ?? "Aktif fon seçilmedi"),
       icon: "performance",
       tone:
         oneMonthReturn == null
@@ -126,13 +131,10 @@ export default function DashboardSummaryCards({
     },
     {
       label: "Son Optimizasyon",
-      value:
-        isLoading || (errors.optimization && !optimizationLog)
-          ? "—"
-          : optimization.value,
+      value: isLoading || errors.optimization ? "—" : optimization.value,
       detail: isLoading
         ? "Veriler yükleniyor"
-        : errors.optimization && !optimizationLog
+        : errors.optimization
           ? "Veri alınamadı"
           : optimization.detail,
       icon: "optimization",

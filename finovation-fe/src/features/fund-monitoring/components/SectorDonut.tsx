@@ -1,24 +1,28 @@
-import { useState } from "react"
-
 import type { SectorAllocation } from "@/features/fund-monitoring/model/fundMonitoring.types"
-import styles from "@/features/fund-monitoring/styles/FundMonitoringPage.module.css"
+import DonutChart from "@/shared/ui/DonutChart"
 
 type SectorDonutProps = {
   allocations: SectorAllocation[]
 }
 
 export const SECTOR_COLORS = [
-  "#0d9488",
-  "#14b8a6",
-  "#2dd4bf",
-  "#5eead4",
-  "#0f766e",
-  "#134e4a",
-  "#94a3b8",
+  "#0e8f76",
+  "#4a90d9",
+  "#e0a458",
+  "#8b7cf0",
+  "#e26d8a",
+  "#45b7c8",
+  "#6bcb77",
+  "#c77dff",
+  "#f4c15d",
+  "#5c8a9e",
+  "#f97316",
+  "#6366f1",
+  "#84cc16",
+  "#a16207",
+  "#ef4444",
+  "#0891b2",
 ] as const
-
-const RADIUS = 58
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 function formatSectorWeight(value: number): string {
   return `%${value.toLocaleString("tr-TR", {
@@ -28,78 +32,20 @@ function formatSectorWeight(value: number): string {
 }
 
 export default function SectorDonut({ allocations }: SectorDonutProps) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const total = allocations.reduce(
-    (sum, allocation) => sum + allocation.weightPercentage,
-    0,
-  )
-  const activeAllocation =
-    activeIndex === null ? null : allocations[activeIndex]
-  let consumed = 0
-
   return (
-    <div className={styles.donutChart}>
-      <svg
-        viewBox="0 0 160 160"
-        role="img"
-        aria-label={
-          allocations.length > 0
-            ? "Seçili fonun sektörel ağırlık dağılımı"
-            : "Fon seçilmediği için sektörel dağılım verisi bulunmuyor"
-        }
-      >
-        <circle
-          cx="80"
-          cy="80"
-          r={RADIUS}
-          fill="none"
-          stroke="#e8eef4"
-          strokeWidth="23"
-        />
-        {total > 0 &&
-          allocations.map((allocation, index) => {
-            const fraction = allocation.weightPercentage / total
-            const length = fraction * CIRCUMFERENCE
-            const offset = -consumed * CIRCUMFERENCE
-            consumed += fraction
-            const label = `${allocation.sectorName}: ${formatSectorWeight(
-              allocation.weightPercentage,
-            )}`
-
-            return (
-              <circle
-                key={allocation.sectorId}
-                cx="80"
-                cy="80"
-                r={RADIUS}
-                fill="none"
-                stroke={SECTOR_COLORS[index % SECTOR_COLORS.length]}
-                strokeWidth={activeIndex === index ? "27" : "23"}
-                strokeDasharray={`${length} ${CIRCUMFERENCE - length}`}
-                strokeDashoffset={offset}
-                strokeLinecap="butt"
-                transform="rotate(-90 80 80)"
-                tabIndex={0}
-                aria-label={label}
-                onPointerEnter={() => setActiveIndex(index)}
-                onPointerLeave={() => setActiveIndex(null)}
-                onFocus={() => setActiveIndex(index)}
-                onBlur={() => setActiveIndex(null)}
-              />
-            )
-          })}
-      </svg>
-
-      {activeAllocation && (
-        <div
-          className={styles.sectorHoverDetail}
-          role="status"
-          aria-live="polite"
-        >
-          <strong>{activeAllocation.sectorName}</strong>
-          <span>{formatSectorWeight(activeAllocation.weightPercentage)}</span>
-        </div>
-      )}
-    </div>
+    <DonutChart
+      slices={allocations.map((allocation, index) => ({
+        id: allocation.sectorId,
+        label: allocation.sectorName,
+        value: allocation.weightPercentage,
+        color: SECTOR_COLORS[index % SECTOR_COLORS.length],
+      }))}
+      ariaLabel={
+        allocations.length > 0
+          ? "Seçili fonun sektörel ağırlık dağılımı"
+          : "Fon seçilmediği için sektörel dağılım verisi bulunmuyor"
+      }
+      formatValue={formatSectorWeight}
+    />
   )
 }
