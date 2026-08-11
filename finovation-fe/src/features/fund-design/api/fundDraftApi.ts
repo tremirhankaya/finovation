@@ -1,5 +1,4 @@
 import {
-  getArchivedFundDraftsUrl,
   getFundDraftAnalysisUrl,
   getFundDraftCompletionUrl,
   getFundDraftInitUrl,
@@ -29,6 +28,9 @@ import {
   fundDraftPortfolioRulesSchema,
   fundDraftSchema,
   modelUniverseAssetSchema,
+  workingPortfolioResponseSchema,
+  type FundPositionResponse,
+  type WorkingPortfolioResponse,
 } from "@/features/fund-design/model/fundDraftSchemas"
 import type { ManagementApproachCode } from "@/features/fund-design/model/managementApproach"
 import { z } from "zod"
@@ -39,6 +41,7 @@ export type CreateFundDraftInput = {
   name: string
   initialPortfolioSize: number
   unitPrice: number
+  designMode?: "AI_ASSISTED" | "MANUAL"
 }
 
 export type UpdateFundDraftPortfolioRulesInput = {
@@ -85,12 +88,19 @@ export async function getFundDraft(
   )
 }
 
+export type FundDraftSortField = "NAME" | "INITIAL_PORTFOLIO_SIZE" | "CREATED_AT" | "UPDATED_AT"
+
+export type SortDirection = "ASC" | "DESC"
+
 export type SearchFundDraftsInput = {
   page?: number
   size?: number
   q?: string
   status?: "IN_PROGRESS" | "COMPLETED"
   managementApproach?: ManagementApproachCode
+  designMode?: "AI_ASSISTED" | "MANUAL"
+  sortBy?: FundDraftSortField
+  direction?: SortDirection
 }
 
 export async function searchFundDrafts(
@@ -105,6 +115,11 @@ export async function searchFundDrafts(
   if (input.managementApproach) {
     params.set("managementApproach", input.managementApproach)
   }
+  if (input.designMode) {
+    params.set("designMode", input.designMode)
+  }
+  if (input.sortBy) params.set("sortBy", input.sortBy)
+  if (input.direction) params.set("direction", input.direction)
 
   return apiFetch(
     `${getFundDraftsUrl()}?${params.toString()}`,
@@ -120,12 +135,39 @@ export async function listArchivedFundDrafts(
   signal?: AbortSignal,
 ): Promise<ArchivedFundDraft[]> {
   return apiFetch(
-    getArchivedFundDraftsUrl(),
+    `${getFundDraftsUrl()}/archived`,
+    { errorMessage: "Kaldırılan fonlar alınamadı", signal },
+    (data) => z.array(archivedFundDraftSchema).parse(data),
+  )
+}
+
+export async function updateFundDraftPinStatus(
+  draftId: string,
+  pinned: boolean,
+): Promise<void> {
+  return apiSend(`${getFundDraftsUrl()}/${draftId}/pin`, {
+    method: "PUT",
+    body: { pinned },
+    errorMessage: "Sabitleme durumu güncellenemedi",
+  })
+}
+
+export async function cloneDeletedFundDraft(
+  draftId: string,
+  payload: {
+    name: string
+    initialPortfolioSize: number
+    unitPrice: number
+  },
+): Promise<FundDraft> {
+  return apiFetch(
+    `${getFundDraftsUrl()}/${draftId}/clone-deleted`,
     {
-      errorMessage: "Arşiv listesi alınamadı",
-      signal,
+      method: "POST",
+      body: payload,
+      errorMessage: "Taslak kopyalanamadı",
     },
-    z.array(archivedFundDraftSchema).parse,
+    fundDraftSchema.parse,
   )
 }
 
@@ -208,9 +250,7 @@ export const fundDraftAnalysisStateSchema = z.object({
 
 export type FundModelAsset = z.infer<typeof fundModelAssetSchema>
 export type FundModelProposal = z.infer<typeof fundModelProposalSchema>
-export type FundModelAnalysisResponse = z.infer<
-  typeof fundModelAnalysisResponseSchema
->
+export type FundModelAnalysisResponse = z.infer<typeof fundModelAnalysisResponseSchema>
 export type FundDraftAnalysisState = z.infer<typeof fundDraftAnalysisStateSchema>
 
 export async function getFundDraftAnalysisState(
@@ -281,35 +321,16 @@ export type FundEstimates = {
   maxDrawdownPct: number | null
 }
 
-export async function getFundEstimates(draftId: string): Promise<FundEstimates> {
+export async function getFundEstimates(
+  draftId: string,
+): Promise<FundEstimates> {
   return apiFetch(getFundEstimatesUrl(draftId), {
     method: "GET",
     errorMessage: "Fon tahmin özellikleri alınamadı",
   })
 }
 
-export const fundPositionResponseSchema = z.object({
-  asset_code: z.string(),
-  weight: z.coerce.number(),
-  ai_note: z.string().nullable().optional(),
-  sector_name: z.string().nullable().optional(),
-  asset_type: z.enum(["EQUITY", "TPP"]),
-})
-
-export const workingPortfolioResponseSchema = z.object({
-  sourceRank: z.number().int().nullable().optional(),
-  label: z.string().nullable().optional(),
-  assets: z.array(fundPositionResponseSchema),
-  equityWeightPct: z.coerce.number().optional(),
-  tppWeightPct: z.coerce.number().optional(),
-  stockCount: z.number().int().optional(),
-  sectorCount: z.number().int().optional(),
-})
-
-export type FundPositionResponse = z.infer<typeof fundPositionResponseSchema>
-export type WorkingPortfolioResponse = z.infer<
-  typeof workingPortfolioResponseSchema
->
+export type { FundPositionResponse, WorkingPortfolioResponse }
 
 export async function getWorkingPortfolio(
   draftId: string,

@@ -1,0 +1,180 @@
+.options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-height: 244px;
+  padding: 1.35rem 1.4rem;
+  border: 1.5px solid #e6edf2;
+  border-radius: 16px;
+  background: #ffffff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.option:hover {
+  border-color: #bdeee2;
+  background: #fbfefd;
+}
+
+.option:focus-visible {
+  outline: 2px solid #2ec4a7;
+  outline-offset: 2px;
+}
+
+.optionSelected {
+  border-color: #2ec4a7;
+  background: #f7fdfb;
+  box-shadow: 0 0 0 3px rgba(46, 196, 167, 0.13);
+}
+
+.optionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.optionIcon {
+  display: flex;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: #eef4f8;
+  color: #6b7c8c;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.optionSelected .optionIcon {
+  background: #2ec4a7;
+  color: #ffffff;
+}
+
+.optionIcon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.recommendedBadge {
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: #e3f8f2;
+  color: #0e8f76;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.radio {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  border: 1.5px solid #d6e0e8;
+  border-radius: 999px;
+  background: #ffffff;
+  transition: border-color 0.16s ease;
+}
+
+.optionSelected .radio {
+  border-color: #2ec4a7;
+}
+
+.radioDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #2ec4a7;
+  transform: scale(0);
+  transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.optionSelected .radioDot {
+  transform: none;
+}
+
+.optionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.optionTitle {
+  color: #0f1f3c;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.optionDescription {
+  color: #6b7c8c;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  color: #41586d;
+  font-size: 0.78125rem;
+  line-height: 1.4;
+}
+
+.benefitIcon {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.05rem;
+  border-radius: 999px;
+  background: #e3f8f2;
+  color: #0e8f76;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option,
+  .optionIcon,
+  .radio,
+  .radioDot {
+    transition: none;
+  }
+}
