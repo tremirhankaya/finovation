@@ -14,6 +14,7 @@ import type { FundMonitoringSnapshot } from "@/features/fund-monitoring/model/fu
 const EMPTY_DATA: DashboardOverviewData = {
   businessDate: null,
   funds: [],
+  draftCount: 0,
   drafts: [],
   optimizationLogs: [],
   latestOptimizationResult: null,

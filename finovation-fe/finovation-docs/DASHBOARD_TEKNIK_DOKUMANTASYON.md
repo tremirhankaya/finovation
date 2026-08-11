@@ -20,9 +20,9 @@ DashboardPage
   |
   +-- GET /api/v1/dashboard/summary
   |     +-- FundMonitoringService.listFunds
-  |     +-- FundDraftService.listInProgressDrafts
-  |     +-- OptimizationRequestService.listLogs/getResult
-  |     +-- StressTestService.getHistory
+  |     +-- FundDraftService.getDashboardDrafts
+  |     +-- OptimizationRequestService.listDashboardLogs/getResult
+  |     +-- StressTestQueryService.getLatestHistory
   |
   +-- GET /api/v1/funds/{selectedFundId}/monitoring
         +-- Seçili fonun fiyat, getiri ve grafik verileri
@@ -138,6 +138,7 @@ Controller, kullanıcı adını `AuthenticationPrincipal` üzerinden alır ve `D
 ```json
 {
   "funds": [],
+  "draftCount": 0,
   "drafts": [],
   "optimizationLogs": [],
   "latestOptimizationResult": null,
@@ -162,10 +163,10 @@ Boş bir liste ilgili modülde veri bulunmadığı anlamına gelebilir. Bir mod�
 | Dashboard verisi | Kaynak servis | Davranış |
 | --- | --- | --- |
 | Aktif fonlar | `FundMonitoringService.listFunds` | Kullanıcının tamamlanmış fonları |
-| Taslaklar | `FundDraftService.listInProgressDrafts` | Kullanıcının devam eden taslakları |
-| Optimizasyon logları | `OptimizationRequestService.listLogs` | Oluşturma tarihine göre azalan loglar |
+| Taslaklar | `FundDraftService.getDashboardDrafts` | Toplam taslak sayısı ve güncellenme tarihine göre son 3 taslak |
+| Optimizasyon logları | `OptimizationRequestService.listDashboardLogs` | En yeni istek ve sonuç içeren en yeni istek; en fazla 2 kayıt |
 | Son kullanılabilir sonuç | `OptimizationRequestService.getResult` | İlk `resultAvailable` logunun sonucu |
-| Stres testi geçmişi | `StressTestService.getHistory` | Tamamlanmış testler, yeniden eskiye |
+| Stres testi geçmişi | `StressTestQueryService.getLatestHistory` | En yeni tamamlanmış test; en fazla 1 kayıt |
 
 Servis, modüllerin repository veya domain mantığını tekrar etmez.
 
@@ -188,6 +189,7 @@ Aggregation seviyesinde ortak transaction kullanılmaz. Her mevcut modül servis
 - KPI değerleri ve mevcut grafik component'inin kullanımı
 - Quick Action ve fon/taslak route'ları
 - Fon seçimi ve manuel yenileme
+- Eski monitoring yanıtının yeni fon seçimini ezmemesi
 - Yeni bir optimizasyon devam ederken KPI'nın güncel durumu göstermesi
 - Aggregation response şema doğrulaması
 - `unavailableSections` hata eşlemesi
@@ -200,17 +202,14 @@ Aggregation seviyesinde ortak transaction kullanılmaz. Her mevcut modül servis
 - Kullanılabilir optimizasyon sonucu olmadığında `null` dönülmesi
 - Bir modül hata verdiğinde kalan modüllerin dönmeye devam etmesi
 - Hatalı modülün `unavailableSections` içinde bildirilmesi
+- Controller'ın kimliği doğrulanmış kullanıcıyı servis katmanına iletmesi
+- Dashboard'a özel sınırlı repository sorgularının doğru kayıtları seçmesi
 
 ## 6. Bilinen sınırlamalar ve sonraki adımlar
 
 ### Veri hacmi
 
-Mevcut response fon, taslak, optimizasyon logu ve stres testi listelerini tam olarak döndürür. Kullanıcı başına veri hacmi büyürse dashboard'a özel kompakt sorgulara geçilmelidir:
-
-- toplam kayıt sayıları,
-- son 3–5 kayıt,
-- son işlem/sonuç,
-- sayfalama veya repository seviyesinde limit.
+Dashboard taslaklarda toplam sayıyı ve son 3 kaydı, optimizasyonda en fazla 2 kaydı, stres testinde ise yalnızca son kaydı repository seviyesinde getirir. Aktif fon listesi seçici bileşeni için tam döner; kullanıcı başına aktif fon hacmi belirgin biçimde büyürse bu alan ayrıca sayfalama veya arama endpoint'ine taşınmalıdır.
 
 ### Risk seviyesi
 
