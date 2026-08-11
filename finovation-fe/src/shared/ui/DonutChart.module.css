@@ -2,13 +2,14 @@
   position: relative;
   width: 100%;
   max-width: 190px;
+  aspect-ratio: 1;
   margin: 0 auto;
 }
 
 .chart svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   overflow: visible;
 }
 

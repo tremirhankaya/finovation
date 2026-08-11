@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import styles from "@/shared/ui/DonutChart.module.css"
 
@@ -17,12 +17,15 @@ export type DonutSlice = {
   label: string
   value: number
   color?: string
+  description?: string
 }
 
 type DonutChartProps = {
   slices: DonutSlice[]
   ariaLabel: string
   formatValue: (value: number) => string
+  highlightedSliceId?: string | null
+  onHighlightChange?: (id: string | null) => void
 }
 
 const RADIUS = 58
@@ -33,8 +36,25 @@ export default function DonutChart({
   slices,
   ariaLabel,
   formatValue,
+  highlightedSliceId,
+  onHighlightChange,
 }: DonutChartProps) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [internalHoveredIndex, setInternalHoveredIndex] = useState<number | null>(null)
+
+  const [isMounted, setIsMounted] = useState(false)
+
+  const activeIndex =
+    highlightedSliceId != null
+      ? slices.findIndex((s) => s.id === highlightedSliceId)
+      : internalHoveredIndex !== null
+        ? internalHoveredIndex
+        : null
+
+  useEffect(() => {
+    // Biraz gecikme ekleyerek animasyonun daha belirgin olmasını sağlayalım
+    const timer = setTimeout(() => setIsMounted(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   const total = slices.reduce((sum, slice) => sum + slice.value, 0)
   const activeSlice = activeIndex === null ? null : slices[activeIndex]
@@ -61,22 +81,39 @@ export default function DonutChart({
             return (
               <circle
                 key={slice.id}
+                className={styles.slice}
                 cx={VIEWBOX_CENTER}
                 cy={VIEWBOX_CENTER}
                 r={RADIUS}
                 fill="none"
                 stroke={slice.color ?? DONUT_COLORS[index % DONUT_COLORS.length]}
-                strokeWidth={activeIndex === index ? "27" : "23"}
-                strokeDasharray={`${length} ${CIRCUMFERENCE - length}`}
-                strokeDashoffset={offset}
+                strokeWidth={activeIndex === index ? "32" : "22"}
+                opacity={activeIndex === null || activeIndex === index ? 1 : 0.3}
+                strokeDasharray={`${isMounted ? length : 0} ${CIRCUMFERENCE}`}
+                strokeDashoffset={isMounted ? offset : 0}
                 strokeLinecap="butt"
                 transform={`rotate(-90 ${VIEWBOX_CENTER} ${VIEWBOX_CENTER})`}
                 tabIndex={0}
                 aria-label={`${slice.label}: ${formatValue(slice.value)}`}
-                onPointerEnter={() => setActiveIndex(index)}
-                onPointerLeave={() => setActiveIndex(null)}
-                onFocus={() => setActiveIndex(index)}
-                onBlur={() => setActiveIndex(null)}
+                onPointerEnter={() => {
+                  setInternalHoveredIndex(index)
+                  if (onHighlightChange) onHighlightChange(slice.id)
+                }}
+                onPointerLeave={() => {
+                  setInternalHoveredIndex(null)
+                  if (onHighlightChange) onHighlightChange(null)
+                }}
+                onFocus={() => {
+                  setInternalHoveredIndex(index)
+                  if (onHighlightChange) onHighlightChange(slice.id)
+                }}
+                onBlur={() => {
+                  setInternalHoveredIndex(null)
+                  if (onHighlightChange) onHighlightChange(null)
+                }}
+                style={{
+                  transition: "all 1s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
               />
             )
           })}
