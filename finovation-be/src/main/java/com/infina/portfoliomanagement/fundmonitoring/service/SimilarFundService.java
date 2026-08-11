@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +57,9 @@ public class SimilarFundService {
     );
 
     private final SimilarFundApi similarFundApi;
+    private final Map<ComparisonCacheKey, List<FundComparisonAssetResponse>> cache =
+            new ConcurrentHashMap<>();
+    private final Object cacheMonitor = new Object();
 
     public List<FundComparisonAssetResponse> comparisonAssets(
             FundType fundType,
@@ -66,17 +70,36 @@ public class SimilarFundService {
             return List.of();
         }
 
-        try {
-            return similarFundApi.fetchComparisons(peerCodes, asOfDate)
-                    .map(profile -> comparisonAssets(profile, peerCodes))
-                    .orElseGet(List::of);
-        } catch (BaseException | RestClientException
-                 | CallNotPermittedException | RequestNotPermitted exception) {
-            log.warn(
-                    "Similar fund comparison data is unavailable: {}",
-                    exception.getClass().getSimpleName()
-            );
-            return List.of();
+        ComparisonCacheKey cacheKey = new ComparisonCacheKey(fundType, asOfDate);
+        List<FundComparisonAssetResponse> cached = cache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        synchronized (cacheMonitor) {
+            cached = cache.get(cacheKey);
+            if (cached != null) {
+                return cached;
+            }
+
+            try {
+                List<FundComparisonAssetResponse> assets = similarFundApi
+                        .fetchComparisons(peerCodes, asOfDate)
+                        .map(profile -> comparisonAssets(profile, peerCodes))
+                        .orElseGet(List::of);
+                if (!assets.isEmpty()) {
+                    cache.keySet().removeIf(key -> !key.asOfDate().equals(asOfDate));
+                    cache.put(cacheKey, assets);
+                }
+                return assets;
+            } catch (BaseException | RestClientException
+                     | CallNotPermittedException | RequestNotPermitted exception) {
+                log.warn(
+                        "Similar fund comparison data is unavailable: {}",
+                        exception.getClass().getSimpleName()
+                );
+                return List.of();
+            }
         }
     }
 
@@ -168,5 +191,8 @@ public class SimilarFundService {
                 )
         );
         return Map.copyOf(codes);
+    }
+
+    private record ComparisonCacheKey(FundType fundType, LocalDate asOfDate) {
     }
 }
