@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -104,6 +105,12 @@ class SimilarFundServiceTest {
                                 8
                         )
                 );
+
+        assertThat(service.comparisonAssets(
+                FundType.EQUITY_INTENSIVE,
+                AS_OF_DATE
+        )).isSameAs(assets);
+        verify(similarFundApi).fetchComparisons(PEER_CODES, AS_OF_DATE);
     }
 
     @Test
