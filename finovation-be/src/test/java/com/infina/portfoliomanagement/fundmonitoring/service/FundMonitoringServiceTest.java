@@ -3,6 +3,8 @@ package com.infina.portfoliomanagement.fundmonitoring.service;
 import com.infina.portfoliomanagement.common.time.FinancialTimeProperties;
 import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.common.enums.AssetType;
+import com.infina.portfoliomanagement.common.exception.BaseException;
+import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPortfolio;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
@@ -47,6 +49,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -206,6 +209,67 @@ class FundMonitoringServiceTest {
                         tuple("Atlas Fonu", new BigDecimal("30.0000"), true, 8),
                         tuple("Nova Fonu", new BigDecimal("20.0000"), true, 8)
                 );
+    }
+
+    @Test
+    void monitoringSnapshot_rejectsZeroBacktestBasePriceWithStableErrorCode() {
+        FundDraft selectedFund = fund(1L, "Atlas Fonu");
+        User actor = mock(User.class);
+        FundPortfolio portfolio = mock(FundPortfolio.class);
+
+        when(actor.getId()).thenReturn(7L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(actor));
+        when(fundDraftRepository.findByPublicIdAndStatus(
+                selectedFund.getPublicId(),
+                FundDraftStatus.COMPLETED
+        )).thenReturn(Optional.of(selectedFund));
+        when(fundPortfolioRepository.findByFundDraft_IdAndPortfolioType(
+                anyLong(),
+                eq(PortfolioType.WORKING)
+        )).thenReturn(Optional.of(portfolio));
+        when(portfolio.getId()).thenReturn(10L);
+        when(fundPositionRepository.findAllByFundPortfolioIdOrderByWeightDesc(10L))
+                .thenReturn(List.of());
+        when(assetRepository.findAllById(List.of())).thenReturn(List.of());
+        when(valuationProviderRegistry.loadUnitValues(
+                eq(List.of()),
+                any(LocalDate.class),
+                eq(AS_OF_DATE)
+        )).thenReturn(Map.of());
+        when(classificationProviderRegistry.loadProfiles(List.of()))
+                .thenReturn(Map.of());
+        when(valuationCalculator.calculateAroundInception(
+                eq(selectedFund),
+                eq(List.of()),
+                eq(List.of()),
+                eq(Map.of()),
+                any(LocalDate.class)
+        )).thenReturn(valuation("100", "110"));
+        when(valuationCalculator.calculate(
+                eq(selectedFund),
+                eq(List.of()),
+                eq(List.of()),
+                eq(Map.of()),
+                any(LocalDate.class)
+        )).thenReturn(valuation("0", "130"));
+        when(benchmarkService.load(AS_OF_DATE)).thenReturn(
+                new BenchmarkSnapshot(
+                        List.of(),
+                        new TreeMap<>(),
+                        new BenchmarkDefinitionResponse(
+                                "Fon Karşılaştırma Ölçütü",
+                                List.of()
+                        )
+                )
+        );
+
+        assertThatThrownBy(() -> service.getMonitoringSnapshot(
+                "manager",
+                selectedFund.getPublicId()
+        ))
+                .isInstanceOf(BaseException.class)
+                .extracting(error -> ((BaseException) error).getErrorCode())
+                .isEqualTo(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE);
     }
 
     @Test
