@@ -1,0 +1,8 @@
+host = replace-with-fortinet-gateway
+port = 443
+username = replace-with-vpn-username
+password = replace-with-vpn-password
+trusted-cert = replace-with-gateway-certificate-sha256
+set-routes = 0
+set-dns = 0
+pppd-use-peerdns = 0

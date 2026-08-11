@@ -1,0 +1,19 @@
+[Unit]
+Description=Finovation private service VPN
+Wants=network-online.target
+After=network-online.target
+Before=docker.service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/default/finovation-vpn
+ExecStart=/usr/bin/openfortivpn -c /etc/openfortivpn/finovation.conf
+ExecStartPost=/usr/local/sbin/finovation-vpn-routes
+Restart=always
+RestartSec=10
+TimeoutStartSec=60
+KillMode=control-group
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
