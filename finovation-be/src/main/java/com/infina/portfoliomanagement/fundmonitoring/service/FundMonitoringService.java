@@ -129,9 +129,9 @@ public class FundMonitoringService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(4, RoundingMode.HALF_UP);
         List<FundValuationPoint> trackingPoints = trackingValuation.points();
-        FundValuationPoint trackingLatest = trackingValuation.latestPoint();
+        FundValuationPoint trackingLatest = latestValuationPoint(trackingPoints);
         List<FundValuationPoint> backtestPoints = backtestValuation.points();
-        FundValuationPoint backtestLatest = backtestValuation.latestPoint();
+        FundValuationPoint backtestLatest = latestValuationPoint(backtestPoints);
         List<FundValuationPoint> annualBacktestPoints = valuationPointsSince(
                 backtestPoints,
                 backtestLatest.date().minusYears(1)
@@ -157,10 +157,7 @@ public class FundMonitoringService {
                 metricCalculator.dailyChange(trackingPoints),
                 priceHistory(trackingPoints, trackingLatest.date()),
                 normalizedBacktestHistory(backtestPoints, backtestLatest.date()),
-                normalizedBacktestValue(
-                        annualBacktestPoints.getFirst(),
-                        annualBacktestPoints.getLast()
-                ),
+                normalizedBacktestPeriodValue(annualBacktestPoints),
                 metricCalculator.dailyChange(backtestPoints),
                 benchmarks.benchmarkDefinition(),
                 metricCalculator.technicalIndicators(
@@ -566,6 +563,9 @@ public class FundMonitoringService {
             LocalDate startDate
     ) {
         List<FundValuationPoint> visiblePoints = valuationPointsSince(points, startDate);
+        if (visiblePoints.isEmpty()) {
+            return List.of();
+        }
         FundValuationPoint base = visiblePoints.getFirst();
         return visiblePoints.stream()
                 .map(point -> new PricePointResponse(
@@ -573,6 +573,24 @@ public class FundMonitoringService {
                         normalizedBacktestValue(base, point)
                 ))
                 .toList();
+    }
+
+    private BigDecimal normalizedBacktestPeriodValue(
+            List<FundValuationPoint> points
+    ) {
+        if (points.isEmpty()) {
+            throw new BaseException(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE);
+        }
+        return normalizedBacktestValue(points.getFirst(), points.getLast());
+    }
+
+    private FundValuationPoint latestValuationPoint(
+            List<FundValuationPoint> points
+    ) {
+        if (points.isEmpty()) {
+            throw new BaseException(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE);
+        }
+        return points.getLast();
     }
 
     private List<FundValuationPoint> valuationPointsSince(
@@ -588,6 +606,11 @@ public class FundMonitoringService {
             FundValuationPoint base,
             FundValuationPoint point
     ) {
+        if (base.sharePrice() == null
+                || base.sharePrice().signum() <= 0
+                || point.sharePrice() == null) {
+            throw new BaseException(ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE);
+        }
         return point.sharePrice().divide(
                 base.sharePrice(),
                 8,

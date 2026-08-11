@@ -56,7 +56,7 @@ export default function RecentFunds({
           <Link className={styles.headerLink} to="/fund-design">
             Aktif fonlar
           </Link>
-          <Link className={styles.headerLink} to="/fund-design/create">
+          <Link className={styles.headerLink} to="/fund-design?tab=drafts">
             Taslaklar
           </Link>
         </div>
