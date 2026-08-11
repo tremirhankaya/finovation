@@ -1,32 +1,40 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import type { OptimizationResultAsset } from "@/features/optimization/model/optimizationResultSchemas"
 import styles from "@/features/optimization/styles/OptimizationResultPage.module.css"
 
 export const DONUT_COLORS = [
-  "#0d9488",
-  "#2563eb",
-  "#d97706",
-  "#7c3aed",
-  "#65a30d",
-  "#db2777",
-  "#0891b2",
-  "#ea580c",
-  "#4f46e5",
-  "#059669",
-  "#c026d3",
-  "#ca8a04",
-  "#9333ea",
-  "#475569",
+  "#2ec4a7",
+  "#4a90d9",
+  "#f0a05a",
+  "#8b7cf0",
+  "#e26d8a",
+  "#45b7c8",
+  "#f4c15d",
+  "#6bcb77",
+  "#c77dff",
+  "#ff6b6b",
+  "#4ecdc4",
+  "#ffa94d",
+  "#748ffc",
+  "#69db7c",
+  "#ff8787",
+  "#3bc9db",
+  "#b197fc",
+  "#fcc419",
+  "#20c997",
+  "#339af0",
 ] as const
-
-const RADIUS = 58
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS
-const DIMMED_OPACITY = 0.28
 
 type SectorSlice = {
   sectorName: string
   weight: number
+}
+
+type SliceMeta = SectorSlice & {
+  color: string
+  startAngle: number
+  endAngle: number
 }
 
 function bySectorDescending(
@@ -53,6 +61,55 @@ function formatSignedPercent(value: number): string {
   return "—"
 }
 
+function polar(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+}
+
+function donutPath(
+  cx: number,
+  cy: number,
+  outerR: number,
+  innerR: number,
+  startAngle: number,
+  endAngle: number,
+): string {
+  const sweep = Math.max(0.01, endAngle - startAngle)
+  const end = startAngle + sweep
+  const largeArc = sweep > 180 ? 1 : 0
+  const o1 = polar(cx, cy, outerR, startAngle)
+  const o2 = polar(cx, cy, outerR, end)
+  const i1 = polar(cx, cy, innerR, end)
+  const i2 = polar(cx, cy, innerR, startAngle)
+  return [
+    `M ${o1.x} ${o1.y}`,
+    `A ${outerR} ${outerR} 0 ${largeArc} 1 ${o2.x} ${o2.y}`,
+    `L ${i1.x} ${i1.y}`,
+    `A ${innerR} ${innerR} 0 ${largeArc} 0 ${i2.x} ${i2.y}`,
+    "Z",
+  ].join(" ")
+}
+
+function buildSliceMeta(
+  slices: SectorSlice[],
+  colorFor: (sectorName: string) => string,
+): SliceMeta[] {
+  const total = slices.reduce((sum, slice) => sum + slice.weight, 0) || 1
+  let cursor = 0
+  return slices.map((slice) => {
+    const span = (slice.weight / total) * 360
+    const startAngle = cursor
+    const endAngle = cursor + span
+    cursor = endAngle
+    return {
+      ...slice,
+      color: colorFor(slice.sectorName),
+      startAngle,
+      endAngle,
+    }
+  })
+}
+
 function Donut({
   title,
   meta,
@@ -70,8 +127,16 @@ function Donut({
   hoveredSector: string | null
   onHoverSector: (sectorName: string | null) => void
 }) {
-  const total = slices.reduce((sum, slice) => sum + slice.weight, 0)
-  let consumed = 0
+  const meta_ = useMemo(
+    () => buildSliceMeta(slices, colorFor),
+    [slices, colorFor],
+  )
+  const active = meta_.find((slice) => slice.sectorName === hoveredSector) ?? null
+  const size = 200
+  const cx = size / 2
+  const cy = size / 2
+  const outerR = 90
+  const innerR = 52
 
   return (
     <div className={styles.donutCard}>
@@ -80,87 +145,55 @@ function Donut({
         <span className={styles.donutCardMeta}>{meta}</span>
       </div>
       <svg
-        viewBox="0 0 160 160"
+        viewBox={`0 0 ${size} ${size}`}
         role="img"
         aria-label={`${title} sektörel ağırlık dağılımı`}
         className={styles.donutSvg}
       >
-        <circle
-          cx="80"
-          cy="80"
-          r={RADIUS}
-          fill="none"
-          stroke="#e8eef4"
-          strokeWidth="23"
-        />
-        {total > 0 &&
-          slices.map((slice) => {
-            const fraction = slice.weight / total
-            const length = fraction * CIRCUMFERENCE
-            const offset = -consumed * CIRCUMFERENCE
-            consumed += fraction
-            const isDimmed =
-              hoveredSector != null && hoveredSector !== slice.sectorName
-            const isActive = hoveredSector === slice.sectorName
-
-            return (
-              <circle
-                key={slice.sectorName}
-                cx="80"
-                cy="80"
-                r={RADIUS}
-                fill="none"
-                stroke={colorFor(slice.sectorName)}
-                strokeWidth={isActive ? "27" : "23"}
-                strokeDasharray={`${length} ${CIRCUMFERENCE - length}`}
-                strokeDashoffset={offset}
-                transform="rotate(-90 80 80)"
-                opacity={isDimmed ? DIMMED_OPACITY : 1}
-                className={`${styles.donutSlice} ${isActive ? styles.donutSliceActive : ""}`}
-                style={isActive ? { color: colorFor(slice.sectorName) } : undefined}
-                onMouseEnter={() => onHoverSector(slice.sectorName)}
-                onMouseLeave={() => onHoverSector(null)}
-              />
-            )
-          })}
-        {hoveredSector != null ? (
-          <foreignObject x="18" y="58" width="124" height="44">
-            <div className={styles.donutCenterHover}>
-              <span className={styles.donutCenterHoverName}>
-                {hoveredSector}
-              </span>
-              <span
-                className={styles.donutCenterHoverValue}
-                style={{ color: colorFor(hoveredSector) }}
-              >
-                %
-                {(
-                  slices.find((slice) => slice.sectorName === hoveredSector)
-                    ?.weight ?? 0
-                ).toFixed(0)}
-              </span>
-            </div>
-          </foreignObject>
-        ) : (
-          <>
-            <text
-              x="80"
-              y="76"
-              textAnchor="middle"
-              className={styles.donutCenterValue}
-            >
-              {totalLabel}
-            </text>
-            <text
-              x="80"
-              y="94"
-              textAnchor="middle"
-              className={styles.donutCenterLabel}
-            >
-              hisse ağırlığı
-            </text>
-          </>
-        )}
+        {meta_.map((slice) => {
+          const isActive = hoveredSector === slice.sectorName
+          const isDimmed = hoveredSector != null && !isActive
+          return (
+            <path
+              key={slice.sectorName}
+              d={donutPath(
+                cx,
+                cy,
+                outerR,
+                innerR,
+                slice.startAngle,
+                slice.endAngle,
+              )}
+              fill={slice.color}
+              className={[
+                styles.donutSlice,
+                isActive ? styles.donutSliceActive : "",
+                isDimmed ? styles.donutSliceDimmed : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onMouseEnter={() => onHoverSector(slice.sectorName)}
+              onMouseLeave={() => onHoverSector(null)}
+            />
+          )
+        })}
+        <circle cx={cx} cy={cy} r={innerR - 1} className={styles.donutCenter} />
+        <text
+          x={cx}
+          y={active ? cy - 8 : cy - 4}
+          textAnchor="middle"
+          className={styles.donutCenterValue}
+        >
+          {active ? `%${active.weight.toFixed(0)}` : totalLabel}
+        </text>
+        <text
+          x={cx}
+          y={active ? cy + 12 : cy + 16}
+          textAnchor="middle"
+          className={styles.donutCenterLabel}
+        >
+          {active ? active.sectorName : "hisse ağırlığı"}
+        </text>
       </svg>
     </div>
   )
@@ -242,6 +275,40 @@ export default function PortfolioDonutComparison({
           onHoverSector={setHoveredSector}
         />
       </div>
+
+      <ul className={styles.donutLegendList}>
+        {allSectors.map((sectorName) => {
+          const isActive = hoveredSector === sectorName
+          const isDimmed = hoveredSector != null && !isActive
+          const proposed =
+            proposedSlices.find((slice) => slice.sectorName === sectorName)
+              ?.weight ?? 0
+
+          return (
+            <li
+              key={sectorName}
+              className={[
+                styles.donutLegendItem,
+                isActive ? styles.donutLegendItemActive : "",
+                isDimmed ? styles.donutLegendItemDimmed : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onMouseEnter={() => setHoveredSector(sectorName)}
+              onMouseLeave={() => setHoveredSector(null)}
+            >
+              <span
+                className={styles.donutLegendSwatch}
+                style={{ background: colorFor(sectorName) }}
+              />
+              <span className={styles.donutLegendCode}>{sectorName}</span>
+              <span className={styles.donutLegendPct}>
+                %{proposed.toFixed(0)}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
 
       <table className={styles.comparisonTable}>
         <thead>

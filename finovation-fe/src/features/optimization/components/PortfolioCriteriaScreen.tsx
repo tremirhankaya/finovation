@@ -136,7 +136,28 @@ export default function PortfolioCriteriaScreen({
                     </tr>
                   )}
                   <tr>
-                    <td>{row.label}</td>
+                    <td>
+                      <span className={styles.criteriaLabelCell}>
+                        {row.description && (
+                          <span className={styles.indicatorHelp}>
+                            <button
+                              type="button"
+                              aria-label={`${row.label} açıklaması`}
+                              aria-describedby={`criteria-${row.key.toLowerCase()}-description`}
+                            >
+                              i
+                            </button>
+                            <span
+                              id={`criteria-${row.key.toLowerCase()}-description`}
+                              role="tooltip"
+                            >
+                              {row.description}
+                            </span>
+                          </span>
+                        )}
+                        <span>{row.label}</span>
+                      </span>
+                    </td>
                     <td>{formatCriteriaValue(row.currentValue, row.unit)}</td>
                     <td>
                       <strong>

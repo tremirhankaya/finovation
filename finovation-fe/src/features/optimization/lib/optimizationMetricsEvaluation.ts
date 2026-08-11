@@ -11,6 +11,26 @@ import type { RiskProfile } from "@/features/optimization/model/optimizationSche
 
 const CANNOT_EVALUATE_DETAIL = "Kontrol Edilemedi — gerekli veri yok"
 
+const INFO_METRIC_DESCRIPTIONS: Record<InfoMetric["key"], string> = {
+  BETA: "Fonun bileşik karşılaştırma ölçütündeki hareketlere duyarlılığını gösterir.",
+  VOLATILITY:
+    "Son 252 işlem günündeki fon getirilerinin yıllıklandırılmış dalgalanmasını gösterir.",
+  MAX_DRAWDOWN:
+    "Son 252 işlem gününde zirveden dip seviyeye yaşanan en büyük kaybı gösterir.",
+  DOWNSIDE_DEVIATION:
+    "MAR yüzde 0 altında kalan getirilerden hesaplanan yıllıklandırılmış aşağı yönlü risktir.",
+  TRACKING_ERROR:
+    "Fonun bileşik karşılaştırma ölçütünden sapmasının yıllıklandırılmış standart sapmasıdır.",
+  SHARPE_RATIO:
+    "TCMB politika faizi üzerindeki getirinin toplam riske oranını gösterir.",
+  CALMAR_RATIO:
+    "Son bir yıllık getirinin mutlak maksimum düşüşe oranını gösterir.",
+  INFORMATION_RATIO:
+    "Bileşik ölçütün üzerindeki getirinin aktif riske göre verimliliğini gösterir.",
+  ALPHA:
+    "Beta ve TCMB politika faizi dikkate alındıktan sonra üretilen yıllık ek getiriyi gösterir.",
+}
+
 function statusForUserRangeValue(
   value: number | null,
   userMin: number,
@@ -293,6 +313,7 @@ export function evaluateInfoMetrics(
       label: "Beta",
       currentValue: current.beta,
       proposedValue: proposed.beta,
+      description: INFO_METRIC_DESCRIPTIONS.BETA,
       ...beta,
     },
     {
@@ -300,6 +321,7 @@ export function evaluateInfoMetrics(
       label: "Volatilite",
       currentValue: current.volatility,
       proposedValue: proposed.volatility,
+      description: INFO_METRIC_DESCRIPTIONS.VOLATILITY,
       ...volatility,
     },
     {
@@ -307,6 +329,7 @@ export function evaluateInfoMetrics(
       label: "Maksimum Düşüş",
       currentValue: current.maxDrawdown,
       proposedValue: proposed.maxDrawdown,
+      description: INFO_METRIC_DESCRIPTIONS.MAX_DRAWDOWN,
       ...maxDrawdown,
     },
     {
@@ -314,6 +337,7 @@ export function evaluateInfoMetrics(
       label: "Downside Deviation",
       currentValue: current.downsideDeviation,
       proposedValue: proposed.downsideDeviation,
+      description: INFO_METRIC_DESCRIPTIONS.DOWNSIDE_DEVIATION,
       ...downsideDeviation,
     },
     {
@@ -321,6 +345,7 @@ export function evaluateInfoMetrics(
       label: "Tracking Error",
       currentValue: current.trackingError,
       proposedValue: proposed.trackingError,
+      description: INFO_METRIC_DESCRIPTIONS.TRACKING_ERROR,
       status: "NEUTRAL",
       detail: "Amaca bağlı yorumlanır",
     },
@@ -329,6 +354,7 @@ export function evaluateInfoMetrics(
       label: "Sharpe Oranı",
       currentValue: current.sharpeRatio,
       proposedValue: proposed.sharpeRatio,
+      description: INFO_METRIC_DESCRIPTIONS.SHARPE_RATIO,
       ...sharpeRatio,
     },
     {
@@ -336,6 +362,7 @@ export function evaluateInfoMetrics(
       label: "Calmar Oranı",
       currentValue: current.calmarRatio,
       proposedValue: proposed.calmarRatio,
+      description: INFO_METRIC_DESCRIPTIONS.CALMAR_RATIO,
       ...calmarRatio,
     },
     {
@@ -343,6 +370,7 @@ export function evaluateInfoMetrics(
       label: "Information Ratio",
       currentValue: current.informationRatio,
       proposedValue: proposed.informationRatio,
+      description: INFO_METRIC_DESCRIPTIONS.INFORMATION_RATIO,
       ...informationRatio,
     },
     {
@@ -350,6 +378,7 @@ export function evaluateInfoMetrics(
       label: "Alfa",
       currentValue: current.alpha,
       proposedValue: proposed.alpha,
+      description: INFO_METRIC_DESCRIPTIONS.ALPHA,
       ...alpha,
     },
   ]

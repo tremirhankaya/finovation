@@ -21,6 +21,7 @@ export type InfoMetric = {
   proposedValue: number | null
   status: InfoMetricStatus
   detail: string
+  description: string
 }
 
 export type PortfolioRiskMetricsSnapshot = {
