@@ -27,6 +27,16 @@ public interface FundDraftRepository
             Long createdByUserId
     );
 
+    long countByStatusAndCreatedByUserId(
+            FundDraftStatus status,
+            Long createdByUserId
+    );
+
+    List<FundDraft> findTop3ByStatusAndCreatedByUserIdOrderByUpdatedAtDescIdDesc(
+            FundDraftStatus status,
+            Long createdByUserId
+    );
+
     Optional<FundDraft> findByPublicIdAndStatus(
             UUID publicId,
             FundDraftStatus status

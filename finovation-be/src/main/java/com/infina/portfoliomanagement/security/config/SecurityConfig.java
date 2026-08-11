@@ -68,6 +68,8 @@ public class SecurityConfig {
                         .hasRole(ADMIN_ROLE)
                         .requestMatchers("/api/v1/users/**")
                         .hasAnyRole(ADMIN_ROLE, COMPANY_MANAGER_ROLE)
+                        .requestMatchers("/api/v1/system-logs/**")
+                        .hasRole(ADMIN_ROLE)
                         .requestMatchers("/api/v1/**")
                         .hasAnyRole(COMPANY_MANAGER_ROLE, "USER")
                         .anyRequest().authenticated()

@@ -18,6 +18,7 @@ import com.infina.portfoliomanagement.stresstest.entity.StressTest;
 import java.util.UUID;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,15 +43,21 @@ public class StressTestQueryService {
                         StressTestStatus.COMPLETED
                 )
                 .stream()
-                .map(stressTest -> new StressTestHistoryResponse(
-                        stressTest.getPublicId(),
-                        stressTest.getScenario().getCode(),
-                        stressTest.getScenario().getName(),
-                        stressTest.getAsOfDate(),
-                        stressTest.getPortfolioImpact(),
-                        stressTest.getCreatedAt()
-                ))
+                .map(this::toHistoryResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<StressTestHistoryResponse> getLatestHistory(String actorUsername) {
+        User actor = userRepository.findByUsername(actorUsername)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        return stressTestRepository
+                .findFirstByUserIdAndStatusAndDeletedFalseOrderByCreatedAtDescIdDesc(
+                        actor.getId(),
+                        StressTestStatus.COMPLETED
+                )
+                .map(this::toHistoryResponse);
     }
     @Transactional(readOnly = true)
     public StressTestDetailResponse getDetail(
@@ -116,5 +123,16 @@ public class StressTestQueryService {
                 );
 
         stressTest.setDeleted(true);
+    }
+
+    private StressTestHistoryResponse toHistoryResponse(StressTest stressTest) {
+        return new StressTestHistoryResponse(
+                stressTest.getPublicId(),
+                stressTest.getScenario().getCode(),
+                stressTest.getScenario().getName(),
+                stressTest.getAsOfDate(),
+                stressTest.getPortfolioImpact(),
+                stressTest.getCreatedAt()
+        );
     }
 }

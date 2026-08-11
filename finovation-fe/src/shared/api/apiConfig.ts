@@ -35,6 +35,9 @@ export const API_PATHS = {
   investmentUniverse:
       import.meta.env.VITE_INVESTMENT_UNIVERSE_PATH?.trim() ||
       "/v1/investment-universe",
+  systemLogs:
+      import.meta.env.VITE_SYSTEM_LOGS_PATH?.trim() || "/v1/system-logs",
+
   dashboard:
       import.meta.env.VITE_DASHBOARD_PATH?.trim() || "/v1/dashboard",
 } as const
@@ -286,4 +289,7 @@ export function getRlStressTestDeleteUrl(
     testId: string,
 ): string {
   return `${getRlStressTestsUrl()}/${encodeURIComponent(testId)}`
+}
+export function getSystemLogsUrl(): string {
+  return buildUrl(API_PATHS.systemLogs)
 }
