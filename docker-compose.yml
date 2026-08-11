@@ -270,6 +270,39 @@ services:
       - "127.0.0.1:9093:9093"
 
     restart: unless-stopped
+  loki:
+    image: grafana/loki:3.7.0
+    container_name: finovation-loki
+
+    command:
+      - -config.file=/etc/loki/loki-config.yml
+
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - finovation_loki_data:/loki
+
+    ports:
+      - "127.0.0.1:3100:3100"
+
+    restart: unless-stopped
+
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: finovation-alloy
+
+    command:
+      - run
+      - /etc/alloy/config.alloy
+
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    depends_on:
+      - loki
+
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest
@@ -298,6 +331,7 @@ volumes:
   finovation_prometheus_data:
   finovation_alertmanager_data:
   finovation_grafana_data:
+  finovation_loki_data:
 
 secrets:
   alertmanager_slack_webhook_url:

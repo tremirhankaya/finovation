@@ -1,0 +1,53 @@
+discovery.docker "finovation" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "finovation" {
+  targets = discovery.docker.finovation.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/finovation-(backend|fund-engine|frontend)"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+    replacement   = "$1"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/finovation-(.*)"
+    target_label  = "service"
+    replacement   = "$1"
+  }
+}
+
+loki.source.docker "finovation" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.finovation.output
+  forward_to = [loki.process.finovation.receiver]
+}
+
+loki.process "finovation" {
+  stage.regex {
+    expression = ".*\\s(?P<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL)\\s.*"
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
