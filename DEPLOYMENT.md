@@ -79,5 +79,42 @@ Update application images after uploading a new source bundle:
 docker compose --env-file .env.production -f compose.production.yaml up -d --build
 ```
 
+## Automated production deployments
+
+The Gitea Actions workflow in `.gitea/workflows/deploy-production.yml` deploys
+every commit merged into `main`. It can also be started manually from the
+Actions page. The runner sends a Git archive over SSH; production secrets stay
+only in `/opt/finovation/.env.production` on the VPS.
+
+Install the two server-side scripts as root:
+
+```bash
+install -m 755 deploy/ci/finovation-ci-command.sh /usr/local/sbin/finovation-ci-command
+install -m 755 deploy/ci/finovation-deploy.sh /usr/local/sbin/finovation-deploy
+install -d -m 700 /var/lib/finovation-deploy/incoming
+```
+
+Create a dedicated Ed25519 key for Gitea Actions. Add its public key to
+`/root/.ssh/authorized_keys` with this prefix so it cannot open a shell or
+forward traffic:
+
+```text
+restrict,command="/usr/local/sbin/finovation-ci-command" ssh-ed25519 PUBLIC_KEY gitea-finovation-production
+```
+
+Configure these repository Actions secrets before merging the workflow into
+`main`:
+
+- `PRODUCTION_SSH_HOST`: production VPS address
+- `PRODUCTION_SSH_USER`: `root`
+- `PRODUCTION_SSH_KEY`: the dedicated private key
+- `PRODUCTION_KNOWN_HOSTS`: a verified `known_hosts` entry for the VPS
+
+Each release is extracted under `/opt/finovation/releases/<commit-sha>` and the
+`/opt/finovation/current` symlink identifies the active release. If startup or
+the API health check fails, the server script restores the previous release.
+The initial source tree at `/opt/finovation` remains in place during the first
+automated deployment.
+
 Back up SQL Server to off-server storage on a schedule. Host snapshots are a
 second recovery layer, not a replacement for database backups.

@@ -23,6 +23,7 @@ services:
     restart: unless-stopped
 
   frontend:
+    image: finovation-production-frontend:${DEPLOY_VERSION:-latest}
     build:
       context: ./finovation-fe
       dockerfile: Dockerfile.prod
@@ -36,6 +37,7 @@ services:
     restart: unless-stopped
 
   backend:
+    image: finovation-production-backend:${DEPLOY_VERSION:-latest}
     build:
       context: ./finovation-be
       dockerfile: Dockerfile
@@ -109,6 +111,7 @@ services:
     restart: unless-stopped
 
   fund-engine:
+    image: finovation-production-fund-engine:${DEPLOY_VERSION:-latest}
     build:
       context: ./finovation-ai
       dockerfile: Dockerfile
