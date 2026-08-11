@@ -224,8 +224,10 @@ services:
       - "5173:5173"
 
     volumes:
-      - ./finovation-fe:/app
-      - /app/node_modules
+      - ./finovation-fe/src:/app/src
+      - ./finovation-fe/index.html:/app/index.html
+      - ./finovation-fe/tsconfig.json:/app/tsconfig.json
+      - ./finovation-fe/vite.config.ts:/app/vite.config.ts
 
     depends_on:
       - backend

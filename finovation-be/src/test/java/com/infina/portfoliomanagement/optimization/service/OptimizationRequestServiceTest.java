@@ -77,6 +77,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -1094,6 +1095,64 @@ class OptimizationRequestServiceTest {
         assertThat(response.tppMaxWeight()).isEqualByComparingTo("15");
         assertThat(response.stockCountMin()).isEqualTo(16);
         assertThat(response.stockCountMax()).isEqualTo(30);
+    }
+
+    @Test
+    void listDashboardLogs_returnsLatestRequestAndLatestAvailableResult() {
+        User actor = User.builder()
+                .id(7L)
+                .role(Role.USER)
+                .username(ACTOR_USERNAME)
+                .build();
+        UUID completedFundId = UUID.randomUUID();
+        OptimizationRequest runningRequest = OptimizationRequest.builder()
+                .id(44L)
+                .fundId(FUND_ID)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.RUNNING)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK))
+                .updatedAt(LocalDateTime.now(CLOCK))
+                .build();
+        OptimizationRequest completedRequest = OptimizationRequest.builder()
+                .id(43L)
+                .fundId(completedFundId)
+                .requestedBy(actor)
+                .riskProfile(RiskProfile.BALANCED)
+                .maxAdditions(3)
+                .status(RequestStatus.COMPLETED)
+                .version(0L)
+                .createdAt(LocalDateTime.now(CLOCK).minusHours(1))
+                .completedAt(LocalDateTime.now(CLOCK).minusMinutes(55))
+                .updatedAt(LocalDateTime.now(CLOCK).minusMinutes(55))
+                .build();
+
+        when(userRepository.findByUsername(ACTOR_USERNAME)).thenReturn(Optional.of(actor));
+        when(optimizationRequestRepository
+                .findFirstByRequestedByIdOrderByCreatedAtDescIdDesc(7L))
+                .thenReturn(Optional.of(runningRequest));
+        when(optimizationRequestRepository
+                .findFirstByRequestedByIdAndStatusInOrderByCreatedAtDescIdDesc(
+                        eq(7L),
+                        anySet()
+                ))
+                .thenReturn(Optional.of(completedRequest));
+        when(fundDraftRepository.findAllByPublicIdIn(List.of(FUND_ID, completedFundId)))
+                .thenReturn(List.of(
+                        FundDraft.builder().publicId(FUND_ID).name("Çalışan Fon").build(),
+                        FundDraft.builder().publicId(completedFundId).name("Sonuç Fonu").build()
+                ));
+
+        List<OptimizationLogEntryResponse> logs = service.listDashboardLogs(ACTOR_USERNAME);
+
+        assertThat(logs).extracting(OptimizationLogEntryResponse::requestId)
+                .containsExactly(44L, 43L);
+        assertThat(logs.get(0).status()).isEqualTo(RequestStatus.RUNNING);
+        assertThat(logs.get(0).resultAvailable()).isFalse();
+        assertThat(logs.get(1).status()).isEqualTo(RequestStatus.COMPLETED);
+        assertThat(logs.get(1).resultAvailable()).isTrue();
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.infina.portfoliomanagement.dashboard.service;
 
 import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.dashboard.dto.DashboardSummaryResponse.UnavailableSection;
+import com.infina.portfoliomanagement.fund.dto.FundDraftDashboardResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
@@ -96,18 +97,21 @@ class DashboardServiceTest {
         );
 
         when(fundMonitoringService.listFunds(USERNAME, null)).thenReturn(List.of(fund));
-        when(fundDraftService.listInProgressDrafts(USERNAME)).thenReturn(List.of(draft));
-        when(optimizationRequestService.listLogs(USERNAME))
+        when(fundDraftService.getDashboardDrafts(USERNAME))
+                .thenReturn(new FundDraftDashboardResponse(4, List.of(draft)));
+        when(optimizationRequestService.listDashboardLogs(USERNAME))
                 .thenReturn(List.of(runningLog, completedLog));
         when(optimizationRequestService.getResult(USERNAME, 11L))
                 .thenReturn(optimizationResult);
-        when(stressTestQueryService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
+        when(stressTestQueryService.getLatestHistory(USERNAME))
+                .thenReturn(java.util.Optional.of(stressTest));
         when(financialTime.currentDate()).thenReturn(businessDate);
 
         var response = service.getSummary(USERNAME);
 
         assertThat(response.businessDate()).isEqualTo(businessDate);
         assertThat(response.funds()).containsExactly(fund);
+        assertThat(response.draftCount()).isEqualTo(4);
         assertThat(response.drafts()).containsExactly(draft);
         assertThat(response.optimizationLogs()).containsExactly(runningLog, completedLog);
         assertThat(response.latestOptimizationResult()).isSameAs(optimizationResult);
@@ -121,9 +125,12 @@ class DashboardServiceTest {
         OptimizationLogEntryResponse runningLog = optimizationLog(12L, false);
 
         when(fundMonitoringService.listFunds(USERNAME, null)).thenReturn(List.of());
-        when(fundDraftService.listInProgressDrafts(USERNAME)).thenReturn(List.of());
-        when(optimizationRequestService.listLogs(USERNAME)).thenReturn(List.of(runningLog));
-        when(stressTestQueryService.getHistory(USERNAME)).thenReturn(List.of());
+        when(fundDraftService.getDashboardDrafts(USERNAME))
+                .thenReturn(new FundDraftDashboardResponse(0, List.of()));
+        when(optimizationRequestService.listDashboardLogs(USERNAME))
+                .thenReturn(List.of(runningLog));
+        when(stressTestQueryService.getLatestHistory(USERNAME))
+                .thenReturn(java.util.Optional.empty());
 
         var response = service.getSummary(USERNAME);
 
@@ -145,9 +152,11 @@ class DashboardServiceTest {
 
         when(fundMonitoringService.listFunds(USERNAME, null))
                 .thenThrow(new IllegalStateException("fund data unavailable"));
-        when(fundDraftService.listInProgressDrafts(USERNAME)).thenReturn(List.of());
-        when(optimizationRequestService.listLogs(USERNAME)).thenReturn(List.of());
-        when(stressTestQueryService.getHistory(USERNAME)).thenReturn(List.of(stressTest));
+        when(fundDraftService.getDashboardDrafts(USERNAME))
+                .thenReturn(new FundDraftDashboardResponse(0, List.of()));
+        when(optimizationRequestService.listDashboardLogs(USERNAME)).thenReturn(List.of());
+        when(stressTestQueryService.getLatestHistory(USERNAME))
+                .thenReturn(java.util.Optional.of(stressTest));
 
         var response = service.getSummary(USERNAME);
 

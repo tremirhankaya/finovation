@@ -16,6 +16,7 @@ import { apiFetch } from "@/shared/api/httpClient"
 const dashboardSummaryResponseSchema = z.object({
   businessDate: z.iso.date(),
   funds: z.array(fundSummaryResponseSchema),
+  draftCount: z.number().int().nonnegative(),
   drafts: z.array(fundDraftSummarySchema),
   optimizationLogs: z.array(optimizationLogEntryResponseSchema),
   latestOptimizationResult: optimizationResultSchema.nullable(),
@@ -49,6 +50,7 @@ export async function loadDashboardOverview(
     data: {
       businessDate: response.businessDate,
       funds: response.funds.map(toFundOption),
+      draftCount: response.draftCount,
       drafts: response.drafts,
       optimizationLogs: response.optimizationLogs,
       latestOptimizationResult: response.latestOptimizationResult,

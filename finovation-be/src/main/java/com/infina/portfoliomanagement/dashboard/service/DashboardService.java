@@ -4,6 +4,7 @@ import com.infina.portfoliomanagement.common.time.FinancialTimeProvider;
 import com.infina.portfoliomanagement.dashboard.dto.DashboardSummaryResponse;
 import com.infina.portfoliomanagement.dashboard.dto.DashboardSummaryResponse.UnavailableSection;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
+import com.infina.portfoliomanagement.fund.dto.FundDraftDashboardResponse;
 import com.infina.portfoliomanagement.fund.service.FundDraftService;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundSummaryResponse;
 import com.infina.portfoliomanagement.fundmonitoring.service.FundMonitoringService;
@@ -41,15 +42,15 @@ public class DashboardService {
                 List.of(),
                 unavailableSections
         );
-        List<FundDraftSummaryResponse> drafts = loadSection(
+        FundDraftDashboardResponse draftOverview = loadSection(
                 UnavailableSection.DRAFTS,
-                () -> fundDraftService.listInProgressDrafts(actorUsername),
-                List.of(),
+                () -> fundDraftService.getDashboardDrafts(actorUsername),
+                new FundDraftDashboardResponse(0, List.of()),
                 unavailableSections
         );
         List<OptimizationLogEntryResponse> optimizationLogs = loadSection(
                 UnavailableSection.OPTIMIZATION,
-                () -> optimizationRequestService.listLogs(actorUsername),
+                () -> optimizationRequestService.listDashboardLogs(actorUsername),
                 List.of(),
                 unavailableSections
         );
@@ -69,7 +70,7 @@ public class DashboardService {
                 .orElse(null);
         List<StressTestHistoryResponse> stressTests = loadSection(
                 UnavailableSection.STRESS_TESTS,
-                () -> stressTestQueryService.getHistory(actorUsername),
+                () -> stressTestQueryService.getLatestHistory(actorUsername).stream().toList(),
                 List.of(),
                 unavailableSections
         );
@@ -77,7 +78,8 @@ public class DashboardService {
         return new DashboardSummaryResponse(
                 financialTime.currentDate(),
                 funds,
-                drafts,
+                draftOverview.totalCount(),
+                draftOverview.recentDrafts(),
                 optimizationLogs,
                 latestOptimizationResult,
                 stressTests,
