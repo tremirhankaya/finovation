@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: "production"
+
+rule_files:
+  - /etc/prometheus/rules/*.rules.yml
+
+scrape_configs:
+  - job_name: "finovation-backend"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["backend:8081"]
+        labels:
+          service: "finovation-backend"
+          component: "api"
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]
+        labels:
+          service: "finovation-monitoring"
+          component: "prometheus"

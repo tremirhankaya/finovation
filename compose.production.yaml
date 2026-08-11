@@ -1,0 +1,233 @@
+name: finovation-production
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: finovation-caddy
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL must be set}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - finovation_caddy_data:/data
+      - finovation_caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - web
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./finovation-fe
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: finovation-frontend
+    expose:
+      - "80"
+    networks:
+      - web
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./finovation-be
+      dockerfile: Dockerfile
+    container_name: finovation-backend
+    dns:
+      - 10.60.63.50
+      - 10.60.63.49
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+
+      DB_URL: "jdbc:sqlserver://sqlserver:1433;databaseName=${DB_NAME:-finovation};encrypt=true;trustServerCertificate=true"
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD must be set}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      AI_ENGINE_BASE_URL: http://fund-engine:8000
+      AI_ENGINE_API_KEY: ${AI_ENGINE_API_KEY:?AI_ENGINE_API_KEY must be set}
+      RL_BASE_URL: http://fund-engine:8000
+      FUND_ENGINE_BASE_URL: http://fund-engine:8000
+      FUND_ENGINE_EXPECTED_MODEL_SNAPSHOT: ${FUND_ENGINE_EXPECTED_MODEL_SNAPSHOT:-FROZEN_2025-05-29_V3}
+
+      INFINA_BASE_URL: ${INFINA_BASE_URL:?INFINA_BASE_URL must be set}
+      INFINA_API_KEY: ${INFINA_API_KEY:?INFINA_API_KEY must be set}
+
+      FUND_MIN_INITIAL_PORTFOLIO_SIZE: ${FUND_MIN_INITIAL_PORTFOLIO_SIZE:-1000000}
+      FUND_MAX_INITIAL_PORTFOLIO_SIZE: ${FUND_MAX_INITIAL_PORTFOLIO_SIZE:-100000000000}
+
+      FINANCIAL_TIME_SIMULATION_ENABLED: ${FINANCIAL_TIME_SIMULATION_ENABLED:-false}
+      FINANCIAL_TIME_ZONE: ${FINANCIAL_TIME_ZONE:-Europe/Istanbul}
+
+      MARKETDATA_SYNC_ENABLED: ${MARKETDATA_SYNC_ENABLED:-true}
+      MARKETDATA_REFERENCE_SYNC_CRON: "${MARKETDATA_REFERENCE_SYNC_CRON:-0 0 7 * * *}"
+      MARKETDATA_PRICE_SYNC_CRON: "${MARKETDATA_PRICE_SYNC_CRON:-0 30 9,19 * * *}"
+      MARKETDATA_PRICE_DEEP_REFRESH_CRON: "${MARKETDATA_PRICE_DEEP_REFRESH_CRON:-0 0 4 * * SUN}"
+      MARKETDATA_PRICE_LOOKBACK_DAYS: ${MARKETDATA_PRICE_LOOKBACK_DAYS:-30}
+      MARKETDATA_PRICE_DEEP_LOOKBACK_DAYS: ${MARKETDATA_PRICE_DEEP_LOOKBACK_DAYS:-365}
+      MARKETDATA_HISTORY_START: ${MARKETDATA_HISTORY_START:-1990-01-01}
+      MARKETDATA_BOOTSTRAP_ON_STARTUP: ${MARKETDATA_BOOTSTRAP_ON_STARTUP:-true}
+
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_ACCESS_TOKEN_EXPIRATION: ${JWT_ACCESS_TOKEN_EXPIRATION:-15m}
+      JWT_REFRESH_TOKEN_EXPIRATION: ${JWT_REFRESH_TOKEN_EXPIRATION:-15h}
+      PASSWORD_RESET_SECRET: ${PASSWORD_RESET_SECRET:?PASSWORD_RESET_SECRET must be set}
+
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_STARTTLS_ENABLED: ${MAIL_STARTTLS_ENABLED:-true}
+      MAIL_FROM: ${MAIL_FROM:-${MAIL_USERNAME:-}}
+    expose:
+      - "8080"
+      - "8081"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      fund-engine:
+        condition: service_healthy
+    networks:
+      - web
+      - application
+      - monitoring
+    restart: unless-stopped
+
+  fund-engine:
+    build:
+      context: ./finovation-ai
+      dockerfile: Dockerfile
+    container_name: finovation-fund-engine
+    environment:
+      FUND_ML_API_KEY: ${AI_ENGINE_API_KEY:?AI_ENGINE_API_KEY must be set}
+    expose:
+      - "8000"
+    networks:
+      - application
+    restart: unless-stopped
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: finovation-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: ${MSSQL_PID:-Express}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD must be set}
+      MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB:-4096}
+    volumes:
+      - finovation_mssql_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    networks:
+      - application
+    restart: unless-stopped
+
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: finovation-sqlserver-init
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD must be set}
+      DB_NAME: ${DB_NAME:-finovation}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        /opt/mssql-tools18/bin/sqlcmd \
+          -S sqlserver \
+          -U sa \
+          -P "$$MSSQL_SA_PASSWORD" \
+          -C \
+          -Q "IF DB_ID('$$DB_NAME') IS NULL CREATE DATABASE [$$DB_NAME];"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - application
+    restart: "no"
+
+  redis:
+    image: redis:7-alpine
+    container_name: finovation-redis
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    volumes:
+      - finovation_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - application
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3
+    container_name: finovation-prometheus
+    profiles: ["monitoring"]
+    volumes:
+      - ./monitoring/prometheus/prometheus.production.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - finovation_prometheus_data:/prometheus
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12
+    container_name: finovation-grafana
+    profiles: ["monitoring"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set when monitoring is enabled}
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - finovation_grafana_data:/var/lib/grafana
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+networks:
+  web:
+  application:
+    internal: true
+  monitoring:
+    internal: true
+
+volumes:
+  finovation_mssql_data:
+  finovation_redis_data:
+  finovation_caddy_data:
+  finovation_caddy_config:
+  finovation_prometheus_data:
+  finovation_grafana_data:
