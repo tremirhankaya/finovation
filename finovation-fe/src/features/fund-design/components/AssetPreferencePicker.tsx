@@ -232,7 +232,17 @@ export default function AssetPreferencePicker({
             onChange={(event) => {
               const nextQuery = event.target.value
               setQuery(nextQuery)
-              if (nextQuery.trim()) openList(nextQuery)
+              setListQuery(nextQuery)
+              if (nextQuery.trim()) setListOpen(true)
+            }}
+            onFocus={() => {
+              if (query.trim()) setListOpen(true)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && query.trim()) {
+                event.preventDefault()
+                setListOpen(true)
+              }
             }}
             autoComplete="off"
           />
@@ -392,7 +402,7 @@ export default function AssetPreferencePicker({
         </div>
 
         {listFiltered.length === 0 ? (
-          <p className={styles.statusMsg} role="status">
+          <p className={[styles.statusMsg, styles.emptyListState].join(" ")} role="status">
             Eşleşen hisse yok.
           </p>
         ) : (

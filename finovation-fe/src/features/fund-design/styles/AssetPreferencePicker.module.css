@@ -204,6 +204,17 @@
   line-height: 1.45;
 }
 
+.emptyListState {
+  display: grid;
+  min-height: 9rem;
+  place-items: center;
+  padding: 1.25rem;
+  border-top: 1px solid #eef3f6;
+  border-bottom: 1px solid #eef3f6;
+  color: #7b8da0;
+  text-align: center;
+}
+
 .retryLink {
   margin-left: 0.4rem;
   padding: 0;
