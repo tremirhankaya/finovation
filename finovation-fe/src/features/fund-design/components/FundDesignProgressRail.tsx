@@ -25,6 +25,7 @@ export default function FundDesignProgressRail({
   const steps = designMode === "MANUAL" ? MANUAL_STEPS : AI_STEPS
 
   useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return
     const source = document.querySelector("[data-fund-design-steps]")
     if (!source) return
     const observer = new IntersectionObserver(

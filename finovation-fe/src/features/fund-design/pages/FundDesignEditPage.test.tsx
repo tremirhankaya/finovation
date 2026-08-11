@@ -46,6 +46,28 @@ const INIT = {
     { assetCode: "GARAN", displayName: "Garanti Bankası" },
     { assetCode: "THYAO", displayName: "Türk Hava Yolları" },
   ],
+  workingPortfolio: {
+    assets: [
+      {
+        asset_code: "AKBNK",
+        weight: 45,
+        asset_type: "EQUITY",
+        sector_name: "Bankacılık",
+      },
+      {
+        asset_code: "GARAN",
+        weight: 35,
+        asset_type: "EQUITY",
+        sector_name: "Bankacılık",
+      },
+      {
+        asset_code: "THYAO",
+        weight: 20,
+        asset_type: "TPP",
+        sector_name: null,
+      },
+    ],
+  },
   minLiquidityTargetPct: 10,
   maxLiquidityTargetPct: 20,
   minTppRangePct: 5,

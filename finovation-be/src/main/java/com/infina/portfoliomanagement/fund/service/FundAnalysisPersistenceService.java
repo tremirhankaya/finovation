@@ -350,6 +350,18 @@ public class FundAnalysisPersistenceService {
         upsertWorking(draft, "Manuel Portföy", assets, now);
     }
 
+
+    @Transactional
+    public void selectManualWorkingPortfolio(FundDraft draft) {
+        FundPortfolio working = fundPortfolioRepository
+                .findByFundDraft_IdAndPortfolioType(draft.getId(), PortfolioType.WORKING)
+                .orElseThrow(() -> new BaseException(ErrorCode.FUND_ANALYSIS_NOT_FOUND));
+
+        working.setSelected(true);
+        working.setUpdatedAt(financialTime.now());
+        fundPortfolioRepository.save(working);
+    }
+
     @Transactional(readOnly = true)
     public void assertWorkingPortfolioIsCompliant(FundDraft draft, FundProperties profileLimits) {
         assertRulesSatisfied(draft, getWorking(draft), profileLimits);

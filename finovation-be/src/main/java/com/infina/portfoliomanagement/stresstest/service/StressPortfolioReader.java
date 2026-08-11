@@ -2,6 +2,8 @@ package com.infina.portfoliomanagement.stresstest.service;
 
 import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.stresstest.dto.StressPortfolioPosition;
 import com.infina.portfoliomanagement.stresstest.dto.StressPortfolioSnapshot;
 import com.infina.portfoliomanagement.stresstest.repository.StressPortfolioQueryRepository;
@@ -27,9 +29,11 @@ public class StressPortfolioReader {
             UUID fundPublicId
     ) {
         List<StressPortfolioPositionProjection> projections =
-                stressPortfolioQueryRepository.findSelectedPortfolioPositions(
+                stressPortfolioQueryRepository.findSelectedOrManualWorkingPortfolioPositions(
                         fundPublicId,
-                        userId
+                        userId,
+                        FundDesignMode.MANUAL,
+                        PortfolioType.WORKING
                 );
 
         if (projections.isEmpty()) {

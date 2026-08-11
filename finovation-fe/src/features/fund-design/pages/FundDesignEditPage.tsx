@@ -29,6 +29,8 @@ type EditablePosition = {
   aiNote?: string | null
 }
 
+const WEIGHT_STEP_PCT = 0.01
+
 function assetLabelForCode(
   universe: { assetCode: string; displayName: string }[] | undefined,
   code: string,
@@ -45,9 +47,10 @@ function toEditablePositions(
     assetCode: a.asset_code,
     sectorName: a.sector_name ?? null,
     assetType: a.asset_type,
-    // Tek tek 0,1'e yuvarlamak toplamda yapay ±0,1 fark oluşturabiliyordu.
-    // Düzenleme hesabında iki ondalık korunur; ekranda gerekli yerde formatlanır.
-    weightPct: Math.round(a.weight * 100) / 100,
+    // Hesaplarda motorun hassas değerini koruruz. Her satırı ayrı ayrı
+    // yuvarlamak, çok hisseli portföylerde toplamın yapay olarak %99,9/%100,1
+    // görünmesine neden olur.
+    weightPct: a.weight,
     aiNote: a.ai_note,
   }))
 
@@ -82,6 +85,12 @@ function formatPct(value: number): string {
   })
 }
 
+function formatWeightInput(value: number): string {
+  return value.toLocaleString("tr-TR", {
+    maximumFractionDigits: 2,
+  })
+}
+
 function EditableWeightInput({
   value,
   onChange,
@@ -96,7 +105,7 @@ function EditableWeightInput({
   const [localStr, setLocalStr] = useState<string | null>(null)
 
   const displayValue =
-    localStr !== null ? localStr : value === 0 ? "" : String(value)
+    localStr !== null ? localStr : value === 0 ? "" : formatWeightInput(value)
 
   return (
     <input
@@ -108,7 +117,7 @@ function EditableWeightInput({
       placeholder="0"
       value={displayValue}
       onFocus={(e) => {
-        setLocalStr(value === 0 ? "" : String(value))
+        setLocalStr(value === 0 ? "" : formatWeightInput(value))
         e.target.select()
       }}
       onBlur={() => {
@@ -432,10 +441,13 @@ export default function FundDesignEditPage() {
   }
 
   function adjustWeightByStep(currentWeight: number, direction: 1 | -1) {
-    // Artı/eksi kontrolü kullanıcı için onda bir puanla ilerler. Mevcut hassas
-    // değer korunur; butona basıldığında ise okunabilir 0,1'lik kademeye oturur.
-    const snapped = Math.round(currentWeight * 10) / 10
-    return Math.max(0, Math.min(100, Math.round((snapped + direction * 0.1) * 10) / 10))
+    return Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round((currentWeight + direction * WEIGHT_STEP_PCT) * 100) / 100,
+      ),
+    )
   }
 
   function requestDeleteSingle(index: number) {
@@ -600,8 +612,7 @@ export default function FundDesignEditPage() {
   }
 
   const totalWeight = useMemo(
-    () =>
-      Math.round(positions.reduce((sum, p) => sum + p.weightPct, 0) * 10) / 10,
+    () => positions.reduce((sum, p) => sum + p.weightPct, 0),
     [positions],
   )
 
@@ -634,13 +645,13 @@ export default function FundDesignEditPage() {
     }
 
     return {
-      hisseOrani: Math.round(equityWeight * 10) / 10,
-      tppOrani: Math.round(tppWeight * 10) / 10,
+      hisseOrani: equityWeight,
+      tppOrani: tppWeight,
       hisseSayisi: equityCount,
       sektorSayisi: Object.keys(sectorWeights).length,
-      maxSingleStockWeight: Math.round(maxSingleStock * 10) / 10,
-      above5PctStockSum: Math.round(above5Sum * 10) / 10,
-      maxSectorWeight: Math.round(maxSector * 10) / 10,
+      maxSingleStockWeight: maxSingleStock,
+      above5PctStockSum: above5Sum,
+      maxSectorWeight: maxSector,
     }
   }, [positions])
 
@@ -1617,7 +1628,7 @@ export default function FundDesignEditPage() {
                                       styles.stepBtn,
                                       styles.stepBtnMinus,
                                     ].join(" ")}
-                                    title="0.1% Azalt"
+                                    title="0,01% Azalt"
                                     onClick={() =>
                                       handleWeightChange(
                                         originalIndex,
@@ -1647,7 +1658,7 @@ export default function FundDesignEditPage() {
                                   <button
                                     type="button"
                                     className={styles.stepBtn}
-                                    title="0.1% Artır"
+                                    title="0,01% Artır"
                                     onClick={() =>
                                       handleWeightChange(
                                         originalIndex,

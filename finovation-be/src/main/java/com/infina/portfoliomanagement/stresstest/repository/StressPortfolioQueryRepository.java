@@ -1,6 +1,8 @@
 package com.infina.portfoliomanagement.stresstest.repository;
 
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
+import com.infina.portfoliomanagement.fund.enums.PortfolioType;
 import com.infina.portfoliomanagement.stresstest.repository.projection.StressPortfolioPositionProjection;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
@@ -25,12 +27,20 @@ public interface StressPortfolioQueryRepository
         join Asset asset on asset.id = position.assetId
         where draft.publicId = :fundPublicId
           and draft.createdByUserId = :userId
-          and portfolio.selected = true
+          and (
+                portfolio.selected = true
+                or (
+                    draft.designMode = :manualDesignMode
+                    and portfolio.portfolioType = :workingPortfolioType
+                )
+          )
           and asset.active = true
         order by position.weight desc
         """)
-    List<StressPortfolioPositionProjection> findSelectedPortfolioPositions(
+    List<StressPortfolioPositionProjection> findSelectedOrManualWorkingPortfolioPositions(
             @Param("fundPublicId") UUID fundPublicId,
-            @Param("userId") Long userId
+            @Param("userId") Long userId,
+            @Param("manualDesignMode") FundDesignMode manualDesignMode,
+            @Param("workingPortfolioType") PortfolioType workingPortfolioType
     );
 }
