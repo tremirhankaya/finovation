@@ -25,6 +25,8 @@ import java.util.NavigableSet;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 @Service
@@ -47,42 +49,116 @@ public class FundBenchmarkService {
 
     private final BenchmarkPriceApi benchmarkPriceApi;
     private final FundMetricCalculator metricCalculator;
+    private final Object cacheMonitor = new Object();
+    private volatile CachedBenchmark cachedBenchmark;
 
     public BenchmarkSnapshot load(LocalDate asOfDate) {
+        CachedBenchmark cached = cachedBenchmark;
+        if (cached != null && cached.asOfDate().equals(asOfDate)) {
+            return cached.snapshot();
+        }
+
+        synchronized (cacheMonitor) {
+            cached = cachedBenchmark;
+            if (cached != null && cached.asOfDate().equals(asOfDate)) {
+                return cached.snapshot();
+            }
+
+            BenchmarkSnapshot snapshot = loadFresh(asOfDate);
+            if (!snapshot.benchmarkValues().isEmpty()) {
+                cachedBenchmark = new CachedBenchmark(asOfDate, snapshot);
+            }
+            return snapshot;
+        }
+    }
+
+    private BenchmarkSnapshot loadFresh(LocalDate asOfDate) {
         LocalDate from = ComparisonPeriod.FIVE_YEARS.startDate(asOfDate)
                 .minusDays(HISTORY_LOOKBACK_BUFFER_DAYS);
-        NavigableMap<LocalDate, BigDecimal> bist30Values = safelyLoad(
-                BIST_30_SOURCE_CODE,
-                () -> indexValues(BIST_30_SOURCE_CODE, from, asOfDate)
-        );
-        NavigableMap<LocalDate, BigDecimal> bist100ReturnValues = safelyLoad(
-                BIST_100_RETURN_SOURCE_CODE,
-                () -> indexValues(BIST_100_RETURN_SOURCE_CODE, from, asOfDate)
-        );
-        NavigableMap<LocalDate, BigDecimal> repoGrossValues = safelyLoad(
-                REPO_GROSS_SOURCE_CODE,
-                () -> indexValues(REPO_GROSS_SOURCE_CODE, from, asOfDate)
-        );
-        NavigableMap<LocalDate, BigDecimal> depositTryValues = safelyLoad(
-                DEPOSIT_TRY_SOURCE_CODE,
-                () -> indexValues(DEPOSIT_TRY_SOURCE_CODE, from, asOfDate)
-        );
-        NavigableMap<LocalDate, BigDecimal> inflationValues = safelyLoad(
-                INFLATION_SOURCE_CODE,
-                () -> inflationIndexValues(INFLATION_SOURCE_CODE, from, asOfDate)
-        );
-        NavigableMap<LocalDate, BigDecimal> goldTryValues = safelyLoad(
-                GOLD_TRY_SOURCE_CODE,
-                () -> indexValues(GOLD_TRY_SOURCE_CODE, from, asOfDate)
-        );
-        NavigableMap<LocalDate, BigDecimal> usdTryValues = safelyLoad(
-                USD_TRY_SOURCE_CODE,
-                () -> indexValues(USD_TRY_SOURCE_CODE, from, asOfDate)
-        );
-        NavigableMap<LocalDate, BigDecimal> eurTryValues = safelyLoad(
-                EUR_TRY_SOURCE_CODE,
-                () -> indexValues(EUR_TRY_SOURCE_CODE, from, asOfDate)
-        );
+        NavigableMap<LocalDate, BigDecimal> bist30Values;
+        NavigableMap<LocalDate, BigDecimal> bist100ReturnValues;
+        NavigableMap<LocalDate, BigDecimal> repoGrossValues;
+        NavigableMap<LocalDate, BigDecimal> depositTryValues;
+        NavigableMap<LocalDate, BigDecimal> inflationValues;
+        NavigableMap<LocalDate, BigDecimal> goldTryValues;
+        NavigableMap<LocalDate, BigDecimal> usdTryValues;
+        NavigableMap<LocalDate, BigDecimal> eurTryValues;
+
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> bist30Future =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    BIST_30_SOURCE_CODE,
+                                    () -> indexValues(BIST_30_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> bist100Future =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    BIST_100_RETURN_SOURCE_CODE,
+                                    () -> indexValues(BIST_100_RETURN_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> repoFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    REPO_GROSS_SOURCE_CODE,
+                                    () -> indexValues(REPO_GROSS_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> depositFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    DEPOSIT_TRY_SOURCE_CODE,
+                                    () -> indexValues(DEPOSIT_TRY_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> inflationFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    INFLATION_SOURCE_CODE,
+                                    () -> inflationIndexValues(INFLATION_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> goldFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    GOLD_TRY_SOURCE_CODE,
+                                    () -> indexValues(GOLD_TRY_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> usdFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    USD_TRY_SOURCE_CODE,
+                                    () -> indexValues(USD_TRY_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+            CompletableFuture<NavigableMap<LocalDate, BigDecimal>> eurFuture =
+                    CompletableFuture.supplyAsync(
+                            () -> safelyLoad(
+                                    EUR_TRY_SOURCE_CODE,
+                                    () -> indexValues(EUR_TRY_SOURCE_CODE, from, asOfDate)
+                            ),
+                            executor
+                    );
+
+            bist30Values = bist30Future.join();
+            bist100ReturnValues = bist100Future.join();
+            repoGrossValues = repoFuture.join();
+            depositTryValues = depositFuture.join();
+            inflationValues = inflationFuture.join();
+            goldTryValues = goldFuture.join();
+            usdTryValues = usdFuture.join();
+            eurTryValues = eurFuture.join();
+        }
 
         NavigableMap<LocalDate, BigDecimal> compositeBenchmarkValues =
                 compositeValues(bist100ReturnValues, repoGrossValues);
@@ -329,5 +405,11 @@ public class FundBenchmarkService {
                     new TreeMap<>(benchmarkValues)
             );
         }
+    }
+
+    private record CachedBenchmark(
+            LocalDate asOfDate,
+            BenchmarkSnapshot snapshot
+    ) {
     }
 }
