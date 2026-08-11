@@ -36,6 +36,18 @@ const READY_PROPS: FundMonitoringViewProps = {
         { date: "2026-08-04", value: 18.4271 },
       ],
     },
+    backtestHistory: {
+      "1M": [
+        { date: "2026-07-04", value: 1.1 },
+        { date: "2026-08-04", value: 1.184271 },
+      ],
+      "1Y": [
+        { date: "2025-08-04", value: 1 },
+        { date: "2026-08-04", value: 1.184271 },
+      ],
+    },
+    backtestCurrentValue: 1.184271,
+    backtestDailyChangePercentage: 1.24,
     benchmark: {
       name: "Fon Karşılaştırma Ölçütü",
       components: [
@@ -194,6 +206,25 @@ describe("FundMonitoringView", () => {
     await user.click(threeMonths)
 
     expect(threeMonths).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("aynı grafik üzerinde fon izleme ve backtest serileri arasında geçiş yapar", async () => {
+    const user = userEvent.setup()
+    render(<FundMonitoringView {...READY_PROPS} />)
+
+    const trackingTab = screen.getByRole("tab", { name: "Fon İzleme" })
+    const backtestTab = screen.getByRole("tab", { name: "Backtest" })
+    expect(trackingTab).toHaveAttribute("aria-selected", "true")
+
+    await user.click(backtestTab)
+
+    expect(backtestTab).toHaveAttribute("aria-selected", "true")
+    expect(
+      screen.getByRole("img", {
+        name: "Büyüme Fonu backtest endeksi değişim grafiği",
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("1,1843", { selector: "strong" })).toBeInTheDocument()
   })
 
   it("fon değişikliğini dış veri katmanına iletir", async () => {

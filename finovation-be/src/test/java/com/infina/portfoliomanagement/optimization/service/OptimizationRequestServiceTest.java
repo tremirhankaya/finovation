@@ -18,6 +18,7 @@ import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundPositionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundSummaryResponse;
 import com.infina.portfoliomanagement.fundmonitoring.service.FundMonitoringService;
+import com.infina.portfoliomanagement.fundmonitoring.service.FundRebalanceService;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.entity.EquityDetail;
 import com.infina.portfoliomanagement.marketdata.entity.Sector;
@@ -122,6 +123,8 @@ class OptimizationRequestServiceTest {
     private FundPortfolioRepository fundPortfolioRepository;
     @Mock
     private FundPositionRepository fundPositionRepository;
+    @Mock
+    private FundRebalanceService fundRebalanceService;
 
     private OptimizationRequestService service;
 
@@ -143,6 +146,7 @@ class OptimizationRequestServiceTest {
                 fundDraftRepository,
                 fundPortfolioRepository,
                 fundPositionRepository,
+                fundRebalanceService,
                 new FinancialTimeProvider(
                         CLOCK,
                         new FinancialTimeProperties(false, null, null, ZoneOffset.UTC)
@@ -470,6 +474,9 @@ class OptimizationRequestServiceTest {
                 BigDecimal.TEN,
                 BigDecimal.ZERO,
                 Map.of(),
+                Map.of(),
+                BigDecimal.ONE,
+                BigDecimal.ZERO,
                 null,
                 List.of(
                         new FundMonitoringResponse.TechnicalIndicatorResponse(
@@ -669,6 +676,16 @@ class OptimizationRequestServiceTest {
         assertThat(tpp.isManuallyOverridden()).isFalse();
 
         verify(fundPositionRepository).deleteAllByFundPortfolioId(20L);
+        verify(fundRebalanceService).recordOptimization(
+                fundDraft,
+                List.of(),
+                Map.of(
+                        101L, new BigDecimal("40.000000"),
+                        102L, new BigDecimal("60.00")
+                ),
+                REQUEST_ID,
+                LocalDateTime.now(CLOCK)
+        );
 
         ArgumentCaptor<List<FundPosition>> positionsCaptor = ArgumentCaptor.forClass(List.class);
         verify(fundPositionRepository).saveAll(positionsCaptor.capture());
@@ -1278,6 +1295,9 @@ class OptimizationRequestServiceTest {
                 BigDecimal.TEN,
                 BigDecimal.ZERO,
                 Map.of(),
+                Map.of(),
+                BigDecimal.ONE,
+                BigDecimal.ZERO,
                 null,
                 List.of(),
                 List.of(),

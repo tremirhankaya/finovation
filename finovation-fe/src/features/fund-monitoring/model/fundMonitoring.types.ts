@@ -71,6 +71,9 @@ export type FundMonitoringSnapshot = {
   currentSharePrice: number
   dailyChangePercentage: number
   priceHistory: Partial<Record<PricePeriod, PricePoint[]>>
+  backtestHistory: Partial<Record<PricePeriod, PricePoint[]>>
+  backtestCurrentValue: number
+  backtestDailyChangePercentage: number
   benchmark: BenchmarkDefinition
   technicalIndicators: TechnicalIndicator[]
   periodReturns: PeriodReturn[]

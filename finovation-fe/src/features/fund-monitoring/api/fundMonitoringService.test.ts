@@ -33,6 +33,15 @@ const SNAPSHOT = {
     "6M": [{ date: "2026-08-04", value: 112.5 }],
     "1Y": [{ date: "2025-08-05", value: 100 }],
   },
+  backtestHistory: {
+    "1W": [{ date: "2026-08-04", value: 1.125 }],
+    "1M": [{ date: "2026-08-04", value: 1.125 }],
+    "3M": [{ date: "2026-08-04", value: 1.125 }],
+    "6M": [{ date: "2026-08-04", value: 1.125 }],
+    "1Y": [{ date: "2025-08-05", value: 1 }],
+  },
+  backtestCurrentValue: 1.125,
+  backtestDailyChangePercentage: 1.2,
   benchmark: {
     name: "Fon Karşılaştırma Ölçütü",
     components: [

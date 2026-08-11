@@ -34,6 +34,9 @@ function snapshot(fund = FUNDS[0]) {
     currentSharePrice: 100,
     dailyChangePercentage: 0,
     priceHistory: {},
+    backtestHistory: {},
+    backtestCurrentValue: 1,
+    backtestDailyChangePercentage: 0,
     benchmark: {
       name: "Fon Karşılaştırma Ölçütü",
       components: [],

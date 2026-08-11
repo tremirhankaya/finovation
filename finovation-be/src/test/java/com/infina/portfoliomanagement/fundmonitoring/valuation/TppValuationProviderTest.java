@@ -34,6 +34,33 @@ class TppValuationProviderTest {
         assertThat(values.get(secondDate)).isEqualByComparingTo("1.001");
     }
 
+    @Test
+    void unitValueForTheSameDate_isIndependentOfRequestedStartDate() {
+        LocalDate firstDate = LocalDate.of(2025, 5, 28);
+        LocalDate secondDate = firstDate.plusDays(1);
+        LocalDate thirdDate = secondDate.plusDays(1);
+        Asset asset = Asset.builder()
+                .id(3L)
+                .assetCode("TPP1G")
+                .assetType(AssetType.TPP)
+                .build();
+        List<TppRate> rates = List.of(
+                rate(asset, firstDate, "36.5"),
+                rate(asset, secondDate, "36.5"),
+                rate(asset, thirdDate, "36.5")
+        );
+        TppValuationProvider provider = new TppValuationProvider(null);
+        var allValues = provider.toUnitValues(rates);
+
+        var fullRange = provider.valuesFrom(allValues, firstDate).get(asset.getId());
+        var oneDayRange = provider.valuesFrom(allValues, thirdDate).get(asset.getId());
+
+        assertThat(fullRange.get(thirdDate)).isEqualByComparingTo("1.002001");
+        assertThat(oneDayRange)
+                .containsOnlyKeys(thirdDate)
+                .containsEntry(thirdDate, fullRange.get(thirdDate));
+    }
+
     private TppRate rate(Asset asset, LocalDate date, String weightedAverageRate) {
         return TppRate.builder()
                 .asset(asset)
