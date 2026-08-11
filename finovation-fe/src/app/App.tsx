@@ -26,6 +26,7 @@ import UsersPage from "@/features/users/pages/UsersPage"
 import StressTestPage from "@/features/stress-test/pages/StressTestPage"
 import PasswordChangeRequiredPage from "@/features/account/pages/PasswordChangeRequiredPage"
 import SystemLogsPage from "@/features/system-logs/pages/SystemLogsPage"
+import RlStressTestPage from "@/features/stress-test/pages/RlStressTestPage"
 
 export default function App() {
     return (
@@ -105,7 +106,14 @@ export default function App() {
                             element={<FundDesignSuccessPage />}
                         />
                         <Route path="/fund-monitoring" element={<FundMonitoringPage />} />
+
                         <Route path="/stress-test" element={<StressTestPage />} />
+
+                        <Route
+                            path="/stress-test/rl"
+                            element={<RlStressTestPage />}
+                        />
+
                         <Route
                             path="/optimization-requests/new"
                             element={<OptimizationFormPage />}

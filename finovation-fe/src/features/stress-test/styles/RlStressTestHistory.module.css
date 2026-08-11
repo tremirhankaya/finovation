@@ -1,0 +1,189 @@
+.card {
+    margin-top: 20px;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgb(15 45 82 / 6%);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.eyebrow {
+    display: block;
+    margin-bottom: 5px;
+    color: #0d9488;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.header h2 {
+    margin: 0;
+    color: #0f2d52;
+    font-size: 1rem;
+}
+
+.count {
+    padding: 6px 10px;
+    color: #0f2d52;
+    background: #eef3f7;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.list {
+    display: grid;
+    gap: 10px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    width: 100%;
+    padding: 14px 16px;
+
+    text-align: left;
+
+    background: #f8fafc;
+    border: 1px solid transparent;
+    border-radius: 12px;
+
+    cursor: pointer;
+}
+
+.row:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+}
+
+.main {
+    display: grid;
+    gap: 4px;
+}
+
+.main strong {
+    color: #0f2d52;
+    font-size: 0.85rem;
+}
+
+.main span {
+    color: #94a3b8;
+    font-size: 0.72rem;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 24px;
+}
+
+.metrics > div {
+    display: grid;
+    gap: 3px;
+    text-align: right;
+}
+
+.metrics span {
+    color: #94a3b8;
+    font-size: 0.68rem;
+}
+
+.metrics strong {
+    color: #334155;
+    font-size: 0.8rem;
+}
+
+.outperformance {
+    color: #0d9488 !important;
+}
+
+.message {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.error {
+    margin: 0;
+    color: #dc2626;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+    .row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .metrics {
+        width: 100%;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .metrics > div {
+        text-align: left;
+    }
+}
+.selectedRow {
+    background: #e6f5f3;
+    border-color: #0d9488;
+    box-shadow: 0 0 0 1px rgb(13 148 136 / 12%);
+}
+.row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    background: #f8fafc;
+    border: 1px solid transparent;
+    border-radius: 12px;
+}
+
+.rowContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    flex: 1;
+    padding: 14px 16px;
+
+    text-align: left;
+    background: transparent;
+    border: 0;
+
+    cursor: pointer;
+}
+
+.deleteButton {
+    margin-right: 12px;
+    padding: 8px 10px;
+
+    color: #dc2626;
+    background: #fff;
+
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.deleteButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}

@@ -453,6 +453,32 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "Invalid request to AI Engine."
     ),
+    RL_PORTFOLIO_INVALID(
+            "RL_001",
+            HttpStatus.BAD_REQUEST,
+            "Portfolio is not compatible with the RL model."
+    ),
+    STRESS_RL_PORTFOLIO_INVALID(
+            "STRESS_005",
+            HttpStatus.UNPROCESSABLE_CONTENT,
+            "Portfolio is not compatible with the RL stress test model."
+    ),
+    STRESS_RL_SCENARIO_UNSUPPORTED(
+            "STRESS_006",
+            HttpStatus.UNPROCESSABLE_CONTENT,
+            "Selected scenario is not supported by the RL stress test model."
+    ),
+    STRESS_RL_ENGINE_UNAVAILABLE(
+            "STRESS_007",
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "RL stress test service is temporarily unavailable."
+    ),
+
+    STRESS_RL_ENGINE_ERROR(
+            "STRESS_008",
+            HttpStatus.BAD_GATEWAY,
+            "RL stress test service returned an unexpected error."
+    ),
     ;
 
     private final String code;

@@ -135,6 +135,7 @@ services:
 
       AI_ENGINE_BASE_URL: http://fund-engine:8000
       AI_ENGINE_API_KEY: ${AI_ENGINE_API_KEY:-}
+      RL_BASE_URL: ${RL_BASE_URL:-http://fund-engine:8000}
 
       INFINA_BASE_URL: ${INFINA_BASE_URL:?INFINA_BASE_URL must be set in .env}
       INFINA_API_KEY: ${INFINA_API_KEY:?INFINA_API_KEY must be set in .env}
