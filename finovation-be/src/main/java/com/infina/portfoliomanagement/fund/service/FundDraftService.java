@@ -9,6 +9,7 @@ import com.infina.portfoliomanagement.fund.dto.ArchivedFundDraftResponse;
 import com.infina.portfoliomanagement.fund.dto.CreateFundDraftRequest;
 import com.infina.portfoliomanagement.fund.dto.FundCurrencyOption;
 import com.infina.portfoliomanagement.fund.dto.FundDraftInitResponse;
+import com.infina.portfoliomanagement.fund.dto.FundDraftDashboardResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftPageResponse;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSearchCriteria;
 import com.infina.portfoliomanagement.fund.dto.FundDraftResponse;
@@ -418,6 +419,25 @@ public class FundDraftService {
                 .stream()
                 .map(FundDraftSummaryResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public FundDraftDashboardResponse getDashboardDrafts(String actorUsername) {
+        User actor = requireActor(actorUsername);
+        long totalCount = fundDraftRepository.countByStatusAndCreatedByUserId(
+                FundDraftStatus.IN_PROGRESS,
+                actor.getId()
+        );
+        List<FundDraftSummaryResponse> recentDrafts = fundDraftRepository
+                .findTop3ByStatusAndCreatedByUserIdOrderByUpdatedAtDescIdDesc(
+                        FundDraftStatus.IN_PROGRESS,
+                        actor.getId()
+                )
+                .stream()
+                .map(FundDraftSummaryResponse::from)
+                .toList();
+
+        return new FundDraftDashboardResponse(totalCount, recentDrafts);
     }
 
     @Transactional(readOnly = true)
