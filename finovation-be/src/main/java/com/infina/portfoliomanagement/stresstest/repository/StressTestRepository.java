@@ -19,4 +19,9 @@ public interface StressTestRepository extends JpaRepository<StressTest, Long> {
             Long userId,
             StressTestStatus status
     );
+
+    Optional<StressTest> findFirstByUserIdAndStatusAndDeletedFalseOrderByCreatedAtDescIdDesc(
+            Long userId,
+            StressTestStatus status
+    );
 }

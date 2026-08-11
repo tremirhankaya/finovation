@@ -46,6 +46,7 @@ function readyDashboard() {
   return {
     businessDate: "2025-05-29",
     funds: FUNDS,
+    draftCount: 1,
     drafts: [
       {
         draftId: "11111111-1111-4111-8111-111111111111",
@@ -143,7 +144,7 @@ describe("DashboardPage", () => {
     )
     expect(screen.getByRole("link", { name: "Taslaklar" })).toHaveAttribute(
       "href",
-      "/fund-design/create",
+      "/fund-design?tab=drafts",
     )
   })
 

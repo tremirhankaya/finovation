@@ -12,6 +12,7 @@ import java.util.List;
 public record DashboardSummaryResponse(
         LocalDate businessDate,
         List<FundSummaryResponse> funds,
+        long draftCount,
         List<FundDraftSummaryResponse> drafts,
         List<OptimizationLogEntryResponse> optimizationLogs,
         OptimizationResultResponse latestOptimizationResult,

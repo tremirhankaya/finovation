@@ -10,6 +10,7 @@ import type { StressTestHistoryResponse } from "@/features/stress-test/model/str
 export type DashboardOverviewData = {
   businessDate: string | null
   funds: FundOption[]
+  draftCount: number
   drafts: FundDraftSummary[]
   optimizationLogs: OptimizationLogEntry[]
   latestOptimizationResult: OptimizationResult | null
