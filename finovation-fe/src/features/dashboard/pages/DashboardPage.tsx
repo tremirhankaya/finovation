@@ -26,13 +26,14 @@ export default function DashboardPage() {
 
         <DashboardSummaryCards
           fundCount={dashboard.funds.length}
-          draftCount={dashboard.drafts.length}
+          draftCount={dashboard.draftCount}
           snapshot={dashboard.monitoringSnapshot}
           optimizationLogs={dashboard.optimizationLogs}
           optimizationResult={dashboard.latestOptimizationResult}
           latestStressTest={latestStressTest}
           errors={dashboard.errors}
           isLoading={dashboard.isOverviewLoading}
+          isMonitoringLoading={dashboard.isMonitoringLoading}
         />
 
         <QuickActions />
