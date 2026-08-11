@@ -15,6 +15,7 @@ import com.infina.portfoliomanagement.fund.repository.FundPositionRepository;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse;
 import com.infina.portfoliomanagement.fundmonitoring.dto.FundMonitoringResponse.FundPositionResponse;
 import com.infina.portfoliomanagement.fundmonitoring.service.FundMonitoringService;
+import com.infina.portfoliomanagement.fundmonitoring.service.FundRebalanceService;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import com.infina.portfoliomanagement.marketdata.entity.EquityDetail;
 import com.infina.portfoliomanagement.marketdata.repository.AssetRepository;
@@ -137,6 +138,7 @@ public class OptimizationRequestService {
     private final FundDraftRepository fundDraftRepository;
     private final FundPortfolioRepository fundPortfolioRepository;
     private final FundPositionRepository fundPositionRepository;
+    private final FundRebalanceService fundRebalanceService;
     private final FinancialTimeProvider financialTime;
 
     @Transactional
@@ -542,17 +544,41 @@ public class OptimizationRequestService {
                 )
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
 
+        List<FundPosition> currentPositions = fundPositionRepository
+                .findAllByFundPortfolioIdOrderByWeightDesc(portfolio.getId());
+        Map<String, Asset> assetsByCode = resultAssets.stream()
+                .collect(Collectors.toMap(
+                        OptimizationResultAsset::getAssetCode,
+                        resultAsset -> assetRepository
+                                .findByAssetCode(resultAsset.getAssetCode())
+                                .orElseThrow(() -> new BaseException(
+                                        ErrorCode.EXTERNAL_SERVICE_ERROR,
+                                        "Approved asset is not registered: "
+                                                + resultAsset.getAssetCode()
+                                ))
+                ));
+        Map<Long, BigDecimal> targetWeightsByAssetId = resultAssets.stream()
+                .filter(resultAsset -> resultAsset.getFinalWeight().signum() > 0)
+                .collect(Collectors.toMap(
+                        resultAsset -> assetsByCode.get(resultAsset.getAssetCode()).getId(),
+                        resultAsset -> toPercentage(resultAsset.getFinalWeight())
+                ));
+
+        fundRebalanceService.recordOptimization(
+                fundDraft,
+                currentPositions,
+                targetWeightsByAssetId,
+                request.getId(),
+                now
+        );
+
         fundPositionRepository.deleteAllByFundPortfolioId(portfolio.getId());
         fundPositionRepository.flush();
 
         List<FundPosition> positions = resultAssets.stream()
                 .filter(resultAsset -> resultAsset.getFinalWeight().signum() > 0)
                 .map(resultAsset -> {
-                    Asset asset = assetRepository.findByAssetCode(resultAsset.getAssetCode())
-                            .orElseThrow(() -> new BaseException(
-                                    ErrorCode.EXTERNAL_SERVICE_ERROR,
-                                    "Approved asset is not registered: " + resultAsset.getAssetCode()
-                            ));
+                    Asset asset = assetsByCode.get(resultAsset.getAssetCode());
                     return FundPosition.builder()
                             .fundPortfolio(portfolio)
                             .assetId(asset.getId())

@@ -4,6 +4,7 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
+import com.infina.portfoliomanagement.fundmonitoring.model.FundRebalanceSnapshot;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationPoint;
 import com.infina.portfoliomanagement.fundmonitoring.model.FundValuationResult;
 import com.infina.portfoliomanagement.fundmonitoring.model.ValuedFundPosition;
@@ -65,15 +66,97 @@ public class FundValuationCalculator {
             Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
             LocalDate historyStartDate
     ) {
+        LocalDate inceptionDate = fund.getCreatedAt().toLocalDate();
+        LocalDate trackingStartDate = historyStartDate.isAfter(inceptionDate)
+                ? historyStartDate
+                : inceptionDate;
         return calculate(
                 fund,
                 positions,
                 assets,
                 unitValuesByAsset,
-                fund.getCreatedAt().toLocalDate(),
-                historyStartDate,
+                inceptionDate,
+                trackingStartDate,
                 QuantityAnchor.INCEPTION_DATE
         );
+    }
+
+    public FundValuationResult calculateWithRebalances(
+            FundDraft fund,
+            List<FundRebalanceSnapshot> snapshots,
+            List<Asset> assets,
+            Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValuesByAsset,
+            LocalDate historyStartDate
+    ) {
+        if (snapshots.isEmpty()) {
+            throw unavailable();
+        }
+
+        List<FundRebalanceSnapshot> orderedSnapshots = snapshots.stream()
+                .sorted(Comparator.comparing(FundRebalanceSnapshot::effectiveAt)
+                        .thenComparing(FundRebalanceSnapshot::id))
+                .toList();
+        Map<Long, Asset> assetsById = assets.stream()
+                .collect(Collectors.toMap(Asset::getId, Function.identity()));
+        Set<Long> snapshotAssetIds = orderedSnapshots.stream()
+                .flatMap(snapshot -> snapshot.positions().stream())
+                .map(FundRebalanceSnapshot.Position::assetId)
+                .collect(Collectors.toSet());
+        if (!assetsById.keySet().containsAll(snapshotAssetIds)) {
+            throw unavailable();
+        }
+        assertUnitValuesAvailable(assets, unitValuesByAsset);
+
+        LocalDate firstEffectiveDate = orderedSnapshots.getFirst().effectiveAt().toLocalDate();
+        LocalDate valuationStart = historyStartDate.isAfter(firstEffectiveDate)
+                ? historyStartDate
+                : firstEffectiveDate;
+        SortedSet<LocalDate> candidateDates = unitValuesByAsset.values().stream()
+                .flatMap(values -> values.keySet().stream())
+                .filter(date -> !date.isBefore(valuationStart))
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        BigDecimal outstandingShares = calculateOutstandingShares(fund);
+        List<FundValuationPoint> points = new ArrayList<>();
+        for (LocalDate date : candidateDates) {
+            FundRebalanceSnapshot activeSnapshot = activeSnapshot(orderedSnapshots, date);
+            if (activeSnapshot == null || !hasAllValues(activeSnapshot, unitValuesByAsset, date)) {
+                continue;
+            }
+            points.add(calculatePoint(
+                    date,
+                    toFundPositions(activeSnapshot),
+                    unitValuesByAsset,
+                    quantities(activeSnapshot),
+                    outstandingShares
+            ));
+        }
+        if (points.isEmpty()) {
+            throw unavailable();
+        }
+
+        FundValuationPoint latestPoint = points.getLast();
+        FundRebalanceSnapshot latestSnapshot = activeSnapshot(
+                orderedSnapshots,
+                latestPoint.date()
+        );
+        List<FundPosition> latestPositions = toFundPositions(latestSnapshot);
+        Map<Long, BigDecimal> latestQuantities = quantities(latestSnapshot);
+        List<ValuedFundPosition> valuedPositions = latestPositions.stream()
+                .map(position -> valuePosition(
+                        position,
+                        requireAsset(assetsById, position.getAssetId()),
+                        unitValuesByAsset,
+                        latestQuantities,
+                        latestPoint
+                ))
+                .sorted(Comparator.comparing(
+                        ValuedFundPosition::currentWeightPercentage,
+                        Comparator.reverseOrder()
+                ))
+                .toList();
+
+        return new FundValuationResult(outstandingShares, points, valuedPositions);
     }
 
     /**
@@ -297,6 +380,49 @@ public class FundValuationCalculator {
         );
 
         return new FundValuationPoint(date, nav, sharePrice);
+    }
+
+    private FundRebalanceSnapshot activeSnapshot(
+            List<FundRebalanceSnapshot> snapshots,
+            LocalDate date
+    ) {
+        FundRebalanceSnapshot active = null;
+        for (FundRebalanceSnapshot snapshot : snapshots) {
+            if (snapshot.effectiveAt().toLocalDate().isAfter(date)) {
+                break;
+            }
+            active = snapshot;
+        }
+        return active;
+    }
+
+    private boolean hasAllValues(
+            FundRebalanceSnapshot snapshot,
+            Map<Long, NavigableMap<LocalDate, BigDecimal>> valuesByAsset,
+            LocalDate date
+    ) {
+        return snapshot.positions().stream().allMatch(position -> {
+            NavigableMap<LocalDate, BigDecimal> values = valuesByAsset.get(position.assetId());
+            BigDecimal value = values == null ? null : values.get(date);
+            return value != null && value.signum() > 0;
+        });
+    }
+
+    private List<FundPosition> toFundPositions(FundRebalanceSnapshot snapshot) {
+        return snapshot.positions().stream()
+                .map(position -> FundPosition.builder()
+                        .assetId(position.assetId())
+                        .weight(position.targetWeight())
+                        .build())
+                .toList();
+    }
+
+    private Map<Long, BigDecimal> quantities(FundRebalanceSnapshot snapshot) {
+        return snapshot.positions().stream()
+                .collect(Collectors.toMap(
+                        FundRebalanceSnapshot.Position::assetId,
+                        FundRebalanceSnapshot.Position::quantity
+                ));
     }
 
     private ValuedFundPosition valuePosition(

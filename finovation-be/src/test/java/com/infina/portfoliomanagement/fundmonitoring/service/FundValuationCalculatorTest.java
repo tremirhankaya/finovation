@@ -5,6 +5,7 @@ import com.infina.portfoliomanagement.common.exception.BaseException;
 import com.infina.portfoliomanagement.common.exception.ErrorCode;
 import com.infina.portfoliomanagement.fund.entity.FundDraft;
 import com.infina.portfoliomanagement.fund.entity.FundPosition;
+import com.infina.portfoliomanagement.fundmonitoring.model.FundRebalanceSnapshot;
 import com.infina.portfoliomanagement.marketdata.entity.Asset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,7 +71,7 @@ class FundValuationCalculatorTest {
     }
 
     @Test
-    void inceptionWeights_remainAnchoredWhenNewMarketDatesArrive() {
+    void trackingSeries_startsAtInceptionAndRemainsAnchoredWhenNewMarketDatesArrive() {
         List<FundPosition> positions = List.of(
                 position(firstAsset.getId(), "50"),
                 position(secondAsset.getId(), "50")
@@ -90,10 +91,10 @@ class FundValuationCalculatorTest {
                 INCEPTION_DATE
         );
 
-        assertThat(result.points()).hasSize(3);
-        assertThat(result.points().getFirst().nav()).isEqualByComparingTo("750");
-        assertThat(result.points().getFirst().sharePrice()).isEqualByComparingTo("7.5");
-        assertThat(result.points().get(1).sharePrice()).isEqualByComparingTo("10");
+        assertThat(result.points()).hasSize(2);
+        assertThat(result.points().getFirst().date()).isEqualTo(INCEPTION_DATE.plusDays(1));
+        assertThat(result.points().getFirst().nav()).isEqualByComparingTo("1000");
+        assertThat(result.points().getFirst().sharePrice()).isEqualByComparingTo("10");
         assertThat(result.latestPoint().nav()).isEqualByComparingTo("1250");
         assertThat(result.latestPoint().sharePrice()).isEqualByComparingTo("12.5");
         assertThat(result.positions())
@@ -231,6 +232,54 @@ class FundValuationCalculatorTest {
                 .isEqualByComparingTo("10.008999");
     }
 
+    @Test
+    void rebalance_keepsPastValuesAndPreservesNavOnTheEffectiveDate() {
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> unitValues = Map.of(
+                firstAsset.getId(), values("10", "20", "30"),
+                secondAsset.getId(), values("20", "20", "40")
+        );
+        List<FundRebalanceSnapshot> snapshots = List.of(
+                new FundRebalanceSnapshot(
+                        1L,
+                        INCEPTION_DATE.atStartOfDay(),
+                        List.of(
+                                snapshotPosition(1L, "50", "50"),
+                                snapshotPosition(2L, "50", "25")
+                        )
+                ),
+                new FundRebalanceSnapshot(
+                        2L,
+                        INCEPTION_DATE.plusDays(1).atStartOfDay(),
+                        List.of(
+                                snapshotPosition(1L, "40", "30"),
+                                snapshotPosition(2L, "60", "45")
+                        )
+                )
+        );
+
+        var result = calculator.calculateWithRebalances(
+                fund,
+                snapshots,
+                List.of(firstAsset, secondAsset),
+                unitValues,
+                INCEPTION_DATE
+        );
+
+        assertThat(result.points())
+                .extracting(point -> point.sharePrice())
+                .containsExactly(
+                        new BigDecimal("10.00000000"),
+                        new BigDecimal("15.00000000"),
+                        new BigDecimal("27.00000000")
+                );
+        assertThat(result.positions())
+                .extracting(position -> position.currentWeightPercentage())
+                .containsExactly(
+                        new BigDecimal("66.666667"),
+                        new BigDecimal("33.333333")
+                );
+    }
+
     private Asset asset(Long id, String code) {
         return Asset.builder()
                 .id(id)
@@ -244,6 +293,18 @@ class FundValuationCalculatorTest {
                 .assetId(assetId)
                 .weight(new BigDecimal(weight))
                 .build();
+    }
+
+    private FundRebalanceSnapshot.Position snapshotPosition(
+            Long assetId,
+            String weight,
+            String quantity
+    ) {
+        return new FundRebalanceSnapshot.Position(
+                assetId,
+                new BigDecimal(weight),
+                new BigDecimal(quantity)
+        );
     }
 
     private NavigableMap<LocalDate, BigDecimal> values(String... values) {

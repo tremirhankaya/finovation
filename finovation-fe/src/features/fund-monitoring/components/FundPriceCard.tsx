@@ -1,3 +1,5 @@
+import { useState } from "react"
+
 import PriceTrendChart from "@/features/fund-monitoring/components/PriceTrendChart"
 import {
   formatDataDate,
@@ -25,19 +27,56 @@ const EMPTY_RETURNS: PeriodReturn[] = [
   { period: "1Y", label: "1 Yıllık Getiri", value: null },
 ]
 
+type ChartMode = "TRACKING" | "BACKTEST"
+
+const indexFormatter = new Intl.NumberFormat("tr-TR", {
+  minimumFractionDigits: 3,
+  maximumFractionDigits: 4,
+})
+
 export default function FundPriceCard({
   snapshot,
   period,
   onPeriodChange,
 }: FundPriceCardProps) {
-  const dailyChange = snapshot?.dailyChangePercentage ?? 0
+  const [chartMode, setChartMode] = useState<ChartMode>("TRACKING")
+  const isBacktest = chartMode === "BACKTEST"
+  const dailyChange = isBacktest
+    ? (snapshot?.backtestDailyChangePercentage ?? 0)
+    : (snapshot?.dailyChangePercentage ?? 0)
   const isNegative = dailyChange < 0
   const isPositive = dailyChange > 0
-  const points = snapshot?.priceHistory[period] ?? []
+  const points = isBacktest
+    ? (snapshot?.backtestHistory[period] ?? [])
+    : (snapshot?.priceHistory[period] ?? [])
   const periodReturns = snapshot?.periodReturns ?? EMPTY_RETURNS
 
   return (
     <section className={`${styles.card} ${styles.priceCard}`}>
+      <div
+        className={styles.chartTabs}
+        role="tablist"
+        aria-label="Grafik görünümü"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={!isBacktest}
+          className={!isBacktest ? styles.activeChartTab : ""}
+          onClick={() => setChartMode("TRACKING")}
+        >
+          Fon İzleme
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={isBacktest}
+          className={isBacktest ? styles.activeChartTab : ""}
+          onClick={() => setChartMode("BACKTEST")}
+        >
+          Backtest
+        </button>
+      </div>
       <div className={styles.priceTop}>
         <div>
           <div className={styles.priceLabel}>
@@ -45,13 +84,16 @@ export default function FundPriceCard({
               className={snapshot ? styles.liveDot : styles.inactiveDot}
               aria-hidden="true"
             />
-            Pay fiyatı · {snapshot?.fund.name ?? "Fon seçilmedi"}
+            {isBacktest ? "Backtest endeksi" : "Pay fiyatı"} ·{" "}
+            {snapshot?.fund.name ?? "Fon seçilmedi"}
           </div>
           <strong className={styles.priceValue}>
-            {formatSharePrice(
-              snapshot?.currentSharePrice ?? 0,
-              snapshot?.currency ?? "TRY",
-            )}
+            {isBacktest
+              ? indexFormatter.format(snapshot?.backtestCurrentValue ?? 0)
+              : formatSharePrice(
+                  snapshot?.currentSharePrice ?? 0,
+                  snapshot?.currency ?? "TRY",
+                )}
           </strong>
           <div
             className={`${styles.priceChange} ${
@@ -86,10 +128,11 @@ export default function FundPriceCard({
           points={points}
           fundName={snapshot?.fund.name}
           currency={snapshot?.currency ?? "TRY"}
+          valueMode={isBacktest ? "INDEX" : "PRICE"}
         />
       </div>
 
-      <h3 className={styles.returnsTitle}>Getiri Özeti</h3>
+      <h3 className={styles.returnsTitle}>Backtest Getiri Özeti</h3>
       <div className={styles.returnsGrid}>
         {periodReturns.map((item) => (
           <div className={styles.returnTile} key={item.period}>

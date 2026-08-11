@@ -39,12 +39,11 @@ public class TppValuationProvider implements AssetValuationProvider {
             LocalDate to
     ) {
         List<TppRate> rates = tppRateRepository
-                .findAllByAssetIdInAndDataDateBetweenOrderByDataDateAsc(
+                .findAllByAssetIdInAndDataDateLessThanEqualOrderByDataDateAsc(
                         assetIds,
-                        from,
                         to
                 );
-        return toUnitValues(rates);
+        return valuesFrom(toUnitValues(rates), from);
     }
 
     Map<Long, NavigableMap<LocalDate, BigDecimal>> toUnitValues(
@@ -64,6 +63,18 @@ public class TppValuationProvider implements AssetValuationProvider {
         }
 
         return valuesByAsset;
+    }
+
+    Map<Long, NavigableMap<LocalDate, BigDecimal>> valuesFrom(
+            Map<Long, NavigableMap<LocalDate, BigDecimal>> valuesByAsset,
+            LocalDate from
+    ) {
+        Map<Long, NavigableMap<LocalDate, BigDecimal>> visibleValues = new HashMap<>();
+        valuesByAsset.forEach((assetId, values) -> visibleValues.put(
+                assetId,
+                new TreeMap<>(values.tailMap(from, true))
+        ));
+        return visibleValues;
     }
 
     private Map<Long, NavigableMap<LocalDate, BigDecimal>> groupRates(
