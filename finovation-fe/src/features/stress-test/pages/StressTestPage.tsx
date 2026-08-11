@@ -15,7 +15,6 @@ import type {
     StressTestHistoryResponse,
 } from "@/features/stress-test/model/stressTestSchemas"
 import styles from "@/features/stress-test/styles/StressTestPage.module.css"
-import Logo from "@/shared/ui/Logo"
 import StressTestModeTabs from "@/features/stress-test/components/StressTestModeTabs"
 
 export default function StressTestPage() {
@@ -110,13 +109,9 @@ export default function StressTestPage() {
                 <StressTestModeTabs />
 
                 <header className={styles.header}>
-                    <div className={styles.brandBlock}>
-                        <Logo variant="dark" size="small" />
-
-                        <div className={styles.titleBlock}>
-                            <h1>Stres Testi</h1>
-                            <p>Portföy Risk Analizi</p>
-                        </div>
+                    <div className={styles.titleBlock}>
+                        <h1>Stres Testi</h1>
+                        <p>Portföy Risk Analizi</p>
                     </div>
 
                     <label className={styles.fundSelect}>

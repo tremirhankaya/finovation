@@ -26,19 +26,11 @@
     border-bottom: 1px solid #dfe7ef;
 }
 
-.brandBlock {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
 .titleBlock {
     display: flex;
     align-items: flex-start;
     flex-direction: column;
     gap: 2px;
-    padding-left: 20px;
-    border-left: 1px solid #dfe7ef;
 }
 
 .titleBlock h1 {
@@ -83,14 +75,6 @@
 
     .header {
         align-items: flex-start;
-    }
-
-    .brandBlock {
-        gap: 14px;
-    }
-
-    .titleBlock {
-        padding-left: 14px;
     }
 
 }

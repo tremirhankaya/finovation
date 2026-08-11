@@ -49,7 +49,7 @@ export default function RecentFunds({
     <section className={`${styles.panel} ${styles.recentPanel}`}>
       <div className={styles.panelHeader}>
         <div>
-          <span className={styles.panelEyebrow}>Fon Tasarımı</span>
+          <span className={styles.panelEyebrow}>Fon Yönetimi</span>
           <h2>Fonlar ve taslaklar</h2>
         </div>
         <div className={styles.headerLinks}>

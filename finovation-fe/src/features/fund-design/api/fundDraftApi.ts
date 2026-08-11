@@ -253,6 +253,9 @@ export type FundModelProposal = z.infer<typeof fundModelProposalSchema>
 export type FundModelAnalysisResponse = z.infer<typeof fundModelAnalysisResponseSchema>
 export type FundDraftAnalysisState = z.infer<typeof fundDraftAnalysisStateSchema>
 
+
+const FUND_ANALYSIS_TIMEOUT_MS = 180_000
+
 export async function getFundDraftAnalysisState(
   draftId: string,
   signal?: AbortSignal,
@@ -277,6 +280,7 @@ export async function runFundDraftAnalysis(
       method: "POST",
       errorMessage: "AI analizi başlatılamadı",
       signal,
+      timeoutMs: FUND_ANALYSIS_TIMEOUT_MS,
     },
     fundModelAnalysisResponseSchema.parse,
   )
