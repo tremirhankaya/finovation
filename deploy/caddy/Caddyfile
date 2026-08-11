@@ -1,0 +1,27 @@
+{
+    email {$ACME_EMAIL}
+}
+
+www.finovation.com.tr {
+    redir https://finovation.com.tr{uri} permanent
+}
+
+finovation.com.tr {
+    encode zstd gzip
+
+    header {
+        -Server
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000"
+    }
+
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    handle {
+        reverse_proxy frontend:80
+    }
+}

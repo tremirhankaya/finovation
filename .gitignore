@@ -1,6 +1,8 @@
 .DS_Store
 .env
+.env.production
 .idea/
+/tmp/
 /data-export/
 /data-export 2/
 /data-export.zip
