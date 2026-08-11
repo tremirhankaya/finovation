@@ -30,6 +30,13 @@ public final class FundDraftSpecifications {
                 ));
             }
 
+            if (criteria.designMode() != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.get("designMode"),
+                        criteria.designMode()
+                ));
+            }
+
             if (criteria.hasQuery()) {
                 predicates.add(criteriaBuilder.like(
                         criteriaBuilder.lower(root.get("name")),

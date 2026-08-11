@@ -10,6 +10,7 @@ import com.infina.portfoliomanagement.fund.dto.FundDraftSearchCriteria;
 import com.infina.portfoliomanagement.fund.dto.FundDraftSummaryResponse;
 import com.infina.portfoliomanagement.fund.dto.FundEstimatesResponse;
 import com.infina.portfoliomanagement.fund.dto.ModelUniverseAssetResponse;
+import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPinRequest;
 import com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPortfolioRulesRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundDraftAnalysisStateResponse;
 import com.infina.portfoliomanagement.fund.dto.analysis.FundModelAnalysisResponse;
@@ -17,12 +18,15 @@ import com.infina.portfoliomanagement.fund.dto.analysis.SelectFundProposalReques
 import com.infina.portfoliomanagement.fund.dto.analysis.UpdateWorkingPortfolioRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
+import com.infina.portfoliomanagement.fund.enums.FundDraftSortField;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
 import com.infina.portfoliomanagement.fund.service.FundDraftService;
 import com.infina.portfoliomanagement.fund.service.FundEstimationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -79,11 +83,23 @@ public class FundDraftController implements FundDraftControllerDocs {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "") String q,
             @RequestParam(required = false) FundDraftStatus status,
-            @RequestParam(required = false) ManagementApproach managementApproach
+            @RequestParam(required = false) ManagementApproach managementApproach,
+            @RequestParam(required = false) FundDesignMode designMode,
+            @RequestParam(required = false) FundDraftSortField sortBy,
+            @RequestParam(required = false) Sort.Direction direction
     ) {
         return fundDraftService.searchDrafts(
                 userDetails.getUsername(),
-                new FundDraftSearchCriteria(page, size, q, status, managementApproach)
+                new FundDraftSearchCriteria(
+                        page,
+                        size,
+                        q,
+                        status,
+                        managementApproach,
+                        designMode,
+                        sortBy,
+                        direction
+                )
         );
     }
 
@@ -109,6 +125,27 @@ public class FundDraftController implements FundDraftControllerDocs {
     @GetMapping("/model-universe")
     public List<ModelUniverseAssetResponse> listModelUniverse() {
         return fundDraftService.listModelUniverse();
+    }
+
+    @Override
+    @PostMapping("/{draftId}/clone-deleted")
+    public FundDraftResponse cloneDeletedDraft(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID draftId,
+            @Valid @RequestBody com.infina.portfoliomanagement.fund.dto.request.CloneDraftRequest request
+    ) {
+        return fundDraftService.cloneDeletedDraft(userDetails.getUsername(), draftId, request);
+    }
+
+    @Override
+    @PutMapping("/{draftId}/pin")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updatePinStatus(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID draftId,
+            @Valid @RequestBody UpdateFundDraftPinRequest request
+    ) {
+        fundDraftService.updatePinStatus(userDetails.getUsername(), draftId, request.pinned());
     }
 
     @Override

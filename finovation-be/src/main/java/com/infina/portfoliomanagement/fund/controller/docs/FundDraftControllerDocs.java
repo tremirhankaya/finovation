@@ -15,12 +15,16 @@ import com.infina.portfoliomanagement.fund.dto.analysis.SelectFundProposalReques
 import com.infina.portfoliomanagement.fund.dto.analysis.UpdateWorkingPortfolioRequest;
 import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
 import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
+import com.infina.portfoliomanagement.fund.enums.FundDesignMode;
+import com.infina.portfoliomanagement.fund.enums.FundDraftSortField;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
@@ -64,9 +68,10 @@ public interface FundDraftControllerDocs {
     @Operation(
             summary = "Search the authenticated user's fund drafts",
             description = "Paginated list scoped to the caller. Filter by status "
-                    + "(IN_PROGRESS for drafts, COMPLETED for funds), management approach and name. "
+                    + "(IN_PROGRESS for drafts, COMPLETED for funds), management approach, design mode and name. "
                     + "Archived drafts are never returned. currentStep is the next wizard screen "
-                    + "to open for an in-progress draft.",
+                    + "to open for an in-progress draft. sortBy accepts NAME, INITIAL_PORTFOLIO_SIZE, "
+                    + "CREATED_AT or UPDATED_AT; direction accepts ASC or DESC.",
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     FundDraftPageResponse searchDrafts(
@@ -75,7 +80,10 @@ public interface FundDraftControllerDocs {
             int size,
             String q,
             FundDraftStatus status,
-            ManagementApproach managementApproach
+            ManagementApproach managementApproach,
+            FundDesignMode designMode,
+            FundDraftSortField sortBy,
+            Sort.Direction direction
     );
 
     @Operation(
@@ -102,6 +110,20 @@ public interface FundDraftControllerDocs {
             security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
     )
     List<ModelUniverseAssetResponse> listModelUniverse();
+
+    @Operation(
+            summary = "Clone an archived draft",
+            description = "Creates a new manual draft cloned from an archived draft.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    FundDraftResponse cloneDeletedDraft(UserDetails userDetails, UUID draftId, @Valid com.infina.portfoliomanagement.fund.dto.request.CloneDraftRequest request);
+
+    @Operation(
+            summary = "Pin or unpin a fund draft",
+            description = "Toggles the pinned status of a fund draft.",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    void updatePinStatus(UserDetails userDetails, UUID draftId, com.infina.portfoliomanagement.fund.dto.UpdateFundDraftPinRequest request);
 
     @Operation(
             summary = "Get a fund draft",

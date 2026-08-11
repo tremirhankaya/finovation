@@ -17,6 +17,7 @@ public record FundDraftSummaryResponse(
         Integer currentStep,
         FundDraftStatus status,
         FundDesignMode designMode,
+        boolean pinned,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -29,6 +30,7 @@ public record FundDraftSummaryResponse(
                 draft.getCurrentStep() == null ? null : draft.getCurrentStep().intValue(),
                 draft.getStatus(),
                 draft.getDesignMode(),
+                draft.isPinned(),
                 draft.getCreatedAt(),
                 draft.getUpdatedAt()
         );

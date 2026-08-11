@@ -102,6 +102,12 @@ public class FundDraft {
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted;
 
+    @Column(name = "is_pinned", nullable = false)
+    private boolean pinned;
+
+    @Column(name = "deleted_by_user_id")
+    private Long deletedByUserId;
+
     @Column(name = "created_by_user_id", nullable = false)
     private Long createdByUserId;
 
@@ -115,6 +121,7 @@ public class FundDraft {
             String name,
             BigDecimal initialPortfolioSize,
             BigDecimal unitPrice,
+            FundDesignMode designMode,
             Long createdByUserId,
             LocalDateTime now
     ) {
@@ -126,12 +133,20 @@ public class FundDraft {
                 .initialPortfolioSize(initialPortfolioSize)
                 .unitPrice(unitPrice)
                 .status(FundDraftStatus.IN_PROGRESS)
-                .designMode(FundDesignMode.AI_ASSISTED)
+                .designMode(designMode)
                 .deleted(false)
-                .currentStep((short) FundDesignSteps.STRATEGY)
+                .pinned(false)
+                .currentStep((short) firstStepFor(designMode))
                 .createdByUserId(createdByUserId)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
+    }
+
+    private static int firstStepFor(FundDesignMode designMode) {
+        if (designMode == FundDesignMode.MANUAL) {
+            return FundDesignSteps.EDIT;
+        }
+        return FundDesignSteps.STRATEGY;
     }
 }

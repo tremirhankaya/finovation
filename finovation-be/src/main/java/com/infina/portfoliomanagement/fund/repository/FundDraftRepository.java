@@ -17,6 +17,9 @@ public interface FundDraftRepository
 
     Optional<FundDraft> findByPublicId(UUID publicId);
 
+    @Query(value = "SELECT * FROM dbo.fund_drafts WHERE public_id = :publicId", nativeQuery = true)
+    Optional<FundDraft> findDeletedOrActiveByPublicId(@Param("publicId") UUID publicId);
+
     List<FundDraft> findAllByCreatedByUserIdOrderByCreatedAtDesc(Long createdByUserId);
 
     List<FundDraft> findAllByStatusAndCreatedByUserIdOrderByCreatedAtDescIdDesc(
@@ -32,14 +35,18 @@ public interface FundDraftRepository
     List<FundDraft> findAllByPublicIdIn(List<UUID> publicIds);
 
     @Query(value = """
-            SELECT CAST(public_id AS CHAR(36)) AS publicId,
-                   name                        AS name,
-                   status                      AS status,
-                   updated_at                  AS archivedAt
-            FROM dbo.fund_drafts
-            WHERE is_deleted = 1
-              AND created_by_user_id = :ownerId
-            ORDER BY updated_at DESC
+            SELECT CAST(f.public_id AS CHAR(36)) AS publicId,
+                   f.name                        AS name,
+                   f.status                      AS status,
+                   f.updated_at                  AS archivedAt,
+                   f.initial_portfolio_size      AS initialPortfolioSize,
+                   f.unit_price                  AS unitPrice,
+                   u.email                       AS deletedBy
+            FROM dbo.fund_drafts f
+            LEFT JOIN dbo.users u ON f.deleted_by_user_id = u.id
+            WHERE f.is_deleted = 1
+              AND f.created_by_user_id = :ownerId
+            ORDER BY f.updated_at DESC
             """, nativeQuery = true)
     List<ArchivedFundDraftProjection> findArchivedByOwnerId(@Param("ownerId") Long ownerId);
 }

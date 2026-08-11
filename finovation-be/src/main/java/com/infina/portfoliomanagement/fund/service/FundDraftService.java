@@ -32,6 +32,7 @@ import com.infina.portfoliomanagement.fund.enums.FundDesignSteps;
 import com.infina.portfoliomanagement.fund.enums.FundDraftStatus;
 import com.infina.portfoliomanagement.fund.enums.FundType;
 import com.infina.portfoliomanagement.fund.enums.InvestmentHorizon;
+import com.infina.portfoliomanagement.fund.enums.ManagementApproach;
 import com.infina.portfoliomanagement.fund.repository.FundAssetPreferenceRepository;
 import com.infina.portfoliomanagement.fund.repository.FundDraftRepository;
 import com.infina.portfoliomanagement.fund.service.analysis.FundModelClient;
@@ -131,6 +132,7 @@ public class FundDraftService {
                 limits.maxAssetPreferences(),
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -168,6 +170,7 @@ public class FundDraftService {
                 limits.maxAssetPreferences(),
                 draft,
                 loadModelUniverse(),
+                loadModelUniverseSectors(),
                 null
         );
     }
@@ -205,7 +208,8 @@ public class FundDraftService {
                 limits.maxAssetPreferences(),
                 draft,
                 loadModelUniverse(),
-                getWorkingPortfolio(actorUsername, draftId)
+                loadModelUniverseSectors(),
+                findWorkingPortfolio(actorUsername, draftId)
         );
     }
 
@@ -241,6 +245,7 @@ public class FundDraftService {
                 limits.aboveThresholdSumMax(),
                 limits.maxAssetPreferences(),
                 draft,
+                null,
                 null,
                 getWorkingPortfolio(actorUsername, draftId)
         );
@@ -279,6 +284,7 @@ public class FundDraftService {
                 limits.maxAssetPreferences(),
                 draft,
                 loadModelUniverse(),
+                loadModelUniverseSectors(),
                 null
         );
     }
@@ -308,11 +314,21 @@ public class FundDraftService {
                 limits.maxAssetPreferences(),
                 null,
                 null,
+                null,
                 null
         );
     }
 
     private List<ModelUniverseAssetResponse> cachedModelUniverse = null;
+
+    private List<String> loadModelUniverseSectors() {
+        return loadModelUniverse().stream()
+                .map(ModelUniverseAssetResponse::sectorName)
+                .filter(sector -> sector != null && !sector.isBlank())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+    }
 
     private synchronized List<ModelUniverseAssetResponse> loadModelUniverse() {
         if (cachedModelUniverse != null) {
@@ -366,11 +382,21 @@ public class FundDraftService {
                 request.name().trim(),
                 request.initialPortfolioSize(),
                 request.unitPrice(),
+                request.designMode(),
                 actor.getId(),
                 now
         );
-        FundDraft saved = fundDraftRepository.save(draft);
+        FundDraft saved;
+        try {
+            saved = fundDraftRepository.save(draft);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new BaseException(ErrorCode.FUND_NAME_ALREADY_EXISTS);
+        }
         fundConstraintService.saveProfileConstraints(saved, limits, now);
+
+        if (saved.getDesignMode() == FundDesignMode.MANUAL) {
+            fundAnalysisPersistenceService.seedManualWorkingPortfolio(saved, limits);
+        }
 
         log.info("Fund draft {} created by user {}", saved.getPublicId(), actor.getId());
         return toResponse(saved);
@@ -549,6 +575,11 @@ public class FundDraftService {
     public WorkingPortfolioResponse getWorkingPortfolio(String actorUsername, UUID draftId) {
         FundDraft draft = requireOwnedDraft(actorUsername, draftId);
         return fundAnalysisPersistenceService.getWorking(draft);
+    }
+
+    private WorkingPortfolioResponse findWorkingPortfolio(String actorUsername, UUID draftId) {
+        FundDraft draft = requireOwnedDraft(actorUsername, draftId);
+        return fundAnalysisPersistenceService.findWorking(draft).orElse(null);
     }
 
     @Transactional
@@ -763,6 +794,7 @@ public class FundDraftService {
 
         draft.setDeleted(true);
         draft.setDeletedByUserId(actor.getId());
+        draft.setPinned(false);
         draft.setUpdatedAt(LocalDateTime.now(clock));
         fundDraftRepository.save(draft);
 
@@ -778,26 +810,35 @@ public class FundDraftService {
     }
 
     @Transactional
-    public FundDraftResponse cloneDeletedDraft(String actorUsername, UUID draftId) {
+    public FundDraftResponse cloneDeletedDraft(String actorUsername, UUID draftId, com.infina.portfoliomanagement.fund.dto.request.CloneDraftRequest request) {
         User actor = requireActor(actorUsername);
 
-        FundDraft deletedDraft = fundDraftRepository.findByPublicId(draftId)
+        FundDraft deletedDraft = fundDraftRepository.findDeletedOrActiveByPublicId(draftId)
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_DRAFT_NOT_FOUND));
 
         if (!deletedDraft.isDeleted() || !deletedDraft.getCreatedByUserId().equals(actor.getId())) {
             throw new BaseException(ErrorCode.FUND_DRAFT_NOT_FOUND);
         }
 
+        FundProperties cloneLimits =
+                fundDesignProfileService.getLimits(deletedDraft.getFundType());
+        fundDraftValidator.assertCreateRequest(
+                request.getName(),
+                request.getInitialPortfolioSize(),
+                request.getUnitPrice(),
+                cloneLimits
+        );
+
         LocalDateTime now = LocalDateTime.now(clock);
         
         FundDraft newDraft = FundDraft.builder()
                 .publicId(UUID.randomUUID())
-                .name(deletedDraft.getName())
+                .name(request.getName())
                 .fundType(deletedDraft.getFundType())
                 .currencyCode(deletedDraft.getCurrencyCode())
-                .initialPortfolioSize(deletedDraft.getInitialPortfolioSize())
-                .unitPrice(deletedDraft.getUnitPrice())
-                .managementApproach(deletedDraft.getManagementApproach())
+                .initialPortfolioSize(request.getInitialPortfolioSize())
+                .unitPrice(request.getUnitPrice())
+                .managementApproach(ManagementApproach.CUSTOM)
                 .liquidityTargetPct(deletedDraft.getLiquidityTargetPct())
                 .horizon(deletedDraft.getHorizon())
                 .tppMinPct(deletedDraft.getTppMinPct())
@@ -818,7 +859,11 @@ public class FundDraftService {
                 .updatedAt(now)
                 .build();
 
-        fundDraftRepository.save(newDraft);
+        try {
+            fundDraftRepository.save(newDraft);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new BaseException(ErrorCode.FUND_NAME_ALREADY_EXISTS);
+        }
 
         List<FundAssetPreference> oldPrefs = fundAssetPreferenceRepository.findAllByFundDraftId(deletedDraft.getId());
         if (!oldPrefs.isEmpty()) {
@@ -837,7 +882,7 @@ public class FundDraftService {
                 List<FundModelAssetDto> mappedAssets = oldWorking.assets().stream()
                         .map(a -> new FundModelAssetDto(
                                 a.assetCode(),
-                                a.weight().multiply(BigDecimal.valueOf(100)), // Map decimal back to % for DB
+                                a.weight(),
                                 a.aiNote()
                         ))
                         .toList();

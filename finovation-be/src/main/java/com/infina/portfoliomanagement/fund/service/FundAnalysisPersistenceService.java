@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -265,6 +266,17 @@ public class FundAnalysisPersistenceService {
                 .findByFundDraft_IdAndPortfolioType(draft.getId(), PortfolioType.WORKING)
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_ANALYSIS_NOT_FOUND));
 
+        return buildWorking(draft, working);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<WorkingPortfolioResponse> findWorking(FundDraft draft) {
+        return fundPortfolioRepository
+                .findByFundDraft_IdAndPortfolioType(draft.getId(), PortfolioType.WORKING)
+                .map(working -> buildWorking(draft, working));
+    }
+
+    private WorkingPortfolioResponse buildWorking(FundDraft draft, FundPortfolio working) {
         Integer sourceRank = fundPortfolioRepository
                 .findByFundDraftIdAndSelectedTrue(draft.getId())
                 .map(FundPortfolio::getProposalRank)
@@ -323,6 +335,19 @@ public class FundAnalysisPersistenceService {
 
         WorkingPortfolioResponse response = getWorking(draft);
         return response;
+    }
+
+    @Transactional
+    public void seedManualWorkingPortfolio(FundDraft draft, FundProperties profileLimits) {
+        LocalDateTime now = financialTime.now();
+        List<FundModelAssetDto> assets = List.of(
+                new FundModelAssetDto(
+                        AIAssetCodeMapping.CASH_TPP.getInternalCode(),
+                        BigDecimal.valueOf(profileLimits.minLiquidityTargetPct()),
+                        null
+                )
+        );
+        upsertWorking(draft, "Manuel Portföy", assets, now);
     }
 
     @Transactional(readOnly = true)

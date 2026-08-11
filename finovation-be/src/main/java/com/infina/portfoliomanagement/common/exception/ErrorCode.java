@@ -293,6 +293,12 @@ public enum ErrorCode {
             "The fund name is invalid."
     ),
 
+    FUND_NAME_ALREADY_EXISTS(
+            "FUND_007_A",
+            HttpStatus.CONFLICT,
+            "A fund draft with this name already exists."
+    ),
+
     FUND_PORTFOLIO_RULES_INVALID(
             "FUND_008",
             HttpStatus.BAD_REQUEST,

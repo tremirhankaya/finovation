@@ -6,6 +6,8 @@ import com.infina.portfoliomanagement.fund.enums.FundDesignInitPage;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.infina.portfoliomanagement.fund.dto.analysis.WorkingPortfolioResponse;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record FundDraftInitResponse(
         FundDesignInitPage page,
@@ -30,6 +32,8 @@ public record FundDraftInitResponse(
         BigDecimal aboveThresholdSumMax,
         int maxAssetPreferences,
         FundDraftResponse draft,
-        List<ModelUniverseAssetResponse> modelUniverse
+        List<ModelUniverseAssetResponse> modelUniverse,
+        List<String> modelUniverseSectors,
+        WorkingPortfolioResponse workingPortfolio
 ) {
 }

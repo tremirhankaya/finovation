@@ -1,5 +1,6 @@
 package com.infina.portfoliomanagement.fund.repository.projection;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public interface ArchivedFundDraftProjection {
@@ -11,4 +12,10 @@ public interface ArchivedFundDraftProjection {
     String getStatus();
 
     LocalDateTime getArchivedAt();
+
+    BigDecimal getInitialPortfolioSize();
+
+    BigDecimal getUnitPrice();
+
+    String getDeletedBy();
 }
