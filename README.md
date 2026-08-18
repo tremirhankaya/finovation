@@ -427,6 +427,10 @@ Yerelde kullanılan başlıca portlar `1433`, `3000`, `5173`, `6380`, `8000`, `8
 - [CREATE/OPTIMIZE karar sözleşmesi](finovation-ai/docs/22_CREATE_OPTIMIZE_DECISION_SPEC.md)
 - [Alertmanager kurulumu](monitoring/alertmanager/README.md)
 
+## Teşekkür
+
+Bu proje, **İnfina Akademi** kapsamında geliştirilmiş ve programın **en başarılı projesi** seçilmiştir. Sürece katkı sunan tüm ekip arkadaşlarımıza emekleri, iş birliği ve özverileri için teşekkür ederiz.
+
 ## Güvenlik notları
 
 - `.env`, SMTP parolaları, API anahtarları, JWT sırları ve Slack webhook'ları commit edilmemelidir.
