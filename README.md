@@ -83,10 +83,8 @@ Finovation/
 │   ├── data/               # Dondurulmuş inference veri setleri
 │   └── src/                # Tahmin, portföy ve stres motorları
 ├── monitoring/             # Prometheus, Grafana, Loki ve Alertmanager ayarları
-├── deploy/                 # Caddy, CI/CD, systemd ve VPN dosyaları
 ├── docker-compose.yml      # Yerel geliştirme ortamı
-├── compose.production.yaml # Üretim ortamı
-└── DEPLOYMENT.md           # Ayrıntılı üretim kurulum rehberi
+└── README.md                # Proje rehberi
 ```
 
 Alt projelerin kendi README dosyaları, ilgili katmanın ayrıntılı çalışma modelini açıklar.
@@ -279,7 +277,7 @@ powershell -ExecutionPolicy Bypass -File .\start_api.ps1 -Port 8000
 | `MARKETDATA_BOOTSTRAP_ON_STARTUP` | Açılışta piyasa verisi yükleme | Dış servise erişim yoksa `false` |
 | `VITE_DEV_PROXY_TARGET` | Frontend geliştirme proxy hedefi | `http://localhost:8080` |
 
-Tüm zaman aşımı, rate-limit, cron, fon büyüklüğü ve model snapshot ayarları için `docker-compose.yml`, `compose.production.yaml` ve `finovation-be/src/main/resources/application.yaml` dosyalarına bakın.
+Tüm zaman aşımı, rate-limit, cron, fon büyüklüğü ve model snapshot ayarları için `docker-compose.yml` ve `finovation-be/src/main/resources/application.yaml` dosyalarına bakın.
 
 ### Finansal zaman simülasyonu
 
@@ -378,19 +376,7 @@ docker compose up -d alertmanager prometheus loki alloy grafana
 
 ## Üretim ortamı
 
-Üretim stack'i `compose.production.yaml` ile tek bir amd64 Linux sunucuda çalışacak şekilde hazırlanmıştır. Dışarıya yalnızca Caddy üzerinden `80` ve `443` portları açılır; veritabanı, Redis, backend ve AI servisi private Docker network'lerinde kalır. Swagger üretim profilinde kapalıdır.
-
-Temel akış:
-
-```bash
-cp .env.production.example .env.production
-chmod 600 .env.production
-docker compose --env-file .env.production -f compose.production.yaml config --quiet
-docker compose --env-file .env.production -f compose.production.yaml up -d --build
-docker compose --env-file .env.production -f compose.production.yaml ps
-```
-
-DNS, TLS, Caddy, opsiyonel Fortinet VPN, Gitea Actions dağıtımı, rollback ve sunucu hazırlığı için [DEPLOYMENT.md](DEPLOYMENT.md) dosyasını izleyin.
+Yerel geliştirme ortamını Docker Compose ile çalıştırabilir; servisleri `docker compose ps` ve `docker compose logs` komutlarıyla izleyebilirsiniz.
 
 ## Sorun giderme
 
@@ -432,7 +418,6 @@ Yerelde kullanılan başlıca portlar `1433`, `3000`, `5173`, `6380`, `8000`, `8
 
 ## Ek dokümantasyon
 
-- [Üretim dağıtımı](DEPLOYMENT.md)
 - [Frontend geliştirme rehberi](finovation-fe/README.md)
 - [Frontend teknik dokümantasyonu](finovation-fe/finovation-docs/DASHBOARD_TEKNIK_DOKUMANTASYON.md)
 - [AI/ML paket açıklaması](finovation-ai/README.md)
