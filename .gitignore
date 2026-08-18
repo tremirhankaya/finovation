@@ -7,6 +7,9 @@
 /data-export 2/
 /data-export.zip
 /docs/
+/deliverables/
+/target/
+**/target/
 
 # Local Codex project context and working instructions.
 AGENTS.md

@@ -30,6 +30,10 @@ type EditablePosition = {
 }
 
 const WEIGHT_STEP_PCT = 0.01
+// Ağırlık alanları iki ondalık basamakla gösterilir ve düzenlenir. Motorun
+// yüksek hassasiyetli dağılımından kalan 0,004 gibi farklar ekranda %100
+// görünür; bunlar kural ihlali değildir. %99,99 / %100,01 ise ihlaldir.
+const TOTAL_WEIGHT_DISPLAY_TOLERANCE_PCT = 0.005
 
 function assetLabelForCode(
   universe: { assetCode: string; displayName: string }[] | undefined,
@@ -522,7 +526,9 @@ export default function FundDesignEditPage() {
         })),
         {
           asset_code: targetCode,
-          weight: 0,
+          // Backend sıfır ağırlıklı pozisyonları kabul etmez. Hisseyi en küçük
+          // düzenleme adımıyla ekleyip kullanıcıya ağırlığı ayarlama imkânı ver.
+          weight: 0.01,
         },
       ]
 
@@ -798,7 +804,13 @@ export default function FundDesignEditPage() {
     )
       return false
     if (!init) return true
-    if (Math.abs(totalWeight - 100) > 0.01) return false
+    // Ekranda %100 olarak gösterilen yüksek hassasiyetli motor dağılımlarını
+    // kabul et; iki ondalıkta %99,99 ya da %100,01 görünen değerlerde ilerleme
+    // kapalı kalır.
+    if (
+      Math.abs(totalWeight - 100) > TOTAL_WEIGHT_DISPLAY_TOLERANCE_PCT
+    )
+      return false
     if (
       summary.hisseOrani < init.minEquityWeightPct ||
       summary.hisseOrani > init.maxEquityWeightPct
@@ -961,7 +973,8 @@ export default function FundDesignEditPage() {
                         gap: "0.75rem",
                       }}
                     >
-                      {Math.abs(totalWeight - 100) > 0.01 && (
+                      {Math.abs(totalWeight - 100) >
+                        TOTAL_WEIGHT_DISPLAY_TOLERANCE_PCT && (
                         <span className={styles.totalWeightHint}>
                           {totalWeight < 100
                             ? `%${formatPct(100 - totalWeight)} eksik`
@@ -988,7 +1001,8 @@ export default function FundDesignEditPage() {
                     <div
                       className={[
                         styles.totalWeightThickFill,
-                        Math.abs(totalWeight - 100) <= 0.01
+                        Math.abs(totalWeight - 100) <=
+                        TOTAL_WEIGHT_DISPLAY_TOLERANCE_PCT
                           ? styles.totalWeightFillOk
                           : Math.abs(totalWeight - 100) <= 2
                             ? styles.totalWeightFillWarn

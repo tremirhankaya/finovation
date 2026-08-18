@@ -578,7 +578,7 @@ export default function ProspectusRulesPanel({
           </li>
           <li>
             <span className={[styles.legendDot, styles.dotWarn].join(" ")} />
-            Turuncu: Yalnızca İzahnameye Uygun
+            Turuncu: İzahnameye Uygun, Kriterlerinize Uygun Değil
           </li>
           <li>
             <span className={[styles.legendDot, styles.dotBad].join(" ")} />

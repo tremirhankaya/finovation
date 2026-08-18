@@ -43,6 +43,42 @@ class WorkingPortfolioRulesTest {
     }
 
     @Test
+    void totalWeightWithinFormerTolerance_stillReportsTotalWeight() {
+        List<FundPositionResponse> positions = new ArrayList<>(compliantPortfolio());
+        FundPositionResponse first = positions.getFirst();
+        positions.set(0, new FundPositionResponse(
+                first.assetCode(),
+                first.displayName(),
+                first.weight().subtract(new BigDecimal("0.05")),
+                first.aiNote(),
+                first.sectorName(),
+                first.assetType()
+        ));
+
+        assertThat(WorkingPortfolioRules.validate(positions, LIMITS))
+                .extracting(RuleViolation::code)
+                .contains(ConstraintCode.TOTAL_WEIGHT);
+    }
+
+    @Test
+    void totalWeightRoundingToHundred_isAccepted() {
+        List<FundPositionResponse> positions = new ArrayList<>(compliantPortfolio());
+        FundPositionResponse first = positions.getFirst();
+        positions.set(0, new FundPositionResponse(
+                first.assetCode(),
+                first.displayName(),
+                first.weight().subtract(new BigDecimal("0.004")),
+                first.aiNote(),
+                first.sectorName(),
+                first.assetType()
+        ));
+
+        assertThat(WorkingPortfolioRules.validate(positions, LIMITS))
+                .extracting(RuleViolation::code)
+                .doesNotContain(ConstraintCode.TOTAL_WEIGHT);
+    }
+
+    @Test
     void singleStockAboveLimit_reportsSingleStockMax() {
         List<FundPositionResponse> positions = List.of(
                 equity("AEFES.E", "12", "GIDA"),

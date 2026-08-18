@@ -13,6 +13,12 @@ import java.util.Map;
 public final class WorkingPortfolioRules {
 
     private static final BigDecimal TOTAL_WEIGHT_PCT = new BigDecimal("100");
+    /**
+     * Ağırlıklar iki ondalıkla gösterilir. Motorun yüksek hassasiyetli
+     * dağılımından ekranda %100'e yuvarlanan farkları kabul eder; %99,99 ve
+     * %100,01 gibi görünür farkları reddeder.
+     */
+    private static final BigDecimal TOTAL_WEIGHT_DISPLAY_TOLERANCE_PCT = new BigDecimal("0.005");
 
     private WorkingPortfolioRules() {
     }
@@ -23,7 +29,7 @@ public final class WorkingPortfolioRules {
     ) {
         List<RuleViolation> violations = new ArrayList<>();
 
-        checkTotalWeightViolation(violations, positions, limits.weightSumTolerancePct());
+        checkTotalWeightViolation(violations, positions);
 
         List<FundPositionResponse> equities = filterByType(positions, AssetType.EQUITY);
 
@@ -60,13 +66,12 @@ public final class WorkingPortfolioRules {
 
     private static void checkTotalWeightViolation(
             List<RuleViolation> violations,
-            List<FundPositionResponse> positions,
-            BigDecimal tolerance
+            List<FundPositionResponse> positions
     ) {
         BigDecimal totalWeight = sumOf(positions);
-        BigDecimal allowedDrift = tolerance == null ? BigDecimal.ZERO : tolerance;
 
-        if (totalWeight.subtract(TOTAL_WEIGHT_PCT).abs().compareTo(allowedDrift) > 0) {
+        if (totalWeight.subtract(TOTAL_WEIGHT_PCT).abs()
+                .compareTo(TOTAL_WEIGHT_DISPLAY_TOLERANCE_PCT) > 0) {
             violations.add(RuleViolation.equalTo(
                     ConstraintCode.TOTAL_WEIGHT,
                     totalWeight,
