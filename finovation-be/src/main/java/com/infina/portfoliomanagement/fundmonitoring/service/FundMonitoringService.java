@@ -348,7 +348,18 @@ public class FundMonitoringService {
                 .orElseThrow(() -> new BaseException(ErrorCode.FUND_NOT_FOUND));
         accessPolicy.assertCanView(fund, actor.getId());
 
-        return workingPositions(fund);
+        LocalDate today = financialTime.currentDate();
+        try {
+            FundMonitoringCalculation calculation = calculateFund(fund, today);
+            Map<Long, AssetMonitoringProfile> profilesByAssetId =
+                    classificationProviderRegistry.loadProfiles(calculation.assets());
+            return positions(calculation.trackingValuation(), profilesByAssetId);
+        } catch (BaseException e) {
+            if (e.getErrorCode() != ErrorCode.FUND_MONITORING_DATA_UNAVAILABLE) {
+                throw e;
+            }
+            return workingPositions(fund);
+        }
     }
 
     private List<FundPositionResponse> workingPositions(FundDraft fund) {
