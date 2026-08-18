@@ -429,7 +429,7 @@ Yerelde kullanılan başlıca portlar `1433`, `3000`, `5173`, `6380`, `8000`, `8
 
 ## Teşekkür
 
-Bu proje, **İnfina Akademi** kapsamında geliştirilmiş ve programın **en başarılı projesi** seçilmiştir. Sürece katkı sunan tüm ekip arkadaşlarımıza emekleri, iş birliği ve özverileri için teşekkür ederiz.
+Bu proje, **İnfina Akademi** kapsamında geliştirilmiş ve programın **en başarılı projesi** seçilmiştir. Sürece katkı sunan tüm ekip arkadaşlarıma emekleri, iş birliği ve özverileri için teşekkür ederim.
 
 ## Güvenlik notları
 
@@ -439,6 +439,3 @@ Bu proje, **İnfina Akademi** kapsamında geliştirilmiş ve programın **en ba�
 - Varsayılan Grafana parolasını mutlaka değiştirin.
 - Veritabanı yedeklerini sunucu dışında saklayın; host snapshot'ını tek yedekleme yöntemi olarak kullanmayın.
 
-## Lisans
-
-Bu repository'de henüz bir lisans dosyası bulunmamaktadır. Dağıtım veya üçüncü taraf kullanımından önce proje sahibinin kullanım koşullarını netleştirin.
