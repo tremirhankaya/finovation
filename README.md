@@ -1,7 +1,7 @@
 # Finovation
 Bu proje, **İnfina Akademi** kapsamında geliştirilmiş ve programın **en başarılı projesi** seçilmiştir. Sürece katkı sunan tüm ekip arkadaşlarıma teşekkürlerimle...
 
-Finovation; fon tasarımı, portföy optimizasyonu, fon izleme ve stres testi süreçlerini tek bir uygulamada birleştiren, yapay zekâ destekli bir portföy yönetim platformudur. Sistem; React tabanlı web arayüzü, Spring Boot iş katmanı ve paketlenmiş tahmin/optimizasyon modellerini sunan FastAPI servisiyle birlikte çalışır.
+Finovation; fon tasarımı, portföy optimizasyonu, fon izleme ve stres testi süreçlerini tek bir uygulamada birleştiren, yapay zekâ destekli bir portföy karar destek platformudur. Sistem; React tabanlı web arayüzü, Spring Boot iş katmanı ve paketlenmiş tahmin/optimizasyon modellerini sunan FastAPI servisiyle birlikte çalışır.
 
 > [!IMPORTANT]
 > AI servisindeki tahmin ve portföy karar motoru `2025-05-29` sistem tarihine ve `2025-05-28` tahmin başlangıç tarihine ait dondurulmuş V3 snapshot'ını kullanır. Bu paket canlı piyasa tahmini üretmez; tekrar üretilebilir model sonuçları sunar.
